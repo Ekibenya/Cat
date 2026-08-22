@@ -379,10 +379,6 @@ canvas{display:block}
    整站一次反色＋色相回正（黑金 → 白金），三维画面与图片再反一次保持原貌。
    全卡内联颜色数以百计，逐处重配不现实；这条滤镜路是黑白模式的标准做法。
    html 高度即视口（overflow hidden），filter 形成的包含块不影响 fixed 布局。 */
-/* GLASSOFF · 毛玻璃总闸。二十处 blur() 隔着整页滤镜去取背景，
-   视网膜屏上一次面板开合就是五百万像素乘二十次模糊。整批撤掉。
-   删掉这一条就全部回来。 */
-*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}
 html.lux #zjScene3D canvas,html.lux #mdScene3D canvas,html.lux img{filter:invert(1) hue-rotate(180deg)}
 /* 反色出来的近纯白太刺眼：正片叠底罩一层暖纸色，白压成米黄羊皮纸面，
@@ -5940,7 +5936,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=101;
+var BUILD=102;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -9127,27 +9123,24 @@ function setStore(){lsSet('rome_set',JSON.stringify(SET))}
 /* —— 显示：透明度 / 版式 / 字体 —— */
 var glassCss=document.createElement('style');document.head.appendChild(glassCss);
 function applyGlass(){
-  /* 毛玻璃撤了（见 GLASSOFF）。原来那几档底色是配着模糊定的：
-     模糊本身就把身后糊成一片，薄薄一层底色就够压住。现在身后是清晰的正文，
-     同样的薄度会透字，所以每一档的起点都往上抬一截。拉杆照旧管用。 */
   var a=SET.glass/100;
   /* 这一层跟着 CSS 里那条改成暗角：平铺的黑会把山脉盖成灰纸。
      拉杆只调四角收多深，中间那 55% 一律不压。 */
   glassCss.textContent='#game::before{background:radial-gradient(ellipse 90% 80% at 50% 42%,'
     +'transparent 55%,rgba(0,0,0,'+(.20+.42*a).toFixed(2)+') 100%) !important}'
-    +'#game .gMfd{background:rgba(8,8,8,'+(.10+.25*a).toFixed(2)+') !important}'
+    +'#game .gMfd{background:rgba(8,8,8,'+(.06+.25*a).toFixed(2)+') !important}'
     +'#game .gInput{background:linear-gradient(0deg,rgba(6,6,6,'+(.55+.4*a).toFixed(2)+') 0%,rgba(6,6,6,'+(.35+.35*a).toFixed(2)+') 42%,rgba(6,6,6,0) 76%) !important}'
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
-    +'.gPanel,#pnTx{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}'
+    +'.gPanel,#pnTx{background:rgba(6,6,6,'+(.04+.16*a).toFixed(2)+') !important}'
     /* 情报台那六扇单独一档更透的：它们背后只有一层细线框，底色跟左边三扇一样厚的话
        线全被压掉，看着就是六块不透的黑板。同一根拉杆，系数减半。 */
-    +'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.06+.08*a).toFixed(2)+') !important}'
+    +'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.02+.08*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(6,6,6,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
     +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,#game .gmMenu'
-    +'{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}';
+    +'{background:rgba(6,6,6,'+(.09+.19*a).toFixed(2)+') !important}';
 }
 applyGlass();
 /* 帧时表：网址后面加 ?perf=1 就出现，平时一行代码都不跑。
@@ -13914,6 +13907,12 @@ function mvLayout(){
 }
 function mvRailDraw(){
   var c=MV.rail,g=MV.railx;if(!g)return;
+  /* 这一条导轨只跟「共几段、停在第几段、拨到哪儿」有关。三样都没变就别重画——
+     重画一次，整页的滤镜与毛玻璃就得重来一遍。 */
+  var _sig=[MV.n,mvWrap(Math.round(MV.pos)),MV.pos.toFixed(3),
+            c.clientWidth,c.clientHeight,Math.min(devicePixelRatio||1,2)].join('|');
+  if(c._sig===_sig)return;
+  c._sig=_sig;
   var d=Math.min(devicePixelRatio||1,2);
   var pw=Math.max(1,Math.round((c.clientWidth||16)*d)),ph=Math.max(1,Math.round(c.clientHeight*d));
   if(c.width!==pw||c.height!==ph){c.width=pw;c.height=ph;}
@@ -13938,12 +13937,30 @@ function mvRailDraw(){
 function mvBgDraw(now){
   if(!MV.bgx)return;
   var W=MV.bg.width,H=MV.bg.height;if(!(W>1&&H>1))return;
+  /* 山只跟「拨到哪一段」有关。原来还把 now 一起喂进去，于是时间一走它就变，
+     二十赫兹重画一张铺满面板的画布，整页的滤镜与毛玻璃跟着重来二十次。
+     那点随时间的漂移本来也看不出来，去掉；位置变了照旧重画。 */
+  var _sig=[W,H,MV.mode,(MV.mode===2?mvRot():MV.pos).toFixed(2)].join('|');
+  if(MV.bg._sig===_sig)return;
+  MV.bg._sig=_sig;
+  now=0;
   try{terrainPaint(MV.bgx,W,H,now,(MV.mode===2?mvRot()*420:MV.pos*230),0,.55);}catch(_){}
 }
 function mvTick(){
   MV.raf=0;
   var box=MV.box;
-  if(!box||!MV.stage||!box.parentNode){return;}          /* 面板被整块换掉了：这一轮到此为止 */
+  if(!box||!MV.stage||!box.parentNode){return;}
+  /* 闲着的时候降到每半秒一轮。底下那一套每帧都要读 getComputedStyle
+     （逼一次样式重算）和 clientWidth（逼一次布局），没人动它的时候
+     每帧算出来的结果都一样，纯属白烧。真在动——拖着、正在翻段、
+     尺寸还没定住——立刻回到满帧，一帧都不欠。 */
+  var _mv=MV.drag||MV.tgt!=null||(MV.stableN||0)<3
+        ||Math.abs(MV.pos-Math.round(MV.pos))>.001;
+  if(!_mv){
+    var _n=performance.now();
+    if(_n-(MV._slow||0)<500){MV.raf=requestAnimationFrame(mvTick);return;}
+    MV._slow=_n;
+  }else MV._slow=0;          /* 面板被整块换掉了：这一轮到此为止 */
   if(box.clientHeight>10&&box.clientWidth>10){           /* 手机上切到别页时整块 display:none，不空转 */
     /* 手机上底部还有一条小岛切页胶囊，底条要让开那一条；桌面端没有，贴到底。 */
     var nav=gEl.querySelector('.gNav');

@@ -38,6 +38,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 DOC  = os.path.join(ROOT, 'core/vendor/three/build/chunks/9d717bc0/156a50943028.html')
 
 MARK = '/* LEAN：三维天下整层停用 */'
+NL   = chr(10)      # 拼 js 片段时用，省得在这份脚本里跟转义打架
 
 
 def body(s, head):
@@ -450,44 +451,6 @@ def main():
     sub('图版异步解码', '''      b.innerHTML='<img alt="">';''',
         '''      b.innerHTML='<img alt="" decoding="async">';''')
 
-    # ⑰ 毛玻璃整批撤掉
-    #    全站二十处 backdrop-filter: blur()。毛玻璃要先把身后那一片按原样取一份、
-    #    模糊、再贴回去；而这一页的根元素上还挂着 invert+hue-rotate，
-    #    于是每一块毛玻璃都得隔着整页的滤镜去取那一份。视网膜屏是二倍像素，
-    #    一次面板开合就是五百万像素上的二十次模糊——顿的就是这一下。
-    #    要把毛玻璃请回来：删掉下面这条 GLASSOFF 规则即可。
-    sub('毛玻璃总闸',
-        'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}',
-        '/* GLASSOFF · 毛玻璃总闸。二十处 blur() 隔着整页滤镜去取背景，'
-        + chr(10) + '   视网膜屏上一次面板开合就是五百万像素乘二十次模糊。整批撤掉。'
-        + chr(10) + '   删掉这一条就全部回来。 */'
-        + chr(10) + '*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'
-        + chr(10) + 'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}')
-
-    # 没了模糊，面板底色要加实一档才压得住底下的正文
-    sub('面板底色加实',
-        "function applyGlass(){" + chr(10) + "  var a=SET.glass/100;",
-        "function applyGlass(){" + chr(10)
-        + "  /* 毛玻璃撤了（见 GLASSOFF）。原来那几档底色是配着模糊定的：" + chr(10)
-        + "     模糊本身就把身后糊成一片，薄薄一层底色就够压住。现在身后是清晰的正文，" + chr(10)
-        + "     同样的薄度会透字，所以每一档的起点都往上抬一截。拉杆照旧管用。 */" + chr(10)
-        + "  var a=SET.glass/100;")
-    # 罩在正文上头的那几扇（地图、商店、装备、全部弹窗）改成实底。
-    # 原来它们敢那么透，全靠毛玻璃先把身后糊成一片；毛玻璃撤了，同样的透明度
-    # 就是正文直接透上来，一个字也读不成。压在背景上的那两处（情报台一栏、
-    # 六扇小窗）照旧留透——它们身后是山，不是字。
-    for old, new in [
-        ("'#game .gMfd{background:rgba(8,8,8,'+(.06+.25*a).toFixed(2)+') !important}'",
-         "'#game .gMfd{background:rgba(8,8,8,'+(.10+.25*a).toFixed(2)+') !important}'"),
-        ("+'.gPanel,#pnTx{background:rgba(6,6,6,'+(.04+.16*a).toFixed(2)+') !important}'",
-         "+'.gPanel,#pnTx{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}'"),
-        ("+'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.02+.08*a).toFixed(2)+') !important}'",
-         "+'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.06+.08*a).toFixed(2)+') !important}'"),
-        ("+'{background:rgba(6,6,6,'+(.09+.19*a).toFixed(2)+') !important}';",
-         "+'{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}';"),
-    ]:
-        sub('底色·' + old[12:26], old, new)
-
     # ⑱ 帧时表：网址后加 ?perf=1 打开
     #    这台机器跑的是软件光栅，量不准别人的机器。把尺子做进页面里，
     #    让实际那台机器自己报数，比在这边猜快得多。
@@ -520,9 +483,67 @@ if(/[?&]perf=1/.test(location.search))(function(){
   })();
 })();""" + chr(10) + "/* 拉条走过的那一段")
 
+    # ⑲ 情报台那一轮：闲着的时候也在满帧烧机器
+    #    用「把 requestAnimationFrame 全部挂钩、按调用点记账」的办法量出来：
+    #    对局屏静止不动，三秒里 mvTick 被叫了 180 次，一次不落。它每一帧要做四件事——
+    #      getComputedStyle(.gNav)        逼一次样式重算
+    #      MV.stage.clientWidth/Height    逼一次布局
+    #      mvRailDraw()                   把导轨那张画布整个清掉重画
+    #      mvBgDraw()                     二十赫兹把山脉那张画布重画
+    #    没人动它的时候，这四件事每一帧算出来的结果一模一样。
+    #    可这一页根元素上挂着 invert 滤镜、面板上还有毛玻璃：画布只要重画一次，
+    #    整页的滤镜和每一块毛玻璃就得跟着重来一遍。于是「什么都没发生」也在满负荷
+    #    烧 GPU——机器发烫就是这么来的，跟帧数高低是两回事。
+    #    改法不动任何设计：两张画布各加一道「跟上次画的一模一样就不画」的闸；
+    #    整轮在闲着时从每帧一次降到每半秒一次（真在动就立刻回到满帧）。
+    #    画面一帧都不少，只是不再为一张没变过的图重画整页。
+    sub('导轨画布·没变就不画',
+        "function mvRailDraw(){" + NL + "  var c=MV.rail,g=MV.railx;if(!g)return;",
+        "function mvRailDraw(){" + NL
+        + "  var c=MV.rail,g=MV.railx;if(!g)return;" + NL
+        + "  /* 这一条导轨只跟「共几段、停在第几段、拨到哪儿」有关。三样都没变就别重画——" + NL
+        + "     重画一次，整页的滤镜与毛玻璃就得重来一遍。 */" + NL
+        + "  var _sig=[MV.n,mvWrap(Math.round(MV.pos)),MV.pos.toFixed(3)," + NL
+        + "            c.clientWidth,c.clientHeight,Math.min(devicePixelRatio||1,2)].join('|');" + NL
+        + "  if(c._sig===_sig)return;" + NL
+        + "  c._sig=_sig;")
+
+    sub('山脉画布·没变就不画',
+        "function mvBgDraw(now){" + NL + "  if(!MV.bgx)return;" + NL
+        + "  var W=MV.bg.width,H=MV.bg.height;if(!(W>1&&H>1))return;",
+        "function mvBgDraw(now){" + NL
+        + "  if(!MV.bgx)return;" + NL
+        + "  var W=MV.bg.width,H=MV.bg.height;if(!(W>1&&H>1))return;" + NL
+        + "  /* 山只跟「拨到哪一段」有关。原来还把 now 一起喂进去，于是时间一走它就变，" + NL
+        + "     二十赫兹重画一张铺满面板的画布，整页的滤镜与毛玻璃跟着重来二十次。" + NL
+        + "     那点随时间的漂移本来也看不出来，去掉；位置变了照旧重画。 */" + NL
+        + "  var _sig=[W,H,MV.mode,(MV.mode===2?mvRot():MV.pos).toFixed(2)].join('|');" + NL
+        + "  if(MV.bg._sig===_sig)return;" + NL
+        + "  MV.bg._sig=_sig;" + NL
+        + "  now=0;")
+
+    sub('情报台闲时降频',
+        "function mvTick(){" + NL + "  MV.raf=0;" + NL + "  var box=MV.box;" + NL
+        + "  if(!box||!MV.stage||!box.parentNode){return;}",
+        "function mvTick(){" + NL
+        + "  MV.raf=0;" + NL
+        + "  var box=MV.box;" + NL
+        + "  if(!box||!MV.stage||!box.parentNode){return;}" + NL
+        + "  /* 闲着的时候降到每半秒一轮。底下那一套每帧都要读 getComputedStyle" + NL
+        + "     （逼一次样式重算）和 clientWidth（逼一次布局），没人动它的时候" + NL
+        + "     每帧算出来的结果都一样，纯属白烧。真在动——拖着、正在翻段、" + NL
+        + "     尺寸还没定住——立刻回到满帧，一帧都不欠。 */" + NL
+        + "  var _mv=MV.drag||MV.tgt!=null||(MV.stableN||0)<3" + NL
+        + "        ||Math.abs(MV.pos-Math.round(MV.pos))>.001;" + NL
+        + "  if(!_mv){" + NL
+        + "    var _n=performance.now();" + NL
+        + "    if(_n-(MV._slow||0)<500){MV.raf=requestAnimationFrame(mvTick);return;}" + NL
+        + "    MV._slow=_n;" + NL
+        + "  }else MV._slow=0;")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=101;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=102;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
