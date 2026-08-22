@@ -158,7 +158,31 @@ MENUDRAW_NEW = """function menuDraw(){
 GMAP_NEW = """/* 对局屏的地图：与择地那一步同一幅罗马马赛克世界图，同一套投影。
    原来挂的是半颗粒子地球（球心压在面板左缘、只露右半边），
    与择地那一屏风马牛不相及，玩家在两处看到的是两个世界。 */
-function gmMM(){try{return (FE&&FE.mm&&FE.mi&&FE.mi.width)?FE.mm:null;}catch(_){return null;}}
+/* 底图数据自带一份加载：对局地图原来直接吃 FE.mm/FE.mi，
+   可那两份只有「进过纪年页」才会装。读档续局的人根本没走那条路，
+   于是地图一片空白——实测刷新后续局，画面内容只剩 1%。
+   这里自己取一份（与铸局那层用的是同两个档，走缓存，不多花一次下载）。 */
+var GMAP={mm:null,mi:null,busy:0};
+function gmSrcMM(){try{if(FE&&FE.mm)return FE.mm;}catch(_){}return GMAP.mm;}
+function gmSrcMI(){try{if(FE&&FE.mi&&FE.mi.width)return FE.mi;}catch(_){}
+  return (GMAP.mi&&GMAP.mi.width)?GMAP.mi:null;}
+function gmFetch(){
+  if(GMAP.busy)return;GMAP.busy=1;
+  try{
+    fetch('/core/res/data/felinia/locus.json').then(function(r){return r.json();})
+      .then(function(j){GMAP.mm=j;gmapDraw._sig='';}).catch(function(){GMAP.busy=0;});
+    var im=new Image();
+    im.onload=function(){GMAP.mi=im;gmMI._c=null;gmapDraw._sig='';};
+    im.onerror=function(){GMAP.busy=0;};
+    im.src='/core/res/img/annals/locus.png';
+  }catch(_){GMAP.busy=0;}
+}
+function gmMM(){
+  var mm=gmSrcMM(),mi=gmSrcMI();
+  if(mm&&mi)return mm;
+  gmFetch();
+  return null;
+}
 function gmBox(){
   /* 镜头对着这一代的地点群，视野至少两百度——先认出是世界的哪一边，再看是哪一处。
      与 feMapFit 同一条式子，只是落在画布的设备像素里，不落在 DOM 上。 */
@@ -376,7 +400,11 @@ def main():
         "  if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));",
         """  /* 地图上挂哪些地方，由这一代自己的资料说了算。
      原来走的是 SITES —— 那是上一张卡的周秦城池表，四十一代里对得上的只有一代。 */
-  var _fl=null;try{_fl=(FE&&FE.era&&FE.era.locs)||null;}catch(_){}
+  /* 读档续局时 FE.era 是空的（铸局那一层根本没开过），
+     所以铸局时把地点表一并写进开局锚点，存档会连它一起存下来。 */
+  var _fl=null;
+  try{_fl=(GAME.op&&GAME.op.feLocs&&GAME.op.feLocs.length)?GAME.op.feLocs:null;}catch(_){}
+  if(!_fl){try{_fl=(FE&&FE.era&&FE.era.locs)||null;}catch(_){}}
   if(_fl&&_fl.length){
     var _rad=Math.PI/180;
     ERA.act=_fl.map(function(L,i){

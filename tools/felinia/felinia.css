@@ -12,7 +12,8 @@
 
 /* ── 底：马赛克世界图 ── */
 #feBg{position:absolute;inset:0;z-index:0;overflow:hidden}
-#feMap{position:absolute;inset:0;overflow:hidden}
+#feMap{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none}
+#feMap:active{cursor:grabbing}
 #feMapIn{position:absolute;left:0;top:0}
 #feMapIn img{display:block;width:100%;height:100%;pointer-events:none;
   -webkit-user-drag:none;user-select:none}

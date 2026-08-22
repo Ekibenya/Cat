@@ -318,7 +318,7 @@ function feOpen2(row,line){
   var era=null,i;
   for(i=0;i<FE.eras.length;i++)if(FE.eras[i].i===row.i){era=FE.eras[i];break;}
   if(!era)return false;
-  FE.era=era;FE.line=line||'luzhi';FE.loc=null;FE.soc=[];FE.cur=null;FE.salt=0;
+  FE.era=era;FE.line=line||'luzhi';FE.loc=null;FE.soc=[];FE.cur=null;FE.salt=0;FE._fit=null;
   FE.hero=feMake(era,null,'hero0');FE.hero.self=1;FE.hero.pre=-1;
   FE.pool=era.figs.map(function(f,k){var p=feMake(era,f,'');p.pre=k;return p;});
   try{FE._esi=ES.i;}catch(_){}
@@ -381,7 +381,7 @@ function fePrev(){
 /* ═══ 一 · 择地 ═══ */
 function feLocRender(){
   var im=$('#feMapImg');if(!im.src)im.src=FE.mi.src;
-  feMapFit();
+  feMapFitOnce();feMapDragInit();
   var box=$('#feMapIn'),k;
   var old=box.querySelectorAll('.feMk,.feLn');
   for(k=0;k<old.length;k++)old[k].remove();
@@ -450,7 +450,110 @@ function feMapFit(){
   T=(bh>H)?Math.min(0,Math.max(H-bh,T)):(H-bh)/2;
   box.style.width=bw+'px';box.style.height=bh+'px';
   box.style.left=L+'px';box.style.top=T+'px';
-  FE._bw=bw;FE._bh=bh;
+  FE._bw=bw;FE._bh=bh;FE._fit=FE.era.i+'|'+W+'x'+H;
+}
+/* 摆位只在「换了一代」或「窗口尺寸变了」时重来。
+   否则从立身退回择地，会把玩家刚拖到的位置弹回默认视野。 */
+function feMapFitOnce(){
+  var host=$('#feMap');if(!host||!FE.era)return;
+  var k=FE.era.i+'|'+host.clientWidth+'x'+host.clientHeight;
+  if(FE._fit===k)return;
+  feMapFit();
+}
+/* ── 图可以拖，也可以缩 ──
+   拖：按住图往哪儿拖就往哪儿走，边界卡住不让图离开视野。
+   缩：滚轮／双指，以指针为定点，缩放范围是「整幅刚好铺满宽度」到「放大八倍」。
+   拖过就不算点击——阈值六像素，免得手一抖把地点选错。 */
+function feMapClamp(){
+  var host=$('#feMap'),box=$('#feMapIn');
+  if(!host||!box)return;
+  var W=host.clientWidth,H=host.clientHeight,bw=FE._bw||0,bh=FE._bh||0;
+  if(bw<1||bh<1)return;
+  var L=parseFloat(box.style.left)||0,T=parseFloat(box.style.top)||0;
+  L=(bw>W)?Math.min(0,Math.max(W-bw,L)):(W-bw)/2;
+  T=(bh>H)?Math.min(0,Math.max(H-bh,T)):(H-bh)/2;
+  box.style.left=L+'px';box.style.top=T+'px';
+}
+function feMapZoom(f,ox,oy){
+  var host=$('#feMap'),box=$('#feMapIn');
+  if(!host||!box||!FE.mm)return;
+  var W=host.clientWidth,bw=FE._bw||0,bh=FE._bh||0;
+  if(bw<1)return;
+  var min=W,max=W*8;
+  var nw=Math.max(min,Math.min(max,bw*f));
+  if(Math.abs(nw-bw)<0.5)return;
+  var k=nw/bw;
+  var L=parseFloat(box.style.left)||0,T=parseFloat(box.style.top)||0;
+  /* 指针底下那一点在缩放前后落在同一处 */
+  box.style.left=(ox-(ox-L)*k)+'px';
+  box.style.top=(oy-(oy-T)*k)+'px';
+  FE._bw=nw;FE._bh=bh*k;
+  box.style.width=FE._bw+'px';box.style.height=FE._bh+'px';
+  feMapClamp();feLocRender();
+}
+function feMapDragInit(){
+  var host=$('#feMap');if(!host||feMapDragInit._on)return;
+  feMapDragInit._on=1;
+  var P={},lx=0,ly=0,moved=0,pin0=0,mid0=null,drag=false,swallow=0,cap=0;
+  function pts(){return Object.keys(P);}
+  function dist(){var k=pts(),a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
+  function mid(){var k=pts(),a=P[k[0]],b=P[k[1]];return{x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
+  host.addEventListener('pointerdown',function(e){
+    P[e.pointerId]={x:e.clientX,y:e.clientY};
+    if(pts().length===2){drag=false;pin0=dist();mid0=mid();return;}
+    /* 按下时先不捕获指针：一捕获，后续 pointerup 就全被这块图劫走，
+       地点标记（它认的正是 pointerup）再也收不到，点了没反应。
+       等真的拖过阈值再捕获——轻点保持原样，拖动照旧跟手。 */
+    drag=true;moved=0;cap=0;lx=e.clientX;ly=e.clientY;
+  });
+  host.addEventListener('pointermove',function(e){
+    if(!P[e.pointerId])return;
+    P[e.pointerId]={x:e.clientX,y:e.clientY};
+    if(pts().length>=2){
+      var d=dist();
+      if(pin0>0){
+        var r=host.getBoundingClientRect(),m=mid();
+        feMapZoom(d/pin0,m.x-r.left,m.y-r.top);
+        pin0=d;
+      }
+      return;
+    }
+    if(!drag)return;
+    var dx=e.clientX-lx,dy=e.clientY-ly;
+    lx=e.clientX;ly=e.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    if(!cap){
+      if(moved<=6)return;              /* 还没算拖，先不动图 */
+      cap=1;try{host.setPointerCapture(e.pointerId);}catch(_){}
+    }
+    var box=$('#feMapIn');
+    box.style.left=((parseFloat(box.style.left)||0)+dx)+'px';
+    box.style.top=((parseFloat(box.style.top)||0)+dy)+'px';
+    feMapClamp();
+  });
+  function up(e){
+    delete P[e.pointerId];
+    if(pts().length<2){pin0=0;mid0=null;}
+    if(pts().length===0){
+      /* 只标记「紧接着的那一下点击要吞掉」，用完即清。
+         原来用 setTimeout 复位 moved，下一次点还落在旧值上，
+         于是拖过之后第一次点地点会被白白吞掉。 */
+      if(drag&&moved>6)swallow=1;
+      drag=false;moved=0;cap=0;
+    }
+  }
+  host.addEventListener('pointerup',up);
+  host.addEventListener('pointercancel',up);
+  host.addEventListener('pointerleave',up);
+  /* 拖过就别把这一下算成点地点——只吞这一下 */
+  host.addEventListener('click',function(e){
+    if(swallow){swallow=0;e.stopPropagation();e.preventDefault();}
+  },true);
+  host.addEventListener('wheel',function(e){
+    e.preventDefault();
+    var r=host.getBoundingClientRect();
+    feMapZoom(Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top);
+  },{passive:false});
 }
 /* 同一座城里的几处地方，投影上几乎是同一点。照实画就只剩一枚标记，
    另外三处点不着。所以重叠的往外散开，再拉一条细线回真正的那一点——
@@ -775,6 +878,10 @@ function feForge(){
 
   /* 底稿的面板照旧由引擎拼（栏名要跟着卡的 panelSpec 走），正文换成本层这一份 */
   var draft=condereOp(line,y,nm,cn);
+  /* 地点表随开局锚点一起存：读档续局时这一层不会再开，
+     对局屏的地图与「此地」全靠它。只带画地图要用的那几栏。 */
+  try{draft.feLocs=e.locs.map(function(L){
+    return {n:L.n,cn:L.cn,la:L.la,lo:L.lo,d:L.d};});}catch(_){}
   var _mv=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
   draft.text=feDraftText()+(_mv?('\n\n'+_mv):'');
   /* loadOpening 里会把 GAME.hero 清成 null（正史开局一律是卡里的本尊），
@@ -881,7 +988,7 @@ function feSyncEngine(){
     FE.hero.self=1;FE.hero.pre=-1;fePerRender();feFootSync();});
   $('#feSocMore').addEventListener('pointerup',function(){feSocMore();});
   $('#feSit').addEventListener('input',function(){feSitRender();});
-  addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){feMapFit();feLocRender();}});
+  addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){FE._fit=null;feMapFit();feLocRender();}});
   addEventListener('keydown',function(ev){
     if(!feIsOpen())return;
     var t=ev.target&&ev.target.tagName;

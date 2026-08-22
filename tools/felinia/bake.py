@@ -292,12 +292,13 @@ def main():
    开局第一次用时经 ctx.filter 反一份存起来，后面一直用它。 */
 function gmMI(){
   if(gmMI._c)return gmMI._c;
-  if(!(FE&&FE.mi&&FE.mi.width))return null;
+  var src=(typeof gmSrcMI==='function')?gmSrcMI():null;
+  if(!src)return null;
   var c=document.createElement('canvas');
-  c.width=FE.mi.width;c.height=FE.mi.height;
+  c.width=src.width;c.height=src.height;
   var g=c.getContext('2d');
   g.filter='invert(1) hue-rotate(180deg)';
-  var im=FE.mi;g.drawImage(im,0,0);   /* 换个写法，免得底下那次批量替换把这一行也卷进去 */
+  g.drawImage(src,0,0);
   gmMI._c=c;return c;
 }
 function gmMM(){'''
@@ -310,7 +311,7 @@ function gmMM(){'''
     s = s.replace('drawImage(FE.mi,', 'drawImage(gmMI()||FE.mi,')
 
     # 版号推一格：线上一眼可辨
-    s = s.replace('var BUILD=106;', 'var BUILD=111;', 1)
+    s = s.replace('var BUILD=106;', 'var BUILD=112;', 1)
 
     io.open(DOC, 'w', encoding='utf-8').write(s)
     print('烘焙完成 · 十六进制 %d 处 · rgb() %d 处 · 主文档 %.0f KB'
