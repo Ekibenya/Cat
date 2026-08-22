@@ -23,7 +23,7 @@
    走一遍就是两百多兆常驻。条子只有九十二像素宽，用缩图就够。
 
 顺带三处早该改的：
-  · 片头——马赛克不再一块一块飞进来，第一帧就整幅铺好
+  · 片头——马赛克照旧一块一块码上去，可整段从五秒八压到一秒二，不再让人等
   · 开始——直接进图版那一屏，中间选线那一层只有一条线，没有意义
   · 图版——鼠标点、手指点选中的那一张就是进下一步，原来点了没反应
 
@@ -305,7 +305,7 @@ def main():
 
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=96;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=97;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
@@ -313,17 +313,18 @@ def main():
         "     不必去猜是浏览器缓存还是部署没上。对局屏的招牌上本来就有同一个数。 */\n"
         "  try{if(mfEl&&mfEl.textContent.indexOf('\u00b7B')<0)mfEl.textContent+='  \u00b7B'+BUILD;}catch(_){}")
 
-    # ⑦ 片头：马赛克第一帧就整幅铺好
-    sub('马赛克起手',
-        "  mosT0=performance.now(); cancelAnimationFrame(mosRaf); mosRaf=requestAnimationFrame(mosTick);",
-        """  /* 片头撤了：马赛克不再一块一块飞进来（原先要六秒），第一帧就整幅铺好。
-     要把飞入请回来，换回：
-       mosT0=performance.now(); cancelAnimationFrame(mosRaf);
-       mosRaf=requestAnimationFrame(mosTick); */
-  cancelAnimationFrame(mosRaf); mosRaf=0;
-  for(var _i=0;_i<mosSeq.length;_i++){mosDraw(_i,mosSG,1);mosSeq[_i][6]=1;}
-  mosG.drawImage(mosSet,0,0);
-  $('#mosRiso').classList.add('on');""")
+    # ⑦ 片头：马赛克照旧一块一块码上去，只是不再让人等
+    #    原来铺满要五秒八，那就成了一段片头——开页先看动画，看完才能动手。
+    #    现在把整段压到一秒二：砖照样是一块一块落下的，可手还没伸到菜单就已经铺完。
+    #    要回到原来那个节奏，把 900 换回 5600、200 换回 240。
+    #    要一帧铺满（完全不码），把 900 改成 0。
+    sub('码砖的节奏',
+        'var MOS_POP=240, mosSeq=[], mosT0=0, mosRaf=0, mosDPR=1, MOS_B=26;',
+        '/* MOS_POP 是单块砖落下的时长，MOS_ALL 是整幅铺满的时长（毫秒）。 */\n'
+        'var MOS_POP=200, MOS_ALL=900, mosSeq=[], mosT0=0, mosRaf=0, mosDPR=1, MOS_B=26;')
+    sub('码砖的步长',
+        '  var el=now-mosT0, step=Math.max(1.4, 5600/mosSeq.length), i, a, done=0, live=[];',
+        '  var el=now-mosT0, step=Math.max(.3, MOS_ALL/mosSeq.length), i, a, done=0, live=[];')
 
     # ⑧ 图版：条子上一律缩图，只有选中那张换全图
     sub('图版装图',
