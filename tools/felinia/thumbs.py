@@ -32,6 +32,20 @@ def main():
         n += 1
     if n != 42:
         sys.exit('应该是四十二张，实际 %d 张，停手。' % n)
+    # 马赛克两张源图各烤一份乘过暖纸的（RGB 各乘 t，alpha 原样）。
+    # 菜单的暖纸罩已折进颜色里，砖要在源头带上同一层——在这里乘而不是在浏览器里乘，
+    # 是因为 <img> 源走的是高质量缩放采样，canvas 源走低质量，砖会发硬。
+    T = (0.941, 0.918, 0.863)
+    for f in ('emblem.png', 'border.png'):
+        im = Image.open(os.path.join(SRC, f)).convert('RGBA')
+        px = im.load()
+        for y in range(im.height):
+            for x in range(im.width):
+                r, g, b, a = px[x, y]
+                px[x, y] = (int(r*T[0]), int(g*T[1]), int(b*T[2]), a)
+        out = os.path.join(SRC, f.replace('.png', '_t.png'))
+        im.save(out, 'PNG', optimize=True)
+        print('暖纸版 %s · %.0f KB' % (os.path.basename(out), os.path.getsize(out)/1024))
     print('缩图 %d 张 · 合计 %.0f KB' % (n, tot / 1024))
 
 

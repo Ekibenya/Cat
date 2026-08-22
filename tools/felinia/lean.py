@@ -694,6 +694,27 @@ if(/[?&]perf=1/.test(location.search))(function(){
         "if(/[?&]perf=1/.test(location.search))(function(){",
         DIAG + "if(/[?&]perf=1/.test(location.search))(function(){")
 
+    # ㉔ 纪年页/铸局屏上白跑的三样
+    #    追踪拨图版：三秒里 3326 个光栅任务；主循环在这两屏还每帧跑
+    #    cardLayout()（给 21 张选局环卡写 transform）与 railDraw()（重画侧栏画布）——
+    #    可 #stage 与 #rail 在这两屏是 display:none，写给谁看？
+    #    胶片噪点也在这两屏每帧整幅重画：噪点是随机的，60Hz 与 20Hz 没有分别，
+    #    重画一次却要让整屏重新合成一遍。选局环那一屏（lineSel）三样照旧。
+    sub('选局环的帧活只在选局环跑',
+        "  if(((!INTRO.on&&!MENU.on)||MENU.exiting)&&!GAME.on){terrainDraw(t);cardLayout();railDraw();}",
+        "  if(((!INTRO.on&&!MENU.on)||MENU.exiting)&&!GAME.on){" + NL
+        + "    var _es=false;try{_es=ES.on||(typeof feIsOpen==='function'&&feIsOpen());}catch(_){}" + NL
+        + "    if(!_es){terrainDraw(t);cardLayout();railDraw();}" + NL
+        + "  }")
+    sub('噪点降到 20Hz',
+        "  if(!INTRO.on&&!MENU.on&&!GAME.on)grainDraw();",
+        "  if(!INTRO.on&&!MENU.on&&!GAME.on){" + NL
+        + "    /* \u566a\u70b9\u662f\u968f\u673a\u7684\uff0c60Hz \u4e0e 20Hz \u6ca1\u6709\u5206\u522b\uff1b" + NL
+        + "       \u91cd\u753b\u4e00\u5e27\u5374\u8981\u8ba9\u6574\u5c4f\u91cd\u65b0\u5408\u6210\u4e00\u904d\u3002 */" + NL
+        + "    grainDraw._n=(grainDraw._n||0)+1;" + NL
+        + "    if(grainDraw._n%3===0)grainDraw();" + NL
+        + "  }")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
     sub('版号', 'var BUILD=95;', 'var BUILD=106;')

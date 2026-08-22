@@ -140,8 +140,8 @@ canvas{display:block}
    选择器一律带 #menu:not(.era):not(.gbg)——原有的 #menu 规则排在本段之后，
    权重不压过去就会被盖回黑底；#mosCv 的 transform 同理，要盖掉 #menu canvas 那条。 */
 /* 这三层自己反过一次，是按真彩画的；暖纸罩会再乘它们一遍，
-   所以底色预先提亮，乘完正好是 #f0eadc。改暖纸罩就得跟着改这几处。 */
-:root{--cream:#fcfcfc}
+   所以底色预先提亮，乘完正好是 #e2d7be。改暖纸罩就得跟着改这几处。 */
+:root{--cream:#ede7d9}
 #menu:not(.era):not(.gbg){background:var(--cream)}
 #menu:not(.era):not(.gbg) #menuCv{display:none}
 #menu:not(.era):not(.gbg)::before{content:"";position:absolute;inset:0;pointer-events:none;
@@ -160,24 +160,24 @@ canvas{display:block}
 #menu #mosRiso.on{opacity:.2}
 #menu.era #mosRiso,#menu.gbg #mosRiso{display:none}
 #menu:not(.era):not(.gbg) .mItems{top:auto;bottom:104px;transform:translateX(-50%);z-index:3}
-#menu:not(.era):not(.gbg) .mItem{color:#4a4237}
-#menu:not(.era):not(.gbg) .mItem i{color:#9a742a}
-#menu:not(.era):not(.gbg) .mItem:hover{color:#1f1a13;border-color:rgba(154,116,42,.55);
-  background:rgba(255,255,255,.45);text-shadow:none}
-#menu:not(.era):not(.gbg) .mFoot{color:#a09684;z-index:3;bottom:68px}
-#menu:not(.era):not(.gbg) #luxTg{color:#4a4237;border-color:rgba(74,66,55,.35)}
-#menu:not(.era):not(.gbg) #luxTg:hover{border-color:#9a742a}
+#menu:not(.era):not(.gbg) .mItem{color:#463d2f}
+#menu:not(.era):not(.gbg) .mItem i{color:#916a24}
+#menu:not(.era):not(.gbg) .mItem:hover{color:#1d1810;border-color:rgba(145,106,36,.55);
+  background:rgba(240,234,220,.45);text-shadow:none}
+#menu:not(.era):not(.gbg) .mFoot{color:#978a72;z-index:3;bottom:68px}
+#menu:not(.era):not(.gbg) #luxTg{color:#463d2f;border-color:rgba(70,61,47,.35)}
+#menu:not(.era):not(.gbg) #luxTg:hover{border-color:#916a24}
 #menu{position:fixed;inset:0;z-index:40;background:var(--ink);opacity:0;
       pointer-events:none;transition:opacity .8s ease}
 #menu.show{opacity:1;pointer-events:auto}
 #menuCv{position:absolute;inset:0;width:100%;height:100%}
 #menu .mItems{position:absolute;left:50%;top:56%;transform:translateX(-50%);
       display:flex;gap:4vw;white-space:nowrap}
-#menu .mItem{font-size:11px;letter-spacing:.42em;color:#9a9a94;cursor:pointer;
+#menu .mItem{font-size:11px;letter-spacing:.42em;color:#918d80;cursor:pointer;
       padding:11px 30px 9px;border:1px solid transparent;
       transition:color .2s,border-color .2s,text-shadow .2s}
 #menu .mItem i{font-style:normal;color:var(--gold)}
-#lineSel{position:fixed;inset:0;z-index:46;display:none;background:rgba(6,6,6,.97);
+#lineSel{position:fixed;inset:0;z-index:46;display:none;background:rgba(6,6,5,.97);
   perspective:1800px;perspective-origin:50% 42%;touch-action:none}
 #lineSel.on{display:block}
 #lsTrack{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
@@ -186,20 +186,20 @@ canvas{display:block}
 #lsMission{position:fixed;top:38%;left:calc(50% - var(--fs)/2);transform:translate(-62%,-50%);
   z-index:48;line-height:1;pointer-events:none}
 #lsMission .m-tag{margin-bottom:12px}
-#lsMission .m-tag .tag{background:var(--gold);color:#0a0a0a}
-#lsMission .num{display:inline-block;background:var(--paper);color:#0a0a0a;font-weight:700;
+#lsMission .m-tag .tag{background:var(--gold);color:#090909}
+#lsMission .num{display:inline-block;background:var(--paper);color:#090909;font-weight:700;
   font-size:clamp(34px,4.6vw,58px);padding:6px 12px 3px;letter-spacing:.06em}
 #lsMission .ttl{margin-top:10px;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
-#lsMission .ttl span{display:inline-block;background:var(--paper);color:#0a0a0a;font-weight:700;
+#lsMission .ttl span{display:inline-block;background:var(--paper);color:#090909;font-weight:700;
   font-size:clamp(13px,1.35vw,19px);letter-spacing:.14em;padding:5px 9px 3px;white-space:nowrap}
 #lsMission .era{margin-top:14px;max-width:40ch;font-size:10px;line-height:1.9;letter-spacing:.12em;color:var(--mut)}
 #lsFoot{position:fixed;left:0;right:0;bottom:0;min-height:40px;z-index:48;
-  border-top:1px solid #232320;display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid #21201c;display:flex;align-items:center;justify-content:space-between;
   padding:4px 30px calc(4px + env(safe-area-inset-bottom,0px));
-  font-size:9px;letter-spacing:.22em;color:var(--mut);background:rgba(6,6,6,.72)}
+  font-size:9px;letter-spacing:.22em;color:var(--mut);background:rgba(6,6,5,.72)}
 #lsFoot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;
-  padding:9px 14px;margin-left:8px;border:1px solid rgba(201,155,63,.45);
-  background:rgba(201,155,63,.07);letter-spacing:.18em}
+  padding:9px 14px;margin-left:8px;border:1px solid rgba(189,142,54,.45);
+  background:rgba(189,142,54,.07);letter-spacing:.18em}
 #lsFoot .go:hover{color:var(--gold-hi)}
 @media (max-width:760px){
   #lsMission{top:auto;bottom:120px;left:12px;transform:none}
@@ -207,10 +207,10 @@ canvas{display:block}
   #lsFoot .lbl{display:none}
   #lsFoot .go{padding:12px 16px;font-size:11px}
 }
-#menu .mItem:hover{color:var(--gold-hi);border-color:rgba(201,155,63,.45);
-      text-shadow:0 0 14px rgba(236,200,120,.5)}
+#menu .mItem:hover{color:var(--gold-hi);border-color:rgba(189,142,54,.45);
+      text-shadow:0 0 14px rgba(222,184,104,.5)}
 #menu .mFoot{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
-      font-size:9px;letter-spacing:.4em;color:#4a4a44;white-space:nowrap}
+      font-size:9px;letter-spacing:.4em;color:#46443b;white-space:nowrap}
 
 /* ---------- intro: SPQR warp gate ---------- */
 #intro{position:fixed;inset:0;z-index:60;background:var(--ink);opacity:1;
@@ -392,7 +392,7 @@ html.lux{color-scheme:light}
    写成 multiply + #171104 的老写法，作用在反色之前的近黑底上，等于没写——
    对局屏与全部弹窗因此一直是纯白。 */
 /* 暖纸罩已按层落地：界面色烘焙时乘进了 (1-s)，真彩三层各自盖一层 multiply。 */
-html.lux #menu:not(.gbg):not(.era)::after,html.lux #eraSel::after,html.lux #feWrap::after{
+html.lux #eraSel::after,html.lux #feWrap::after{
   content:'';position:absolute;inset:0;z-index:2147483647;pointer-events:none;
   background:#f0eadc;mix-blend-mode:multiply}
 /* 菜单那一屏不参与全局反色：马赛克是按真彩烤好的，再反一遍就成负片。
@@ -1674,8 +1674,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 </div>
 
 <style>
-/* 这几个变量根上那份已烘成 G(原色)；真彩三层要的是原色，按烘前的值重声一遍。 */
-#menu:not(.gbg):not(.era),#eraSel,#feWrap{--cream:#fcfcfc;--gold:#c99b3f;--gold-hi:#ecc878;--ink:#060606;--mut:#6b6b66;--paper:#ecece8;--txt:#d9d9d4}
+/* 这几个变量根上那份已烘成 G(原色)。纪年页与铸局用原色（它们自带暖纸罩）；菜单用乘过暖纸的值（它的罩子已折进颜色）。 */
+#eraSel,#feWrap{--cream:#fcfcfc;--gold:#c99b3f;--gold-hi:#ecc878;--ink:#060606;--mut:#6b6b66;--paper:#ecece8;--txt:#d9d9d4}
+#menu:not(.gbg):not(.era){--cream:#ede7d9;--gold:#bd8e36;--gold-hi:#deb868;--ink:#060605;--mut:#656258;--paper:#ded9c8;--txt:#ccc7b7}
 
 /* ═══════ 纪年 ANNALES ═══════
    与剧情线 lineSel 同一层级、同一套外壳：满屏、不透光、底条在下、说明块在左。
@@ -3544,8 +3545,8 @@ function mosTick(now){
 }
 if(mosCv){
   mosArt.onload=mosBd.onload=function(){ if(++mosLoaded>=2 && MENU.on) mosStart(); };
-  mosArt.src='/core/res/img/annals/emblem.png';
-  mosBd.src='/core/res/img/annals/border.png';
+  mosArt.src='/core/res/img/annals/emblem_t.png';
+  mosBd.src='/core/res/img/annals/border_t.png';
   addEventListener('resize',function(){
     if(!MENU.on||mosLoaded<2)return;
     var wasDone=(mosRaf===0);
@@ -5953,7 +5954,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=107;
+var BUILD=108;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -13401,9 +13402,17 @@ function loop(t){
   if(GAME.on&&(GAME.mapOpen||gEl.getAttribute('data-pg')==='map'))gmapDraw();
   /* 缩略图每 700ms 对一次：内容没变就只是一次字符串比较，不重排 */
   if(GAME.on){var _rn=performance.now();if(_rn-_railT>700){_railT=_rn;try{railSync();}catch(_){}}}
-  if(((!INTRO.on&&!MENU.on)||MENU.exiting)&&!GAME.on){terrainDraw(t);cardLayout();railDraw();}
+  if(((!INTRO.on&&!MENU.on)||MENU.exiting)&&!GAME.on){
+    var _es=false;try{_es=ES.on||(typeof feIsOpen==='function'&&feIsOpen());}catch(_){}
+    if(!_es){terrainDraw(t);cardLayout();railDraw();}
+  }
   else if(GAME.on)gTerrDraw(t);
-  if(!INTRO.on&&!MENU.on&&!GAME.on)grainDraw();
+  if(!INTRO.on&&!MENU.on&&!GAME.on){
+    /* 噪点是随机的，60Hz 与 20Hz 没有分别；
+       重画一帧却要让整屏重新合成一遍。 */
+    grainDraw._n=(grainDraw._n||0)+1;
+    if(grainDraw._n%3===0)grainDraw();
+  }
  }catch(err){
   /* 帧内任何异常都只吞掉这一帧。原先异常会顺着栈冲出 loop()，
      末尾的 raf_(loop) 就再也排不上队——页面从此彻底静止，

@@ -65,6 +65,26 @@ def bake_rgb(m):
     return '%s%d,%d,%d' % (m.group(1), nr, ng, nb)
 
 
+T = (0xf0/255.0, 0xea/255.0, 0xdc/255.0)     # \u6696\u7eb8 #f0eadc
+
+
+def mulT(r, g, b):
+    return (round(r*T[0]), round(g*T[1]), round(b*T[2]))
+
+
+def mul_hex(m):
+    h = m.group(1)
+    if len(h) in (3, 4):
+        h = ''.join(ch*2 for ch in h)
+    r, g, b = mulT(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+    return '#%02x%02x%02x%s' % (r, g, b, h[6:8])
+
+
+def mul_rgb(m):
+    r, g, b = mulT(int(m.group(2)), int(m.group(3)), int(m.group(4)))
+    return '%s%d,%d,%d' % (m.group(1), r, g, b)
+
+
 RE_HEX = re.compile(r'#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b')
 RE_RGB = re.compile(r'(rgba?\(\s*)(\d+)\s*,\s*(\d+)\s*,\s*(\d+)')
 
@@ -93,7 +113,7 @@ html.lux{color-scheme:light}"""),
   ("""html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-events:none;
   background:#181204;mix-blend-mode:screen}""",
    """/* 暖纸罩已按层落地：界面色烘焙时乘进了 (1-s)，真彩三层各自盖一层 multiply。 */
-html.lux #menu:not(.gbg):not(.era)::after,html.lux #eraSel::after,html.lux #feWrap::after{
+html.lux #eraSel::after,html.lux #feWrap::after{
   content:'';position:absolute;inset:0;z-index:2147483647;pointer-events:none;
   background:#f0eadc;mix-blend-mode:multiply}"""),
   ('html.lux #menu:not(.gbg):not(.era){filter:invert(1) hue-rotate(180deg)}',
@@ -159,6 +179,9 @@ def main():
     #    与纪年页浅底那一节。这两节的字面颜色都是真彩，不烘。
     a6 = find1(s, '/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u83dc\u5355\uff1a\u5976\u6cb9\u7eb8', '\u83dc\u5355\u8282')
     b6 = find1(s, '/* ---------- intro', '\u83dc\u5355\u8282\u5c3e')
+    # \u83dc\u5355\u8282\u4e0d\u8c41\u514d\uff1a\u6539\u8d70\u300c\u4e58 t\u300d\u2014\u2014multiply \u53ef\u4ea4\u6362\uff0c
+    # \u628a\u6696\u7eb8\u7f69\u76f4\u63a5\u6298\u8fdb\u83dc\u5355\u7684 DOM \u989c\u8272\uff0c
+    # \u90a3\u5c42\u5168\u5c4f ::after \u5c31\u80fd\u7701\u6389\uff08\u7816\u7684\u90e8\u5206\u5728\u753b\u5e03\u91cc\u540c\u6837\u4e58\uff09\u3002
     ex.append((a6, b6))
     a7 = find1(s, '/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u7eaa\u5e74\u9875\uff1a\u6d45\u5e95\u914d\u8272', '\u7eaa\u5e74\u8282')
     b7 = s.find('/* \u2550\u2550', a7 + 10)
@@ -227,15 +250,36 @@ def main():
     s = s.replace('.zjP .gbtn:hover{filter:brightness(1.12)}',
                   '.zjP .gbtn:hover{filter:brightness(.918) contrast(1.22)}', 1)
 
+    # 马赛克的暖纸乘在源图上：砖是互相叠着铺的（马赛克的味道就来自叠），
+    # 逐砖乘会把重叠处乘两遍。给 emblem/border 两张源图各乘一次 t，
+    # 铺出来的每一块自然只带一层暖纸——与原来那层全屏 ::after 逐像素相等。
+    # 马赛克换用乘过暖纸的源图（构建期由 thumbs.py 烤好），
+    # 与原来那层全屏 ::after multiply 逐像素相等，采样路径也与原来一致。
+    for _src in ("emblem", "border"):
+        _old = "/core/res/img/annals/" + _src + ".png'"
+        if s.count(_old) != 1:
+            sys.exit('马赛克源图 %s 该有 1 处，实际 %d 处，停手。' % (_src, s.count(_old)))
+        s = s.replace(_old, "/core/res/img/annals/" + _src + "_t.png'", 1)
+
     # 帧时表原来自带一道反回来的滤镜（隔着整页滤镜才需要）。滤镜烘掉了，摘掉。
     s = s.replace(";filter:invert(1) hue-rotate(180deg)'", "'", 1)
 
+    # 菜单节乘 t：G 已经跳过它了，这里把暖纸乘进去（multiply 可交换，
+    # 与原来那层全屏 ::after 逐像素相等）。放在主烘焙之后做，免得被 G 再过一遍。
+    a6 = find1(s, '/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u83dc\u5355\uff1a\u5976\u6cb9\u7eb8', '\u83dc\u5355\u8282(\u4e58t)')
+    b6 = find1(s, '/* ---------- intro', '\u83dc\u5355\u8282\u5c3e(\u4e58t)')
+    s = s[:a6] + RE_RGB.sub(mul_rgb, RE_HEX.sub(mul_hex, s[a6:b6])) + s[b6:]
+
     # 豁免层消费的共享变量：根上的那份已被烘焙，这里按真彩重新声明一遍
     if truevals:
-        rule = ('/* \u8fd9\u51e0\u4e2a\u53d8\u91cf\u6839\u4e0a\u90a3\u4efd\u5df2\u70d8\u6210 G(\u539f\u8272)\uff1b'
-                '\u771f\u5f69\u4e09\u5c42\u8981\u7684\u662f\u539f\u8272\uff0c\u6309\u70d8\u524d\u7684\u503c\u91cd\u58f0\u4e00\u904d\u3002 */\n'
-                '#menu:not(.gbg):not(.era),#eraSel,#feWrap{'
-                + ';'.join(k+':'+v for k, v in sorted(truevals.items())) + '}\n')
+        mulvals = {k: RE_RGB.sub(mul_rgb, RE_HEX.sub(mul_hex, v)) for k, v in truevals.items()}
+        rule = ('/* \u8fd9\u51e0\u4e2a\u53d8\u91cf\u6839\u4e0a\u90a3\u4efd\u5df2\u70d8\u6210 G(\u539f\u8272)\u3002'
+                '\u7eaa\u5e74\u9875\u4e0e\u94f8\u5c40\u7528\u539f\u8272\uff08\u5b83\u4eec\u81ea\u5e26\u6696\u7eb8\u7f69\uff09\uff1b'
+                '\u83dc\u5355\u7528\u4e58\u8fc7\u6696\u7eb8\u7684\u503c\uff08\u5b83\u7684\u7f69\u5b50\u5df2\u6298\u8fdb\u989c\u8272\uff09\u3002 */\n'
+                '#eraSel,#feWrap{'
+                + ';'.join(k+':'+v for k, v in sorted(truevals.items())) + '}\n'
+                + '#menu:not(.gbg):not(.era){'
+                + ';'.join(k+':'+v for k, v in sorted(mulvals.items())) + '}\n')
         i2 = s.rfind('<style>')
         s = s[:i2+len('<style>')] + '\n' + rule + s[i2+len('<style>'):]
 
@@ -269,7 +313,7 @@ function gmMM(){'''
     s = s.replace('drawImage(FE.mi,', 'drawImage(gmMI()||FE.mi,')
 
     # 版号推一格：线上一眼可辨
-    s = s.replace('var BUILD=106;', 'var BUILD=107;', 1)
+    s = s.replace('var BUILD=106;', 'var BUILD=108;', 1)
 
     io.open(DOC, 'w', encoding='utf-8').write(s)
     print('烘焙完成 · 十六进制 %d 处 · rgb() %d 处 · 主文档 %.0f KB'
