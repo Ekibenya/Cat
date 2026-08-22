@@ -5936,7 +5936,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=102;
+var BUILD=103;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -7205,8 +7205,15 @@ function uiScaleApply(q){
   try{cfgStore();}catch(_){}
   try{if(GAME.on)setTimeout(gmapSize,60);}catch(_){}
 }
-var LUX=1;   /* 只有奶油一档：开机即白昼，没有黑夜可切 */
+/* 网址加 ?lux=0：把整站反色那一道当场摘掉，画面回到引擎原生的黑金。
+   这一道是奶油配色的实现方式（整份文档反色），也是这一版最贵的一样东西——
+   根元素挂滤镜会逼浏览器把整页画进离屏图再整张跑着色器，
+   页面里每一块毛玻璃都得隔着它取背景。留这个开关是为了能当场对比。 */
+var LUX_OFF=/[?&]lux=0/.test(location.search);
+var LUX=LUX_OFF?0:1;
 function luxApply(){
+  if(LUX_OFF){LUX=0;document.documentElement.classList.remove('lux');
+    var _cb=$('#cfgLux');if(_cb){_cb.checked=false;}return;}
   LUX=1;
   document.documentElement.classList.add('lux');
   var cb=$('#cfgLux');

@@ -541,9 +541,32 @@ if(/[?&]perf=1/.test(location.search))(function(){
         + "    MV._slow=_n;" + NL
         + "  }else MV._slow=0;")
 
+    # ⑳ 奶油那道整站反色，给一个当场关掉的开关（?lux=0）
+    #    拿 Tails 一比就清楚了：同一副引擎，Tails 是 var LUX=0，这张卡是 var LUX=1。
+    #    差别不在毛玻璃（Tails 三十二处、这张三十三处，一样多），
+    #    在于这张卡把「白昼模式」当成唯一一档常开着——而白昼模式是靠
+    #    html{filter:invert(1) hue-rotate(180deg)} 把整份文档反过来实现的。
+    #    根元素挂滤镜，浏览器就得把整个文档先画进一张离屏图、整张跑一遍着色器、再合成；
+    #    页面里每一块毛玻璃还得隔着这张离屏图去取自己的背景。视网膜屏是二倍像素，
+    #    于是任何一处变化都要重来五百万像素。Tails 没有这一道，所以同样的毛玻璃它不疼。
+    #    网址后面加 ?lux=0 就能当场把这一道摘掉（画面回到引擎原生的黑金），
+    #    用来验证「顿的到底是不是它」——一秒钟就能对比出来。
+    sub('奶油开关',
+        "var LUX=1;   /* 只有奶油一档：开机即白昼，没有黑夜可切 */" + NL + "function luxApply(){" + NL + "  LUX=1;",
+        "/* 网址加 ?lux=0：把整站反色那一道当场摘掉，画面回到引擎原生的黑金。" + NL
+        + "   这一道是奶油配色的实现方式（整份文档反色），也是这一版最贵的一样东西——" + NL
+        + "   根元素挂滤镜会逼浏览器把整页画进离屏图再整张跑着色器，" + NL
+        + "   页面里每一块毛玻璃都得隔着它取背景。留这个开关是为了能当场对比。 */" + NL
+        + "var LUX_OFF=/[?&]lux=0/.test(location.search);" + NL
+        + "var LUX=LUX_OFF?0:1;" + NL
+        + "function luxApply(){" + NL
+        + "  if(LUX_OFF){LUX=0;document.documentElement.classList.remove('lux');" + NL
+        + "    var _cb=$('#cfgLux');if(_cb){_cb.checked=false;}return;}" + NL
+        + "  LUX=1;")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=102;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=103;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
