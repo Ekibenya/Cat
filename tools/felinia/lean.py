@@ -588,9 +588,35 @@ if(/[?&]perf=1/.test(location.search))(function(){
         + "  mW=w;mH=h;" + NL
         + "  if(mCv.width!==1){mCv.width=1;mCv.height=1;}}")
 
+    # ㉒ 主循环：对局中把「选局环那一整套」整段跳过
+    #    量出来的（1440×900 DPR2，静止十秒，按进程分）：
+    #      对局屏  渲染器 0.75 秒 / 十秒 —— 一个什么都没发生的页面还占着 7.5% 的核
+    #    翻开 loop() 才发现：对局中它照旧每帧跑一遍选局环的物理——
+    #    位置、惯性、吸附、取模、卡片重排，末了还给 #mission 写一次 opacity。
+    #    可 #stage、#rail、#mission 在 gameShow 里全都 display:none 了，
+    #    这一整套算给谁看？对局中直接跳到该跑的那三件事上。
+    sub('主循环·对局快路',
+        "function loop(t){" + NL + " try{",
+        "function loop(t){" + NL
+        + " try{" + NL
+        + "  /* 对局中：选局环那一整套（位置/惯性/吸附、卡片重排、任务栏那几行字）" + NL
+        + "     一件都不相干——#stage、#rail、#mission 在 gameShow 里已经 display:none。" + NL
+        + "     原来每帧照跑一遍，还每帧给 #mission 写一次 opacity。整段跳过，" + NL
+        + "     只留对局真正要的三件：地图面板、缩略窗、背后那张山。 */" + NL
+        + "  if(GAME.on){" + NL
+        + "    if(GBG.inited){GBG.inited=false;GBG.p=null;GBG.orders=null;" + NL
+        + "      try{mg.clearRect(0,0,mW,mH);}catch(_){}}" + NL
+        + "    if(GAME.mapOpen||gEl.getAttribute('data-pg')==='map')gmapDraw();" + NL
+        + "    var _rn2=performance.now();" + NL
+        + "    if(_rn2-_railT>700){_railT=_rn2;try{railSync();}catch(_){}}" + NL
+        + "    gTerrDraw(t);" + NL
+        + "    if(LIVE)raf_(loop);" + NL
+        + "    return;" + NL
+        + "  }")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=104;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=105;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"

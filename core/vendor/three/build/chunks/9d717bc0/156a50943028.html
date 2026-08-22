@@ -5945,7 +5945,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=104;
+var BUILD=105;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -13248,6 +13248,20 @@ size();
 var lastSel=-1;
 function loop(t){
  try{
+  /* 对局中：选局环那一整套（位置/惯性/吸附、卡片重排、任务栏那几行字）
+     一件都不相干——#stage、#rail、#mission 在 gameShow 里已经 display:none。
+     原来每帧照跑一遍，还每帧给 #mission 写一次 opacity。整段跳过，
+     只留对局真正要的三件：地图面板、缩略窗、背后那张山。 */
+  if(GAME.on){
+    if(GBG.inited){GBG.inited=false;GBG.p=null;GBG.orders=null;
+      try{mg.clearRect(0,0,mW,mH);}catch(_){}}
+    if(GAME.mapOpen||gEl.getAttribute('data-pg')==='map')gmapDraw();
+    var _rn2=performance.now();
+    if(_rn2-_railT>700){_railT=_rn2;try{railSync();}catch(_){}}
+    gTerrDraw(t);
+    if(LIVE)raf_(loop);
+    return;
+  }
   /* 数值消毒：pos/vel 一旦变成 NaN/Infinity（历史上由除零而来），此后
      mod() 全线出 NaN，卡面 transform 变成非法字符串，整个转盘就永久不动了。
      与其指望上游永不失手，不如每帧把它拉回合法区间。 */
