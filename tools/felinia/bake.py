@@ -121,9 +121,6 @@ html.lux #eraSel::after,html.lux #feWrap::after{
   ('html.lux #eraSel{filter:invert(1) hue-rotate(180deg)}',
    '/* 滤镜已卸：这一层本来就是真彩 */'),
   ('html.lux #eraSel img{filter:none}', '/* 滤镜已卸 */'),
-  ('html.lux #feWrap{filter:invert(1) hue-rotate(180deg)}',
-   '/* 滤镜已卸：这一层本来就是真彩 */'),
-  ('html.lux #feWrap img{filter:none}', '/* 滤镜已卸 */'),
 ]
 
 def main():
@@ -313,7 +310,7 @@ function gmMM(){'''
     s = s.replace('drawImage(FE.mi,', 'drawImage(gmMI()||FE.mi,')
 
     # 版号推一格：线上一眼可辨
-    s = s.replace('var BUILD=106;', 'var BUILD=110;', 1)
+    s = s.replace('var BUILD=106;', 'var BUILD=111;', 1)
 
     io.open(DOC, 'w', encoding='utf-8').write(s)
     print('烘焙完成 · 十六进制 %d 处 · rgb() %d 处 · 主文档 %.0f KB'

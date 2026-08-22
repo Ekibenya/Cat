@@ -1,4 +1,8 @@
 <div id="feWrap" data-step="loc">
+  <!-- 底：马赛克世界图铺满整屏，四步都看得见。择地那一步在上面点地方，
+       其余三步它退成背景（feLocRender 会把标记收起来）。 -->
+  <div id="feBg"><div id="feMap"><div id="feMapIn"><img id="feMapImg" alt=""></div></div></div>
+
   <div id="feHead">
     <span><b>FELINIA</b>&nbsp;·&nbsp;<span class="st" id="feStName">择地</span></span>
     <span id="feSteps">
@@ -8,58 +12,62 @@
     <span class="er" id="feEraLbl"></span>
   </div>
 
-  <div id="feBody">
-    <!-- 一 · 择地 -->
-    <div class="feStep" data-s="loc">
-      <div id="feMap"><div id="feMapIn"><img id="feMapImg" alt=""></div></div>
-      <div id="feLocInfo">
-        <div class="lt"><span id="feLocN">—</span><b id="feLocCn">在图上拣一处</b></div>
-        <div class="ld" id="feLocD">这一代能落脚的地方都标在图上。点一处，下面会写清那里是做什么的。</div>
-        <div class="lw" id="feLocW"></div>
-      </div>
-    </div>
-
-    <!-- 二 · 立身 -->
-    <div class="feStep" data-s="per">
-      <div class="feCols">
-        <div class="feColL">
+  <!-- 两块倾斜的玻璃板浮在图上。左板朝右倾、右板朝左倾，各自朝着中间那道
+       露出地图的缝收——与情报台那一叠同一套透视（perspective 520，±10°，
+       scaleY 抵掉近边被放大的那一点）。 -->
+  <div id="feStage">
+    <div class="fePan" id="fePanL">
+      <div class="feGl"></div>
+      <div class="feIn">
+        <div class="feSec" data-s="loc">
+          <div class="feColH">这一代能落脚的地方</div>
+          <div id="feLocList"></div>
+          <div class="feNote">图上也可以直接点。</div>
+        </div>
+        <div class="feSec" data-s="per">
           <div class="feColH">预设角色&nbsp;·&nbsp;此代在册者</div>
           <div id="fePreList"></div>
         </div>
-        <div class="feColR">
+        <div class="feSec" data-s="soc">
+          <div class="feRow"><span class="t">相关人物</span>
+            <span><span class="feBtn" id="feSocMore">↻&nbsp;另生一位</span></span></div>
+          <div class="feNote" style="margin:0 0 12px">点选带进这一局，至多五位。</div>
+          <div id="feSocList"></div>
+        </div>
+        <div class="feSec" data-s="sit">
+          <div class="feColH">此刻的场面</div>
+          <div class="sub">开局那一幕从哪儿起？几时、在哪儿、谁在场、你刚做了什么或刚被卷进什么。<br><br>
+            只写看得见的。别写来龙去脉，也别写这一幕怎么收——那是神谕的事。<br><br>
+            留空亦可，神谕会按你选的年代、地点与人自拟一幕。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fePan" id="fePanR">
+      <div class="feGl"></div>
+      <div class="feIn">
+        <div class="feSec" data-s="loc">
+          <div id="feLocInfo">
+            <div class="lt"><span id="feLocN">—</span><b id="feLocCn">在图上拣一处</b></div>
+            <div class="ld" id="feLocD">这一代能落脚的地方都标在图上。点一处，这里会写清那里是做什么的。</div>
+            <div class="lw" id="feLocW"></div>
+          </div>
+        </div>
+        <div class="feSec" data-s="per">
           <div class="feRow"><span class="t" id="fePerT">自拟一个人</span>
             <span><span class="feBtn" id="fePerRoll">↻&nbsp;重掷</span></span></div>
           <div class="feGrid" id="fePerForm"></div>
           <div id="fePerDoss"></div>
           <div class="feNote" id="fePerNote"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- 三 · 识人 -->
-    <div class="feStep" data-s="soc">
-      <div class="feCols">
-        <div class="feColL" style="width:auto;flex:1 1 auto;padding:14px 16px">
-          <div class="feRow"><span class="t">相关人物&nbsp;·&nbsp;点选带进这一局（至多五位）</span>
-            <span><span class="feBtn" id="feSocMore">↻&nbsp;另生一位</span></span></div>
-          <div id="feSocList"></div>
-        </div>
-        <div class="feColR" style="flex:0 0 42%;max-width:520px">
-          <div class="feColH" style="padding:0 0 10px">档案</div>
+        <div class="feSec" data-s="soc">
+          <div class="feColH">档案</div>
           <div id="feDoss">点左边任意一位，这里出档案。</div>
         </div>
-      </div>
-    </div>
-
-    <!-- 四 · 此刻 -->
-    <div class="feStep" data-s="sit">
-      <div id="feSitBox">
-        <h3>此刻的场面</h3>
-        <div class="sub">开局那一幕从哪儿起？几时、在哪儿、谁在场、你刚做了什么或刚被卷进什么。<br>
-          只写看得见的。别写来龙去脉，也别写这一幕怎么收——那是神谕的事。<br>
-          留空亦可，神谕会按你选的年代、地点与人自拟一幕。</div>
-        <textarea id="feSit" placeholder="例：城门刚闭，我在门内侧的石阶上，守门的把我的木牌拿走了，还没还我。"></textarea>
-        <div id="feSum"></div>
+        <div class="feSec" data-s="sit">
+          <textarea id="feSit" placeholder="例：城门刚闭，我在门内侧的石阶上，守门的把我的木牌拿走了，还没还我。"></textarea>
+          <div id="feSum"></div>
+        </div>
       </div>
     </div>
   </div>

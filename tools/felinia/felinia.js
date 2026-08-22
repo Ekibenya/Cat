@@ -405,7 +405,22 @@ function feLocRender(){
     d.addEventListener('pointerup',function(){feLocPick(n);});
     box.appendChild(d);
   });
+  feLocList();
   feLocInfo();
+}
+/* 左板的地点清单：与图上的标记一一对应，点哪一边都一样。
+   图上那几枚标记在同一座城里会挤成一团，清单是给「看名字挑」的人预备的。 */
+function feLocList(){
+  var box=$('#feLocList');if(!box)return;
+  box.innerHTML='';
+  FE.era.locs.forEach(function(L,n){
+    var b=document.createElement('button');
+    b.className='feLoc'+(FE.loc===L?' on':'');
+    b.type='button';
+    b.innerHTML='<b>'+feEsc(L.cn)+'</b><span>'+feEsc(L.n)+'</span>';
+    b.addEventListener('click',function(){feLocPick(n);});
+    box.appendChild(b);
+  });
 }
 function feProjX(lo){return (lo+180)/360;}
 function feProjY(la){return (FE.mm.laTop-la)/(FE.mm.laTop-FE.mm.laBot);}
@@ -467,7 +482,13 @@ function feLocPick(n){
   for(k=0;k<ms.length;k++)ms[k].classList.toggle('on',k===n);
   feLocInfo();feFootSync();
 }
+function feLocSync(){
+  var box=$('#feLocList');if(!box)return;
+  var bs=box.children;
+  for(var i=0;i<bs.length;i++)bs[i].classList.toggle('on',FE.era.locs[i]===FE.loc);
+}
 function feLocInfo(){
+  feLocSync();
   var L=FE.loc;
   $('#feLocN').textContent=L?L.n:'—';
   $('#feLocCn').textContent=L?L.cn:'在图上拣一处';

@@ -53,7 +53,8 @@ html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-eve
     ('#feWrap{position:fixed;inset:0;z-index:47;display:none;background:#f0eadc;',
      '#feWrap{position:fixed;inset:0;z-index:47;display:none;background:#fcfcfc;', 1),
     # 与底色相接的那几处半透明层：不跟着提亮就会在接缝上显出一道
-    ('rgba(240,234,220,', 'rgba(252,252,252,', 12),
+    # 处数不写死：铸局那一层改版之后这个数会变，写死只会让重打脚本无谓地停。
+    ('rgba(240,234,220,', 'rgba(252,252,252,', None),
 ]
 
 
@@ -63,10 +64,14 @@ def main():
         print('暖纸罩早已挪过，跳过。')
         return
     for a, _, cnt in PAIRS:
-        if s.count(a) != cnt:
-            sys.exit('锚点 %r 该有 %d 处，实际 %d 处，停手。' % (a[:40], cnt, s.count(a)))
+        got = s.count(a)
+        if cnt is None:
+            if got == 0:
+                sys.exit('锚点 %r 一处都没有，停手。' % a[:40])
+        elif got != cnt:
+            sys.exit('锚点 %r 该有 %d 处，实际 %d 处，停手。' % (a[:40], cnt, got))
     for a, n, cnt in PAIRS:
-        s = s.replace(a, n, cnt)
+        s = s.replace(a, n) if cnt is None else s.replace(a, n, cnt)
     io.open(DOC, 'w', encoding='utf-8').write(s)
     print('暖纸罩已挪到反色之后 · 主文档 %.0f KB' % (os.path.getsize(DOC) / 1024))
 
