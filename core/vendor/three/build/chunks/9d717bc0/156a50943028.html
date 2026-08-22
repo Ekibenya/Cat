@@ -379,6 +379,30 @@ canvas{display:block}
    整站一次反色＋色相回正（黑金 → 白金），三维画面与图片再反一次保持原貌。
    全卡内联颜色数以百计，逐处重配不现实；这条滤镜路是黑白模式的标准做法。
    html 高度即视口（overflow hidden），filter 形成的包含块不影响 fixed 布局。 */
+
+/* ═══ 合成图层的节流：看不见的东西不该常驻一张整屏纹理 ═══
+   实测对局屏原本有 94 个合成图层、28.0 Mpx；Tails 同类画面只有 18 个 / 14.4 Mpx。
+   合成器每帧要管这些纹理，这一笔全落在 GPU 上——cpu 侧的火焰图上什么都看不见，
+   机器却在发烫。逐项查下来，超支的全是「已经看不见、却仍按整屏提层」的东西。 */
+
+/* ① 选局环那一屏的两张整屏画布与转场闪屏：对局中一笔都不画（见主循环里的对局快路），
+      可它们照旧 display:block，各占一张 1.3 Mpx 的整屏图层。对局中收起来。
+      :has() 不支持的老浏览器会整条忽略，退回原样，不会出错。 */
+html:has(#game.show) #terrain,
+html:has(#game.show) #grain,
+html:has(#game.show) #flash{display:none}
+
+/* ② 关着的三扇面板（地图/装备/商店）：关着时是 opacity:0，本来就看不见，
+      可每扇都带 backdrop-filter:blur(9px)，于是常驻一张带模糊的合成图层，
+      连里面的商店清单、装备格也一并提层（实测这三扇合计 4.9 Mpx）。
+      关着就 visibility:hidden——图层当场释放。
+      visibility 的过渡延后 .34s 生效，好让收起来那一下的淡出照旧走完；
+      打开时选择器立刻失配，visibility 马上恢复，淡入一帧不欠。 */
+#game:not(.mapOpen) #pnMap,
+#game:not(.armOpen) #pnArm,
+#game:not(.shopOpen) #pnShop{
+  visibility:hidden;
+  transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease,visibility 0s linear .34s}
 /* BAKED·已烘焙 */
 /* 奶油配色已烘焙进每一个颜色值：上面整份样式里的颜色都是 G(原色)。
    这里不再挂整页滤镜——根元素一挂滤镜，任何一个像素变化都要整页重过

@@ -40,6 +40,9 @@ DOC  = os.path.join(ROOT, 'core/vendor/three/build/chunks/9d717bc0/156a50943028.
 MARK = '/* LEAN：三维天下整层停用 */'
 NL   = chr(10)      # 拼 js 片段时用，省得在这份脚本里跟转义打架
 
+CSS_LAYERS = '\n/* ═══ 合成图层的节流：看不见的东西不该常驻一张整屏纹理 ═══\n   实测对局屏原本有 94 个合成图层、28.0 Mpx；Tails 同类画面只有 18 个 / 14.4 Mpx。\n   合成器每帧要管这些纹理，这一笔全落在 GPU 上——cpu 侧的火焰图上什么都看不见，\n   机器却在发烫。逐项查下来，超支的全是「已经看不见、却仍按整屏提层」的东西。 */\n\n/* ① 选局环那一屏的两张整屏画布与转场闪屏：对局中一笔都不画（见主循环里的对局快路），\n      可它们照旧 display:block，各占一张 1.3 Mpx 的整屏图层。对局中收起来。\n      :has() 不支持的老浏览器会整条忽略，退回原样，不会出错。 */\nhtml:has(#game.show) #terrain,\nhtml:has(#game.show) #grain,\nhtml:has(#game.show) #flash{display:none}\n\n/* ② 关着的三扇面板（地图/装备/商店）：关着时是 opacity:0，本来就看不见，\n      可每扇都带 backdrop-filter:blur(9px)，于是常驻一张带模糊的合成图层，\n      连里面的商店清单、装备格也一并提层（实测这三扇合计 4.9 Mpx）。\n      关着就 visibility:hidden——图层当场释放。\n      visibility 的过渡延后 .34s 生效，好让收起来那一下的淡出照旧走完；\n      打开时选择器立刻失配，visibility 马上恢复，淡入一帧不欠。 */\n#game:not(.mapOpen) #pnMap,\n#game:not(.armOpen) #pnArm,\n#game:not(.shopOpen) #pnShop{\n  visibility:hidden;\n  transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease,visibility 0s linear .34s}\n'
+
+
 DIAG = r'''/* 诊断板：网址加 ?diag=1，右上角出一块开关板。
    逐项关掉可疑的渲染开销——哪一项一关就不卡了，凶手就是哪一项。
    板子只在带参数时存在，一行不带参数的代码都不跑，默认画面一个字节不动。
@@ -714,6 +717,11 @@ if(/[?&]perf=1/.test(location.search))(function(){
         + "    grainDraw._n=(grainDraw._n||0)+1;" + NL
         + "    if(grainDraw._n%3===0)grainDraw();" + NL
         + "  }")
+
+    # ㉕ 合成图层节流：看不见的东西不再常驻整屏纹理
+    sub('图层节流',
+        '/* GLASSOFF' if False else 'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}',
+        CSS_LAYERS + 'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}')
 
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
