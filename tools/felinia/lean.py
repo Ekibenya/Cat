@@ -723,6 +723,22 @@ if(/[?&]perf=1/.test(location.search))(function(){
         '/* GLASSOFF' if False else 'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}',
         CSS_LAYERS + 'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}')
 
+    # ㉖ 离开纪年页就把图版卸掉
+    #    实测对局中 DOM 里还挂着 43 张已解码的图版（21.6 MB 位图），Tails 是 0 张。
+    #    它们在对局里一张都看不见，可解码后的位图会一直占着内存、在真机上还占显存。
+    #    离开这一屏就把 src 摘掉；回来时 esLoad 会照旧补上（缩图十来 KB，走缓存）。
+    sub('离开纪年页卸图',
+        "function esClose(){ES.on=false;$('#eraSel').classList.remove('on');}",
+        "function esClose(){" + NL
+        + "  ES.on=false;$('#eraSel').classList.remove('on');" + NL
+        + "  /* 图版卸掉：这一屏之外一张都看不见，留着只是白占内存与显存。" + NL
+        + "     回来时 esRender→esLoad 会照旧把缩图补上。 */" + NL
+        + "  for(var _i=0;_i<ES.pls.length;_i++){" + NL
+        + "    var _im=ES.pls[_i]&&ES.pls[_i].firstChild;" + NL
+        + "    if(_im&&_im.getAttribute('src')){_im._want=null;_im.removeAttribute('src');}" + NL
+        + "  }" + NL
+        + "}")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
     sub('版号', 'var BUILD=95;', 'var BUILD=106;')
