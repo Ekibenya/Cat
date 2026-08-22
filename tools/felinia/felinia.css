@@ -1,0 +1,149 @@
+/* ═══════ FELINIA · 铸局四步（择地 · 立身 · 识人 · 此刻） ═══════
+   与纪年页同一层级、同一套外壳：满屏、不透光、上有眉、下有脚。
+   底色走奶油，与菜单一致——所以要先从全局反色里豁免出来（再反一次抵消），
+   不然整层会被翻成负片。这一条必须排在 luxpatch 那一段之后才压得住，
+   而本段就在纪年页样式的前面，位置是对的。 */
+html.lux #feWrap{filter:invert(1) hue-rotate(180deg)}
+html.lux #feWrap img{filter:none}
+
+#feWrap{position:fixed;inset:0;z-index:47;display:none;background:#f0eadc;
+  color:#4a4237;font-family:var(--mono);touch-action:manipulation}
+#feWrap.on{display:block}
+#feWrap::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  opacity:.11;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/></filter><rect width='260' height='260' filter='url(%23p)' opacity='.5'/></svg>");
+  background-size:260px 260px}
+
+/* ── 眉 ── */
+#feHead{position:absolute;left:0;right:0;top:0;height:52px;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;border-bottom:1px solid #cec3ab;font-size:11px;letter-spacing:.16em}
+#feHead b{color:#4a4237;font-weight:600;letter-spacing:.3em}
+#feHead .st{color:#9a742a}
+#feHead .er{color:#9a9184;letter-spacing:.08em}
+#feSteps{display:flex;gap:14px;align-items:center;color:#c0b59c;font-size:10px}
+#feSteps i{font-style:normal;letter-spacing:.14em}
+#feSteps i.on{color:#9a742a}
+#feSteps i.done{color:#9a9184}
+
+/* ── 脚 ── */
+#feFoot{position:absolute;left:0;right:0;bottom:0;min-height:44px;z-index:4;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;border-top:1px solid #cec3ab;background:rgba(240,234,220,.94);
+  font-size:11px;letter-spacing:.14em;color:#9a9184}
+#feFoot .go{color:#4a4237;cursor:pointer;display:inline-block;white-space:nowrap;
+  padding:5px 12px;margin-left:10px;border:1px solid rgba(154,116,42,.5);
+  background:rgba(255,255,255,.45)}
+#feFoot .go:hover{color:#1f1a13;border-color:#9a742a}
+#feFoot .go.off{opacity:.35;cursor:default;border-color:#cec3ab}
+#feFoot .go.off:hover{color:#4a4237;border-color:#cec3ab}
+
+/* ── 身 ── */
+#feBody{position:absolute;left:0;right:0;top:52px;bottom:44px;z-index:2;overflow:hidden}
+.feStep{position:absolute;inset:0;display:none}
+#feWrap[data-step="loc"] .feStep[data-s="loc"],
+#feWrap[data-step="per"] .feStep[data-s="per"],
+#feWrap[data-step="soc"] .feStep[data-s="soc"],
+#feWrap[data-step="sit"] .feStep[data-s="sit"]{display:block}
+
+/* ═══ 一 · 择地 LOCVS ═══ */
+#feMap{position:absolute;left:0;right:0;top:0;bottom:96px;overflow:hidden}
+#feMapIn{position:absolute;left:0;top:0}
+#feMapIn img{display:block;width:100%;height:100%;pointer-events:none;
+  -webkit-user-drag:none;user-select:none}
+.feLn{position:absolute;height:1px;background:rgba(154,116,42,.5);transform-origin:0 50%;
+  pointer-events:none;z-index:2}
+.feMk{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
+  display:flex;flex-direction:column;align-items:center;gap:3px}
+.feMk .dot{width:13px;height:13px;box-sizing:border-box;
+  border:2px solid #9a742a;background:rgba(240,234,220,.85);
+  transform:rotate(45deg);transition:all .22s ease}
+.feMk .nm{font-size:10px;letter-spacing:.1em;color:#6f6757;white-space:nowrap;
+  background:rgba(240,234,220,.82);padding:1px 5px;transition:all .22s ease}
+.feMk:hover .dot{background:#9a742a}
+.feMk:hover .nm{color:#1f1a13}
+.feMk.on .dot{background:#9a742a;box-shadow:0 0 0 4px rgba(154,116,42,.22);width:16px;height:16px}
+.feMk.on .nm{color:#1f1a13;background:rgba(255,255,255,.9);border-bottom:1px solid #9a742a}
+#feLocInfo{position:absolute;left:0;right:0;bottom:0;height:96px;padding:14px 22px;
+  border-top:1px solid #cec3ab;background:rgba(240,234,220,.9)}
+#feLocInfo .lt{font-size:13px;color:#1f1a13;letter-spacing:.06em}
+#feLocInfo .lt span{color:#9a742a;margin-right:10px;letter-spacing:.2em}
+#feLocInfo .ld{font-size:11px;color:#6f6757;margin-top:6px;line-height:1.7}
+#feLocInfo .lw{font-size:11px;color:#9a9184;margin-top:4px;line-height:1.7}
+
+/* ═══ 二 · 立身 PERSONA ═══ */
+.feCols{position:absolute;inset:0;display:flex}
+.feColL{width:270px;flex:0 0 270px;border-right:1px solid #cec3ab;overflow-y:auto;padding:14px 0}
+.feColR{flex:1 1 auto;min-width:0;overflow-y:auto;padding:16px 22px 22px}
+.feColR>*{max-width:1180px}
+.feColH{font-size:10px;letter-spacing:.2em;color:#9a742a;padding:0 16px 10px}
+.fePre{display:block;width:100%;box-sizing:border-box;text-align:left;
+  padding:9px 16px;border:0;background:none;cursor:pointer;font:inherit;color:#6f6757;
+  border-left:2px solid transparent}
+.fePre:hover{background:rgba(255,255,255,.5);color:#1f1a13}
+.fePre.on{background:rgba(255,255,255,.72);color:#1f1a13;border-left-color:#9a742a}
+.fePre b{display:block;font-weight:600;font-size:12px;letter-spacing:.04em}
+.fePre span{display:block;font-size:10px;color:#9a9184;margin-top:2px;line-height:1.6}
+
+.feGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:10px 18px}
+.feF{display:flex;flex-direction:column;gap:4px}
+.feF>label{font-size:10px;letter-spacing:.14em;color:#9a742a}
+.feF input,.feF select,.feF textarea{
+  box-sizing:border-box;width:100%;padding:7px 9px;font:inherit;font-size:12px;
+  color:#1f1a13;background:rgba(255,255,255,.6);border:1px solid #cec3ab;border-radius:0;
+  -webkit-appearance:none;appearance:none}
+.feF select{background-image:linear-gradient(45deg,transparent 50%,#9a742a 50%),
+  linear-gradient(135deg,#9a742a 50%,transparent 50%);
+  background-position:calc(100% - 14px) 14px,calc(100% - 9px) 14px;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:26px}
+.feF input:focus,.feF select:focus,.feF textarea:focus{outline:0;border-color:#9a742a;
+  background:rgba(255,255,255,.85)}
+.feRow{display:flex;align-items:baseline;justify-content:space-between;margin:2px 0 14px}
+.feRow .t{font-size:12px;color:#1f1a13;letter-spacing:.05em}
+.feBtn{cursor:pointer;font-size:10px;letter-spacing:.14em;color:#9a742a;
+  padding:4px 10px;border:1px solid rgba(154,116,42,.45);background:rgba(255,255,255,.45)}
+.feBtn:hover{color:#1f1a13;border-color:#9a742a}
+.feNote{font-size:10px;color:#9a9184;line-height:1.8;margin-top:14px}
+#fePerDoss{margin-top:22px;white-space:pre-wrap;font-size:11px;line-height:2;color:#4a4237;
+  border-top:1px solid #cec3ab;padding-top:16px}
+#fePerDoss b{color:#9a742a;font-weight:600;letter-spacing:.14em}
+
+/* ═══ 三 · 识人 SOCII ═══ */
+#feSocList{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:9px}
+.feCard{box-sizing:border-box;padding:9px 11px;border:1px solid #cec3ab;cursor:pointer;
+  background:rgba(255,255,255,.42);transition:all .18s ease}
+.feCard:hover{border-color:#9a742a;background:rgba(255,255,255,.7)}
+.feCard.on{border-color:#9a742a;background:rgba(255,255,255,.86);
+  box-shadow:inset 3px 0 0 #9a742a}
+.feCard.cur{outline:1px dashed rgba(154,116,42,.6);outline-offset:2px}
+.feCard b{display:block;font-size:12px;color:#1f1a13;letter-spacing:.04em}
+.feCard i{display:block;font-style:normal;font-size:10px;color:#9a742a;margin-top:3px}
+.feCard span{display:block;font-size:10px;color:#9a9184;margin-top:4px;line-height:1.6}
+.feCard em{position:absolute;font-style:normal}
+#feDoss{white-space:pre-wrap;font-size:11px;line-height:2;color:#4a4237;
+  border-left:2px solid #cec3ab;padding-left:14px}
+#feDoss b{color:#9a742a;font-weight:600;letter-spacing:.14em;margin-right:8px}
+
+/* ═══ 四 · 此刻 SITVS ═══ */
+#feSitBox{position:absolute;inset:0;overflow-y:auto;padding:20px 26px}
+#feSitBox h3{font-size:13px;color:#1f1a13;letter-spacing:.1em;margin:0 0 8px;font-weight:600}
+#feSitBox .sub{font-size:11px;color:#9a9184;line-height:1.9;margin-bottom:14px}
+#feSit{box-sizing:border-box;width:100%;min-height:170px;resize:vertical;
+  padding:12px 14px;font:inherit;font-size:12px;line-height:1.9;color:#1f1a13;
+  background:rgba(255,255,255,.6);border:1px solid #cec3ab;border-radius:0}
+#feSit:focus{outline:0;border-color:#9a742a;background:rgba(255,255,255,.85)}
+#feSum{margin-top:18px;font-size:11px;line-height:2;color:#6f6757;white-space:pre-wrap;
+  border-top:1px solid #cec3ab;padding-top:14px}
+#feSum b{color:#9a742a;font-weight:600;letter-spacing:.14em;margin-right:8px}
+
+@media (max-width:760px){
+  #feHead{padding:0 12px;font-size:10px}
+  #feSteps i{display:none}
+  #feSteps i.on{display:inline}
+  .feCols{flex-direction:column}
+  .feColL{width:auto;flex:0 0 auto;max-height:34%;border-right:0;border-bottom:1px solid #cec3ab}
+  .feColR{padding:12px 14px 18px}
+  #feMap{bottom:112px}
+  #feLocInfo{height:112px;padding:10px 14px}
+  .feMk .nm{font-size:9px}
+}

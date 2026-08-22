@@ -103,6 +103,24 @@ CORE = [
 ]
 
 
+# ═══════════ 「本地人住在哪儿」 ═══════════
+# 档案里要有一行「如今住在……」。用地点表（水门、后门、桅顶）去填这一栏会闹笑话——
+# 那些是干活的地方，不是住处。所以每一代单写一句：这一代的人平常住在什么样的地方。
+HOME = {
+ 1:'火堆下风处的窝棚', 2:'河岸聚落的土屋', 3:'城墙根下的排屋', 4:'砖巷里的低位屋',
+ 5:'港边的石砌小屋', 6:'河堤边的泥砖屋', 7:'城外的外邦人区', 8:'仓栈后头的租房',
+ 9:'军户里的土房', 10:'驿站旁的客舍', 11:'港区的窄楼', 12:'修院客舍的通铺',
+ 13:'商栈后院的通铺', 14:'泊地边的木屋', 15:'夜市后巷的赁屋', 16:'楼里的后房',
+ 17:'城外棚户', 18:'随营移动的毡帐', 19:'商栈的通铺', 20:'教区的旧屋',
+ 21:'水巷边的浮屋', 22:'船坞后头的窄屋', 23:'港边的水手宿处', 24:'营地边的木棚',
+ 25:'港区的合租屋', 26:'宅邸后头的下人房', 27:'宅院的后罩房', 28:'阁楼上的赁屋',
+ 29:'区部登记的合租楼', 30:'港务站的宿处', 31:'工场后头的阁楼', 32:'工人住房的一格',
+ 33:'学堂的寄宿舍', 34:'铁路工人的宿处', 35:'医院后头的看护房', 36:'官署安置的长屋',
+ 37:'百货后街的赁屋', 38:'口岸窝群的通铺', 39:'展会临时公寓', 40:'混合家庭的城市住宅',
+ 41:'战壕后头的宿营地',
+}
+
+
 def load_annals():
     ann = json.load(io.open(ANN, encoding='utf-8'))
     return {a['i']: a for a in ann}
@@ -140,6 +158,7 @@ def check(eras, ann):
         cats = sum(1 for f in e['figs'] if f['sp'] == 'cat')
         assert 5 <= cats <= 9, '纪年 %d 的猫娘与人类比例失衡：%d/10' % (i, cats)
         assert i in LORE, '纪年 %d 没有世界书原料' % i
+        assert HOME.get(i), '纪年 %d 没有写住处' % i
         for f in ('guo', 'zheng', 'shi', 'ye'):
             assert LORE[i].get(f), '纪年 %d 的世界书缺 %s' % (i, f)
     want = set(range(1, 42))
@@ -162,6 +181,7 @@ def build_eras(eras, ann):
             'i': e['i'], 'y': e['y'], 'yl': year_label(e['y']),
             'ys': a['y'], 'age': a['era'], 't': a['t'], 's': a['s'], 'src': a['src'],
             'reg': e['reg'], 'w': e['w'], 'inst': e['inst'], 'nm': e['nm'],
+            'home': HOME[e['i']],
             'locs': e['locs'], 'roles': e['roles'], 'dress': e['dress'],
             'figs': e['figs'],
         })
@@ -172,6 +192,7 @@ def build_gen():
     return {'morphs': pools.MORPHS, 'furs': pools.FURS, 'fursRare': pools.FURS_RARE,
             'furMarks': pools.FUR_MARKS, 'temper': pools.TEMPER, 'tails': pools.TAILS,
             'voices': pools.VOICES, 'relations': pools.RELATIONS,
+            'origins': pools.ORIGINS,
             # 体格尺度：母本 TABLEAU 4 的中位数，上下各给一段合理范围
             'body': {'hMid': 139.8, 'hLo': 131, 'hHi': 148,
                      'wMid': 39.7, 'wLo': 33, 'wHi': 47},
