@@ -52,6 +52,12 @@ PAIRS = [
     ('<div class="psCard" id="pcZhou"><b>—</b><span>空壳&nbsp;·&nbsp;尚无固定人物</span></div>',
      '<div class="psCard" id="pcZhou"><b>—</b><span>世界书里那些人是别人&nbsp;·&nbsp;'
      '不是你的前身</span></div>', 1),
+    # 全站只剩奶油一档：手机上的浏览器外框与状态栏也得跟着走，
+    # 不然页面是奶油的、顶上那一条还是黑的；黑底半透明的状态栏配奶油纸，字也看不清。
+    ('<meta name="theme-color" content="#060606">',
+     '<meta name="theme-color" content="#f0eadc">', 1),
+    ('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+     '<meta name="apple-mobile-web-app-status-bar-style" content="default">', 1),
 ]
 
 

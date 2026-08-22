@@ -1,0 +1,8 @@
+# 上线的只有能跑的那一份。以下都不必进公开站点：
+# tools/  组装脚本与作业流程（含韩语见本与语料），是工作台不是成品
+# st/     卡资料的来源；成品已经由 cardbuild.py 注入主文档，站点不读它
+# rwserve.py 本地起服务用的，线上有 vercel.json 的重写规则
+tools/
+st/
+rwserve.py
+.gitignore

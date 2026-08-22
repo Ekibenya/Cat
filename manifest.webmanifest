@@ -1,16 +1,16 @@
 {
   "id": "/",
-  "name": "陆之纪 · 世界未定",
-  "short_name": "LVZHI.SYS",
-  "description": "一部跑在浏览器里的叙事游戏：左手是可以无限写下去的文字剧本，右手是一座可以走进去的世界。",
+  "name": "FELINIA · 猫娘世界通史",
+  "short_name": "FELINIA",
+  "description": "一部横跨上下万年的猫娘世界史。四十一幅图版，年代、地点与人由你定。",
   "lang": "zh-Hans",
   "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#060606",
-  "theme_color": "#060606",
+  "background_color": "#f0eadc",
+  "theme_color": "#f0eadc",
   "categories": [
     "games",
     "entertainment"

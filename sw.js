@@ -1,7 +1,9 @@
-/* LVZHI.SYS · service worker
+/* FELINIA.SYS · service worker
    壳层预缓存 + 其余按需缓存。素材总量近 200MB（三维包与乐曲），一次性全预下载既慢又
    会撑爆配额，所以只预存「打得开」所需的那几个档，其余用过哪个存哪个。 */
-var V = 'lvzhi-v1';
+/* 换了卡就换缓存名：activate 里会把名字对不上的旧缓存整个删掉，
+   否则回头客拿到的还是上一张卡的壳。 */
+var V = 'felinia-v1';
 var SHELL = [
   '/',
   '/manifest.webmanifest',
