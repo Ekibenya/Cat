@@ -148,6 +148,8 @@ canvas{display:block}
   opacity:.13;mix-blend-mode:multiply;z-index:1;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/></filter><rect width='260' height='260' filter='url(%23p)' opacity='.5'/></svg>");
   background-size:260px 260px}
+/* 三维天下整层停用，面板与那一列钮一并收起，免得对局屏上留一块空框 */
+#pnTx,.g3dRail{display:none!important}
 #menu #mosCv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
   transform:translateZ(0)}
 #menu.era #mosCv,#menu.gbg #mosCv{display:none}
@@ -2065,7 +2067,7 @@ html.lux #feWrap img{filter:none}
   </div>
   <div class="gPanel" id="pnMap">
     <canvas id="gmapCv"></canvas>
-    <div class="pnTitle"><i>◆</i>&nbsp;TABVLA&nbsp;·&nbsp;地图&nbsp;&nbsp;—&nbsp;&nbsp;拖动旋转</div>
+    <div class="pnTitle"><i>◆</i>&nbsp;TABVLA&nbsp;·&nbsp;地图&nbsp;&nbsp;—&nbsp;&nbsp;滚轮缩放</div>
     <div class="pFade"></div>
   </div>
   <div class="gPanel" id="pnArm">
@@ -2596,7 +2598,14 @@ window.__GAME_LUZHI__ = {"panelSpec":{"textOrder":["形貌","衣着","持物","�
 /* three.js 加载策略：优先本仓库 core 的现代版（含 GLTF/Meshopt，支持三维天下游历），
    失败（如单文件离线分发）则回退 CDN r128，仅呈现书房场景。 */
 (function(){
-  try{if(localStorage.getItem('zj3d_off')==='1'){window.__ZJ3D_OFF__=true;return;}}catch(e){}
+  /* LEAN：三维天下整层停用 */
+  /* 这一层画的是周秦八城，是上一张卡的东西。这一张四十一代、没有固定主角，
+     那八座城一代也对不上，一格都用不着；而它每次开页都要装 three.js 800 KB、
+     两台引擎 716 KB，装完在内存里常驻一百九十六兆。整层不装。
+     要请回来：把下面这一行 return 去掉，并把 core/three-bundle.min.js、
+     core/vendor/three/build/chunks/9d717bc0/{36411d0a880f,1aa613ec934b,8e2ad10c77b4}.js
+     与 core/res/data/st/ 一并取回。 */
+  window.__ZJ3D_OFF__=true;return;
   function cdn(){
     var s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
@@ -3502,7 +3511,14 @@ function mosStart(){
   mosSG.clearRect(0,0,mosSet.width,mosSet.height);
   mosG.clearRect(0,0,mosCv.width,mosCv.height);
   $('#mosRiso').classList.remove('on');
-  mosT0=performance.now(); cancelAnimationFrame(mosRaf); mosRaf=requestAnimationFrame(mosTick);
+  /* 片头撤了：马赛克不再一块一块飞进来（原先要六秒），第一帧就整幅铺好。
+     要把飞入请回来，换回：
+       mosT0=performance.now(); cancelAnimationFrame(mosRaf);
+       mosRaf=requestAnimationFrame(mosTick); */
+  cancelAnimationFrame(mosRaf); mosRaf=0;
+  for(var _i=0;_i<mosSeq.length;_i++){mosDraw(_i,mosSG,1);mosSeq[_i][6]=1;}
+  mosG.drawImage(mosSet,0,0);
+  $('#mosRiso').classList.add('on');
 }
 function mosStop(){cancelAnimationFrame(mosRaf);mosRaf=0;}
 function mosTick(now){
@@ -3537,61 +3553,13 @@ if(mosCv){
 
 var mOv=$('#menu'),mCv=$('#menuCv'),mg=mCv.getContext('2d');
 var mW=0,mH=0;
-var LAND_B64="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8P8PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD3//8HAPH//38AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+P//f/j/////f/4DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAODP+f/H////////PwAAAABABgAA8AEAAAAAwB8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA4H//f4D///////8HAAAA8N8fAAAAAAAAAACAfwAAAAAAAAAAAAAAAAAAAAAAAAAAEPAcv/8P/v///////wMAAADgPwAAAAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAAAAAAAAA8AABA/gH/////////AwAAAAAfBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfAAAcPD/Af7///////8DAAAAAAYAAAAAAAAAAAAAAH8AAAAAAAAAAAAAAAAAAAAAAADHx8AHBwAAAPD//////wMAAAAAAAAAAAAA+AMAAAD3/z8AAAA8AAAAAAAAAAAAAAAAAMD3A+f+fwAAgP//////AQAAAAAAAAAAAMAPAAAA/P//PwAAAP59AAAAAAAAAAAAAADgAwAAAAAAAAAA/v////8BAAAAAAAAAAAA4AEAAAD///8DAAAAAAAAAAAAAAAAAAAAAMB/AI7v49wDAAD8/////wAAAAAAAAAAAABwAAAA/v////8PPgB4AAAAAAAAAAAAAAAA4Od/x9/wPwYAAPj///9fAAAAAAAAAAAAADwA4An8//////9/APgDAAAAAAEAAAAAAADA+/8PzvD/PwAA/P///38AAAAAAAAAAAAAPgD47P///////39I/n8AAAAAAADAfwAAAADg/x/g4///BwC4////7wAAAAAAAPwDAAAAAPz5//////////////8BAAAAAPj//wfgL8H//8wBBvwfAPj///8/AAAAAADg/wsAAAAI+P3//////////////wHgDwCA/////////3wggDc++A8AgP///wcAAAAAAPj//wEAAPDx+f///////////////+//BwD/////////AD/YPx+cfwDg//8PAAAAAAAA/v//Hw7////7//////////////////8/APz/////////////H4D/AfD//wcAAAAAAID///8/5v////z///////////////////+H8/////////////8AwM8H8P//AMDkAAAAwP//P8z/////////////////////////8MD/////////////fwP+HwHA/wcAgP8BAADg//B/8P////////////////////////+AAOD///////////8/H85/AMD/BwAAfwAAAPj//H/+////////////////////////PwAG8P///////////wcCAO8AgP8DAAAAAAAA/j////////////////////////////9/AAD+////////////ARgAOAAA/wAAAAAAAMD/j////////////////////////////38AAP////////////8AgP4AAAD+AQAAAAAAwP8H/////////////////////////97/AQAA/3/v////////fwAA/AcAAOAAAAAAAADA/w////////////////////////8f4H8AAIDwvwf4//////9/AAD8hwEAAAAAAAAAAMD/HwD//////////////////////w94AAAAANA/AMD//////38AAP6HAwAAAAAAAAAAwPcP/P///////////////////z8AAx4AAAAAAA4AAPj//////wEA/P8HAAAAAAAAAAwA4Af4////////////////////DwAADwAAAAAAMwAA8P//////DQD4/w8AAAAAAAAAPgDsE/v///////////////////8HAMAfAAAAAMAAAADg//////9/APj/DwAAAAAAAAAcAM6D/////////////////////wEA4B8AAAAAGAAAAMD///////8B/v8/AAAAAAAAADgANgD///////////////////9/AADgDwAAAAAAAAAAgP///////w////8AAAAAAADA8wAM3P////////////////////8AAOAHAAAAAAAAAAAQ////////H////wMAAAAAAODhAP///////////////////////08A4AMAAAAAAAAAACD+//////8f/v//AwAAAAAAwPnj////////////////////////fwDgAAAAAAAAAAAAAPz//////z////8BAAAAAABA/PH///////////////////////9/AEAAAAAAAAAAAAAA/P//////////PwMAAAAAAAD4/f///////////////////////88AAAAAAAAAAAAAAAD8/////////z8AAwAAAAAAAAD+////////////////////////zwAAAAAAAAAAAAAAALD/////////z4APAAAAAAAAwP////////////////////////9PAQAAAAAAAAAAAAAAYP/////////3wB8AAAAAAAD4/////////////////////////0cAAAAAAAAAAAAAAADA//////////8AFAAAAAAAAOD/////////////////////////QwAAAAAAAAAAAAAAAMD//////////xYAAAAAAAAAwP////97/H/4//////////////8DAAAAAAAAAAAAAAAAwP//////////HwAAAAAAAACA/7///3H9H/j//////////////wAAAAAAAAAAAAAAAADA/////////58BAAAAAAAAAID/P/7/IPwP//////////////9/YAAAAAAAAAAAAAAAAMD/////////gwAAAAAAAACAwP94/P8A8B/+/////////////z/gAwAAAAAAAAAAAAAAwP////////8BAAAAAAAAAMD/B/DwfwDAH/z/////////////A/gAAAAAAAAAAAAAAADA/////////wMAAAAAAAAAwP8H4MN/8MA/9P////////////8AGAAAAAAAAAAAAAAAAMD/////////AAAAAAAAAADA/wGA53///3/g/////////////wAQAAAAAAAAAAAAAAAAwP///////z8AAAAAAAAAAMD/AAbCxf//f/j//////////58/ADAAAAAAAAAAAAAAAADA////////DwAAAAAAAAAA4P8AAoTD//9/+P//////////hzgAOAAAAAAAAAAAAAAAAID///////8PAAAAAAAAAADAfwAAguf//z/w//////////8HeAAYAAAAAAAAAAAAAAAAAP///////wcAAAAAAAAAAMA/AIABw/////D//////////+/gABwAAAAAAAAAAAAAAAAA/v//////DwAAAAAAAAAAAAb+DwACM///////////////P/CADwAAAAAAAAAAAAAAAAD+//////8PAAAAAAAAAAAAxv8PAAQA//////////////8f4PAPAAAAAAAAAAAAAAAAAPz//////wcAAAAAAAAAAAD+/w8AABD//////////////x8w/AMAAAAAAAAAAAAAAAAA8P//////AQAAAAAAAAAAAP//DwAAgP//////////////PwB6AAAAAAAAAAAAAAAAAADA/////38AAAAAAAAAAADA//9/AACA//////////////8/AA8AAAAAAAAAAAAAAAAAAMD/////PwAAAAAAAAAAAOD////BB4D//////////////38AAgAAAAAAAAAAAAAAAAAAgPz///8/AAAAAAAAAAAA4P///8f/1v//////////////fwAAAAAAAAAAAAAAAAAAAACA+f//Dz4AAAAAAAAAAADg/////////7////////////9/AAAAAAAAAAAAAAAAAAAAAAD7/z8YMAAAAAAAAAAAAOD/////////H/////////////8AAAAAAAAAAAAAAAAAAAAAAPb/HwBwAAAAAAAAAAAA+P//////v/8//v//////////fwAAAAAAAAAAAAAAAAAAAAAA5/8PAHAAAAAAAAAAAAD+//////8f/3/4//////////8/AAAAAAAAAAAAAAAAAAAAAADM/w8AYAEAAAAAAAAAAP7//////z///4D//////////x8AAAAAAAAAAAAAAAAAAAAAAIj/DwBAAAAAAAAAAAAA////////P/7/Qf7/////////HwAAAAAAAAAAAAAAAAAAAAAAGP8PAAACAAAAAAAAAID///////9//v9hAPj///////9PAAAAAAAAAAAAAAAAAAAAAAAg/gcAAAAAAAAAAAAAwP/////////4//8A+P///////0cAAAAAAAAAAAAAAAAAAAAAAAD8BwB4AAAAAAAAAADA//////////j//wPg////////QQAAAAAAAAAAAABAAAAAAAAAAPgHAMQDAAAAAAAAAOD/////////+f//A+D//8///z8AAAAAAAAAAAAAAAACAAAAAAAA+A/wAA4AAAAAAAAA4P/////////x//8BwP7/wf9/BAAAAAAAAAAAAAAAAAAAAAAAAAD4D3gAPAAAAAAAAADA//////////H//wAA/v+A/z8AAAAAAAAAAAAAAAAACAAAAAAAAPgfeACAAwAAAAAAAMD/////////wf//AAD+PwD/PwYAAAAAAAAAAAAAAAAAAAAAAAAA4H8/AOJvAAAAAAAAwP/////////D/38AAP4fAP4/AkAAAAAAAAAAAAAAAAAAAAAAAACA/z8AAAAAAAAAAADA/////////4f/HwAA/g8A/n8AwAAAAAAAAAAAAAAAAAAAAAAAAAD8PwAAAAAAAAAAAMD/////////h/8HAAD8BwD+fwDAAAAAAAAAAAAAAAAAAAAAAAAAABDfAwAAAAAAAAAAwP////////+P/wMAAPwBAPD/AWAAAAAAAAAAAAAAAAAAAAAAAAAAAP4PAAAAAAAAAADg/////////x//AAAA+AEA4P8BQAAAAAAAAAAAAAAAAAAAAAAAAAAA+AcAAAAAAAAAAOD/////////Px8AAAD4AQDg/wHAAQAAAAAAAAAAAAAAAAAAAAAAAACABwAAAAAAAAAA4P////////9/AwAAAPgBAGD/AUACAAAAAAAAAAAAAAAAAAAAAAAAAAAHAAEAAAAAAADA//////////8AAAAA8AEAYPwBAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAbADAAAAAAAAID//////////+ABAADwAQBA/AEADQAAAAAAAAAAAAAAAAAAAAAAAAAABvB+CwAAAAAAAP///////////wEAAOABACBwABACAAAAAAAAAAAAAAAAAAAAAAAAAACM8P4PAAAAAAAA/v//////////AAAA4AIAICAACAkAAAAAAAAAAAAAAAAAAAAAAAAAAHj+/x8AAAAAAAD+//////////8AAABgAgBgAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAQP7/fwAAAAAAAPz/////////fwAAAAAGAMAAAAAdAAAAAAAAAAAAAAAAAAAAAAAAAAAA/P//AAAAAAAA+P////////9/AAAAAAYAgAEAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAD8//8NAAAAAADg/+H//////z8AAAAAAACAAwAGCAAAAAAAAAAAAAAAAAAAAAAAAAAAAPz//z8AAAAAAMBhwP//////PwAAAAAAABwHgA8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA/P//fwAAAAAAAAAA/P////8fAAAAAAAAOAfABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8//9/AAAAAAAAAAD4/////w8AAAAAAABwBsADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP7///8AAAAAAAAAAPj/////BwAAAAAAAOAM8AcAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAA/P////8BAAAAAAAAwAv+D0AAAAAAAAAAAAAAAAAAAAAAAAAAAID/////AAAAAAAAAAD8/////wAAAAAAAADAB/7nQwAAAAAAAAAAAAAAAAAAAAAAAAAAgP////8DAAAAAAAAAPz///9/AAAAAAAAAIAH/gcAAAAAAAAAAAAAAAAAAAAAAAAAAADA/////x8AAAAAAAAA/P///38AAAAAAAAAAA/84wAeAAAAAAAAAAAAAAAAAAAAAAAAAMD/////fwAAAAAAAAD4////HwAAAAAAAAAAD/xxAAAHAAAAAAAAAAAAAAAAAAAAAAAAgP//////DwAAAAAAAPj///8fAAAAAAAAAAA+8PHAuT8AAQAAAAAAAAAAAAAAAAAAAADA//////8/AAAAAAAA8P///w8AAAAAAAAAADwAoADg/wEAAAAAAAAAAAAAAAAAAAAAAMD//////38AAAAAAADg////BwAAAAAAAAAAOAAgAQD/AwEAAAAAAAAAAAAAAAAAAAAAwP///////wEAAAAAAMD///8HAAAAAAAAAAAwAAAAIPznEAAAAAAAAAAAAAAAAAAAAACA////////AQAAAAAAwP///w8AAAAAAAAAAOAJAAAA/AcAAAAAAAAAAAAAAAAAAAAAAAD///////8BAAAAAADA////DwAAAAAAAAAAAD8AAAD+DwABAAAAAAAAAAAAAAAAAAAAAP///////wEAAAAAAID///8PAAAAAAAAAAAAgOwYAHAYAAAAAAAAAAAAAAAAAAAAAAAA/v//////AQAAAAAAwP///w8AAAAAAAAAAAAAAAQAADgACgAAAAAAAAAAAAAAAAAAAAD+//////8AAAAAAACA////HwAAAAAAAAAAAAAAAAAAwAAIAAAAAAAAAAAAAAAAAAAAAPz/////fwAAAAAAAID///8fAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAA/P////8/AAAAAAAAgP///x8AAAAAAAAAAAAAAAC4QAAAAAAAAAAAAAAAAAAAAAAAAAD4/////x8AAAAAAADA////H0AAAAAAAAAAAAAAAP7gAAAAAAAAAAAAAAAAAAAAAAAAAPj/////HwAAAAAAAMD///8f4AAAAAAAAAAAAAAAf+AAAAAAAAAAAAAAAAAAAAAAAAAA8P////8fAAAAAAAA4P///x/gAAAAAAAAAAAAAHh/4AEAAAIAAAAAAAAAAAAAAAAAAADg/////x8AAAAAAADg////H3gAAAAAAAAAAAAA/P/gAwAAAAAAAAAAAAAAAAAAAAAAAID/////HwAAAAAAAOD///8PfgAAAAAAAAAAAAD//+EDAAAAwAAAAAAAAAAAAAAAAAAAAP7///8PAAAAAAAA4P///wN+AAAAAAAAAAAAAP//9wMAAAAgAAAAAAAAAAAAAAAAAAAA/P///w8AAAAAAADg////AX4AAAAAAAAAAAAA////AwAAAAAAAAAAAAAAAAAAAAAAAAD8////DwAAAAAAAMD//38APgAAAAAAAAAAAID///8PAAAAAAAAAAAAAAAAAAAAAAAAAPz///8HAAAAAAAAgP//fwA+AAAAAAAAAAAA8P///x8AQAAAAAAAAAAAAAAAAAAAAAAA/P///wcAAAAAAACA//9/AD4AAAAAAAAAAAD+////PwCAAAAAAAAAAAAAAAAAAAAAAAD8////AwAAAAAAAAD//38AHwAAAAAAAAAAgP////8/AAACAAAAAAAAAAAAAAAAAAAAAPz///8BAAAAAAAAAP//fwAfAAAAAAAAAADA//////8AAAAAAAAAAAAAAAAAAAAAAAAA/P//HwAAAAAAAAAA////AB4AAAAAAAAAAMD//////wAAAAAAAAAAAAAAAAAAAAAAAAD8//8HAAAAAAAAAAD//z8ADgAAAAAAAAAAwP//////AQAAAAAAAAAAAAAAAAAAAAAAAP7//wMAAAAAAAAAAP//DwAAAAAAAAAAAACA//////8DAAAAAAAAAAAAAAAAAAAAAAAA/v//AwAAAAAAAAAA/v8fAAAAAAAAAAAAAMD//////wMAAAAAAAAAAAAAAAAAAAAAAAD+//8DAAAAAAAAAAD+/w8AAAAAAAAAAAAAgP//////AwAAAAAAAAAAAAAAAAAAAAAAAP7//wMAAAAAAAAAAPz/DwAAAAAAAAAAAACA//////8HAAAAAAAAAAAAAAAAAAAAAAAA/v//AQAAAAAAAAAA+P8HAAAAAAAAAAAAAAD//////wMAAAAAAAAAAAAAAAAAAAAAAAD+//8AAAAAAAAAAAD4/wMAAAAAAAAAAAAAAP//////AwAAAAAAAAAAAAAAAAAAAAAAAP///wAAAAAAAAAAAPD/AQAAAAAAAAAAAAAA//////8DAAAAAAAAAAAAAAAAAAAAAAAA/v8/AAAAAAAAAAAA8P8AAAAAAAAAAAAAAAD+P/j//wMAAAAAAAAAAAAAAAAAAAAAAAD//z8AAAAAAAAAAADwfwAAAAAAAAAAAAAAAP4D4P//AQAAAAAAAAAAAAAAAAAAAAAAAP//HwAAAAAAAAAAAPAfAAAAAAAAAAAAAAAA/wPA/v8AAAAAAAAAAAAAAAAAAAAAAAAA/38OAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAOAAD8/wAAAAAAAAAAAAAAAAAAAAAAAID//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPx/AAAAAgAAAAAAAAAAAAAAAAAAgP//AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+H8AAAAAAAAAAAAAAAAAAAAAAADA//8BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwfwAAAAQAAAAAAAAAAAAAAAAAAMD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAOAAAAPAAAAAAAAAAAAAAAAAAAgP8HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+AAAAAAAAAAAAAAAAAADA/wcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAMD/AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAACADAAAAAAAAAAAAAAAAAAAwP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAIADAAAAAAAAAAAAAAAAAACA/wEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAwAEAAAAAAAAAAAAAAAAAAID/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAA4H8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAADgHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPgAAAAAAAAAAAAAAAAAAAPAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAA4H8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAfAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8A8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAHQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAHAAAAAAAAAAAAAAAAAAAAfAAAAAAAAA5wAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAAAAAD/AQAAAAaA//+H////AwAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAA/P/PHwD8//////////8HAAAAAAAAAAAAAAAAAAAAAAAAAOABAAAAAAAAAAAAAAAAYMD///8fgP////////////8JAAAAAAAAAAAAAAAAAAAAAAAA9wMAAAAAAAAAAAAAAAD8/////x/w//////////////8BAAAAAAAAAAAAAAAAAAAAAAD/BwAAAAAAAAAAwO//////////B/7//////////////w8AAAAAAAAAAAAAAAAAAAAA4O8PAAAAAAAAMP////////////8P/////////////////z8AAAAAAAAAAAAAAAAdAAAA4Q8AAAAAAAD8////////////////////////////////PwAAAAAAAAAACAAA4If7AQD/HwAAAAAAwP////////////////////////////////8PAAAAAAAAAAAA8AMA//////8PAAAAAACA/////////////////////////////////wEAAAAAAAD8/////37//////wEAAAAAAPD///////////////////////////////9/AAAAAAAAwP////////////8PAAAAAACA/////////////////////////////////z8AAAAAAAD4////////////AwAAAAAAgP//////////////////////////////////PwAAAAAA//////////////8/AAAAAAD4//////////////////////////////////9/AAAAADj4/////////////wEAAAB+AP////////////////////////////////////8DAAAAAAD4////////////BwAAgP8AgP//////////////////////////////////BwAAAAAAAOD/////////////gB/wHwCA//////////////////////////////////8DAAAAAADw//////////////9/AAAA/P///////////////////////////////////wcAAAAAAMD///////////////8/8P//////////////////////////////////////PwAAAAAAwP//////////////////////////////////////////////////////////BwAQDwAA/v//////////////////////////////////////////////////////////AAAA+P//AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+/* 粒子地球整块卸载。原来这里是一份 13 KB 的陆地掩码、一份罗马疆域掩码，
+   加一段把它们摊成三万五千个点位的构造器；四处画它的地方（主菜单、纪年页、
+   对局屏的地图面板、存档缩略窗）合起来每帧上十万次矩形入桶。
+   菜单的画布本来就 display:none，纪年页的粒子地球这一版进不去，
+   剩下两处已改用平铺的罗马马赛克世界图。三个数组留成空的，
+   底下那些 for(i<LANDPTS.length) 一圈都不会转，不必逐处去删。 */
 var LANDPTS=[],LINKS=[],GEO=[];
-(function(){
-  var bin=atob(LAND_B64),GW=400,GH=200,d2r=Math.PI/180;
-  var MASK=new Uint8Array(GW*GH);
-  for(var mi2=0;mi2<GW*GH;mi2++)if(bin.charCodeAt(mi2>>3)&(1<<(mi2&7)))MASK[mi2]=1;
-  function landAt(lonD,latD){
-    var x=Math.min(GW-1,Math.max(0,Math.floor((lonD+180)/360*GW)));
-    var y=Math.min(GH-1,Math.max(0,Math.floor((90-latD)/180*GH)));
-    return MASK[y*GW+x];
-  }
-  /* Roman Empire at its greatest extent (Trajan, 117 AD) — real historical borders,
-     rasterized from the AWMC-derived extent polygon at 0.25° into a bbox mask */
-  var ROME_B64="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/v////////8AAAAAAAAAAAAAAAAAAAAAAAAAAP7/////////AAAAAAAAAAAAAAAAAAAAAAAAAAD+/////////wAAAAAAAAAAAAAAAAAAAAAAAAAA/v////////8AAAAAAAAAAAAAAAAAAAAAAAAAAP7/////////AAAAAAAAAAAAAAAAAAAAAAAAAAD+/////////wAAAAAAAAAAAAAAAAAAAAAAAAAA/v////////8AAAAAAAAAAAAAAAAAAAAAAAAAAP7/////////AAAAAAAAAAAAAAAAAAAAAAAAAAD+/////////wAAAAAAAAAAAAAAAAAAAAAAAAAA/v////////8AAAAAAAAAAAAAAAAAAAAAAAAAAP7/////////AAAAAAAAAAAAAAAAAAAAAAAAAAD+/////////wAAAAAAAAAAAAAAAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+//////////////////////8AAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+//////////////////////8AAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+//////////////////////8AAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+//////////////////////8AAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+//////////////////////8AAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+//////////////////////8AAAAAAAAAAAAA/v//////////////////////AAAAAAAAAAAAAP7//////////////////////wAAAAAAAAAAAAD+/////////////////////////////38AAAAA/v////////////////////////////9/AAAAAP7/////////////////////////////fwAAAAD+/////////////////////////////38AAAAA/v////////////////////////////9/AAAAAP7/////////////////////////////fwAAAAD+/////////////////////////////38AAAAAAPD///////////////////////////9/AAAAAADw////////////////////////////fwAAAAAA8P///////////////////////////38AAAAAAPD/////////////////////////////fwAAAADw/////////////////////////////38AAAAA8P////////////////////////////9/AAAAAPD/////////////////////////////fwAAAADw/////////////////////////////38AAAAA8P////////////////////////////9/AAAAAPD/////////////////////////////fwAAAADw/////////////////////////////38AAAAA8P////////////////////////////9/AAAAAPD/////////////////////////////fwAAAAAAAADg/////////////////////////38AAAAAAAAA4P////////////////////////9/AAAAAAAAAOD/////////////////////////fwAAAAAAAADg/////////////////////////38AAAAAAAAA4P////////////////////////9/AAAAAAAAAOD/////////////////////////fwAAAAAAAADg/////////////////////////38AAAAAAAAA4P////////////////////////9/AAAAAAAAAOD/////////////////////////fwAAAAAAAADg/////////////////////////38AAAAAAAAA4P////////////////////////9/AAAAAAAAAOD/////////////////////////fwAAAAAAAADg/////////////////////////38AAAAAAAAA4P////////////////////////9/AAAAAAAAAAD/////////D/D/////////////fwAAAAAAAAAA/////////w/w/////////////38AAAAAAAAAAP////////8P8P////////////9/AAAAAAAAAAD/////////D/D/////////////fwAAAAAAAAAA/////////w/w/////////////38AAAAAAAAAAP////////8P8P////////////9/AAAAAAAAAAD/////////D/D///////////9/AAAAAAAAAAAA/////////w/w////////////fwAAAAAAAAAAAP////////8P8P///////////38AAAAAAAAAAAD/////////D/D///////////9/AAAAAAAAAAAA/////////w/w////////////AwAAAAAAAAAAAP////////8P8P///////////wMAAAAAAAAAAAD/////////D/D///////////8DAAAAAAAAAAAA/////////w/w////////////AwAAAAAAAAAAAP////////8P8P///////////wMAAAAAAAAAAAD/////////D/D///////////8DAAAAAAAAAAAA/////////w/w////////////AwAAAAAAAAAAAP////////8P8P///////////wMAAAAAAAAAAAD/////////D/D///////////8DAAAAAAAAAAAA/////////w/w////////////AwAAAAAAAAAAAP////////8P8P///////////wMAAAAAAAAAAAD/////////D/D///////////8DAAAAAAAAAAAA/////////w/w////////////AwAAAAAAAAAAAP////////8P8P///////////wMAAAAAAAAAAAD/////////D/D///////////8DAAAAAAAAAAAA/////////w/w////////////AwAAAAAAAAAAAP//////AAAAAAAAAOD//////wMAAAAAAAAAAAD//////wAAAAAAAADg//////8DAAAAAAAAAAAA//////8AAAAAAAAA4P//////AwAAAAAAAAAAAP//////AAAAAAAAAOD//////wMAAAAAAAAAAAD//////wAAAAAAAADg//8DAAAAAAAAAAAAAAAA//////8AAAAAAAAA4P//AwAAAAAAAAAAAAAAAP//////AAAAAAAAAOD//wMAAAAAAAAAAAAAAAD//////wAAAAAAAADg//8DAAAAAAAAAAAAAAAA//////8AAAAAAAAA4P//AwAAAAAAAAAAAAAAAP//////AAAAAAAAAOD//wMAAAAAAAAAAAAAAAD//////wAAAAAAAADg//8DAAAAAAAAAAAAAAAA//////8AAAAAAAAA4P//AwAAAAAAAAAAAAAAAP//////AAAAAAAAAOD//wMAAAAAAAAAAAAAAAD//////wAAAAAAAADg//8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4P//AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOD//wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADg//8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4P//AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOD//wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADg//8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4P//AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOD//wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADg//8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4P//AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-  var RB={lo0:15,lo1:140,la0:15,la1:58,w:224,h:144};
-  var rbin=atob(ROME_B64),RMASK=new Uint8Array(RB.w*RB.h);
-  for(var ri2=0;ri2<RB.w*RB.h;ri2++)if(rbin.charCodeAt(ri2>>3)&(1<<(ri2&7)))RMASK[ri2]=1;
-  function inEmpire(lonD,latD){
-    if(lonD<RB.lo0||lonD>=RB.lo1||latD<=RB.la0||latD>RB.la1)return false;
-    var x=Math.floor((lonD-RB.lo0)/(RB.lo1-RB.lo0)*RB.w);
-    var y=Math.floor((RB.la1-latD)/(RB.la1-RB.la0)*RB.h);
-    return !!RMASK[y*RB.w+x];
-  }
-  /* GitHub-globe method: equal-pitch latitude bands, evenly spaced dots per band,
-     land-mask lookup decides visibility → clean machine raster, not scatter */
-  var DLAT=.58;                                /* dense raster: ~3× the dot count */
-  for(var latD=-90+DLAT/2;latD<90;latD+=DLAT){
-    var nB=Math.max(1,Math.round(360*Math.cos(latD*d2r)/DLAT));
-    for(var kB=0;kB<nB;kB++){
-      var lonD=-180+(kB+.5)*360/nB;
-      if(!landAt(lonD,latD))continue;
-      var la2=latD*d2r,lo2=lonD*d2r;
-      LANDPTS.push({sy:Math.sin(la2),cl:Math.cos(la2),lo:lo2,
-                    br:.78+.32*hash(kB*1.3,latD*2.1),
-                    rome:inEmpire(lonD,latD),
-                    hi:hash(kB*7.7,latD*3.3)<.006});
-    }
-  }
-  /* geodesic wireframe wrapping the whole sphere: icosahedron subdivided once */
-  function nrm(v){var l=Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);return[v[0]/l,v[1]/l,v[2]/l];}
-  function mid(a,b){return nrm([(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2]);}
-  var t=(1+Math.sqrt(5))/2;
-  var V=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],
-         [t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]].map(nrm);
-  var F=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],
-         [3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];
-  var seen={};
-  F.forEach(function(fc){
-    var a=V[fc[0]],b=V[fc[1]],c=V[fc[2]],ab=mid(a,b),bc=mid(b,c),ca=mid(c,a);
-    [[a,ab],[ab,b],[b,bc],[bc,c],[c,ca],[ca,a],[ab,bc],[bc,ca],[ca,ab]].forEach(function(e){
-      var k1=e[0].join()+'|'+e[1].join(),k2=e[1].join()+'|'+e[0].join();
-      if(!seen[k1]&&!seen[k2]){seen[k1]=1;GEO.push(e);}
-    });
-  });
-})();
 /* menu title = same particle-dot SPQR as the intro (rasterize → dot targets) */
 var MTP=[],MTC=[],MSTEP=4;
 function menuText(){
@@ -3872,109 +3840,11 @@ function GB_flush(g){
 }
 function menuDraw(){
   if(ERA.on){eraDraw();return;}
-  var now=performance.now(),mt=now-MENU.t0;
-  /* full-scene parallax: 指标／拖曳，静置自动巡游（不用陀螺仪） */
-  var _pt=parTarget(),tx=_pt[0],ty=_pt[1];
-  PX+=(tx-PX)*(REDUCED?1:.06);PY+=(ty-PY)*(REDUCED?1:.06);
-  if(REDUCED){PX=0;PY=0;}
-  /* globe: oversized bleed layout — sphere bigger than the frame, centre pushed
-     up-left so the limb crops off top/bottom and the disc fills the scene */
-  /* STEM framing: sphere centre far left-of-centre, LEFT + TOP limbs cropped
-     off-frame — what reads is the bright lower-right limb crescent, with dark
-     sky on the right for future HUD */
-  var cx=mW*.26-PX*mW*.011,cy=mH*.47-PY*mH*.011,R=mH*.62;
-  miEl.style.translate=(PX*34)+'px '+(PY*22)+'px';         /* options: nearest layer, moves most */
-  mfEl.style.translate=(PX*12)+'px '+(PY*8)+'px';
-  mg.clearRect(0,0,mW,mH);
-  /* light bloom behind the title (GIF-1 style volumetric glow) */
-  var gy=mH*.36-PY*mH*.008,gx=mW/2-PX*mW*.008;          /* bloom stays with the title, not the globe */
-  var grd=mg.createRadialGradient(gx,gy,0,gx,gy,mH*.42);
-  grd.addColorStop(0,'rgba(212,166,72,'+(.10+.03*Math.sin(mt*.0011)).toFixed(3)+')');
-  grd.addColorStop(1,'rgba(212,166,72,0)');
-  mg.fillStyle=grd;mg.fillRect(0,0,mW,mH);
-  /* particle Earth — orthographic, opens parked on Europe then slow spin */
-  var spin=REDUCED?0:Math.max(0,mt-1600)*.000042;
-  var lonC=15*Math.PI/180+spin;                /* Europe ≈15°E faces the camera first */
-  var tilt=.50,ctl=Math.cos(tilt),stl=Math.sin(tilt);  /* deeper tilt keeps Europe in the visible band */
-  var cs=Math.cos(lonC),sn=Math.sin(lonC);
-  /* halo: annulus glow hugging the limb only — inside stays pure black */
-  /* amber-orange rim glow only — no drawn limb circle; the crescent is carried
-     purely by the glow and the rim-lit dots */
-  var hg=mg.createRadialGradient(cx,cy,0,cx,cy,R*1.12);
-  hg.addColorStop(0,'rgba(255,148,38,0)');
-  hg.addColorStop(.86,'rgba(255,148,38,0)');
-  hg.addColorStop(.905,'rgba(255,148,38,.20)');
-  hg.addColorStop(1,'rgba(255,148,38,0)');
-  mg.fillStyle=hg;mg.beginPath();mg.arc(cx,cy,R*1.12,0,Math.PI*2);mg.fill();
-  /* geodesic shell: DETACHED from the dot sphere — larger radius, so the mesh
-     floats past the limb and fills the dark sky upper-right (STEM look) */
-  var RG=R*1.32;
-  mg.strokeStyle='rgba(201,155,63,.09)';
-  mg.beginPath();
-  for(var ge=0;ge<GEO.length;ge++){
-    var E=GEO[ge],q=[null,null],vis=true;
-    for(var en=0;en<2;en++){
-      var v=E[en];
-      var Xg=v[0]*cs+v[2]*sn,Zg=-v[0]*sn+v[2]*cs,Yg=v[1];
-      var Yt=Yg*ctl-Zg*stl,Zt=Yg*stl+Zg*ctl;
-      if(Zt<-.06){vis=false;break;}
-      q[en]=[cx+Xg*RG,cy-Yt*RG];
-    }
-    if(vis){mg.moveTo(q[0][0],q[0][1]);mg.lineTo(q[1][0],q[1][1]);}
-  }
-  mg.stroke();
-  /* land dots: aligned bands, depth-faded (moiré-killer), per-dot brightness variance.
-     Empire dots are saturated signal red, plain land is dimmed gold — strong split */
-  for(var i=0;i<LANDPTS.length;i++){
-    var p=LANDPTS[i],lam=p.lo-lonC;
-    var Xr=p.cl*Math.sin(lam),Zr=p.cl*Math.cos(lam),Yr=p.sy;
-    var Y2=Yr*ctl-Zr*stl,Z2=Yr*stl+Zr*ctl;
-    if(Z2<=0)continue;                                 /* dark far side = contrast */
-    var sx=cx+Xr*R,sy2=cy-Y2*R;
-    /* 三万五千个点，逐点算出一个 rgba 字符串再赋给 fillStyle——那等于每帧做
-       一万七千次字符串拼接与 CSS 颜色解析。Chrome 把这条路优化得看不出来，
-       WebKit（Safari／Tauri 的 WKWebView）没有，于是同一份代码在 Mac 上
-       整屏发木。改法是把透明度量化成十六档、按档分桶，每帧只设十六次
-       fillStyle、每桶一次 fill()——画面几乎无差，调用量降到千分之一。 */
-    if(p.rome){
-      var ar=.5+.5*Z2;
-      var sr=1.6*DPR*(.8+.35*Z2);
-      GB_push(0,(ar*GB_N)|0,sx,sy2,sr,sr);
-    }else if(p.hi){
-      var ah=Math.min(1,(.2+.6*Z2)*1.4);
-      GB_push(1,(ah*GB_N)|0,sx-1*DPR,sy2-1*DPR,2.6*DPR,2.6*DPR);
-    }else{
-      /* rim light: grazing-angle dots brighten toward the limb (STEM crescent) */
-      var rim=Math.pow(1-Z2,5)*.38;
-      var a=Math.min(1,(.10+.5*Z2)*p.br+rim);
-      var s=1.15*DPR*(.75+.4*Z2);
-      GB_push(rim>.12?2:3,(a*GB_N)|0,sx,sy2,s,s);
-    }
-  }
-  GB_flush(mg);
-
-  /* SPQR title: the intro's particle-dot lettering, re-assembling on entry */
-  var pox=PX*22*DPR,poy=PY*14*DPR;                    /* title parallax layer */
-  /* dark backing plate lifts the lettering off the map */
-  var bx=mW/2+pox,by=mH*.36+poy;
-  var bg2=mg.createRadialGradient(bx,by,0,bx,by,mH*.30);
-  bg2.addColorStop(0,'rgba(6,6,6,.78)');
-  bg2.addColorStop(.7,'rgba(6,6,6,.45)');
-  bg2.addColorStop(1,'rgba(6,6,6,0)');
-  mg.fillStyle=bg2;mg.fillRect(bx-mH*.5,by-mH*.30,mH,mH*.6);
-  mg.globalCompositeOperation='lighter';
-  var settled2=mt>2000;
-  for(var ti=0;ti<MTP.length;ti++){
-    var tpp=MTP[ti],tcc=MTC[ti];
-    if(settled2||REDUCED){tcc.x=tpp.x;tcc.y=tpp.y;}
-    else if(mt>tcc.delay){tcc.x+=(tpp.x-tcc.x)*.13;tcc.y+=(tpp.y-tcc.y)*.13;}
-    var tw3=REDUCED?1:(.82+.18*Math.sin(now*.002+ti*1.3));
-    mg.fillStyle=tpp.hi?'rgba(240,208,132,'+(.95*tw3).toFixed(2)+')'
-                       :'rgba(212,166,72,'+(.68*tw3).toFixed(2)+')';
-    var ts=(tpp.hi?.78:.55)*MSTEP;
-    mg.fillRect(tcc.x+pox,tcc.y+poy,ts,ts);
-  }
-  mg.globalCompositeOperation='source-over';
+  /* 底下原来是一整套：粒子地球、测地线壳、标题点阵、光晕。
+     可 `#menu:not(.era):not(.gbg) #menuCv{display:none}` —— 这一屏的画布是
+     不显示的，马赛克盖在上头。画了三万五千个点，一个也没人看见，
+     帧率却因此从 60 掉到 21。整段撤掉。
+     要请回来，去 git 里取这一段的旧身体。 */
 }
 /* ============ era select flow: year box → globe of period sites → persona ============ */
 /* sites: [latin, 汉名, lat, lon, firstYear, lastYear] — shown when the entered year falls in range */
@@ -4653,7 +4523,9 @@ ebEl.addEventListener('pointerup',function(e){if(e.target===ebEl)ebClose();});
 psEl.addEventListener('pointerup',function(e){if(e.target===psEl)psClose();});
 prEl.addEventListener('pointerup',function(e){if(e.target===prEl)prClose();});
 
-$('#miMiss').addEventListener('pointerup',function(e){e.stopPropagation();lsOpen();});
+$('#miMiss').addEventListener('pointerup',function(e){e.stopPropagation();
+  /* 这张卡只有一条线，中间那一层选线的屏没有意义：开始就是选图版 */
+  if(typeof esHas==='function'&&esHas(ACTIVE))esOpen(ACTIVE);else lsOpen();});
 /* ═══════════ INITIVM · 三线选择面板（粒子构筑物） ═══════════
    秦的高台大殿——与开场 SPQR 同一套「粒子聚形」语言：
    把剪影画到离屏画布上采样成目标点，粒子从散乱中逐个归位，归位后保持微颤与偶发高光。 */
@@ -4832,7 +4704,8 @@ function esBuild(){
          状态残留到下一次按下，手一动就乱跳。 */
       b.addEventListener('pointerup',function(){
         if(ES.moved>ES.dead)return;      /* 这一下是拖，不是点 */
-        if(n!==ES.i)esGo(n);             /* 点选中的那张不做事——进局只认 ENGAGE 与回车 */
+        if(n!==ES.i){esGo(n);return;}    /* 先点选 */
+        esEngage();                      /* 再点选中的那一张就是进下一步 */
       });
       tr.appendChild(b);ES.pls.push(b);
       var p=document.createElement('button');
@@ -4856,13 +4729,32 @@ function esBuild(){
   ES.bands=g;
 }
 
-/* 一次只把选中那张前后各六张的图真装上，省得四十二张一起下 */
+/* 图版四十二张，一张全图解开是 1024×1536×4 ≈ 6 MB。
+   原来是「选中那张前后各六张一起上全图」，走一遍四十二张就是两百多兆常驻，
+   而且换出去也不放。可条子上那几张只有九十二像素宽，用不着全图。
+   现在：条子一律上缩图（t/ 下，四十二张合计四百九十一 KB，可以一直留着），
+   只有选中那一张在全图于后台解开之后才换上去——先换会闪一下空白。 */
+function esThumb(s){return String(s).replace('/annals/','/annals/t/');}
 function esLoad(){
-  var k,d,im;
+  var k,d,im,th;
   for(k=0;k<ES.rows.length;k++){
-    if(Math.abs(k-ES.i)>6)continue;
-    im=ES.pls[k].firstChild;d=ES.rows[k];
-    if(im&&!im.getAttribute('src')){im.setAttribute('src',d.src);im.setAttribute('alt',d.t);}
+    im=ES.pls[k].firstChild;if(!im)continue;
+    d=ES.rows[k];th=esThumb(d.src);
+    if(im.getAttribute('alt')!==d.t)im.setAttribute('alt',d.t);
+    if(k!==ES.i){
+      im._want=th;
+      if(im.getAttribute('src')!==th)im.setAttribute('src',th);
+      continue;
+    }
+    im._want=d.src;
+    if(!im.getAttribute('src'))im.setAttribute('src',th);
+    if(im.getAttribute('src')===d.src)continue;
+    (function(img,full){
+      var pre=new Image();
+      pre.decoding='async';
+      pre.onload=function(){if(img._want===full)img.setAttribute('src',full);};
+      pre.src=full;
+    })(im,d.src);
   }
 }
 
@@ -6054,10 +5946,18 @@ function gameShow(){
   ERA.on=false;mOv.classList.remove('era');
   MENU.on=false;MENU.exiting=false;
   mOv.classList.add('show','gbg');          /* 画布留下：地球在毛玻璃后面转 */
-  if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));
+  /* 地图上挂哪些地方，由这一代自己的资料说了算。
+     原来走的是 SITES —— 那是上一张卡的周秦城池表，四十一代里对得上的只有一代。 */
+  var _fl=null;try{_fl=(FE&&FE.era&&FE.era.locs)||null;}catch(_){}
+  if(_fl&&_fl.length){
+    var _rad=Math.PI/180;
+    ERA.act=_fl.map(function(L,i){
+      return {n:L.n,cn:L.cn,la:L.la,lo0:L.lo,d:L.d,
+              cl:Math.cos(L.la*_rad),sy:Math.sin(L.la*_rad),lo:L.lo*_rad,delay:i*90};});
+  }else if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));
   GAME.on=true;gEl.classList.add('show');gEl.setAttribute('data-pg','narr');
   /* 桌面端进入游戏默认展开天下面板（默认条档） */
-  if(!GAME.txOpen){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');try{localStorage.setItem('med3d_tier','0');}catch(_){}setTimeout(zj3dTick,600);} /* 手机亦默认开三维（默认条档，LOD 自动降耗） */
+  if(false){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');try{localStorage.setItem('med3d_tier','0');}catch(_){}setTimeout(zj3dTick,600);} /* 手机亦默认开三维（默认条档，LOD 自动降耗） */
   /* 这里直接改了 txOpen 与 class，绕过了展开／收起两钮的重绘——不补这一脚，
      钮的灰态会一直停在「脚本刚解析时」的样子。 */
   try{if(window.__arrPaint)window.__arrPaint();}catch(_){}
@@ -6246,56 +6146,61 @@ function gameExit(){
   ['#dlgCfg','#dlgBook','#dlgSave','#dlgExit','#dlgApi','#dlgVoc','#dlgBgm'].forEach(function(d){$(d).style.display='none';});
   menuEnter();
 }
-/* half-globe map: the sphere hangs off the panel's left edge; drag to roll it */
+/* 对局屏的地图：与择地那一步同一幅罗马马赛克世界图，同一套投影。
+   原来挂的是半颗粒子地球（球心压在面板左缘、只露右半边），
+   与择地那一屏风马牛不相及，玩家在两处看到的是两个世界。 */
+function gmMM(){try{return (FE&&FE.mm&&FE.mi&&FE.mi.width)?FE.mm:null;}catch(_){return null;}}
+function gmBox(){
+  /* 镜头对着这一代的地点群，视野至少两百度——先认出是世界的哪一边，再看是哪一处。
+     与 feMapFit 同一条式子，只是落在画布的设备像素里，不落在 DOM 上。 */
+  var mm=gmMM();if(!mm)return null;
+  var A=ERA.act||[],i,lo0=1e9,lo1=-1e9,la0=1e9,la1=-1e9;
+  for(i=0;i<A.length;i++){
+    lo0=Math.min(lo0,A[i].lo0);lo1=Math.max(lo1,A[i].lo0);
+    la0=Math.min(la0,A[i].la); la1=Math.max(la1,A[i].la);
+  }
+  if(!A.length){lo0=lo1=12;la0=la1=30;}
+  var cLo=(lo0+lo1)/2,cLa=(la0+la1)/2;
+  var span=Math.max(lo1-lo0,(la1-la0)*gmW/gmH)*1.9+24;
+  span=Math.max(200,Math.min(360,span))/Math.max(.7,Math.min(4,GAME.zoom||1));
+  var sc=gmW/(span*(mm.w/360));
+  /* 面板是一根竖长条，整幅世界图按经度铺进去只占中间一条，上下空着两截。
+     在不把这一代的地点挤出画面的前提下，把高度尽量铺满：
+     scMax 是「这一代的地点群最少要露出来的经度跨度」定下的上限。 */
+  var need=Math.max(24,(lo1-lo0)*1.6+20);
+  sc=Math.max(sc,Math.min(gmW/(need*(mm.w/360)),gmH/mm.h));
+  var bw=mm.w*sc,bh=mm.h*sc;
+  var px=((cLo+180)/360)*bw,py=((mm.laTop-cLa)/(mm.laTop-mm.laBot))*bh;
+  var L=gmW/2-px,T=gmH/2-py;
+  L=(bw>gmW)?Math.min(0,Math.max(gmW-bw,L)):(gmW-bw)/2;
+  T=(bh>gmH)?Math.min(0,Math.max(gmH-bh,T)):(gmH-bh)/2;
+  return {mm:mm,L:L,T:T,bw:bw,bh:bh};
+}
+function gmPX(B,lo){return B.L+((lo+180)/360)*B.bw;}
+function gmPY(B,la){return B.T+((B.mm.laTop-la)/(B.mm.laTop-B.mm.laBot))*B.bh;}
 function gmapDraw(){
   if(gmW<4){gmapSize();if(gmW<4)return;}
-  if(!GAME.drag){GAME.lon+=GAME.vel+((REDUCED||GAME.hov)?0:.00022);GAME.vel*=.94;}
-  var cx=gmW*.04,cy=gmH*.5,R=Math.min(gmH*.72,gmW*.98)*(GAME.zoom||1);
-  var lonC=GAME.lon,tilt=(GAME.tilt==null?.42:GAME.tilt),ctl=Math.cos(tilt),stl=Math.sin(tilt);
-  var cs=Math.cos(lonC),sn=Math.sin(lonC);
-  var eraRed=ERA.year>=-27&&ERA.year<=395;
   gmc.clearRect(0,0,gmW,gmH);
-  var hg=gmc.createRadialGradient(cx,cy,0,cx,cy,R*1.12);
-  hg.addColorStop(0,'rgba(255,148,38,0)');
-  hg.addColorStop(.86,'rgba(255,148,38,0)');
-  hg.addColorStop(.905,'rgba(255,148,38,.18)');
-  hg.addColorStop(1,'rgba(255,148,38,0)');
-  gmc.fillStyle=hg;gmc.beginPath();gmc.arc(cx,cy,R*1.12,0,Math.PI*2);gmc.fill();
-  for(var i=0;i<LANDPTS.length;i++){
-    var p=LANDPTS[i],lam=p.lo-lonC;
-    var Xr=p.cl*Math.sin(lam),Zr=p.cl*Math.cos(lam),Yr=p.sy;
-    var Y2=Yr*ctl-Zr*stl,Z2=Yr*stl+Zr*ctl;
-    if(Z2<=0)continue;
-    var sx=cx+Xr*R,sy2=cy-Y2*R;
-    if(sx<-4||sx>gmW+4)continue;
-    if(p.rome&&eraRed){
-      var sr=1.6*DPR*(.8+.35*Z2);
-      GB_push(0,((.5+.5*Z2)*GB_N)|0,sx,sy2,sr,sr);
-    }else if(p.hi){
-      var ah2=Math.min(1,(.2+.6*Z2)*1.4);
-      GB_push(1,(ah2*GB_N)|0,sx-1*DPR,sy2-1*DPR,2.6*DPR,2.6*DPR);
-    }else{
-      var rim=Math.pow(1-Z2,5)*.38,a=Math.min(1,(.10+.5*Z2)*p.br+rim);
-      var s=1.15*DPR*(.75+.4*Z2);
-      GB_push(rim>.12?2:3,(a*GB_N)|0,sx,sy2,s,s);
-    }
-  }
-  GB_flush(gmc);
   GAME.hit.length=0;
-  gmc.textBaseline='middle';
-  var vis=[],hovI=-1,hb=52;
-  for(var si=0;si<ERA.act.length;si++){
-    var st=ERA.act[si],lam2=st.lo-lonC;
-    var Xs=st.cl*Math.sin(lam2),Zs=st.cl*Math.cos(lam2),Ys=st.sy;
-    var Ym=Ys*ctl-Zs*stl,Zm=Ys*stl+Zs*ctl;
-    if(Zm<=.10)continue;
-    var mx=cx+Xs*R,my=cy-Ym*R;
-    if(mx<0||mx>gmW)continue;
-    vis.push({s:st,i:si,x:mx,y:my});
+  var B=gmBox();
+  if(!B){                                   /* 图还没到：先空着，下一帧再说 */
+    gmc.fillStyle='rgba(236,236,232,.35)';
+    gmc.font=(11*DPR)+'px ui-monospace,Menlo,monospace';
+    gmc.fillText('TABVLA…',14*DPR,20*DPR);
+    return;
   }
-  for(var vi=0;vi<vis.length;vi++){
-    var d0=Math.hypot(GAME.mx-vis[vi].x/DPR,GAME.my-vis[vi].y/DPR);
-    if(d0<hb){hb=d0;hovI=vis[vi].i;}
+  gmc.imageSmoothingEnabled=false;          /* 马赛克要的就是硬边 */
+  gmc.drawImage(FE.mi,B.L,B.T,B.bw,B.bh);
+  gmc.textBaseline='middle';
+  var A=ERA.act||[],vis=[],i,hovI=-1,hb=52;
+  for(i=0;i<A.length;i++){
+    var mx=gmPX(B,A[i].lo0),my=gmPY(B,A[i].la);
+    if(mx<-20||mx>gmW+20||my<-20||my>gmH+20)continue;
+    vis.push({s:A[i],i:i,x:mx,y:my});
+  }
+  for(i=0;i<vis.length;i++){
+    var d0=Math.hypot(GAME.mx-vis[i].x/DPR,GAME.my-vis[i].y/DPR);
+    if(d0<hb){hb=d0;hovI=vis[i].i;}
   }
   var boxes=[];
   function coll(b){for(var k=0;k<boxes.length;k++){var o=boxes[k];
@@ -6303,32 +6208,46 @@ function gmapDraw(){
   var prev=GAME.lblPrev||{},shown={};
   vis.sort(function(a,b){return (prev[b.s.n]?1:0)-(prev[a.s.n]?1:0);});
   for(var vj=0;vj<vis.length;vj++){
-    var V=vis[vj],st2=V.s,mx2=V.x,my2=V.y,hov=V.i===hovI;
-    gmc.fillStyle=hov?'rgba(255,222,150,1)':'rgba(240,208,132,.95)';
-    var ms=(hov?4.4:3.2)*DPR;
+    var V=vis[vj],st=V.s,mx2=V.x,my2=V.y,hov=V.i===hovI;
+    /* 底图是浅色的马赛克，点位得压得住：先一枚深底方砖，再一点金心 */
+    var ms=(hov?9:7)*DPR;
+    gmc.fillStyle='rgba(24,18,10,.82)';
     gmc.fillRect(mx2-ms/2,my2-ms/2,ms,ms);
-    var isDest=GAME.dest===st2.n;
-    if(isDest){
+    gmc.fillStyle=hov?'rgba(255,222,150,1)':'rgba(240,208,132,.95)';
+    gmc.fillRect(mx2-ms/4,my2-ms/4,ms/2,ms/2);
+    if(GAME.dest===st.n){
       var pu=1+.18*Math.sin(performance.now()*.004);
-      gmc.strokeStyle='rgba(255,208,104,.95)';gmc.lineWidth=1.6*DPR;
+      gmc.strokeStyle='rgba(196,120,40,.95)';gmc.lineWidth=1.6*DPR;
       gmc.beginPath();gmc.arc(mx2,my2,12*DPR*pu,0,Math.PI*2);gmc.stroke();
-      gmc.strokeStyle='rgba(212,166,72,.5)';gmc.lineWidth=1;
-      gmc.beginPath();gmc.arc(mx2,my2,17*DPR*pu,0,Math.PI*2);gmc.stroke();
-    }else{
-      gmc.strokeStyle=hov?'rgba(255,208,104,.9)':'rgba(212,166,72,.5)';gmc.lineWidth=1;
-      gmc.beginPath();gmc.arc(mx2,my2,(hov?11:8)*DPR,0,Math.PI*2);gmc.stroke();
+    }else if(hov){
+      gmc.strokeStyle='rgba(196,120,40,.8)';gmc.lineWidth=1;
+      gmc.beginPath();gmc.arc(mx2,my2,11*DPR,0,Math.PI*2);gmc.stroke();
     }
     gmc.font=(9*DPR)+'px ui-monospace,Menlo,monospace';
-    var lw=gmc.measureText(st2.n).width;
-    var bx={x0:mx2+9*DPR,y0:my2-9*DPR,x1:mx2+15*DPR+lw,y1:my2+16*DPR};
-    if(hov||!coll(bx)){
+    /* 同一座城里的几处地方，在这个尺度上几乎落在同一点。照实叠着画就只看得见最后一枚。
+       撞上了就把牌子往下挪一格，最多挪四格；再挪不开的那一处只留点，不留牌。 */
+    var lw=gmc.measureText(st.n).width,off=0,bx=null,tr;
+    for(tr=0;tr<5;tr++){
+      off=tr*20*DPR;
+      bx={x0:mx2+9*DPR,y0:my2-9*DPR+off,x1:mx2+15*DPR+lw,y1:my2+16*DPR+off};
+      if(hov||!coll(bx))break;
+      bx=null;
+    }
+    if(bx){
       boxes.push(bx);
-      gmc.fillStyle=hov?'rgba(255,236,190,1)':'rgba(236,236,232,.85)';
-      gmc.fillText(st2.n,mx2+13*DPR,my2-1*DPR);
-      gmc.fillStyle=hov?'rgba(255,208,104,.95)':'rgba(154,154,148,.75)';
+      if(off>1){                               /* 挪开了就拉一条细线回真正的那一点 */
+        gmc.strokeStyle='rgba(24,18,10,.5)';gmc.lineWidth=1;
+        gmc.beginPath();gmc.moveTo(mx2+2*DPR,my2);gmc.lineTo(bx.x0,my2+off);gmc.stroke();
+      }
+      /* 浅底上写字要垫一层，不然金字压在金砖上读不出来 */
+      gmc.fillStyle='rgba(24,18,10,.78)';
+      gmc.fillRect(bx.x0,bx.y0,bx.x1-bx.x0,bx.y1-bx.y0);
+      gmc.fillStyle=hov?'rgba(255,236,190,1)':'rgba(240,234,220,.92)';
+      gmc.fillText(st.n,mx2+13*DPR,my2-1*DPR+off);
+      gmc.fillStyle=hov?'rgba(255,208,104,.95)':'rgba(206,198,178,.8)';
       gmc.font=(8*DPR)+'px ui-monospace,Menlo,monospace';
-      gmc.fillText(st2.cn,mx2+13*DPR,my2+10*DPR);
-      shown[st2.n]=1;
+      gmc.fillText(st.cn,mx2+13*DPR,my2+10*DPR+off);
+      shown[st.n]=1;
       GAME.hit.push({x:mx2/DPR,y:my2/DPR,i:V.i,
         b:{x0:bx.x0/DPR-4,y0:bx.y0/DPR-2,x1:bx.x1/DPR+4,y1:bx.y1/DPR+2}});
       continue;
@@ -12374,6 +12293,9 @@ MODCITY.setTravel(function(name,isPoi,wx,wz){
   }catch(_){}});
 function zj3dTick(){
   try{
+    /* 三维那一层停用了。这里再挡一道：存档里带着旧的展开档位、
+       或是别处把 txOpen 打开，都不该把资材包与现代城的点云拉起来。 */
+    if(window.__ZJ3D_OFF__)return;
     if(!GAME.txOpen)return;
     /* 艳后线同走地中海路线：亚历山卓等古城与东京（现代城生成）都在 MED 引擎；
        只有周纪卡固定中原引擎。 */
@@ -14089,41 +14011,24 @@ function railThumb(arrId,srcId){
   if(mw._h!==h){mw._h=h;mw.innerHTML=h;}
 }
 function railMapThumb(){
-  /* 缩略窗里画一颗完整的地球。
-     原来是从地图面板的画布上拷像素——可那幅是「地球挂在左缘、只露右半边」的构图
-     （cx=宽*0.04、R 接近整幅），整幅硬塞会横向拉扁，按比例裁又只剩一条局部带。
-     两条路都到不了「一颗完整的球」。所以这里不拷了：用同一份 LANDPTS、同一套投影、
-     同一个点阵分桶器另画一颗，居中、半径按短边算——不裁、不拉、不畸变。
-     顺带把「面板关着时每 1.4 秒替它重画一帧」那段也撤了：那一整幅重绘本来就只是
-     为了喂这枚缩略窗，现在自己画，不必再惊动面板。 */
+  /* 缩略窗里原来另画一颗完整的粒子地球。地球撤了，这里改画同一幅马赛克世界图，
+     整幅塞进窗里（不裁、不拉），再点上这一代的地点。 */
   var c=document.querySelector('#arrMap .mmap');if(!c)return;
   var g=c.getContext('2d');if(!g)return;
   var W=c.width,H=c.height;
   if(!(W>1)||!(H>1))return;
   g.clearRect(0,0,W,H);
-  var cx=W/2,cy=H/2,R=Math.min(W,H)*.42;
-  var lonC=GAME.lon||0,tilt=(GAME.tilt==null?.42:GAME.tilt),ctl=Math.cos(tilt),stl=Math.sin(tilt);
-  var hg=g.createRadialGradient(cx,cy,0,cx,cy,R*1.14);
-  hg.addColorStop(0,'rgba(255,148,38,0)');
-  hg.addColorStop(.84,'rgba(255,148,38,0)');
-  hg.addColorStop(.90,'rgba(255,148,38,.28)');
-  hg.addColorStop(1,'rgba(255,148,38,0)');
-  g.fillStyle=hg;g.beginPath();g.arc(cx,cy,R*1.14,0,Math.PI*2);g.fill();
-  var eraRed=ERA.year>=-27&&ERA.year<=395;
-  for(var i=0;i<LANDPTS.length;i++){
-    var p=LANDPTS[i],lam=p.lo-lonC;
-    var Xr=p.cl*Math.sin(lam),Zr=p.cl*Math.cos(lam),Yr=p.sy;
-    var Y2=Yr*ctl-Zr*stl,Z2=Yr*stl+Zr*ctl;
-    if(Z2<=0)continue;
-    var x=cx+Xr*R,y=cy-Y2*R,s=1.05*(.75+.4*Z2);
-    if(p.rome&&eraRed)GB_push(0,((.5+.5*Z2)*GB_N)|0,x,y,s*1.3,s*1.3);
-    else if(p.hi)GB_push(1,(Math.min(1,(.2+.6*Z2)*1.4)*GB_N)|0,x-.6,y-.6,s*1.9,s*1.9);
-    else{
-      var rim=Math.pow(1-Z2,5)*.38,a=Math.min(1,(.12+.55*Z2)*p.br+rim);
-      GB_push(rim>.12?2:3,(a*GB_N)|0,x,y,s,s);
-    }
+  var mm=gmMM();if(!mm)return;
+  var sc=Math.min(W/mm.w,H/mm.h),bw=mm.w*sc,bh=mm.h*sc;
+  var L=(W-bw)/2,T=(H-bh)/2;
+  g.imageSmoothingEnabled=false;
+  g.drawImage(FE.mi,L,T,bw,bh);
+  var A=ERA.act||[];
+  for(var i=0;i<A.length;i++){
+    var x=L+((A[i].lo0+180)/360)*bw,y=T+((mm.laTop-A[i].la)/(mm.laTop-mm.laBot))*bh;
+    g.fillStyle=(GAME.dest===A[i].n)?'rgba(226,110,40,.95)':'rgba(24,18,10,.8)';
+    g.fillRect(x-1.5,y-1.5,3,3);
   }
-  GB_flush(g);
 }
 
 /* 三维那一枚的微缩。三维是 WebGL，宿主没开 preserveDrawingBuffer，

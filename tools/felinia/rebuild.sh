@@ -20,7 +20,9 @@ python3 tools/felinia/brand.py
 python3 tools/felinia/qinfix.py
 python3 tools/felinia/introskip.py
 python3 tools/felinia/creamfix.py
+python3 tools/felinia/lean.py
 python3 tools/felinia/build.py
+python3 tools/felinia/thumbs.py
 python3 tools/felinia/cardmeta.py
 python3 tools/cardbuild.py
 echo '重打完成。'
