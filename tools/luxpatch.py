@@ -29,8 +29,11 @@ function luxApply(on){
 CSS_NEW = """html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-events:none;
   background:#f2ece0;mix-blend-mode:multiply}
 /* 菜单那一屏不参与全局反色：马赛克是按真彩烤好的，再反一遍就成负片。
-   同一条滤镜再上一次，正好抵消。 */
-html.lux #menu{filter:invert(1) hue-rotate(180deg)}
+   同一条滤镜再上一次，正好抵消。
+   只豁免马赛克那一屏。挂上 .gbg（对局时当背景）或 .era（粒子地球）的时候，
+   这一层显示的是引擎原来的墨底，再抵消一次就把整块留在黑里——
+   对局那一屏于是不是奶油而是暗灰。那两个状态照旧走全局反色。 */
+html.lux #menu:not(.gbg):not(.era){filter:invert(1) hue-rotate(180deg)}
 /* 只剩奶油一档了，开关收起来 */
 #luxTg{display:none!important}"""
 

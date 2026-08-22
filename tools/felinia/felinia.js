@@ -151,7 +151,7 @@ function feAge(r,ti,sp){
   if(sp!=='cat')return /老|长者|嬷嬷|院长|校长|行首|里正|将|帕夏|主教|牧师/.test(t)
     ? feInt(r,48,66) : feInt(r,26,52);
   if(/幼|学生|学徒|丫头|新兵|新来|旁听|孩子/.test(t))return feInt(r,11,16);
-  if(/年长|长者|嬷嬷|老|舍监|行首|班头|军官|中尉|上尉|校|大夫|医师/.test(t))return feInt(r,28,41);
+  if(/年长|长者|嬷嬷|老人|老太|老者|老匠|舍监|行首|班头|军官|中尉|上尉|校尉|大夫|医师|管事|里正/.test(t))return feInt(r,28,41);
   return feInt(r,17,29);
 }
 function feBody(r,morph,sp){
@@ -660,6 +660,49 @@ function feSplit0(txt){
   return{scene:scene.trim(),names:names.trim()};
 }
 
+/* 未接神谕时看到的那一幕，以及铸局失败时退回的那一幕。
+   它不是小说，是一份摊开的场面：这一代是什么样、这一处做什么、谁在旁边、你是谁。
+   写得长一点是有道理的——正文那一栏顶上压着三维画面，太短就整幕藏在画面后头。 */
+function feDraftText(){
+  var e=FE.era,h=FE.hero,L=FE.loc,o=[];
+  o.push(e.yl+'　'+e.t+'　'+(L?(L.cn+'（'+L.n+'）'):''));
+  o.push('');
+  o.push('——这一代——');
+  o.push(e.w);
+  o.push('在场的制度：'+e.inst.join('、')+'。');
+  o.push('钱的尺子：'+e.coin+'。');
+  o.push('');
+  if(L){
+    o.push('——此地——');
+    o.push(L.cn+'，'+L.d+'。');
+    o.push((e.s&&L.d.indexOf(e.s)<0&&e.s.indexOf(L.d)<0?(e.s+'。'):'')
+      +'本地人多半住在'+e.home+'。');
+    o.push('');
+  }
+  o.push('——你——');
+  o.push('你是「'+h.n+'」，'+h.ti+'，'+h.age+'岁。'
+    +(h.sp==='cat'?(h.morph.n+'，毛色'+h.fur+'，'+h.mark+'。身高'+h.h+'厘米，体重'+h.w+'公斤。'):''));
+  o.push('身上是'+h.dress+'。生于'+h.born+'，如今住在'+h.live+'。');
+  o.push(h.temper.join('；')+'。'+(h.tail?h.tail+'。':''));
+  o.push(h.rel+'。');
+  o.push('');
+  if(FE.soc.length){
+    o.push('——在场的人——');
+    FE.soc.forEach(function(k){
+      var p=FE.pool[k];
+      o.push(p.n+'　'+p.ti+(p.sp==='cat'?'　猫娘':(/人类/.test(p.ti)?'':'　人类'))+'　'+p.age+'岁。'
+        +(p.d?p.d+'。':'')+(p.q[0]?('她的口头：'+p.q[0]):''));
+    });
+    o.push('');
+  }
+  o.push('——此刻——');
+  var sit=String($('#feSit').value||'').trim();
+  o.push(sit||('这一幕自你落脚之刻写起。'+(L?(L.cn+'的活照旧在做，'):'')+'没有人特意在等你。'));
+  o.push('');
+  o.push('开口、动身，或先看看四周。');
+  return o.join('\n');
+}
+
 /* ═══════════ 铸局 ═══════════ */
 function feForge(){
   var e=FE.era,h=FE.hero,L=FE.loc;
@@ -672,7 +715,10 @@ function feForge(){
   feSyncEngine();
   feClose();
 
+  /* 底稿的面板照旧由引擎拼（栏名要跟着卡的 panelSpec 走），正文换成本层这一份 */
   var draft=condereOp(line,y,nm,cn);
+  var _mv=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
+  draft.text=feDraftText()+(_mv?('\n\n'+_mv):'');
   loadOpening(line,draft,loc);
   GAME.hero={n:h.n,g:h.ti,a:String(h.age),o:h.born,f:1};
   gameShow();
