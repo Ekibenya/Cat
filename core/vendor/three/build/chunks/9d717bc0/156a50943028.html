@@ -3602,7 +3602,10 @@ function menuSize(){DPR=Math.min(devicePixelRatio||1,2);
   mW=mCv.width=w;mH=mCv.height=h;menuText();}
 addEventListener('resize',menuSize);
 menuSize();
-function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;MENU.t0=performance.now();menuScatter();mosStart();
+function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;
+  /* 版号落在页脚。线上到底换没换到新的一版，看一眼就知道，
+     不必去猜是浏览器缓存还是部署没上。对局屏的招牌上本来就有同一个数。 */
+  try{if(mfEl&&mfEl.textContent.indexOf('·B')<0)mfEl.textContent+='  ·B'+BUILD;}catch(_){}MENU.t0=performance.now();menuScatter();mosStart();
   /* 菜单期间把选局环 DOM 全部收起：淡入过程不再透出残留画面 */
   $('#stage').style.display='none';$('#rail').style.display='none';$('#mission').style.display='none';try{$('#luxTg').style.display='none';}catch(_){}
   /* 有局在身才给「继续游戏」——内存里的这一局，或本机存着的上一局，都算。 */
@@ -5911,7 +5914,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=95;
+var BUILD=96;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，

@@ -303,6 +303,16 @@ def main():
               cl:Math.cos(L.la*_rad),sy:Math.sin(L.la*_rad),lo:L.lo*_rad,delay:i*90};});
   }else if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));""")
 
+    # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
+    #    （每次要上线的改动，把下面这个数字往上加一。）
+    sub('版号', 'var BUILD=95;', 'var BUILD=96;')
+    sub('页脚落版号',
+        "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
+        "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
+        "  /* 版号落在页脚。线上到底换没换到新的一版，看一眼就知道，\n"
+        "     不必去猜是浏览器缓存还是部署没上。对局屏的招牌上本来就有同一个数。 */\n"
+        "  try{if(mfEl&&mfEl.textContent.indexOf('\u00b7B')<0)mfEl.textContent+='  \u00b7B'+BUILD;}catch(_){}")
+
     # ⑦ 片头：马赛克第一帧就整幅铺好
     sub('马赛克起手',
         "  mosT0=performance.now(); cancelAnimationFrame(mosRaf); mosRaf=requestAnimationFrame(mosTick);",
