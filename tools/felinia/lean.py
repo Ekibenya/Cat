@@ -541,32 +541,56 @@ if(/[?&]perf=1/.test(location.search))(function(){
         + "    MV._slow=_n;" + NL
         + "  }else MV._slow=0;")
 
-    # ⑳ 奶油那道整站反色，给一个当场关掉的开关（?lux=0）
-    #    拿 Tails 一比就清楚了：同一副引擎，Tails 是 var LUX=0，这张卡是 var LUX=1。
-    #    差别不在毛玻璃（Tails 三十二处、这张三十三处，一样多），
-    #    在于这张卡把「白昼模式」当成唯一一档常开着——而白昼模式是靠
-    #    html{filter:invert(1) hue-rotate(180deg)} 把整份文档反过来实现的。
-    #    根元素挂滤镜，浏览器就得把整个文档先画进一张离屏图、整张跑一遍着色器、再合成；
-    #    页面里每一块毛玻璃还得隔着这张离屏图去取自己的背景。视网膜屏是二倍像素，
-    #    于是任何一处变化都要重来五百万像素。Tails 没有这一道，所以同样的毛玻璃它不疼。
-    #    网址后面加 ?lux=0 就能当场把这一道摘掉（画面回到引擎原生的黑金），
-    #    用来验证「顿的到底是不是它」——一秒钟就能对比出来。
-    sub('奶油开关',
-        "var LUX=1;   /* 只有奶油一档：开机即白昼，没有黑夜可切 */" + NL + "function luxApply(){" + NL + "  LUX=1;",
-        "/* 网址加 ?lux=0：把整站反色那一道当场摘掉，画面回到引擎原生的黑金。" + NL
-        + "   这一道是奶油配色的实现方式（整份文档反色），也是这一版最贵的一样东西——" + NL
-        + "   根元素挂滤镜会逼浏览器把整页画进离屏图再整张跑着色器，" + NL
-        + "   页面里每一块毛玻璃都得隔着它取背景。留这个开关是为了能当场对比。 */" + NL
-        + "var LUX_OFF=/[?&]lux=0/.test(location.search);" + NL
-        + "var LUX=LUX_OFF?0:1;" + NL
-        + "function luxApply(){" + NL
-        + "  if(LUX_OFF){LUX=0;document.documentElement.classList.remove('lux');" + NL
-        + "    var _cb=$('#cfgLux');if(_cb){_cb.checked=false;}return;}" + NL
-        + "  LUX=1;")
+    # ㉑ 三张铺满视口的画布，这张卡一张也不显示，却照样按整屏分配
+    #    量出来的（1440×900、DPR2）：这张卡的菜单常驻 15 张 canvas 合计 62.2 MB，
+    #    其中三张是 2880×1800 的整屏画布，每张 19.8 MB——
+    #      #terrain  选局环那一屏的山。这张卡进不去选局环，一笔都没画过。
+    #      #menuCv   粒子地球那张。地球已经卸载，menuDraw 也空了，CSS 里还写着 display:none。
+    #      #mosCv    马赛克，这一张是真在用的。
+    #    另外 mosSet（离屏那张）也是 2880×1800，加起来将近 80 MB 的画布后备存储，
+    #    而 Tails 同一屏只有两张、40 MB。
+    #    画布一旦取过 2d 上下文并画过，浏览器就会把它挂在显存里；三张整屏的
+    #    在视网膜屏上就是实打实的显存压力，挤不下就来回搬——机器发烫、掉帧，
+    #    但 cpu 侧的火焰图上什么都看不见（我这台是软件光栅，更是看不出来）。
+    #    没人显示的两张不再按整屏分配。#gTerr 原来跟着 #terrain 的尺寸走，
+    #    改成按自己的盒子算，画面不受影响。
+    sub('对局屏的山·自己量尺寸',
+        "  if(c._painted&&c.width===tc.width&&c.height===tc.height)return;" + NL
+        + "  if(c.width!==tc.width||c.height!==tc.height){c.width=tc.width;c.height=tc.height;}",
+        "  /* 原来这张画布跟着 #terrain 的尺寸走。#terrain 是选局环那一屏的山，" + NL
+        + "     这张卡进不去那一屏，那张整屏画布已经不再按视口分配了（见下），" + NL
+        + "     所以这里改成按自己的盒子算。 */" + NL
+        + "  var _w=Math.round((c.clientWidth||innerWidth)*DPR)," + NL
+        + "      _h=Math.round((c.clientHeight||innerHeight)*DPR);" + NL
+        + "  if(c._painted&&c.width===_w&&c.height===_h)return;" + NL
+        + "  if(c.width!==_w||c.height!==_h){c.width=_w;c.height=_h;}")
+
+    sub('选局环的山·不再按整屏分配',
+        "  tc.width=innerWidth*DPR;tc.height=innerHeight*DPR;",
+        "  /* #terrain 是选局环那一屏的山。这张卡从菜单直接进纪年页，" + NL
+        + "     选局环整屏进不去，这张画布一笔都没画过——可只要按整屏分配，" + NL
+        + "     视网膜屏上就是一张 2880×1800、十九兆的后备存储白占着。" + NL
+        + "     要把选局环请回来，把这一行换回 tc.width=innerWidth*DPR; 就行。 */" + NL
+        + "  if(tc.width!==1){tc.width=1;tc.height=1;}")
+
+    sub('菜单画布·不再按整屏分配',
+        "function menuSize(){DPR=Math.min(devicePixelRatio||1,2);" + NL
+        + "  var w=Math.round(innerWidth*DPR),h=Math.round(innerHeight*DPR);" + NL
+        + "  if(mCv.width===w&&mCv.height===h)return;" + NL
+        + "  mW=mCv.width=w;mH=mCv.height=h;menuText();}",
+        "function menuSize(){DPR=Math.min(devicePixelRatio||1,2);" + NL
+        + "  var w=Math.round(innerWidth*DPR),h=Math.round(innerHeight*DPR);" + NL
+        + "  /* mW/mH 照旧记着「本来该多大」——别处（例如进对局时那一次 clearRect）还读它们。" + NL
+        + "     但画布本身不再按整屏分配：粒子地球已经卸载、menuDraw 是空的，" + NL
+        + "     而 CSS 里这张画布在本卡的每一种状态下都是 display:none。" + NL
+        + "     整屏分配等于白占一张 2880×1800、十九兆的后备存储。" + NL
+        + "     menuText() 是给粒子标题算点阵的，同样没人用了，一并不跑。 */" + NL
+        + "  mW=w;mH=h;" + NL
+        + "  if(mCv.width!==1){mCv.width=1;mCv.height=1;}}")
 
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=103;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=104;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
