@@ -5529,9 +5529,29 @@ function feMapDragInit(){
   host.addEventListener('click',function(e){
     if(swallow){swallow=0;e.stopPropagation();e.preventDefault();}
   },true);
+  /* 触控板与鼠标滚轮发的是同一种事件，但人的意思完全不同：
+       · 触控板双指滑动 = 平移（Mac 上「拖」就是这个动作）
+       · 触控板双指捏合 = 缩放，浏览器会把它报成 ctrlKey 的 wheel
+       · 鼠标滚轮       = 缩放（看地图的老规矩）
+     所以按下面三条分：带 ctrl 的一律缩放；有横向分量、或纵向步子很碎的，
+     是触控板在滑，走平移；其余当成鼠标滚轮，缩放。
+     判据用 deltaMode（0＝像素，鼠标滚轮常报 1＝行）加步长——
+     鼠标滚轮一格通常是 100 上下的整数，触控板是连续的小数。 */
   host.addEventListener('wheel',function(e){
     e.preventDefault();
     var r=host.getBoundingClientRect();
+    if(e.ctrlKey){                       /* 捏合 */
+      feMapZoom(Math.exp(-e.deltaY*0.012),e.clientX-r.left,e.clientY-r.top);
+      return;
+    }
+    var pad=(e.deltaMode===0)&&(Math.abs(e.deltaX)>0||Math.abs(e.deltaY)<50);
+    if(pad){                             /* 触控板双指滑 = 平移 */
+      var box=$('#feMapIn');
+      box.style.left=((parseFloat(box.style.left)||0)-e.deltaX)+'px';
+      box.style.top=((parseFloat(box.style.top)||0)-e.deltaY)+'px';
+      feMapClamp();
+      return;
+    }
     feMapZoom(Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top);
   },{passive:false});
 }
@@ -6185,7 +6205,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=112;
+var BUILD=113;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
