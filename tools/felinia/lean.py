@@ -376,9 +376,83 @@ def main():
         "  if(window.__ZJ3D_OFF__)return;   /* 三维整层停用，这一枚连同那一列钮都收起来了 */\n"
         "  var c=document.querySelector('#arr3d .m3d');if(!c)return;")
 
+    # ⑮ 纪年页拨图版：一步一卡的两处，都是「边写边读」逼出来的同步重排
+    #    实测（DPR2）连续拨图版：20.7 帧，一半的帧超过 53 毫秒，最长 110 毫秒。
+    #    两处毛病：
+    #      esThin  在同一个循环里「读一次 getBoundingClientRect、加一次 class」——
+    #              class 一加，布局就脏了，下一次读就得当场重排。四十二枚年号，
+    #              等于每拨一格逼四十二次同步重排。改成先全读、再全写。
+    #      esLayout 每拨一格就给四十二张图版全部重写宽高。真正变的只有两张
+    #              （让出去的那张与接手的那张），其余四十张宽高一个像素没动，
+    #              可写进 style 就算没变也要重算——那几张还都挂着 mask-image，
+    #              重算就得把撕边遮罩重新栅格一遍。改成值没变就不写。
+    sub('年号避让·先读后写',
+        """function esThin(){
+  /* 年号一行挤不下。先把与选中那枚相撞的纪元标记让开——选中的永远优先，
+     再从左往右在剩下的纪元标记之间逐个避让。 */
+  var k,r,act=null,edge=-1e9;
+  for(k=0;k<ES.pips.length;k++)ES.pips[k].classList.remove('hush');
+  if(ES.pips[ES.i])act=ES.pips[ES.i].querySelector('b').getBoundingClientRect();
+  for(k=0;k<ES.pips.length;k++){
+    if(k===ES.i||!ES.pips[k].classList.contains('mark'))continue;
+    r=ES.pips[k].querySelector('b').getBoundingClientRect();
+    if(act&&r.left<act.right+10&&r.right>act.left-10){ES.pips[k].classList.add('hush');continue;}
+    if(r.left<edge+10){ES.pips[k].classList.add('hush');continue;}
+    edge=r.right;
+  }
+}""",
+        """function esThin(){
+  /* 年号一行挤不下。先把与选中那枚相撞的纪元标记让开——选中的永远优先，
+     再从左往右在剩下的纪元标记之间逐个避让。
+
+     读与写必须分开走两趟。原来是一趟里「读一次矩形、加一次 hush」：
+     class 一加布局就脏了，下一次读矩形浏览器就得当场把整条年号带重排一遍——
+     四十二枚，等于每拨一格逼出四十二次同步重排。实测拨图版因此掉到二十帧。
+     现在第一趟只读，第二趟只写，同步重排从四十二次降到一次。 */
+  var k,act=null,edge=-1e9,rects=[],hush=[];
+  for(k=0;k<ES.pips.length;k++)ES.pips[k].classList.remove('hush');
+  for(k=0;k<ES.pips.length;k++){                 /* ① 一口气读完，中间不写任何东西 */
+    var bb=ES.pips[k].querySelector('b');
+    rects[k]=bb?bb.getBoundingClientRect():null;
+  }
+  act=rects[ES.i]||null;
+  for(k=0;k<ES.pips.length;k++){                 /* ② 只算，仍然不写 */
+    if(k===ES.i||!ES.pips[k].classList.contains('mark'))continue;
+    var r=rects[k];if(!r)continue;
+    if(act&&r.left<act.right+10&&r.right>act.left-10){hush.push(k);continue;}
+    if(r.left<edge+10){hush.push(k);continue;}
+    edge=r.right;
+  }
+  for(k=0;k<hush.length;k++)ES.pips[hush[k]].classList.add('hush');   /* ③ 一次写完 */
+}""")
+
+    sub('图版宽高·没变就不写',
+        """  for(k=0;k<ES.pls.length;k++){
+    w=(k===ES.i)?wi:narrow;
+    ES.pls[k].style.width=w+'px';
+    ES.pls[k].style.height=(k===ES.i?hi:h)+'px';
+    if(k<ES.i)before+=w+gap;
+  }""",
+        """  /* 拨一格，真正换了尺寸的只有两张：让出去的那张与接手的那张。
+     其余四十张一个像素没动，可只要写进 style，浏览器就当它变了——
+     而这些图版都挂着撕边的 mask-image，一「变」就得把遮罩重新栅格一遍。
+     所以值没变就不写。 */
+  for(k=0;k<ES.pls.length;k++){
+    var el=ES.pls[k];
+    w=(k===ES.i)?wi:narrow;
+    var hh=(k===ES.i)?hi:h;
+    if(el._w!==w){el._w=w;el.style.width=w+'px';}
+    if(el._h!==hh){el._h=hh;el.style.height=hh+'px';}
+    if(k<ES.i)before+=w+gap;
+  }""")
+
+    # ⑯ 图版的 img 一律异步解码，别把解码压在主线程上
+    sub('图版异步解码', '''      b.innerHTML='<img alt="">';''',
+        '''      b.innerHTML='<img alt="" decoding="async">';''')
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=99;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=100;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
@@ -430,12 +504,23 @@ function esLoad(){
     im._want=d.src;
     if(!im.getAttribute('src'))im.setAttribute('src',th);
     if(im.getAttribute('src')===d.src)continue;
-    (function(img,full){
+    /* 全图要等手停下来再上。一张 1024×1536 的图解一次约二十毫秒，
+       连着拨图版时每拨一格就解一张，光解码就把这一屏拖成二十帧。
+       停手两百四十毫秒才上全图：拨的时候一路是缩图（条子上本来就看不出差别），
+       停在哪一张，哪一张才换成全图。 */
+    clearTimeout(esLoad._t);
+    esLoad._t=setTimeout(function(){
+      var j=ES.i,img=ES.pls[j]&&ES.pls[j].firstChild,full=ES.rows[j]&&ES.rows[j].src;
+      if(!img||!full||img._want!==full||img.getAttribute('src')===full)return;
       var pre=new Image();
       pre.decoding='async';
-      pre.onload=function(){if(img._want===full)img.setAttribute('src',full);};
+      pre.onload=function(){
+        /* 解好了再换，且换的时候手还停在这一张上 */
+        var go=function(){if(img._want===full)img.setAttribute('src',full);};
+        if(pre.decode)pre.decode().then(go,go);else go();
+      };
       pre.src=full;
-    })(im,d.src);
+    },240);
   }
 }""")
 
