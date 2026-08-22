@@ -40,6 +40,76 @@ DOC  = os.path.join(ROOT, 'core/vendor/three/build/chunks/9d717bc0/156a50943028.
 MARK = '/* LEAN：三维天下整层停用 */'
 NL   = chr(10)      # 拼 js 片段时用，省得在这份脚本里跟转义打架
 
+DIAG = r'''/* 诊断板：网址加 ?diag=1，右上角出一块开关板。
+   逐项关掉可疑的渲染开销——哪一项一关就不卡了，凶手就是哪一项。
+   板子只在带参数时存在，一行不带参数的代码都不跑，默认画面一个字节不动。
+   板子用纯灰阶配色：整页反色开着关着它都读得清，自己不用挂滤镜。 */
+if(/[?&]diag=1/.test(location.search))(function(){
+  var KILL={
+    glass:'body *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}',
+    blend:'body *,body *::before,body *::after{mix-blend-mode:normal!important}'
+         +'html.lux::after{display:none!important}',
+    filt:'body *{filter:none!important}',
+    shadow:'body *{box-shadow:none!important;text-shadow:none!important}',
+    mask:'body *{-webkit-mask-image:none!important;mask-image:none!important}',
+    anim:'body *{animation:none!important;transition:none!important}',
+    cv:'canvas{visibility:hidden!important}'
+  };
+  function setK(k,on){                     /* on=true＝这一项照常 */
+    if(k==='lux'){document.documentElement.classList.toggle('lux',!!on);return;}
+    var id='diagK_'+k,el=document.getElementById(id);
+    if(on){if(el)el.remove();return;}
+    if(!el){var st=document.createElement('style');st.id=id;
+      st.textContent=KILL[k];document.head.appendChild(st);}
+  }
+  var LBL=[['lux','整页反色（奶油那一道）'],['glass','毛玻璃'],['blend','混合层（暖纸/纹理）'],
+           ['filt','元素滤镜'],['shadow','阴影'],['mask','撕边遮罩'],
+           ['anim','动画与过渡'],['cv','全部画布']];
+  var box=document.createElement('div');box.id='diagBox';
+  box.style.cssText='position:fixed;right:10px;top:10px;z-index:2147483647;'
+    +'background:rgba(0,0,0,.85);color:#e8e8e8;border:1px solid #777;'
+    +'font:12px/2 ui-monospace,Menlo,monospace;padding:8px 12px;user-select:none';
+  var fps=document.createElement('div');
+  fps.style.cssText='border-bottom:1px solid #555;margin-bottom:4px;padding-bottom:2px';
+  fps.textContent='…';box.appendChild(fps);
+  LBL.forEach(function(pair){
+    var row=document.createElement('label');
+    row.style.cssText='display:block;cursor:pointer';
+    var cb=document.createElement('input');cb.type='checkbox';cb.checked=true;
+    cb.style.cssText='margin-right:7px;vertical-align:-2px';
+    cb.addEventListener('change',function(){setK(pair[0],cb.checked);});
+    row.appendChild(cb);row.appendChild(document.createTextNode(pair[1]));
+    row._cb=cb;row._k=pair[0];box.appendChild(row);
+  });
+  var bar=document.createElement('div');
+  bar.style.cssText='margin-top:5px;display:flex;gap:8px';
+  [['全关',false],['全开',true]].forEach(function(bp){
+    var bt=document.createElement('button');bt.textContent=bp[0];
+    bt.style.cssText='flex:1;background:#222;color:#e8e8e8;border:1px solid #777;'
+      +'font:inherit;padding:1px 0;cursor:pointer';
+    bt.addEventListener('click',function(){
+      box.querySelectorAll('label').forEach(function(row){
+        if(row._cb){row._cb.checked=bp[1];setK(row._k,bp[1]);}});
+    });
+    bar.appendChild(bt);
+  });
+  box.appendChild(bar);
+  document.body.appendChild(box);
+  var last=performance.now(),acc=[],t0=last;
+  (function tick(){
+    var t=performance.now();acc.push(t-last);last=t;
+    if(t-t0>=500){
+      var n=acc.length,sum=0,worst=0,i;
+      for(i=0;i<n;i++){sum+=acc[i];if(acc[i]>worst)worst=acc[i];}
+      fps.textContent=(1000/(sum/n)).toFixed(0)+' fps · 最长一帧 '+worst.toFixed(0)+' ms';
+      acc=[];t0=t;
+    }
+    requestAnimationFrame(tick);
+  })();
+})();
+'''
+
+
 
 def body(s, head):
     """返回 head 那个函数从头到「配对的右花括号」为止的整段文本。"""
@@ -614,9 +684,19 @@ if(/[?&]perf=1/.test(location.search))(function(){
         + "    return;" + NL
         + "  }")
 
+    # ㉓ 诊断板：?diag=1，逐项开关渲染开销
+    #    走到这一步该老实承认：本机是软件光栅、没有 GPU，凡是代价落在 GPU 侧的
+    #    （滤镜、毛玻璃、合成）这里一律量成零——在这台机器上再怎么测都测不到
+    #    真机的痛处。与其继续隔空猜，不如把开关板做进页面：
+    #    在真机上逐项关掉可疑项，哪一项一关就顺了，凶手当场现形。
+    #    默认不带参数时一行代码都不跑，画面与样式一个字节不动。
+    sub('诊断板',
+        "if(/[?&]perf=1/.test(location.search))(function(){",
+        DIAG + "if(/[?&]perf=1/.test(location.search))(function(){")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=105;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=106;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
