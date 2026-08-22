@@ -3463,8 +3463,9 @@ var MOS={"w":2464,"h":1232,"cells":[[3,157,20,20],[22,156,22,22],[45,155,22,22],
 var mosCv=$('#mosCv'), mosG=mosCv&&mosCv.getContext('2d');
 var mosArt=new Image(), mosBd=new Image(), mosLoaded=0;
 var mosSet=document.createElement('canvas'), mosSG=mosSet.getContext('2d');
-/* MOS_POP 是单块砖落下的时长，MOS_ALL 是整幅铺满的时长（毫秒）。 */
-var MOS_POP=200, MOS_ALL=900, mosSeq=[], mosT0=0, mosRaf=0, mosDPR=1, MOS_B=26;
+/* MOS_POP 是单块砖落下的时长，MOS_ALL 是整幅铺满的时长（毫秒）。
+   这两个数就是码砖的快慢，改它们即可；别的地方不必动。 */
+var MOS_POP=240, MOS_ALL=5600, mosSeq=[], mosT0=0, mosRaf=0, mosDPR=1, MOS_B=26;
 
 function mosFit(){
   if(!mosCv)return;
@@ -3516,7 +3517,7 @@ function mosStart(){
 }
 function mosStop(){cancelAnimationFrame(mosRaf);mosRaf=0;}
 function mosTick(now){
-  var el=now-mosT0, step=Math.max(.3, MOS_ALL/mosSeq.length), i, a, done=0, live=[];
+  var el=now-mosT0, step=Math.max(1.4, MOS_ALL/mosSeq.length), i, a, done=0, live=[];
   for(i=0;i<mosSeq.length;i++){
     a=el-i*step;
     if(a<=0)break;
@@ -5908,7 +5909,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=97;
+var BUILD=98;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
