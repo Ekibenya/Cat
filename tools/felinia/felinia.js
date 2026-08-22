@@ -124,9 +124,22 @@ function feVoiceFor(r,ti){
   for(i=0;i<FE_VOICE_BY.length;i++)if(FE_VOICE_BY[i][0].test(t))return FE_VOICE_BY[i][1];
   return fePick(r,FE.gen.voices).k;
 }
+/* 衣着先按身份挑：难民穿联军的制服、宫女穿船台的护腕，一眼就假。
+   身份里的字与那件衣裳的说明有一个字对得上就算数，都对不上再随便挑一件。 */
+function feDress(r,era,ti){
+  var t=String(ti||''),hit=[],i,j,d;
+  for(i=0;i<era.dress.length;i++){
+    d=era.dress[i];
+    for(j=0;j<t.length;j++)if(t.charAt(j)!=='的'&&d.indexOf(t.charAt(j))>=0){hit.push(d);break;}
+  }
+  return fePick(r,hit.length?hit:era.dress);
+}
 function feM(k){var m=FE.gen.morphs,i;for(i=0;i<m.length;i++)if(m[i].k===k)return m[i];return m[0];}
 function feVoice(k){var v=FE.gen.voices,i;for(i=0;i<v.length;i++)if(v[i].k===k)return v[i];return v[0];}
-function feOrigins(era){return FE.gen.origins[era.reg]||FE.gen.origins['旧大陆'];}
+function feOrigins(era){
+  if(era&&era.og&&era.og.length)return era.og;   /* 前几代的地名与后世不通用，各有各的 */
+  return FE.gen.origins[(era&&era.reg)||'旧大陆']||FE.gen.origins['旧大陆'];
+}
 
 /* 事迹里写了岁数（「十四岁」「三十八岁」），档案就得照那个数。
    另掷一个，档案第一行说十四、第二行说十二，读的人立刻不信这份档案了。 */
@@ -155,7 +168,11 @@ function feAge(r,ti,sp){
   return feInt(r,17,29);
 }
 function feBody(r,morph,sp){
-  if(sp!=='cat')return{h:feInt(r,152,178),w:feInt(r,48,74)};
+  if(sp!=='cat'){
+    /* 体重要跟着身高走：各掷各的会掷出一米七八配五十公斤这种人 */
+    var hh=feInt(r,152,180),bmi=19+r()*8;
+    return{h:hh,w:Math.round(bmi*hh*hh/10000)};
+  }
   var b=FE.gen.body,h=b.hLo+r()*(b.hHi-b.hLo),w=b.wLo+r()*(b.wHi-b.wLo);
   if(morph&&morph.k==='alpine')h-=4.5;
   if(morph&&morph.k==='steppe')h+=3.5;
@@ -188,7 +205,8 @@ function feMake(era,fig,salt){
       :(fePick(r,FE.gen.origins[fePick(r,Object.keys(FE.gen.origins))])+'（远地）'));
   var here=(r()<.8)?era.home:(two[1]||two[0]);
   if(born===here)born=(two[0]===here?(two[1]||og[0]):two[0]);   /* 生处与住处不能同一句话说两遍 */
-  var rel=fePick(r,FE.gen.relations).replace('{a}',fePick(r,og));
+  var _rp=(sp==='cat')?FE.gen.relations:(FE.gen.relationsH||FE.gen.relations);
+  var rel=fePick(r,_rp).replace('{a}',fePick(r,og));
   var v=feVoice(fig?fig.v:feVoiceFor(r,ti));
   return{
     id:seed, era:era.i, sp:sp, fig:fig||null, salt:(salt==null?'':salt),
@@ -196,7 +214,7 @@ function feMake(era,fig,salt){
     ti:ti, d:fig?fig.d:'', q:fig?fig.q.slice():[],
     age:told||feAge(r,ti,sp), h:b.h, w:b.w,
     fur:(sp==='cat')?feFur(r,morph):'', mark:(sp==='cat')?fePick(r,FE.gen.furMarks):'',
-    morph:morph, dress:fePick(r,era.dress),
+    morph:morph, dress:feDress(r,era,ti),
     born:born, live:here,
     temper:fePickN(r,FE.gen.temper,2), tail:(sp==='cat')?fePick(r,FE.gen.tails):'',
     rel:rel, v:v,
@@ -208,37 +226,56 @@ function feMake(era,fig,salt){
    取名法是一句人话（写在 era.nm 里），程序做不到照着它造词，
    所以退一步——从这一代册上那十位的名字里取字重组，起出来的名字与本代同源。 */
 var FE_TITLE=/嬷嬷|掌柜|管家|小姐|大娘|太太|夫人|先生|老爷|大爷|二爷|行首|里正|校尉|亭长|大夫|医生|医官|医师|上校|中尉|上尉|少尉|院长|校长|舍监|牧师|教士|祭司|帕夏|长者|老人|婆|哨长|工头|经理|东家|主母|队长|军官|书记|警长|管事|班头|老太|老匠|师|官|吏|长/;
+/* 拼名字时不该当零件用的字：职称、说明的残片、以及只能打头不能收尾的那几个 */
+var FE_NAMEBAD=/的|了|人|员|工|者|兵|吏|官|师|尉|长|主|队|民|介|绍|无|被|典|家|生|夫/;
+var FE_HEADONLY='阿老小大';
 function feName(r,era,seed){
-  var pool=[],i,s;
+  var stem=[],bag=[],i,k,t;
   for(i=0;i<era.figs.length;i++){
-    s=String(era.figs[i].n);
-    /* 带「·」的多半是「某处·某人」「某某·已赎」这类带前后缀的写法，
-       拿它去拼字会拼出「门上桃」这种东西。只留后半段，且只用两三个字的。 */
-    if(s.indexOf('\u00b7')>=0)s=s.split('\u00b7').pop();
-    /* 带称谓的整个不要：拿「柳嬷嬷」去拼字会拼出「阿嬷嬷」，那不是名字是官称。 */
-    if(FE_TITLE.test(s))continue;
-    if(s.length>=2&&s.length<=3)pool.push(s);
+    t=String(era.figs[i].n);
+    /* 带「·」的多半是「某处·某人」这类前后缀写法，只留后半段 */
+    if(t.indexOf('\u00b7')>=0)t=t.split('\u00b7').pop();
+    /* 「联军的少尉薇拉」这种：「的」后面那一截才是名字 */
+    var m=t.match(/\u7684([^\u7684]{2,4})$/);
+    if(m)t=m[1];
+    /* 带称谓的整个不要：拿「柳嬷嬷」去拼字会拼出「阿嬷嬷」，那不是名字是官称 */
+    if(FE_TITLE.test(t))continue;
+    /* 只留看得出是名字的那一段。带这些字的多半还是职称或者说明的残片
+       （「被典的」「雇员林」「少尉薇拉」），拿去拼字会拼出「介绍茂」这种东西。 */
+    if(FE_NAMEBAD.test(t))continue;
+    if(t.length>=2&&t.length<=4)stem.push(t);
   }
-  if(!pool.length)for(i=0;i<era.figs.length;i++){
-    s=String(era.figs[i].n).split('\u00b7').pop();
-    if(s.length>=2)pool.push(s.slice(0,3));
+  if(!stem.length)for(i=0;i<era.figs.length;i++){
+    t=String(era.figs[i].n).split('\u00b7').pop();
+    if(t.length>=2)stem.push(t.slice(0,3));
   }
-  /* 拼出来的名字不能跟册上那十位重名——同一局里两个「阿桃」，玩家会以为是同一个人。 */
-  var taken={},k;
+  for(i=0;i<stem.length;i++)for(k=0;k<stem[i].length;k++)
+    if(bag.indexOf(stem[i].charAt(k))<0)bag.push(stem[i].charAt(k));
+  /* 拼出来的名字不能跟册上那些人重名——同一局里两个同名，玩家会当成同一个人 */
+  var taken={};
   for(k=0;k<era.figs.length;k++)taken[era.figs[k].n]=1;
   for(k=0;k<(FE.pool||[]).length;k++)taken[FE.pool[k].n]=1;
-  var nm='',t;
-  for(t=0;t<24;t++){
-    var a=fePick(r,pool),b=fePick(r,pool);
-    var head=a.slice(0,Math.max(1,Math.min(2,a.length-1)));
-    var tail=b.slice(-Math.max(1,Math.min(2,b.length-1)));
+  function ok(n){return n.length>=2&&n.length<=4&&!taken[n];}
+  var nm='';
+  for(var tries=0;tries<60;tries++){
+    var a=fePick(r,stem);
+    var head=a.slice(0,(a.length>2&&r()<.5)?2:1);
+    var tail=(r()<.6)?fePick(r,bag):fePick(r,stem).slice(-1);
+    while(tail.length&&head.length&&head.charAt(head.length-1)===tail.charAt(0))
+      tail=tail.slice(1);
+    if(tail&&FE_HEADONLY.indexOf(tail.charAt(tail.length-1))>=0)continue;  /* 阿、老、小不收尾 */
     nm=head+tail;
-    if(nm.length>4)nm=nm.slice(0,4);
-    if(nm.length>=2&&!taken[nm])return nm;
+    if(ok(nm))return nm;
   }
-  return nm+String.fromCharCode(0x4e8c+((seed||0)%8));   /* 实在拼不出新的，缀一个字了事 */
+  /* 拼不出新的，就从字袋里随便取两个不重的字——比缀一个生僻字体面 */
+  for(i=0;i<bag.length;i++)for(k=0;k<bag.length;k++){
+    if(i===k)continue;
+    if(FE_HEADONLY.indexOf(bag[k])>=0)continue;
+    nm=bag[i]+bag[k];
+    if(ok(nm))return nm;
+  }
+  return nm||'\u65e0\u540d';
 }
-
 /* 档案文本。一栏一件事——外貌栏不掺来历，开头栏不掺关系。
    最后那一栏是「怎么说话」：先散文，再四字标记，再台词，再一句底色。 */
 function feDoss(p){
@@ -719,8 +756,12 @@ function feForge(){
   var draft=condereOp(line,y,nm,cn);
   var _mv=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
   draft.text=feDraftText()+(_mv?('\n\n'+_mv):'');
+  /* loadOpening 里会把 GAME.hero 清成 null（正史开局一律是卡里的本尊），
+     所以这一句必须排在它后面；铸局成稿再落一次 loadOpening 时也要再写一次，
+     否则第二次之后「本局主角是谁」那一段就整段不发了。 */
+  var _hero={n:h.n,g:h.born,a:String(h.age),o:h.ti,f:1};
   loadOpening(line,draft,loc);
-  GAME.hero={n:h.n,g:h.ti,a:String(h.age),o:h.born,f:1};
+  GAME.hero=_hero;
   gameShow();
 
   if(!apiReady()){
@@ -781,6 +822,7 @@ function feForge(){
            if(!txt)return fail('译文没有回来');
            if(!/<mvu_panel>/.test(txt))txt=txt+'\n\n'+panel;
            loadOpening(line,{id:'custom',year:y,era:yl,scene:cn,text:txt},loc);
+           GAME.hero=_hero;                 /* loadOpening 又清了一次，写回来 */
          });
   }
   stage0(0);

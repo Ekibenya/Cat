@@ -17,6 +17,7 @@ python3 tools/felinia/enginepatch.py
 python3 tools/felinia/herofix.py
 python3 tools/felinia/luxfix.py
 python3 tools/felinia/brand.py
+python3 tools/felinia/qinfix.py
 python3 tools/felinia/build.py
 python3 tools/felinia/cardmeta.py
 python3 tools/cardbuild.py

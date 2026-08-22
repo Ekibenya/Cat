@@ -170,6 +170,19 @@ COIN = {
 }
 
 
+# ═══════════ 最早那几代的出身地 ═══════════
+# 地区路线那几把地名（汴梁、马赛、喀山……）到公元前三千年还没有一个成立。
+# 前六代各给一份自己的，其余的照地区路线走。
+OG = {
+ 1: ['河岸的窝群', '火塘那一带', '上游的浅滩', '林边的旧窝', '塌了的那处坡地'],
+ 2: ['河岸聚落', '上游的窝群', '田那一头的村子', '邻窝', '三条河汇处'],
+ 3: ['城墙外的村落', '河湾的渔户', '北门一带', '上游的城邦', '沙路那头的部族'],
+ 4: ['砖巷的北头', '城外的农户', '下游的港', '西岸的村子', '山那边来的商队里'],
+ 5: ['岛上的渔村', '南岸的港', '海对面的城', '山坡上的橄榄园', '一条常来的船上'],
+ 6: ['河堤边的村子', '上游的神庙田', '三角洲的渔户', '绿洲那一带', '沙漠边缘的部族'],
+}
+
+
 def load_annals():
     ann = json.load(io.open(ANN, encoding='utf-8'))
     return {a['i']: a for a in ann}
@@ -232,6 +245,7 @@ def build_eras(eras, ann):
             'ys': a['y'], 'age': a['era'], 't': a['t'], 's': a['s'], 'src': a['src'],
             'reg': e['reg'], 'w': e['w'], 'inst': e['inst'], 'nm': e['nm'],
             'home': HOME[e['i']], 'coin': COIN[e['i']],
+            'og': OG.get(e['i'], []),
             'locs': e['locs'], 'roles': e['roles'], 'dress': e['dress'],
             'figs': e['figs'],
         })
@@ -242,6 +256,7 @@ def build_gen():
     return {'morphs': pools.MORPHS, 'furs': pools.FURS, 'fursRare': pools.FURS_RARE,
             'furMarks': pools.FUR_MARKS, 'temper': pools.TEMPER, 'tails': pools.TAILS,
             'voices': pools.VOICES, 'relations': pools.RELATIONS,
+            'relationsH': pools.RELATIONS_H,
             'origins': pools.ORIGINS,
             # 体格尺度：母本 TABLEAU 4 的中位数，上下各给一段合理范围
             'body': {'hMid': 139.8, 'hLo': 131, 'hHi': 148,
