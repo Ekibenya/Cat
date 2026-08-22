@@ -119,6 +119,7 @@ function gmapDraw(){
   GAME.hit.length=0;
   var B=gmBox();
   if(!B){                                   /* 图还没到：先空着，下一帧再说 */
+    gmapDraw._sig='';                       /* 这一帧画的是占位，别把它记成已画好 */
     gmc.fillStyle='rgba(236,236,232,.35)';
     gmc.font=(11*DPR)+'px ui-monospace,Menlo,monospace';
     gmc.fillText('TABVLA…',14*DPR,20*DPR);
@@ -201,8 +202,14 @@ THUMB_NEW = """function railMapThumb(){
   var g=c.getContext('2d');if(!g)return;
   var W=c.width,H=c.height;
   if(!(W>1)||!(H>1))return;
-  g.clearRect(0,0,W,H);
   var mm=gmMM();if(!mm)return;
+  /* 这一枚每 0.7 秒被叫一次。画布再小，一变也要整页重来一遍滤镜与毛玻璃——
+     实测就是那一下 40 毫秒的顿。图是死的，没变就别动它。 */
+  var A0=ERA.act||[];
+  var sig=[W,H,GAME.dest||'',A0.length,(A0[0]&&A0[0].n)||''].join('|');
+  if(c._sig===sig)return;
+  c._sig=sig;
+  g.clearRect(0,0,W,H);
   var sc=Math.min(W/mm.w,H/mm.h),bw=mm.w*sc,bh=mm.h*sc;
   var L=(W-bw)/2,T=(H-bh)/2;
   g.imageSmoothingEnabled=false;
@@ -303,9 +310,75 @@ def main():
               cl:Math.cos(L.la*_rad),sy:Math.sin(L.la*_rad),lo:L.lo*_rad,delay:i*90};});
   }else if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));""")
 
+    # ⑫ 对局屏的山：只画一次，不再每帧重画
+    #    实测（1280×800）对局屏只有 16 帧，最长一帧 122 毫秒。逐项摘下来看：
+    #      原样 15.9 ／ 去掉 html.lux 那道滤镜 23.2 ／ 去掉全部毛玻璃 31.6
+    #      两个都去 60.2 ／ 只把 #gTerr 这一张画布藏起来 58.4
+    #    最后一条是关键：画布照画，只是不显示，帧率就回来了——
+    #    所以吃掉四十多帧的不是画山的那点算术，是「铺满视口的画布每帧都在变」。
+    #    根元素上挂着 html.lux 的 invert+hue-rotate，页面里还有二十处毛玻璃；
+    #    背景只要动一个像素，整页的滤镜和每一块毛玻璃就得全部重算一遍。
+    #    山本来就只是往前漂那么一点，静止与漂移肉眼分不出来。改成只画一次。
+    sub('对局屏的山',
+        """function gTerrDraw(t){
+  var c=document.getElementById('gTerr');if(!c)return;
+  if(c.width!==tc.width||c.height!==tc.height){c.width=tc.width;c.height=tc.height;}
+  var g=c.getContext('2d');if(!g)return;""",
+        """function gTerrDraw(t){
+  var c=document.getElementById('gTerr');if(!c)return;
+  /* 只画一次：进对局画一次，视口变了再画一次。
+     原本每帧重画，为的是那一点几乎看不出来的前移；可这是一张铺满视口的画布，
+     它一变，根元素那道 invert+hue-rotate 与页面里二十处毛玻璃就得全部重算。
+     实测就为这点漂移，对局屏从满帧掉到十六帧。要把漂移请回来，删掉下面这一行 return。 */
+  if(c._painted&&c.width===tc.width&&c.height===tc.height)return;
+  if(c.width!==tc.width||c.height!==tc.height){c.width=tc.width;c.height=tc.height;}
+  var g=c.getContext('2d');if(!g)return;
+  if(c.width>1&&c.height>1)c._painted=1;    /* 尺寸还没定就别记成画过了 */""")
+
+    # ⑬ 地图面板：画面没变就不重画（同一个道理）
+    sub('地图面板的重画闸',
+        """function gmapDraw(){
+  if(gmW<4){gmapSize();if(gmW<4)return;}
+  gmc.clearRect(0,0,gmW,gmH);
+  GAME.hit.length=0;""",
+        """function gmapDraw(){
+  if(gmW<4){gmapSize();if(gmW<4)return;}
+  /* 同 gTerrDraw：这张画布一变，整页的滤镜与毛玻璃就要重算一遍。
+     地图是死的，只有指针移动、缩放、换目的地时画面才真的不一样——
+     那就只在这几样变了的时候重画，其余帧直接退出。 */
+  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.mx),Math.round(GAME.my),
+           GAME.dest||'',(ERA.act||[]).length,(ERA.act&&ERA.act[0]&&ERA.act[0].n)||''].join('|');
+  if(gmapDraw._sig===sig)return;
+  gmapDraw._sig=sig;
+  gmc.clearRect(0,0,gmW,gmH);
+  GAME.hit.length=0;""")
+
+    # 目的地那一圈原本按时间搏动——一搏动，上面那道闸就形同虚设。改成不动的双圈。
+    sub('目的地标记',
+        """    if(GAME.dest===st.n){
+      var pu=1+.18*Math.sin(performance.now()*.004);
+      gmc.strokeStyle='rgba(196,120,40,.95)';gmc.lineWidth=1.6*DPR;
+      gmc.beginPath();gmc.arc(mx2,my2,12*DPR*pu,0,Math.PI*2);gmc.stroke();
+    }else if(hov){""",
+        """    if(GAME.dest===st.n){
+      /* 原来这一圈按时间搏动。搏动就意味着这张画布每帧都在变，
+         上面那道「没变就不重画」的闸也就白设了。改成不动的双圈，一样认得出来。 */
+      gmc.strokeStyle='rgba(196,120,40,.95)';gmc.lineWidth=1.6*DPR;
+      gmc.beginPath();gmc.arc(mx2,my2,12*DPR,0,Math.PI*2);gmc.stroke();
+      gmc.strokeStyle='rgba(196,120,40,.45)';gmc.lineWidth=1;
+      gmc.beginPath();gmc.arc(mx2,my2,17*DPR,0,Math.PI*2);gmc.stroke();
+    }else if(hov){""")
+
+    # ⑭ 三维那一枚缩略窗：三维整层停用了，别再每 0.7 秒空画一次
+    sub('三维缩略窗',
+        "function rail3dThumb(){\n  var c=document.querySelector('#arr3d .m3d');if(!c)return;",
+        "function rail3dThumb(){\n"
+        "  if(window.__ZJ3D_OFF__)return;   /* 三维整层停用，这一枚连同那一列钮都收起来了 */\n"
+        "  var c=document.querySelector('#arr3d .m3d');if(!c)return;")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=98;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=99;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"

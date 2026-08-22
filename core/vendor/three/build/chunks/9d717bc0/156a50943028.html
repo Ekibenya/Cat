@@ -5909,7 +5909,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=98;
+var BUILD=99;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -6178,10 +6178,18 @@ function gmPX(B,lo){return B.L+((lo+180)/360)*B.bw;}
 function gmPY(B,la){return B.T+((B.mm.laTop-la)/(B.mm.laTop-B.mm.laBot))*B.bh;}
 function gmapDraw(){
   if(gmW<4){gmapSize();if(gmW<4)return;}
+  /* 同 gTerrDraw：这张画布一变，整页的滤镜与毛玻璃就要重算一遍。
+     地图是死的，只有指针移动、缩放、换目的地时画面才真的不一样——
+     那就只在这几样变了的时候重画，其余帧直接退出。 */
+  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.mx),Math.round(GAME.my),
+           GAME.dest||'',(ERA.act||[]).length,(ERA.act&&ERA.act[0]&&ERA.act[0].n)||''].join('|');
+  if(gmapDraw._sig===sig)return;
+  gmapDraw._sig=sig;
   gmc.clearRect(0,0,gmW,gmH);
   GAME.hit.length=0;
   var B=gmBox();
   if(!B){                                   /* 图还没到：先空着，下一帧再说 */
+    gmapDraw._sig='';                       /* 这一帧画的是占位，别把它记成已画好 */
     gmc.fillStyle='rgba(236,236,232,.35)';
     gmc.font=(11*DPR)+'px ui-monospace,Menlo,monospace';
     gmc.fillText('TABVLA…',14*DPR,20*DPR);
@@ -6214,9 +6222,12 @@ function gmapDraw(){
     gmc.fillStyle=hov?'rgba(255,222,150,1)':'rgba(240,208,132,.95)';
     gmc.fillRect(mx2-ms/4,my2-ms/4,ms/2,ms/2);
     if(GAME.dest===st.n){
-      var pu=1+.18*Math.sin(performance.now()*.004);
+      /* 原来这一圈按时间搏动。搏动就意味着这张画布每帧都在变，
+         上面那道「没变就不重画」的闸也就白设了。改成不动的双圈，一样认得出来。 */
       gmc.strokeStyle='rgba(196,120,40,.95)';gmc.lineWidth=1.6*DPR;
-      gmc.beginPath();gmc.arc(mx2,my2,12*DPR*pu,0,Math.PI*2);gmc.stroke();
+      gmc.beginPath();gmc.arc(mx2,my2,12*DPR,0,Math.PI*2);gmc.stroke();
+      gmc.strokeStyle='rgba(196,120,40,.45)';gmc.lineWidth=1;
+      gmc.beginPath();gmc.arc(mx2,my2,17*DPR,0,Math.PI*2);gmc.stroke();
     }else if(hov){
       gmc.strokeStyle='rgba(196,120,40,.8)';gmc.lineWidth=1;
       gmc.beginPath();gmc.arc(mx2,my2,11*DPR,0,Math.PI*2);gmc.stroke();
@@ -13994,8 +14005,14 @@ var _railT=0;
    再叠半透明（没颜色）。三样毛病都出在「省」上，这里一样都不省。 */
 function gTerrDraw(t){
   var c=document.getElementById('gTerr');if(!c)return;
+  /* 只画一次：进对局画一次，视口变了再画一次。
+     原本每帧重画，为的是那一点几乎看不出来的前移；可这是一张铺满视口的画布，
+     它一变，根元素那道 invert+hue-rotate 与页面里二十处毛玻璃就得全部重算。
+     实测就为这点漂移，对局屏从满帧掉到十六帧。要把漂移请回来，删掉下面这一行 return。 */
+  if(c._painted&&c.width===tc.width&&c.height===tc.height)return;
   if(c.width!==tc.width||c.height!==tc.height){c.width=tc.width;c.height=tc.height;}
   var g=c.getContext('2d');if(!g)return;
+  if(c.width>1&&c.height>1)c._painted=1;    /* 尺寸还没定就别记成画过了 */
   /* 视差恒为 0，不接鼠标。选局那边指针只管转环，山跟着推是顺的；
      对局里指针在点按钮、拖正文、敲字，背景再跟着晃就是无端乱动。
      parX 这个全局也一并不碰——省得回主菜单时山从一个歪掉的位置弹回来。
@@ -14015,8 +14032,14 @@ function railMapThumb(){
   var g=c.getContext('2d');if(!g)return;
   var W=c.width,H=c.height;
   if(!(W>1)||!(H>1))return;
-  g.clearRect(0,0,W,H);
   var mm=gmMM();if(!mm)return;
+  /* 这一枚每 0.7 秒被叫一次。画布再小，一变也要整页重来一遍滤镜与毛玻璃——
+     实测就是那一下 40 毫秒的顿。图是死的，没变就别动它。 */
+  var A0=ERA.act||[];
+  var sig=[W,H,GAME.dest||'',A0.length,(A0[0]&&A0[0].n)||''].join('|');
+  if(c._sig===sig)return;
+  c._sig=sig;
+  g.clearRect(0,0,W,H);
   var sc=Math.min(W/mm.w,H/mm.h),bw=mm.w*sc,bh=mm.h*sc;
   var L=(W-bw)/2,T=(H-bh)/2;
   g.imageSmoothingEnabled=false;
@@ -14034,6 +14057,7 @@ function railMapThumb(){
    所以拷完抽查几个点：真有像素就用，全黑就退回自己画一张地平线示意，
    总好过挂一块死黑的方块。收起状态下画面本来就没有，直接画示意。 */
 function rail3dThumb(){
+  if(window.__ZJ3D_OFF__)return;   /* 三维整层停用，这一枚连同那一列钮都收起来了 */
   var c=document.querySelector('#arr3d .m3d');if(!c)return;
   var g=c.getContext('2d');if(!g)return;
   var W=c.width,H=c.height,live=false;
