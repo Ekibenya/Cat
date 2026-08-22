@@ -139,7 +139,9 @@ canvas{display:block}
 /* ═══════ 菜单：奶油纸 + 罗马马赛克 ═══════
    选择器一律带 #menu:not(.era):not(.gbg)——原有的 #menu 规则排在本段之后，
    权重不压过去就会被盖回黑底；#mosCv 的 transform 同理，要盖掉 #menu canvas 那条。 */
-:root{--cream:#f0eadc}
+/* 这三层自己反过一次，是按真彩画的；暖纸罩会再乘它们一遍，
+   所以底色预先提亮，乘完正好是 #f0eadc。改暖纸罩就得跟着改这几处。 */
+:root{--cream:#fcfcfc}
 #menu:not(.era):not(.gbg){background:var(--cream)}
 #menu:not(.era):not(.gbg) #menuCv{display:none}
 #menu:not(.era):not(.gbg)::before{content:"";position:absolute;inset:0;pointer-events:none;
@@ -379,8 +381,12 @@ html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}
 html.lux #zjScene3D canvas,html.lux #mdScene3D canvas,html.lux img{filter:invert(1) hue-rotate(180deg)}
 /* 反色出来的近纯白太刺眼：正片叠底罩一层暖纸色，白压成米黄羊皮纸面，
    深色文字几乎不动（对比度不丢）；压在一切弹窗之上，全站统一。 */
+/* 暖纸罩。颜色与混合模式是按「隔着根元素那道 invert+hue-rotate」反解出来的：
+   F(screen(c,s)) = M·((1-c)·(1-s))，令它等于 #f0eadc，得 s=#181204。
+   写成 multiply + #f2ece0 的老写法，作用在反色之前的近黑底上，等于没写——
+   对局屏与全部弹窗因此一直是纯白。 */
 html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-events:none;
-  background:#f2ece0;mix-blend-mode:multiply}
+  background:#181204;mix-blend-mode:screen}
 /* 菜单那一屏不参与全局反色：马赛克是按真彩烤好的，再反一遍就成负片。
    同一条滤镜再上一次，正好抵消。 */
 html.lux #menu:not(.gbg):not(.era){filter:invert(1) hue-rotate(180deg)}
@@ -390,15 +396,15 @@ html.lux #menu:not(.gbg):not(.era){filter:invert(1) hue-rotate(180deg)}
    与菜单同样先从全局反色里豁免，再按浅底重配——不然这一层会被反成负片。 */
 html.lux #eraSel{filter:invert(1) hue-rotate(180deg)}
 html.lux #eraSel img{filter:none}          /* 层已抵消，图不必再反一次 */
-html.lux #eraSel{background:#f0eadc}
-html.lux #esReel::before{background:linear-gradient(90deg,#f0eadc 0%,rgba(240,234,220,.7) 45%,rgba(240,234,220,0) 100%)}
-html.lux #esReel::after{background:linear-gradient(270deg,#f0eadc 0%,rgba(240,234,220,.7) 45%,rgba(240,234,220,0) 100%)}
+html.lux #eraSel{background:#fcfcfc}
+html.lux #esReel::before{background:linear-gradient(90deg,#f0eadc 0%,rgba(252,252,252,.7) 45%,rgba(252,252,252,0) 100%)}
+html.lux #esReel::after{background:linear-gradient(270deg,#f0eadc 0%,rgba(252,252,252,.7) 45%,rgba(252,252,252,0) 100%)}
 /* 未选中的图：浅底上要「淡出」，不是「压暗」 */
 html.lux #eraSel .pl{filter:saturate(.35) contrast(.92) brightness(1.06);opacity:.42}
 html.lux #eraSel .pl:hover{filter:saturate(.5) contrast(.95) brightness(1.03);opacity:.62}
 html.lux #eraSel .pl.on{filter:none;opacity:1}
 /* 选中那张的底部压边：改成从奶油色压上来 */
-html.lux #eraSel .pl.on::before{background:linear-gradient(0deg,rgba(240,234,220,.94) 0%,rgba(240,234,220,.6) 15%,rgba(240,234,220,0) 40%)}
+html.lux #eraSel .pl.on::before{background:linear-gradient(0deg,rgba(252,252,252,.94) 0%,rgba(252,252,252,.6) 15%,rgba(252,252,252,0) 40%)}
 /* 说明块：深墨底、浅字 */
 html.lux #esMission .m-tag .tag{background:#9a742a;color:#f6f1e4}
 html.lux #esMission .num{background:#2f2a22;color:#f6f1e4}
@@ -416,7 +422,7 @@ html.lux #eraSel .pip.on i{background:#9a742a;box-shadow:0 0 9px rgba(154,116,42
 html.lux #eraSel .pip b{color:#c0b59c}
 html.lux #eraSel .pip.mark b{color:#9a9184}
 html.lux #eraSel .pip.on b{color:#9a742a}
-html.lux #esFoot{border-top-color:#cec3ab;color:#9a9184;background:rgba(240,234,220,.92)}
+html.lux #esFoot{border-top-color:#cec3ab;color:#9a9184;background:rgba(252,252,252,.92)}
 html.lux #esFoot .go{color:#4a4237;border-color:rgba(154,116,42,.5);background:rgba(255,255,255,.45)}
 html.lux #esFoot .go:hover{color:#1f1a13;border-color:#9a742a}
 html.lux #esBrand{color:#9a9184}
@@ -1673,7 +1679,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 html.lux #feWrap{filter:invert(1) hue-rotate(180deg)}
 html.lux #feWrap img{filter:none}
 
-#feWrap{position:fixed;inset:0;z-index:47;display:none;background:#f0eadc;
+#feWrap{position:fixed;inset:0;z-index:47;display:none;background:#fcfcfc;
   color:#4a4237;font-family:var(--mono);touch-action:manipulation}
 #feWrap.on{display:block}
 #feWrap::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
@@ -1696,7 +1702,7 @@ html.lux #feWrap img{filter:none}
 /* ── 脚 ── */
 #feFoot{position:absolute;left:0;right:0;bottom:0;min-height:44px;z-index:4;
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px;border-top:1px solid #cec3ab;background:rgba(240,234,220,.94);
+  padding:0 20px;border-top:1px solid #cec3ab;background:rgba(252,252,252,.94);
   font-size:11px;letter-spacing:.14em;color:#9a9184}
 #feFoot .go{color:#4a4237;cursor:pointer;display:inline-block;white-space:nowrap;
   padding:5px 12px;margin-left:10px;border:1px solid rgba(154,116,42,.5);
@@ -1723,16 +1729,16 @@ html.lux #feWrap img{filter:none}
 .feMk{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
   display:flex;flex-direction:column;align-items:center;gap:3px}
 .feMk .dot{width:13px;height:13px;box-sizing:border-box;
-  border:2px solid #9a742a;background:rgba(240,234,220,.85);
+  border:2px solid #9a742a;background:rgba(252,252,252,.85);
   transform:rotate(45deg);transition:all .22s ease}
 .feMk .nm{font-size:10px;letter-spacing:.1em;color:#6f6757;white-space:nowrap;
-  background:rgba(240,234,220,.82);padding:1px 5px;transition:all .22s ease}
+  background:rgba(252,252,252,.82);padding:1px 5px;transition:all .22s ease}
 .feMk:hover .dot{background:#9a742a}
 .feMk:hover .nm{color:#1f1a13}
 .feMk.on .dot{background:#9a742a;box-shadow:0 0 0 4px rgba(154,116,42,.22);width:16px;height:16px}
 .feMk.on .nm{color:#1f1a13;background:rgba(255,255,255,.9);border-bottom:1px solid #9a742a}
 #feLocInfo{position:absolute;left:0;right:0;bottom:0;height:96px;padding:14px 22px;
-  border-top:1px solid #cec3ab;background:rgba(240,234,220,.9)}
+  border-top:1px solid #cec3ab;background:rgba(252,252,252,.9)}
 #feLocInfo .lt{font-size:13px;color:#1f1a13;letter-spacing:.06em}
 #feLocInfo .lt span{color:#9a742a;margin-right:10px;letter-spacing:.2em}
 #feLocInfo .ld{font-size:11px;color:#6f6757;margin-top:6px;line-height:1.7}
@@ -7251,7 +7257,10 @@ function luxApply(){
   var cb=$('#cfgLux');
   if(cb){cb.checked=true;cb.disabled=true;
     var row=cb.closest&&cb.closest('.sRow,label,div');
-    if(row)row.style.display='none';}          /* 设置里那一行也收起 */
+    if(row){row.style.display='none';
+      /* 那一行下面还跟着一段说明，讲的是已经不存在的开关，一并收掉 */
+      var sub=row.nextElementSibling;
+      if(sub&&sub.className&&String(sub.className).indexOf('sub')>=0)sub.style.display='none';}}          /* 设置里那一行也收起 */
 }
 try{luxApply();}catch(_){}
 addEventListener('DOMContentLoaded',function(){try{luxApply();}catch(_){}});
@@ -13278,7 +13287,14 @@ function loop(t){
   }
   /* mission cluster fades out while the ring is turning */
   $('#mission').style.opacity=clamp01(1-Math.abs(pos-Math.round(pos))*3).toFixed(3);
-  if(INTRO.on)introDraw();
+  /* 片头撤掉了：第一帧直接落到主菜单，那一段一帧都不画。
+     要把它请回来，把这一段换回 if(INTRO.on)introDraw(); 就行。 */
+  if(INTRO.on&&!INTRO.skipped){
+    INTRO.skipped=1;
+    try{iOv.style.transition='none';iOv.style.display='none';}catch(_){}
+    introExit();                 /* 里面会 menuEnter()，并在 850ms 后把节点摘掉 */
+    INTRO.on=false;
+  }
   if(MENU.on)menuDraw();
   /* 正文背后那根粒子罗马柱整个撤掉。1500 个粒子每帧要重算引力路径再逐点描绘，
      还常驻一份 orders 点云表；对局界面本来就不该有东西在背景里动。
