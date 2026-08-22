@@ -204,9 +204,13 @@ function gmBox(){
   sc=Math.max(sc,Math.min(gmW/(need*(mm.w/360)),gmH/mm.h));
   var bw=mm.w*sc,bh=mm.h*sc;
   var px=((cLo+180)/360)*bw,py=((mm.laTop-cLa)/(mm.laTop-mm.laBot))*bh;
-  var L=gmW/2-px,T=gmH/2-py;
-  L=(bw>gmW)?Math.min(0,Math.max(gmW-bw,L)):(gmW-bw)/2;
-  T=(bh>gmH)?Math.min(0,Math.max(gmH-bh,T)):(gmH-bh)/2;
+  /* 拖动量就地卡住再写回去：不写回的话，手拖出边界之后 panX 还在一路加，
+     回头要把多出来的那一截原样拖回来才见得到动静，手感像是拖不动。
+     图比框子小的那一轴本来就没得可看，直接归零居中。 */
+  var L=gmW/2-px,T=gmH/2-py,pX=GAME.panX||0,pY=GAME.panY||0;
+  if(bw>gmW){pX=Math.min(-L,Math.max(gmW-bw-L,pX));L+=pX;}else{pX=0;L=(gmW-bw)/2;}
+  if(bh>gmH){pY=Math.min(-T,Math.max(gmH-bh-T,pY));T+=pY;}else{pY=0;T=(gmH-bh)/2;}
+  GAME.panX=pX;GAME.panY=pY;
   return {mm:mm,L:L,T:T,bw:bw,bh:bh};
 }
 function gmPX(B,lo){return B.L+((lo+180)/360)*B.bw;}
@@ -398,7 +402,8 @@ def main():
     # ⑥ 地点表改由这一代的资料出（原来那一份 SITES 是上一张卡的周秦城池）
     sub('地点表',
         "  if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));",
-        """  /* 地图上挂哪些地方，由这一代自己的资料说了算。
+        """  GAME.panX=0;GAME.panY=0;GAME.zoom=1;   /* 换一局：地图回到默认视野 */
+  /* 地图上挂哪些地方，由这一代自己的资料说了算。
      原来走的是 SITES —— 那是上一张卡的周秦城池表，四十一代里对得上的只有一代。 */
   /* 读档续局时 FE.era 是空的（铸局那一层根本没开过），
      所以铸局时把地点表一并写进开局锚点，存档会连它一起存下来。 */
@@ -448,7 +453,8 @@ def main():
   /* 同 gTerrDraw：这张画布一变，整页的滤镜与毛玻璃就要重算一遍。
      地图是死的，只有指针移动、缩放、换目的地时画面才真的不一样——
      那就只在这几样变了的时候重画，其余帧直接退出。 */
-  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.mx),Math.round(GAME.my),
+  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.panX||0),Math.round(GAME.panY||0),
+           Math.round(GAME.mx),Math.round(GAME.my),
            GAME.dest||'',(ERA.act||[]).length,(ERA.act&&ERA.act[0]&&ERA.act[0].n)||''].join('|');
   if(gmapDraw._sig===sig)return;
   gmapDraw._sig=sig;
@@ -766,6 +772,57 @@ if(/[?&]perf=1/.test(location.search))(function(){
         + "    if(_im&&_im.getAttribute('src')){_im._want=null;_im.removeAttribute('src');}" + NL
         + "  }" + NL
         + "}")
+
+    # ㉗ 对局屏的地图：拖动改成真正的平移
+    #    地图从半颗地球换成平铺的马赛克图之后，拖动处理还在改 GAME.lon / GAME.tilt
+    #    （球面的经度与俯仰）——而平铺图根本不读那两个值，所以拖了一点反应都没有。
+    #    改成实打实的像素平移量，越界由 gmBox 那边卡住。
+    #    手势与择地那幅图对齐：触控板双指滑＝平移，捏合＝缩放，鼠标滚轮＝缩放。
+    sub('对局地图·单指拖',
+        "  if(!GAME.drag)return;" + NL
+        + "  var dx=e.clientX-GAME.lx;GAME.lx=e.clientX;" + NL
+        + "  var dy=e.clientY-(GAME.ly==null?e.clientY:GAME.ly);GAME.ly=e.clientY;" + NL
+        + "  var nowT=performance.now(),dtT=nowT-(GAME.lt||nowT);GAME.lt=nowT;" + NL
+        + "  GAME.lon-=dx*.005/(GAME.zoom||1);" + NL
+        + "  var vRaw=(-dx*.005/(GAME.zoom||1))*(16.7/Math.max(dtT,8));" + NL
+        + "  GAME.vel=Math.max(-.02,Math.min(.02,vRaw));" + NL
+        + "  GAME.tilt=Math.max(-1.25,Math.min(1.35,(GAME.tilt==null?.42:GAME.tilt)+dy*.0035/(GAME.zoom||1)));" + NL
+        + "  GAME.moved+=Math.abs(dx)+Math.abs(dy);",
+        "  if(!GAME.drag)return;" + NL
+        + "  var dx=e.clientX-GAME.lx;GAME.lx=e.clientX;" + NL
+        + "  var dy=e.clientY-(GAME.ly==null?e.clientY:GAME.ly);GAME.ly=e.clientY;" + NL
+        + "  /* 平铺图不读 lon/tilt，拖动改成实打实的像素平移。 */" + NL
+        + "  GAME.panX=(GAME.panX||0)+dx*DPR;" + NL
+        + "  GAME.panY=(GAME.panY||0)+dy*DPR;" + NL
+        + "  GAME.vel=0;" + NL
+        + "  GAME.moved+=Math.abs(dx)+Math.abs(dy);")
+
+    sub('对局地图·双指中点平移',
+        "    if(gmMid0){" + NL
+        + "      GAME.lon-=(mid.x-gmMid0.x)*.005/(GAME.zoom||1);" + NL
+        + "      GAME.tilt=Math.max(-1.25,Math.min(1.35,(GAME.tilt==null?.42:GAME.tilt)+(mid.y-gmMid0.y)*.0035/(GAME.zoom||1)));" + NL
+        + "    }",
+        "    if(gmMid0){" + NL
+        + "      GAME.panX=(GAME.panX||0)+(mid.x-gmMid0.x)*DPR;" + NL
+        + "      GAME.panY=(GAME.panY||0)+(mid.y-gmMid0.y)*DPR;" + NL
+        + "    }")
+
+    sub('对局地图·滚轮与触控板',
+        "gmCv.addEventListener('wheel',function(e){" + NL
+        + "  e.preventDefault();e.stopPropagation();" + NL
+        + "  GAME.zoom=Math.max(.7,Math.min(4,(GAME.zoom||1)*Math.exp(-e.deltaY*.0012)));" + NL
+        + "},{passive:false});",
+        "gmCv.addEventListener('wheel',function(e){" + NL
+        + "  e.preventDefault();e.stopPropagation();" + NL
+        + "  /* 触控板双指滑＝平移，捏合（带 ctrl）＝缩放，鼠标滚轮＝缩放。 */" + NL
+        + "  if(!e.ctrlKey&&e.deltaMode===0&&(Math.abs(e.deltaX)>0||Math.abs(e.deltaY)<50)){" + NL
+        + "    GAME.panX=(GAME.panX||0)-e.deltaX*DPR;" + NL
+        + "    GAME.panY=(GAME.panY||0)-e.deltaY*DPR;" + NL
+        + "    return;" + NL
+        + "  }" + NL
+        + "  var k=e.ctrlKey?.012:.0012;" + NL
+        + "  GAME.zoom=Math.max(.7,Math.min(4,(GAME.zoom||1)*Math.exp(-e.deltaY*k)));" + NL
+        + "},{passive:false});")
 
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）

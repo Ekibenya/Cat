@@ -6205,7 +6205,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=113;
+var BUILD=114;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -6240,6 +6240,7 @@ function gameShow(){
   ERA.on=false;mOv.classList.remove('era');
   MENU.on=false;MENU.exiting=false;
   mOv.classList.add('show','gbg');          /* 画布留下：地球在毛玻璃后面转 */
+  GAME.panX=0;GAME.panY=0;GAME.zoom=1;   /* 换一局：地图回到默认视野 */
   /* 地图上挂哪些地方，由这一代自己的资料说了算。
      原来走的是 SITES —— 那是上一张卡的周秦城池表，四十一代里对得上的只有一代。 */
   /* 读档续局时 FE.era 是空的（铸局那一层根本没开过），
@@ -6507,9 +6508,13 @@ function gmBox(){
   sc=Math.max(sc,Math.min(gmW/(need*(mm.w/360)),gmH/mm.h));
   var bw=mm.w*sc,bh=mm.h*sc;
   var px=((cLo+180)/360)*bw,py=((mm.laTop-cLa)/(mm.laTop-mm.laBot))*bh;
-  var L=gmW/2-px,T=gmH/2-py;
-  L=(bw>gmW)?Math.min(0,Math.max(gmW-bw,L)):(gmW-bw)/2;
-  T=(bh>gmH)?Math.min(0,Math.max(gmH-bh,T)):(gmH-bh)/2;
+  /* 拖动量就地卡住再写回去：不写回的话，手拖出边界之后 panX 还在一路加，
+     回头要把多出来的那一截原样拖回来才见得到动静，手感像是拖不动。
+     图比框子小的那一轴本来就没得可看，直接归零居中。 */
+  var L=gmW/2-px,T=gmH/2-py,pX=GAME.panX||0,pY=GAME.panY||0;
+  if(bw>gmW){pX=Math.min(-L,Math.max(gmW-bw-L,pX));L+=pX;}else{pX=0;L=(gmW-bw)/2;}
+  if(bh>gmH){pY=Math.min(-T,Math.max(gmH-bh-T,pY));T+=pY;}else{pY=0;T=(gmH-bh)/2;}
+  GAME.panX=pX;GAME.panY=pY;
   return {mm:mm,L:L,T:T,bw:bw,bh:bh};
 }
 function gmPX(B,lo){return B.L+((lo+180)/360)*B.bw;}
@@ -6519,7 +6524,8 @@ function gmapDraw(){
   /* 同 gTerrDraw：这张画布一变，整页的滤镜与毛玻璃就要重算一遍。
      地图是死的，只有指针移动、缩放、换目的地时画面才真的不一样——
      那就只在这几样变了的时候重画，其余帧直接退出。 */
-  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.mx),Math.round(GAME.my),
+  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.panX||0),Math.round(GAME.panY||0),
+           Math.round(GAME.mx),Math.round(GAME.my),
            GAME.dest||'',(ERA.act||[]).length,(ERA.act&&ERA.act[0]&&ERA.act[0].n)||''].join('|');
   if(gmapDraw._sig===sig)return;
   gmapDraw._sig=sig;
@@ -6651,7 +6657,14 @@ gmCv.addEventListener('pointerdown',function(e){
 gmCv.addEventListener('pointerleave',function(){GAME.hov=false;GAME.mx=-1e4;GAME.my=-1e4;});
 gmCv.addEventListener('wheel',function(e){
   e.preventDefault();e.stopPropagation();
-  GAME.zoom=Math.max(.7,Math.min(4,(GAME.zoom||1)*Math.exp(-e.deltaY*.0012)));
+  /* 触控板双指滑＝平移，捏合（带 ctrl）＝缩放，鼠标滚轮＝缩放。 */
+  if(!e.ctrlKey&&e.deltaMode===0&&(Math.abs(e.deltaX)>0||Math.abs(e.deltaY)<50)){
+    GAME.panX=(GAME.panX||0)-e.deltaX*DPR;
+    GAME.panY=(GAME.panY||0)-e.deltaY*DPR;
+    return;
+  }
+  var k=e.ctrlKey?.012:.0012;
+  GAME.zoom=Math.max(.7,Math.min(4,(GAME.zoom||1)*Math.exp(-e.deltaY*k)));
 },{passive:false});
 gmCv.addEventListener('pointermove',function(e){
   var lp=gmLocal(e);
@@ -6661,8 +6674,8 @@ gmCv.addEventListener('pointermove',function(e){
     if(gmPin0>0)GAME.zoom=Math.max(.7,Math.min(4,gmZoom0*gmDist()/gmPin0));
     var mid=gmMid();
     if(gmMid0){
-      GAME.lon-=(mid.x-gmMid0.x)*.005/(GAME.zoom||1);
-      GAME.tilt=Math.max(-1.25,Math.min(1.35,(GAME.tilt==null?.42:GAME.tilt)+(mid.y-gmMid0.y)*.0035/(GAME.zoom||1)));
+      GAME.panX=(GAME.panX||0)+(mid.x-gmMid0.x)*DPR;
+      GAME.panY=(GAME.panY||0)+(mid.y-gmMid0.y)*DPR;
     }
     gmMid0=mid;
     return;
@@ -6670,11 +6683,10 @@ gmCv.addEventListener('pointermove',function(e){
   if(!GAME.drag)return;
   var dx=e.clientX-GAME.lx;GAME.lx=e.clientX;
   var dy=e.clientY-(GAME.ly==null?e.clientY:GAME.ly);GAME.ly=e.clientY;
-  var nowT=performance.now(),dtT=nowT-(GAME.lt||nowT);GAME.lt=nowT;
-  GAME.lon-=dx*.005/(GAME.zoom||1);
-  var vRaw=(-dx*.005/(GAME.zoom||1))*(16.7/Math.max(dtT,8));
-  GAME.vel=Math.max(-.02,Math.min(.02,vRaw));
-  GAME.tilt=Math.max(-1.25,Math.min(1.35,(GAME.tilt==null?.42:GAME.tilt)+dy*.0035/(GAME.zoom||1)));
+  /* 平铺图不读 lon/tilt，拖动改成实打实的像素平移。 */
+  GAME.panX=(GAME.panX||0)+dx*DPR;
+  GAME.panY=(GAME.panY||0)+dy*DPR;
+  GAME.vel=0;
   GAME.moved+=Math.abs(dx)+Math.abs(dy);
 });
 gmCv.addEventListener('pointercancel',function(e){delete GMP[e.pointerId];if(gmPts().length<2){gmPin0=0;gmMid0=null;}});
