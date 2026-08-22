@@ -1511,8 +1511,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
          实测：模糊半径几乎不影响，起决定作用的是亮度增益。
          所以半径收到 6px、补一道 2.6 倍增益——线这才透得出来。
          左边三扇不用这么补：它们背后是打了光的三维画面，本来就亮。 */
-      -webkit-backdrop-filter:blur(6px) saturate(140%);
-              backdrop-filter:blur(6px) saturate(140%);
+      -webkit-backdrop-filter:blur(6px) brightness(.955) saturate(140%);
+              backdrop-filter:blur(6px) brightness(.955) saturate(140%);
       transform:perspective(620px) translateX(26px) scale(.955) rotateY(var(--mvTilt)) scaleY(var(--mvFit));
       opacity:0;pointer-events:none;
       transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease}
@@ -4781,6 +4781,13 @@ function esLoad(){
     im=ES.pls[k].firstChild;if(!im)continue;
     d=ES.rows[k];th=esThumb(d.src);
     if(im.getAttribute('alt')!==d.t)im.setAttribute('alt',d.t);
+    if(Math.abs(k-ES.i)>6){
+      /* 屏幕上同时只看得见五六张条子。条子是按原图纵向分辨率竖着裁的
+         （九十二像素宽的一条缝，纵向要的和大图一样多，缩小了会糊），
+         所以单张不小——远处的卸掉，进了视野再补。 */
+      if(im.getAttribute('src')){im._want=null;im.removeAttribute('src');}
+      continue;
+    }
     if(k!==ES.i){
       im._want=th;
       if(im.getAttribute('src')!==th)im.setAttribute('src',th);
@@ -5986,7 +5993,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=109;
+var BUILD=110;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，

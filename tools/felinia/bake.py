@@ -236,10 +236,10 @@ def main():
     #   blur 与 saturate 跟反色可交换，照旧不动。
     if s.count('blur(6px) brightness(2.6) saturate(140%)') != 2:
         sys.exit('mvWin \u6bdb\u73bb\u7483\u90a3\u6863\u4eae\u5ea6\u8be5\u6709 2 \u5904\uff0c\u505c\u624b\u3002')
-    # \u90a3\u6863 brightness(2.6) \u5168\u90e8\u7684\u804c\u8d23\u5c31\u662f\u628a\u53cd\u8272\u4e16\u754c\u91cc\u7684\u6697\u5e95\u63d0\u4eae\u3002
-    # \u5e95\u5df2\u70d8\u6210\u6d45\u8272\uff0c\u5b83\u7684\u6d3b\u5e72\u5b8c\u4e86\uff1b\u7559\u7740\u53cd\u800c\u628a\u6d45\u5e95\u6253\u7206\u6210\u7eaf\u767d\u3002
+    # 那档 brightness(2.6) 是给反色世界里的暗底用的：先提亮暗背景，整页反色之后它反而把这扇窗压深一档。
+    # 底烘成浅色后直接删掉它，窗就变淡了（看着就是「不透明度太高」）。按代数推的 y=2.6x-1.6 实测更差（contrast 削顶），改用实测扫描：0.955 最贴。
     s = s.replace('blur(6px) brightness(2.6) saturate(140%)',
-                  'blur(6px) saturate(140%)', 2)
+                  'blur(6px) brightness(.955) saturate(140%)', 2)
     # \u4fa7\u5361\u6846\u7684 brightness(.86)\uff1a\u540c\u4e00\u5957\u4ee3\u6570\u6362\u7b97\uff0c
     # \u65e7\u4e16\u754c F(0.86c) \u2261 \u65b0\u4e16\u754c 0.86u+0.14w \u2248 contrast(.77) \u518d brightness(1.116)
     if s.count("C.fr.style.filter=pop?'none':'brightness(.86)';") != 1:
@@ -313,7 +313,7 @@ function gmMM(){'''
     s = s.replace('drawImage(FE.mi,', 'drawImage(gmMI()||FE.mi,')
 
     # 版号推一格：线上一眼可辨
-    s = s.replace('var BUILD=106;', 'var BUILD=109;', 1)
+    s = s.replace('var BUILD=106;', 'var BUILD=110;', 1)
 
     io.open(DOC, 'w', encoding='utf-8').write(s)
     print('烘焙完成 · 十六进制 %d 处 · rgb() %d 处 · 主文档 %.0f KB'

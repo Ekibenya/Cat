@@ -785,6 +785,13 @@ function esLoad(){
     im=ES.pls[k].firstChild;if(!im)continue;
     d=ES.rows[k];th=esThumb(d.src);
     if(im.getAttribute('alt')!==d.t)im.setAttribute('alt',d.t);
+    if(Math.abs(k-ES.i)>6){
+      /* 屏幕上同时只看得见五六张条子。条子是按原图纵向分辨率竖着裁的
+         （九十二像素宽的一条缝，纵向要的和大图一样多，缩小了会糊），
+         所以单张不小——远处的卸掉，进了视野再补。 */
+      if(im.getAttribute('src')){im._want=null;im.removeAttribute('src');}
+      continue;
+    }
     if(k!==ES.i){
       im._want=th;
       if(im.getAttribute('src')!==th)im.setAttribute('src',th);

@@ -24,10 +24,16 @@ def main():
     for f in sorted(os.listdir(SRC)):
         if not f.endswith('.jpg'):
             continue
-        im = Image.open(os.path.join(SRC, f))
-        h = max(1, round(im.height * W / im.width))
-        im.convert('RGB').resize((W, h), Image.LANCZOS).save(
-            os.path.join(DST, f), 'JPEG', quality=82, optimize=True)
+        im = Image.open(os.path.join(SRC, f)).convert('RGB')
+        # 条子是「九十二像素宽、73vh 高」的一条竖缝——纵向要的分辨率跟大图一样，
+        # 横向只露出中间很窄的一道。所以缩图不能整图缩小（那样纵向会被拉三倍，
+        # 糊得不能看），要按条子的形状竖着裁一条：高度照原样，宽度按最窄的
+        # 视口比例留足（0.24 覆盖到六百像素高的窗口），中间取。
+        cw = max(1, round(im.height * 0.24))
+        if cw < im.width:
+            x0 = (im.width - cw) // 2
+            im = im.crop((x0, 0, x0 + cw, im.height))
+        im.save(os.path.join(DST, f), 'JPEG', quality=86, optimize=True)
         tot += os.path.getsize(os.path.join(DST, f))
         n += 1
     if n != 42:
