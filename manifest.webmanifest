@@ -1,0 +1,44 @@
+{
+  "id": "/",
+  "name": "陆之纪 · 世界未定",
+  "short_name": "LVZHI.SYS",
+  "description": "一部跑在浏览器里的叙事游戏：左手是可以无限写下去的文字剧本，右手是一座可以走进去的世界。",
+  "lang": "zh-Hans",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#060606",
+  "theme_color": "#060606",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "/core/res/icon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/core/res/icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/core/res/icon/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/core/res/icon/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+ "source": "cdcf9bb63a.dat",
+ "xor": true,
+ "gzip": true,
+ "chunks": {
+  "core": {
+   "file": "core.dat",
+   "raw": 479420,
+   "size": 380348,
+   "entries": [
+    "nature.glb",
+    "tex/Ancient_Tex_Wei.png",
+    "tex/Ancient_Tex_Zhao.png",
+    "tex/LowpolyChineseBuilding_Texture_01.png",
+    "tex/LowpolyChineseBuilding_Texture_02.png",
+    "tex/LowpolyChineseBuilding_Texture_03.png",
+    "tex/LowpolyChineseBuilding_Texture_04.png",
+    "tex/LowpolyChineseBuilding_Texture_05.png",
+    "tex/LowpolyHistoricInterior_Texture_01.png",
+    "tex/LowpolyHistoricInterior_Texture_02.png",
+    "tex/LowpolyHistoricInterior_Texture_03.png",
+    "tex/LowpolyHistoricInterior_Texture_04.png",
+    "tex/LowpolyHistoricInterior_Texture_05.png",
+    "tex/LowpolyHistoric_Sculpture_01.png",
+    "tex/LowpolyHistoric_Sculpture_02.png",
+    "tex/LowpolyHistoric_Sculpture_03.png",
+    "tex/LowpolyHistoric_Sculpture_04.png",
+    "tex/LowpolyHistoric_Sculpture_05.png",
+    "tex/LowpolyHistoric_Texture_01.png",
+    "tex/LowpolyHistoric_Texture_02.png",
+    "tex/LowpolyHistoric_Texture_03.png",
+    "tex/LowpolyHistoric_Texture_04.png",
+    "tex/LowpolyHistoric_Texture_05.png",
+    "tex/T_Mountains_temperate_climate_32.png",
+    "tex/T_Tree_tropical.png",
+    "tex/T_Trees_temp_climate.png"
+   ],
+   "sha": "b834d34cebd1fa7f"
+  },
+  "ancient": {
+   "file": "ancient.dat",
+   "raw": 1490969,
+   "size": 979753,
+   "entries": [
+    "ancient.glb"
+   ],
+   "sha": "69b6cdc4706865b4"
+  },
+  "historic": {
+   "file": "historic.dat",
+   "raw": 1295370,
+   "size": 915457,
+   "entries": [
+    "historic.glb"
+   ],
+   "sha": "21e5dd3761281ebd"
+  },
+  "interior": {
+   "file": "interior.dat",
+   "raw": 457130,
+   "size": 349552,
+   "entries": [
+    "interior.glb"
+   ],
+   "sha": "4531a253f2896d29"
+  },
+  "desert": {
+   "file": "desert.dat",
+   "raw": 1181400,
+   "size": 687370,
+   "entries": [
+    "desert.glb"
+   ],
+   "sha": "0a7551087b4e2a60"
+  },
+  "pawn": {
+   "file": "pawn.dat",
+   "raw": 3285979,
+   "size": 494349,
+   "entries": [
+    "pawn.glb",
+    "pawn.json",
+    "tex/pawnpal.png"
+   ],
+   "sha": "61f58900a175fc3a"
+  },
+  "zhou": {
+   "file": "zhou.dat",
+   "raw": 19582718,
+   "size": 11119185,
+   "entries": [
+    "ancient.glb",
+    "historic.glb",
+    "interior.glb",
+    "tex/Ancient_Tex_Wei.png",
+    "tex/Ancient_Tex_Zhao.png",
+    "tex/LowpolyChineseBuilding_Texture_01.png",
+    "tex/LowpolyChineseBuilding_Texture_02.png",
+    "tex/LowpolyChineseBuilding_Texture_03.png",
+    "tex/LowpolyChineseBuilding_Texture_04.png",
+    "tex/LowpolyChineseBuilding_Texture_05.png",
+    "tex/LowpolyHistoricInterior_Texture_01.png",
+    "tex/LowpolyHistoricInterior_Texture_02.png",
+    "tex/LowpolyHistoricInterior_Texture_03.png",
+    "tex/LowpolyHistoricInterior_Texture_04.png",
+    "tex/LowpolyHistoricInterior_Texture_05.png",
+    "tex/LowpolyHistoric_Sculpture_01.png",
+    "tex/LowpolyHistoric_Sculpture_02.png",
+    "tex/LowpolyHistoric_Sculpture_03.png",
+    "tex/LowpolyHistoric_Sculpture_04.png",
+    "tex/LowpolyHistoric_Sculpture_05.png",
+    "tex/LowpolyHistoric_Texture_01.png",
+    "tex/LowpolyHistoric_Texture_02.png",
+    "tex/LowpolyHistoric_Texture_03.png",
+    "tex/LowpolyHistoric_Texture_04.png",
+    "tex/LowpolyHistoric_Texture_05.png"
+   ],
+   "sha": "38534cc85f4e7f32"
+  },
+  "steppe": {
+   "file": "steppe.dat",
+   "raw": 3168700,
+   "size": 2951030,
+   "entries": [
+    "steppe.glb",
+    "steppe.license.txt"
+   ],
+   "sha": "1ffb4d92cff0a98b"
+  }
+ }
+}

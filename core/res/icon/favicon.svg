@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ROMA.SYS">
+  <rect width="512" height="512" fill="#060606"/>
+  <rect x="26" y="26" width="460" height="460" fill="none" stroke="#c99b3f" stroke-opacity=".5" stroke-width="7"/>
+  <g fill="#c99b3f">
+    <path d="M132 382 V218 A124 124 0 0 1 380 218 V382 H332 V218 A76 76 0 0 0 180 218 V382 Z"/>
+    <rect x="104" y="382" width="304" height="34"/>
+  </g>
+</svg>
