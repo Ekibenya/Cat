@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FELINIA.SYS</title>
 <meta name="description" content="一部横跨上下万年的猫娘世界史。年代 · 地点 · 人由你定。">
-<meta name="theme-color" content="#f0eadc">
+<meta name="theme-color" content="#191304">
 <link rel="icon" type="image/svg+xml" href="/core/res/icon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/core/res/icon/favicon-32.png">
 <link rel="apple-touch-icon" href="/core/res/icon/apple-touch-icon.png">
@@ -18,24 +18,24 @@
 <body>
 <style>
 :root{
-  --ink:#060606;          /* ground */
-  --line:#9c9c98;         /* wireframe grey */
-  --paper:#ecece8;        /* block white */
-  --txt:#d9d9d4;          /* body text */
-  --mut:#6b6b66;          /* muted text */
-  --gold:#c99b3f;         /* guilloché gold */
-  --gold-hi:#ecc878;      /* gold highlight */
+  --ink:#ede7d9;          /* ground */
+  --line:#5f5c53;         /* wireframe grey */
+  --paper:#13120d;        /* block white */
+  --txt:#25241d;          /* body text */
+  --mut:#8d8a7d;          /* muted text */
+  --gold:#845800;         /* guilloché gold */
+  --gold-hi:#523000;      /* gold highlight */
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Cascadia Mono',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 /* 滚动条：浏览器默认那根又粗又白，和这套黑金 UI 完全不搭。全局收成一根细金线，
    轨槽近乎透明，滑块常态半暗、悬停才亮。下面几处 ::-webkit-scrollbar{display:none}
    是按 class 写的，比这条裸选择器更具体，照旧生效。 */
-*{scrollbar-width:thin;scrollbar-color:rgba(201,155,63,.42) transparent}
+*{scrollbar-width:thin;scrollbar-color:rgba(132,88,0,.42) transparent}
 ::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:rgba(236,236,232,.05)}
-::-webkit-scrollbar-thumb{background:rgba(201,155,63,.34);border:0}
-::-webkit-scrollbar-thumb:hover{background:rgba(236,200,120,.66)}
+::-webkit-scrollbar-track{background:rgba(19,18,13,.05)}
+::-webkit-scrollbar-thumb{background:rgba(132,88,0,.34);border:0}
+::-webkit-scrollbar-thumb:hover{background:rgba(82,48,0,.66)}
 ::-webkit-scrollbar-corner{background:transparent}
 html,body{height:100%;overscroll-behavior:none}
 /* 原来这里写的是 cursor:crosshair——十字光标于是铺满菜单、选局和全部弹窗
@@ -47,10 +47,10 @@ canvas{display:block}
 #terrain,#grain{position:fixed;inset:0;width:100%;height:100%}
 #grain{pointer-events:none;opacity:.07;mix-blend-mode:screen}
 #vig{position:fixed;inset:0;pointer-events:none;
-     background:radial-gradient(ellipse 90% 80% at 50% 42%,transparent 55%,rgba(0,0,0,.55) 100%)}
+     background:radial-gradient(ellipse 90% 80% at 50% 42%,transparent 55%,rgba(242,236,222,.55) 100%)}
 
 /* ---------- chrome ---------- */
-.tag{display:inline-block;background:var(--paper);color:#0a0a0a;padding:2px 7px 1px;
+.tag{display:inline-block;background:var(--paper);color:#e9e3d6;padding:2px 7px 1px;
      font-size:10px;letter-spacing:.22em;font-weight:700}
 .lbl{font-size:9px;letter-spacing:.3em;color:var(--mut)}
 
@@ -65,16 +65,16 @@ canvas{display:block}
 #glyphs .star{color:var(--txt);font-size:13px;letter-spacing:0}
 
 #edgeL{position:fixed;left:12px;top:50%;transform:translateY(-50%) rotate(180deg);
-       writing-mode:vertical-rl;font-size:8px;letter-spacing:.4em;color:#3c3c38;z-index:5}
+       writing-mode:vertical-rl;font-size:8px;letter-spacing:.4em;color:#bab5a7;z-index:5}
 #edgeR{position:fixed;right:12px;top:50%;transform:translateY(-50%);
-       writing-mode:vertical-rl;font-size:8px;letter-spacing:.4em;color:#3c3c38;z-index:5}
+       writing-mode:vertical-rl;font-size:8px;letter-spacing:.4em;color:#bab5a7;z-index:5}
 
 /* ---------- 3D ring carousel ---------- */
 #stage{position:fixed;inset:0;z-index:10;perspective:1800px;perspective-origin:50% 42%;touch-action:none}
 #track{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
 .card{position:absolute;left:50%;top:44%;width:var(--fs);height:var(--fs);pointer-events:auto;cursor:pointer;touch-action:none;
       will-change:transform,opacity;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.cframe{position:absolute;inset:0;border:1px solid rgba(236,236,232,.5)}
+.cframe{position:absolute;inset:0;border:1px solid rgba(19,18,13,.5)}
 .cframe::before,.cframe::after{content:'';position:absolute;width:7px;height:7px;border:1px solid var(--paper)}
 .cframe::before{left:-4px;top:-4px;border-right:0;border-bottom:0}
 .cframe::after{right:-4px;bottom:-4px;border-left:0;border-top:0}
@@ -88,12 +88,12 @@ canvas{display:block}
 #mission{position:fixed;top:38%;left:calc(50% - var(--fs)/2);transform:translate(-62%,-50%);
          z-index:18;line-height:1;pointer-events:none}
 #mission .m-tag{margin-bottom:12px}
-#mission .m-tag .tag{background:var(--gold);color:#0a0a0a}
-#mission .num{display:inline-block;background:var(--paper);color:#0a0a0a;font-weight:700;
+#mission .m-tag .tag{background:var(--gold);color:#e9e3d6}
+#mission .num{display:inline-block;background:var(--paper);color:#e9e3d6;font-weight:700;
       font-size:clamp(34px,4.6vw,58px);padding:6px 12px 3px;letter-spacing:.06em;
       font-variant-numeric:tabular-nums}
 #mission .ttl{margin-top:10px;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
-#mission .ttl span{display:inline-block;background:var(--paper);color:#0a0a0a;font-weight:700;
+#mission .ttl span{display:inline-block;background:var(--paper);color:#e9e3d6;font-weight:700;
              font-size:clamp(13px,1.35vw,19px);letter-spacing:.14em;padding:5px 9px 3px;
              white-space:nowrap}
 /* 第二块是开局标题。标题改成大白话之后能到十七八个字，nowrap 会一路顶出屏幕，
@@ -106,7 +106,7 @@ canvas{display:block}
 .ghost{position:absolute;left:8%;top:12%;line-height:1}
 .ghost .lbl{display:block;margin-bottom:12px}
 .ghost .num{font-size:clamp(64px,8.5vw,116px);font-weight:700;color:transparent;line-height:.9;
-      -webkit-text-stroke:1px rgba(236,236,232,.75);letter-spacing:.04em;
+      -webkit-text-stroke:1px rgba(19,18,13,.75);letter-spacing:.04em;
       font-variant-numeric:tabular-nums}
 .ghost .name{margin-top:14px;font-size:clamp(13px,1.5vw,20px);letter-spacing:.3em;color:var(--txt);
        white-space:nowrap;overflow:hidden;max-width:90%}
@@ -117,9 +117,9 @@ canvas{display:block}
 
 /* ---------- footer ---------- */
 #foot{position:fixed;left:0;right:0;bottom:0;min-height:40px;z-index:20;
-      border-top:1px solid #232320;display:flex;align-items:center;
+      border-top:1px solid #d2ccbd;display:flex;align-items:center;
       justify-content:space-between;padding:4px 30px calc(4px + env(safe-area-inset-bottom,0px));font-size:9px;letter-spacing:.22em;color:var(--mut);
-      background:rgba(6,6,6,.72)}
+      background:rgba(237,231,217,.72)}
 /* 手机：左侧状态行与英文操作提示让位，把位置留给两颗真按钮 */
 @media (max-width:760px){
   #foot{padding-left:12px;padding-right:12px}
@@ -130,7 +130,7 @@ canvas{display:block}
 }
 #foot b{color:var(--gold);font-weight:400}
 #foot .r{display:flex;gap:26px}
-#foot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;padding:9px 14px;margin-left:8px;border:1px solid rgba(201,155,63,.45);background:rgba(201,155,63,.07);letter-spacing:.18em}
+#foot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;padding:9px 14px;margin-left:8px;border:1px solid rgba(132,88,0,.45);background:rgba(132,88,0,.07);letter-spacing:.18em}
 #foot .r{display:flex;align-items:center;flex-wrap:nowrap}
 #foot .go:hover{color:var(--gold-hi)}
 
@@ -220,25 +220,25 @@ canvas{display:block}
        font-size:10px;letter-spacing:.52em;color:var(--mut);white-space:nowrap;
        opacity:0;transition:opacity .7s ease}
 #intro .iSub{position:absolute;left:50%;top:58%;transform:translateX(-50%);
-       font-size:10px;letter-spacing:.34em;color:#8a8a84;white-space:nowrap;
+       font-size:10px;letter-spacing:.34em;color:#706d61;white-space:nowrap;
        opacity:0;transition:opacity .7s ease}
 #intro .iBtn{position:absolute;left:50%;top:66%;transform:translateX(-50%);
-       border:1px solid rgba(236,236,232,.35);padding:11px 40px 9px;
+       border:1px solid rgba(19,18,13,.35);padding:11px 40px 9px;
        font-size:11px;letter-spacing:.44em;color:var(--txt);
        opacity:0;transition:opacity .7s ease,border-color .2s,color .2s}
 #intro .iBtn:hover{border-color:var(--gold);color:var(--gold-hi)}
 #intro .iFoot{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
-       font-size:9px;letter-spacing:.4em;color:#4a4a44;white-space:nowrap;
+       font-size:9px;letter-spacing:.4em;color:#ada999;white-space:nowrap;
        opacity:0;transition:opacity .7s ease}
 #intro.p1 .iEyebrow{opacity:1}
 #intro.p2 .iSub{opacity:1}
 #intro.p3 .iBtn,#intro.p3 .iFoot{opacity:1}
 
 /* ---------- engage overlay ---------- */
-#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:90}
+#flash{position:fixed;inset:0;background:#000000;opacity:0;pointer-events:none;z-index:90}
 #link{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
-      background:rgba(4,4,4,.86)}
-#link .box{border:1px solid rgba(236,236,232,.4);padding:38px 46px;text-align:left;max-width:520px}
+      background:rgba(239,233,219,.86)}
+#link .box{border:1px solid rgba(19,18,13,.4);padding:38px 46px;text-align:left;max-width:520px}
 #link .box .tag{margin-bottom:22px}
 #link h2{font-size:15px;letter-spacing:.3em;font-weight:400;color:var(--txt);margin-bottom:14px}
 #link p{font-size:10px;letter-spacing:.16em;line-height:2.1;color:var(--mut)}
@@ -254,17 +254,17 @@ canvas{display:block}
 #eraHud b{display:block;font-weight:400;font-size:19px;letter-spacing:.5em;color:var(--txt)}
 #eraHud span{display:inline-block;margin-top:12px;font-size:9px;letter-spacing:.32em;color:var(--mut)}
 #eraBox,#persona,#psRes{position:fixed;inset:0;z-index:82;display:none;align-items:center;
-      justify-content:center;background:rgba(4,4,4,.58)}
-#eraBox .box,#persona .box,#psRes .box{border:1px solid rgba(236,236,232,.4);padding:38px 46px;
+      justify-content:center;background:rgba(239,233,219,.58)}
+#eraBox .box,#persona .box,#psRes .box{border:1px solid rgba(19,18,13,.4);padding:38px 46px;
       min-width:340px;max-width:540px;
-      background:rgba(6,6,6,.24);box-shadow:0 18px 48px rgba(0,0,0,.55);
+      background:rgba(237,231,217,.24);box-shadow:0 18px 48px rgba(242,236,222,.55);
       -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)}
 /* 场面窗压在人物面板之上：返回时人物面板原样还在后头，填好的名字不必重打 */
-#psRes{z-index:84;background:rgba(4,4,4,.92)}
+#psRes{z-index:84;background:rgba(239,233,219,.92)}
 #psRes .box{width:min(calc(94vw/var(--ui)),540px);max-height:calc(92vh/var(--ui));overflow-y:auto}
 #psRes .prNote{font-size:10.5px;letter-spacing:.06em;line-height:2.05;color:var(--mut);margin-top:16px}
 #psRes textarea{display:block;width:100%;margin-top:16px;min-height:168px;
-      background:rgba(236,236,232,.03);border:1px solid rgba(236,236,232,.18);color:var(--gold-hi);
+      background:rgba(19,18,13,.03);border:1px solid rgba(19,18,13,.18);color:var(--gold-hi);
       font-size:12px;letter-spacing:.06em;line-height:2;padding:12px 14px;
       outline:none;font-family:inherit;resize:vertical}
 #psRes textarea:focus{border-color:var(--gold)}
@@ -280,7 +280,7 @@ canvas{display:block}
 #eraBox h2,#persona h2,#psRes h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:var(--txt);margin:22px 0 8px}
 #eraBox .sub,#persona .sub,#psRes .sub{font-size:9px;letter-spacing:.22em;color:var(--mut);line-height:2}
 #eraBox input{display:block;margin:26px auto 4px;width:230px;background:transparent;border:0;
-      border-bottom:1px solid rgba(236,236,232,.4);color:var(--gold-hi);font-size:26px;
+      border-bottom:1px solid rgba(19,18,13,.4);color:var(--gold-hi);font-size:26px;
       letter-spacing:.18em;text-align:center;padding:6px 0;outline:none;font-family:inherit}
 #eraBox input:focus{border-color:var(--gold)}
 /* 年代面板定宽：否则切纪元时下方范围提示长短不同，会带着整个面板与按钮一起缩放 */
@@ -289,14 +289,14 @@ canvas{display:block}
 .ebEra{display:flex;gap:10px;justify-content:center;margin:12px 0 4px}
 /* 两枚等宽：中文标签同为三字、拉丁写法降为副行，宽度不受文字长短影响，切换也不跳动 */
 .ebEraBtn{flex:0 0 auto;width:140px;box-sizing:border-box;text-align:center;
-  border:1px solid rgba(236,236,232,.3);padding:8px 6px 7px;
+  border:1px solid rgba(19,18,13,.3);padding:8px 6px 7px;
   color:var(--mut);cursor:pointer;white-space:nowrap;transition:border-color .18s,background .18s,color .18s}
 .ebEraBtn b{display:block;font-weight:400;font-size:12px;letter-spacing:.24em;text-indent:.24em}
 .ebEraBtn i{display:block;font-style:normal;margin-top:3px;font-size:8px;letter-spacing:.2em;text-indent:.2em;opacity:.7}
 .ebEraBtn:hover{border-color:var(--gold);color:var(--gold-hi)}
-.ebEraBtn.on{background:var(--gold);border-color:var(--gold);color:#0a0a0a}
-#eraBox input.bad{border-color:#c8402e;color:#e86a52}
-.eBtn{display:inline-block;margin-top:28px;border:1px solid rgba(236,236,232,.35);
+.ebEraBtn.on{background:var(--gold);border-color:var(--gold);color:#e9e3d6}
+#eraBox input.bad{border-color:#ff7f63;color:#d35d3d}
+.eBtn{display:inline-block;margin-top:28px;border:1px solid rgba(19,18,13,.35);
       padding:10px 34px 8px;font-size:11px;letter-spacing:.4em;color:var(--txt);cursor:pointer;
       transition:border-color .2s,color .2s}
 .eBtn:hover{border-color:var(--gold);color:var(--gold-hi)}
@@ -310,7 +310,7 @@ canvas{display:block}
 #persona .box>.esc2{flex:none}
 #persona .psBody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
       scrollbar-gutter:stable;padding-right:10px;
-      scrollbar-width:thin;scrollbar-color:rgba(201,155,63,.55) rgba(236,236,232,.07)}
+      scrollbar-width:thin;scrollbar-color:rgba(132,88,0,.55) rgba(19,18,13,.07)}
 @media (max-width:760px){
   /* min-width:340px 在 320 宽的机子上会把面板顶出左缘 */
   #persona .box{padding:24px 18px;max-height:calc(94vh/var(--ui));
@@ -318,22 +318,22 @@ canvas{display:block}
   #persona .box>.eBtn{align-self:stretch;text-align:center}
 }
 #persona .pField{display:flex;justify-content:space-between;align-items:baseline;gap:34px;
-      border-bottom:1px solid rgba(236,236,232,.14);padding:11px 0}
+      border-bottom:1px solid rgba(19,18,13,.14);padding:11px 0}
 #persona .pField span{font-size:9px;letter-spacing:.3em;color:var(--mut);white-space:nowrap}
 #persona .pField input{flex:1;background:transparent;border:0;color:var(--gold-hi);
       font-size:12px;letter-spacing:.2em;text-align:right;outline:none;font-family:inherit}
 /* 此刻的场面：一段自由文字，玩家写多少神谕就照多少来铸 */
 #persona .psFixed{display:flex;gap:10px;margin-top:18px}
-#persona .psCard{flex:1;border:1px solid rgba(201,155,63,.4);padding:12px 14px 10px;cursor:pointer;
+#persona .psCard{flex:1;border:1px solid rgba(132,88,0,.4);padding:12px 14px 10px;cursor:pointer;
       transition:border-color .2s,background .2s}
 #persona .psCard b{display:block;font-weight:400;font-size:13px;letter-spacing:.3em;color:var(--gold-hi)}
 #persona .psCard span{font-size:8.5px;letter-spacing:.16em;color:var(--mut)}
-#persona .psCard:hover{border-color:var(--gold);background:rgba(201,155,63,.08)}
+#persona .psCard:hover{border-color:var(--gold);background:rgba(132,88,0,.08)}
 #persona .pcRe{color:var(--gold);cursor:pointer;letter-spacing:.2em}
 #persona .pcRe:hover{color:var(--gold-hi)}
 #persona .psNpcs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;
       max-height:180px;overflow-y:auto}
-#persona .npcCard{border:1px solid rgba(236,236,232,.16);padding:9px 11px 8px;cursor:pointer;
+#persona .npcCard{border:1px solid rgba(19,18,13,.16);padding:9px 11px 8px;cursor:pointer;
       transition:border-color .2s}
 #persona .npcCard:hover,#persona .npcCard.on{border-color:var(--gold)}
 #persona .npcCard b{display:block;font-weight:400;font-size:10.5px;letter-spacing:.14em;color:var(--txt)}
@@ -341,10 +341,10 @@ canvas{display:block}
 #persona .npcCard i{font-style:normal;font-size:8px;letter-spacing:.1em;color:var(--gold)}
 #persona .npcCard span{display:block;font-size:8px;letter-spacing:.06em;line-height:1.7;color:var(--mut);margin-top:3px}
 /* 地点志：地理一行（金色小字）＋此年此地的实录（正文体，可滚动） */
-.psDoc{margin-top:14px;border-left:2px solid rgba(201,155,63,.45);padding:2px 0 2px 14px;
+.psDoc{margin-top:14px;border-left:2px solid rgba(132,88,0,.45);padding:2px 0 2px 14px;
       max-height:min(34vh,260px);overflow-y:auto;scrollbar-width:thin}
 .psDoc .pdG{font-size:10.5px;letter-spacing:.06em;line-height:1.95;color:var(--gold-hi);margin-bottom:9px}
-.psDoc .pdT{font-size:11.5px;letter-spacing:.04em;line-height:2.05;color:#cfcfc9;white-space:pre-wrap}
+.psDoc .pdT{font-size:11.5px;letter-spacing:.04em;line-height:2.05;color:#2e2d25;white-space:pre-wrap}
 .psDoc .pdW{color:var(--mut);font-style:normal}
 @media (max-width:760px){.psDoc .pdG{font-size:12px}.psDoc .pdT{font-size:13px;line-height:1.95}}
 #persona .box>.eBtn{margin-top:20px}
@@ -353,7 +353,7 @@ canvas{display:block}
 .esc2{margin-top:24px;font-size:9px;letter-spacing:.3em;color:var(--mut)}
 
 /* ---------- game stage (Ghost layout, ROME dress) ---------- */
-#game{position:fixed;inset:0;z-index:50;background:rgba(4,4,4,.26);display:none;isolation:isolate;cursor:default}
+#game{position:fixed;inset:0;z-index:50;background:rgba(239,233,219,.26);display:none;isolation:isolate;cursor:default}
 /* 这一层原来是给背后那根粒子罗马柱加毛玻璃用的。柱子已经撤掉，背后只剩一块纯黑，
    模糊没有任何可模糊的东西，却要常驻一整屏的合成缓冲 + 背景快照
    （will-change:backdrop-filter 还把它钉死在显存里）。只留同样的压暗色。 */
@@ -361,7 +361,7 @@ canvas{display:block}
    就成了盖在山上的一张灰纸——颜色深度全没了。换成选局用的那条暗角
    （#vig 的同一句），中间一寸不压，四角照旧收下去。 */
 #game::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
-      background:radial-gradient(ellipse 90% 80% at 50% 42%,transparent 55%,rgba(0,0,0,.55) 100%)}
+      background:radial-gradient(ellipse 90% 80% at 50% 42%,transparent 55%,rgba(242,236,222,.55) 100%)}
 /* 选局那张粒子山脉底，铺满整个对局界面（正文底下也铺）。
    必须挂在 #game 里面：#game 是 isolation:isolate 的独立层，
    毛玻璃取的背景只到这一层为止——铺在外面的 #terrain 它根本采不到，
@@ -379,25 +379,31 @@ canvas{display:block}
    整站一次反色＋色相回正（黑金 → 白金），三维画面与图片再反一次保持原貌。
    全卡内联颜色数以百计，逐处重配不现实；这条滤镜路是黑白模式的标准做法。
    html 高度即视口（overflow hidden），filter 形成的包含块不影响 fixed 布局。 */
-html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}
-html.lux #zjScene3D canvas,html.lux #mdScene3D canvas,html.lux img{filter:invert(1) hue-rotate(180deg)}
+/* BAKED·已烘焙 */
+/* 奶油配色已烘焙进每一个颜色值：上面整份样式里的颜色都是 G(原色)。
+   这里不再挂整页滤镜——根元素一挂滤镜，任何一个像素变化都要整页重过
+   着色器、33 块毛玻璃全部重取样，特效才因此逐项叠卡。 */
+html.lux{color-scheme:light}
+/* 滤镜已卸：图片本来就是真彩，不再需要反回来 */
 /* 反色出来的近纯白太刺眼：正片叠底罩一层暖纸色，白压成米黄羊皮纸面，
    深色文字几乎不动（对比度不丢）；压在一切弹窗之上，全站统一。 */
 /* 暖纸罩。颜色与混合模式是按「隔着根元素那道 invert+hue-rotate」反解出来的：
-   F(screen(c,s)) = M·((1-c)·(1-s))，令它等于 #f0eadc，得 s=#181204。
-   写成 multiply + #f2ece0 的老写法，作用在反色之前的近黑底上，等于没写——
+   F(screen(c,s)) = M·((1-c)·(1-s))，令它等于 #191304，得 s=#e6dbc1。
+   写成 multiply + #171104 的老写法，作用在反色之前的近黑底上，等于没写——
    对局屏与全部弹窗因此一直是纯白。 */
-html.lux::after{content:'';position:fixed;inset:0;z-index:2147483647;pointer-events:none;
-  background:#181204;mix-blend-mode:screen}
+/* 暖纸罩已按层落地：界面色烘焙时乘进了 (1-s)，真彩三层各自盖一层 multiply。 */
+html.lux #menu:not(.gbg):not(.era)::after,html.lux #eraSel::after,html.lux #feWrap::after{
+  content:'';position:absolute;inset:0;z-index:2147483647;pointer-events:none;
+  background:#f0eadc;mix-blend-mode:multiply}
 /* 菜单那一屏不参与全局反色：马赛克是按真彩烤好的，再反一遍就成负片。
    同一条滤镜再上一次，正好抵消。 */
-html.lux #menu:not(.gbg):not(.era){filter:invert(1) hue-rotate(180deg)}
+/* 滤镜已卸：这一层本来就是真彩 */
 /* 只剩奶油一档了，开关收起来 */
 #luxTg{display:none!important}
 /* ═══════ 纪年页：浅底配色 ═══════
    与菜单同样先从全局反色里豁免，再按浅底重配——不然这一层会被反成负片。 */
-html.lux #eraSel{filter:invert(1) hue-rotate(180deg)}
-html.lux #eraSel img{filter:none}          /* 层已抵消，图不必再反一次 */
+/* 滤镜已卸：这一层本来就是真彩 */
+/* 滤镜已卸 */          /* 层已抵消，图不必再反一次 */
 html.lux #eraSel{background:#fcfcfc}
 html.lux #esReel::before{background:linear-gradient(90deg,#f0eadc 0%,rgba(252,252,252,.7) 45%,rgba(252,252,252,0) 100%)}
 html.lux #esReel::after{background:linear-gradient(270deg,#f0eadc 0%,rgba(252,252,252,.7) 45%,rgba(252,252,252,0) 100%)}
@@ -453,7 +459,7 @@ html.lux #esBrand b{color:#4a4237}
       overflow:hidden;flex:1 1 auto;min-width:0;max-width:min(46vw,200px)}
 #game .gLoc i{font-style:normal;color:var(--gold)}
 #game .gTools{display:flex;gap:8px;flex:none}
-#game .gt{font-size:9px;letter-spacing:.24em;color:var(--mut);border:1px solid rgba(236,236,232,.22);
+#game .gt{font-size:9px;letter-spacing:.24em;color:var(--mut);border:1px solid rgba(19,18,13,.22);
       padding:5px 10px 4px;cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap}
 #game .gt:hover{color:var(--gold-hi);border-color:var(--gold)}
 #game .gTools .gt{width:32px;height:26px;padding:0;display:flex;align-items:center;justify-content:center}
@@ -473,20 +479,20 @@ html.lux #esBrand b{color:#4a4237}
   #game.mvFree #pnTx{right:calc(var(--mvGut,322px)*var(--ui))}
 }
 #game .gNarr{flex:1;overflow-y:auto;padding:calc(46px*var(--ui) + 36px) 7% 96px;font-size:17px;line-height:1.8;
-      letter-spacing:.03em;color:#c8c8c2;background:transparent}
+      letter-spacing:.03em;color:#35342b;background:transparent}
 #game .gNarr p{margin-bottom:1.5em}
 #game .gNarr>*{max-width:750px;margin-left:auto;margin-right:auto}
 #game .gNarr .q{color:var(--gold-hi)}
 #game .gNarr .sys{font-size:12px;letter-spacing:.32em;color:var(--mut)}
-#game .gNarr .me{color:#9fb4c8}
-#game .gEot{text-align:center;font-size:10px;letter-spacing:.4em;color:#4a4a44;margin:28px 0 8px}
+#game .gNarr .me{color:#3a4b5a}
+#game .gEot{text-align:center;font-size:10px;letter-spacing:.4em;color:#ada999;margin:28px 0 8px}
 /* 输入区浮于正文之上（Ghost 式）：正文滚到底下透出，阅读面拉满；渐隐底幕保字可读 */
 /* z-index 必须高过三维面板(25)：这一层是层叠上下文，里面的模式行／四策／输入框
    写多大的 z 都被整块一起压在面板底下——放到最大档时控件就点不着了。 */
 /* 底幕只该盖住输入行那一条。模式行撤掉之后这一块矮了一截，内距再收一档；
    渐变的收口也从 100% 提到 76%——上面那一段本来就是空的，压黑了只是白挡正文。 */
 #game .gInput{position:absolute;left:0;right:0;bottom:0;z-index:27;pointer-events:none;padding-top:6px;
-      background:linear-gradient(0deg,rgba(6,6,6,.88) 0%,rgba(6,6,6,.66) 42%,rgba(6,6,6,0) 76%)}
+      background:linear-gradient(0deg,rgba(237,231,217,.88) 0%,rgba(237,231,217,.66) 42%,rgba(237,231,217,0) 76%)}
 /* 三维面板是 z-index:25 的绝对定位层；放到最大档时它会压住下面这一组控件。
    把输入这一组抬到面板之上——画面可以被盖一点，控件不能点不着。 */
 #game .gLine,#game .gSugRow{pointer-events:auto}
@@ -496,15 +502,15 @@ html.lux #esBrand b{color:#4a4237}
 /* 前缀符号单独一个 <i>：桌面留着当装饰，手机上整排要一屏放得下，藏掉它省一截。 */
 #game .gm .ms,#game .gsug .ms{font-style:normal;margin-right:5px}
 #game .gm{font-size:9px;letter-spacing:.2em;color:var(--mut);padding:6px 12px 5px;cursor:pointer;
-      border:1px solid transparent;white-space:nowrap;background:rgba(6,6,6,.6)} /* 页签自带底色：浮层下正文透字不糊眼 */
-#game .gm.on{color:#0a0a0a;background:var(--gold);font-weight:600}
+      border:1px solid transparent;white-space:nowrap;background:rgba(237,231,217,.6)} /* 页签自带底色：浮层下正文透字不糊眼 */
+#game .gm.on{color:#e9e3d6;background:var(--gold);font-weight:600}
 #game .gsug.off{opacity:.32;pointer-events:none}
 #game .gm:not(.on):hover{color:var(--gold-hi)}
 /* 行里那枚「当前模式」钮 */
 #game .gmBtn{position:relative;flex:none;height:30px;display:inline-flex;align-items:center;
       font-size:9px;letter-spacing:.2em;color:var(--gold-hi);cursor:pointer;
       padding:0 11px;white-space:nowrap;
-      border:1px solid rgba(201,155,63,.42);background:rgba(6,6,6,.6)}
+      border:1px solid rgba(132,88,0,.42);background:rgba(237,231,217,.6)}
 #game .gmBtn .ms{font-style:normal;margin-right:5px}
 #game .gmBtn b{font-weight:400}
 #game .gmBtn .cv{font-style:normal;margin-left:7px;opacity:.6}
@@ -521,8 +527,8 @@ html.lux #esBrand b{color:#4a4237}
    剩图标+名字，整张单子于是是一条窄的竖长方形，占地最小。 */
 #game .gmMenu{position:absolute;left:0;bottom:100%;margin-bottom:2px;z-index:40;
       width:max-content;max-width:min(64vw,220px);padding:4px;
-      background:rgba(6,6,6,.24);border:1px solid rgba(236,236,232,.4);
-      box-shadow:0 18px 48px rgba(0,0,0,.55);
+      background:rgba(237,231,217,.24);border:1px solid rgba(19,18,13,.4);
+      box-shadow:0 18px 48px rgba(242,236,222,.55);
       -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
       opacity:0;visibility:hidden;pointer-events:none;
       transform:perspective(620px) translateY(var(--mv-y)) rotateY(10deg) scaleY(.93) scale(var(--mv-s));
@@ -537,22 +543,22 @@ html.lux #esBrand b{color:#4a4237}
       margin:0;background:transparent;border:0;white-space:nowrap;color:var(--mut)}
 #game .gmMenu .ms{display:inline !important;margin-right:0;flex:none;width:12px;
       text-align:center;opacity:.75}
-#game .gmMenu b{font-weight:400;color:#d9d9d4;flex:none}
+#game .gmMenu b{font-weight:400;color:#25241d;flex:none}
 #game .gmMenu em{display:none}          /* 说明只留在输入框的 placeholder 里，单子不再重复一遍 */
-#game .gmMenu .gm.on,#game .gmMenu .gsug.on{background:rgba(201,155,63,.16);color:var(--mut)}
+#game .gmMenu .gm.on,#game .gmMenu .gsug.on{background:rgba(132,88,0,.16);color:var(--mut)}
 #game .gmMenu .gm.on b,#game .gmMenu .gsug.on b{color:var(--gold-hi)}
 #game .gmMenu .gm.on .ms,#game .gmMenu .gsug.on .ms{opacity:1;color:var(--gold-hi)}
-#game .gmMenu .gm:hover,#game .gmMenu .gsug:hover{background:rgba(236,236,232,.06)}
-#game .gmSep{display:block;height:1px;margin:4px 6px;background:rgba(236,236,232,.14)}
+#game .gmMenu .gm:hover,#game .gmMenu .gsug:hover{background:rgba(19,18,13,.06)}
+#game .gmSep{display:block;height:1px;margin:4px 6px;background:rgba(19,18,13,.14)}
 #game .gmMenu .gsug::after{content:'';flex:none;width:11px;margin-left:auto;text-align:right;color:var(--gold-hi)}
 #game .gmMenu .gsug.on::after{content:'✓'}
 /* 行里那颗 ○／● 是给一排小钮用的开关指示；单子里右边已经有勾了，不要两套。 */
 #game .gmMenu .gsug::before,#game .gmMenu .gsug.on::before{content:none}
 /* 参谋是开关不是输入模式：它不占模式位，只管「每一幕后要不要给四条可点的下一步」 */
 #game .gsug{font-size:9px;letter-spacing:.2em;padding:6px 12px 5px;cursor:pointer;white-space:nowrap;
-      margin-left:10px;border:1px solid rgba(201,155,63,.28);color:var(--mut);background:rgba(6,6,6,.6)}
+      margin-left:10px;border:1px solid rgba(132,88,0,.28);color:var(--mut);background:rgba(237,231,217,.6)}
 #game .gsug.on{color:var(--gold-hi);border-color:var(--gold)}
-#game #dreamIn.on,#game #dreamOut.on{color:#0a0a0a;background:var(--gold);border-color:var(--gold);font-weight:600}
+#game #dreamIn.on,#game #dreamOut.on{color:#e9e3d6;background:var(--gold);border-color:var(--gold);font-weight:600}
 #game #dreamIn::before,#game #dreamOut::before{content:''}
 #game .gsug:hover{color:var(--gold-hi)}
 #game .gsug::before{content:'○\00a0';font-size:8px}
@@ -562,12 +568,12 @@ html.lux #esBrand b{color:#4a4237}
 #game .gSugRow.on{display:grid}
 #game.txBig .gSugRow.on{display:none}   /* 三维放到最大时，下方空间不够，四策先让位 */
 #game .gSugRow .sg{font-size:10.5px;line-height:1.5;letter-spacing:.04em;padding:7px 11px;cursor:pointer;
-      color:var(--gold-hi);border:1px solid rgba(201,155,63,.3);background:rgba(6,6,6,.55);
+      color:var(--gold-hi);border:1px solid rgba(132,88,0,.3);background:rgba(237,231,217,.55);
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .18s,border-color .18s}
-#game .gSugRow .sg:hover{background:rgba(201,155,63,.16);border-color:var(--gold)}
+#game .gSugRow .sg:hover{background:rgba(132,88,0,.16);border-color:var(--gold)}
 #game .gSugRow .sg i{font-style:normal;color:var(--mut);font-size:8.5px;letter-spacing:.16em;margin-right:6px}
-#game .gSugRow .sg.risk{border-color:rgba(200,80,60,.55)}
-#game .gSugRow .sg.risk i{color:#c8503c}
+#game .gSugRow .sg.risk{border-color:rgba(232,119,90,.55)}
+#game .gSugRow .sg.risk i{color:#e8775a}
 .zjNoBar{scrollbar-width:none}              /* 三维营造页签行：能滑但不显滚动条 */
 .zjNoBar::-webkit-scrollbar{display:none}
 #game .gSugRow .sg.wait{color:var(--mut);border-style:dashed;cursor:default;grid-column:1/-1;text-align:center}
@@ -577,59 +583,59 @@ html.lux #esBrand b{color:#4a4237}
 #game .gLine{display:flex;align-items:center;gap:12px;padding:6px 14px 10px}
 /* min-width:0 —— flex 子项默认 min-width:auto，输入框的 min-content 是按 size 属性
    算出来的一大截固定宽度，字号一大就把后面几颗钮整排顶出屏幕外。 */
-#game .gLine input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid rgba(236,236,232,.25);
+#game .gLine input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid rgba(19,18,13,.25);
       padding:8px 2px;color:var(--txt);font-size:12px;letter-spacing:.08em;outline:none;font-family:inherit}
 #game .gLine input:focus{border-color:var(--gold)}
-#game .gAux{width:30px;height:30px;flex:none;border:1px solid rgba(236,236,232,.2);color:var(--mut);
+#game .gAux{width:30px;height:30px;flex:none;border:1px solid rgba(19,18,13,.2);color:var(--mut);
       display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;
       transition:color .2s,border-color .2s}
 #game .gAux:hover{color:var(--gold-hi);border-color:var(--gold)}
-#game .gAux.on{color:#0a0a0a;background:var(--gold);border-color:var(--gold)}
-.cfgTabs{display:flex;flex-wrap:wrap;gap:2px;margin-top:16px;border-bottom:1px solid rgba(236,236,232,.16);
+#game .gAux.on{color:#e9e3d6;background:var(--gold);border-color:var(--gold)}
+.cfgTabs{display:flex;flex-wrap:wrap;gap:2px;margin-top:16px;border-bottom:1px solid rgba(19,18,13,.16);
       padding-bottom:0} /* 换行铺开：12 个页签任何窗宽都全部可见，不再裁掉备份/图库 */
 .cfgTabs span{flex:none;font-size:9px;letter-spacing:.16em;color:var(--mut);cursor:pointer;
       padding:8px 10px 7px;border:1px solid transparent;border-bottom:0;white-space:nowrap;
       transition:color .15s}
-.cfgTabs span.on{color:#0a0a0a;background:var(--gold);font-weight:600}
+.cfgTabs span.on{color:#e9e3d6;background:var(--gold);font-weight:600}
 .cfgTabs span:not(.on):hover{color:var(--gold-hi)}
 .cfgPane{max-height:calc(52vh/var(--ui));overflow-y:auto;padding-top:4px}
 .lRow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-      border-bottom:1px solid rgba(236,236,232,.1);padding:8px 2px;font-size:9px;
-      letter-spacing:.1em;color:#b9b9b3}
+      border-bottom:1px solid rgba(19,18,13,.1);padding:8px 2px;font-size:9px;
+      letter-spacing:.1em;color:#434238}
 .lRow b{font-weight:400;color:var(--txt);letter-spacing:.14em}
 .lRow .op{cursor:pointer;color:var(--mut);white-space:nowrap}
 .lRow .op:hover{color:var(--gold-hi)}
 .lRow.off b{color:var(--mut);text-decoration:line-through}
-.aIn{background:transparent;border:0;border-bottom:1px solid rgba(236,236,232,.3);color:var(--gold-hi);
+.aIn{background:transparent;border:0;border-bottom:1px solid rgba(19,18,13,.3);color:var(--gold-hi);
       font-family:inherit;font-size:10px;letter-spacing:.06em;padding:6px 2px;outline:none}
 .aIn:focus{border-color:var(--gold)}
-.vLine{font-size:10px;letter-spacing:.08em;line-height:1.9;margin:6px 0;color:#b9b9b3}
+.vLine{font-size:10px;letter-spacing:.08em;line-height:1.9;margin:6px 0;color:#434238}
 .vLine b{font-weight:400;color:var(--gold-hi)}
-.vLine.me{color:#9fb4c8;text-align:right}
+.vLine.me{color:#3a4b5a;text-align:right}
 #game .gSend{width:36px;height:36px;flex:none;border:1px solid var(--gold);color:var(--gold-hi);
       display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;
       transition:background .2s,color .2s}
-#game .gSend:hover{background:var(--gold);color:#0a0a0a}
+#game .gSend:hover{background:var(--gold);color:#e9e3d6}
 /* right MFD — TABVLARIVM */
-#game .gMfd{--mut:#9c9c98;position:absolute;right:0;top:46px;bottom:0;width:322px;overflow-y:auto;z-index:20;
-      border-left:1px solid rgba(236,236,232,.14);background:rgba(8,8,8,.26);padding:20px 18px 34px}
+#game .gMfd{--mut:#5f5c53;position:absolute;right:0;top:46px;bottom:0;width:322px;overflow-y:auto;z-index:20;
+      border-left:1px solid rgba(19,18,13,.14);background:rgba(235,229,215,.26);padding:20px 18px 34px}
 .mSec{margin-bottom:26px}
 .mHead{font-size:12px;letter-spacing:.3em;color:var(--txt);margin-bottom:13px}
 .mHead i{font-style:normal;color:var(--gold)}
 .mRow{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;
       letter-spacing:.22em;color:var(--mut);margin:11px 0 5px}
 .mRow b{color:var(--txt);font-weight:400;font-size:13px}
-.mBar{height:3px;background:rgba(236,236,232,.10);position:relative}
+.mBar{height:3px;background:rgba(19,18,13,.10);position:relative}
 .mBar i{position:absolute;left:0;top:0;bottom:0;background:var(--gold)}
-.mBar.red i{background:#c8402e}
+.mBar.red i{background:#ff7f63}
 .mSteps{display:flex;gap:5px}
 .mStep{flex:1;text-align:center;font-size:9.5px;letter-spacing:.08em;color:var(--mut);padding-top:7px;
-      border-top:2px solid rgba(236,236,232,.12)}
+      border-top:2px solid rgba(19,18,13,.12)}
 .mStep.on{color:var(--gold-hi);border-top-color:var(--gold)}
-.mLead{font-size:11px;letter-spacing:.12em;line-height:1.9;color:#d9d9d4;margin:7px 0}
+.mLead{font-size:11px;letter-spacing:.12em;line-height:1.9;color:#25241d;margin:7px 0}
 .mLead i{font-style:normal;color:var(--gold)}
 .mOps{display:flex;gap:5px}
-.mOp{flex:1;border:1px solid rgba(236,236,232,.18);text-align:center;padding:9px 0 7px;
+.mOp{flex:1;border:1px solid rgba(19,18,13,.18);text-align:center;padding:9px 0 7px;
       font-size:9.5px;letter-spacing:.12em;color:var(--mut);cursor:pointer;transition:color .2s,border-color .2s}
 .mOp.on{border-color:var(--gold);color:var(--gold-hi)}
 .mOp:hover{color:var(--txt)}
@@ -648,7 +654,7 @@ html.lux #esBrand b{color:#4a4237}
 /* 缩略窗本体：一道细边框住内容。没有标题栏、没有四角括号——
    那三颗视窗按钮是苹果的，角括号是本作别处的花活，搁在 44px 高的小窗上只剩噪点。 */
 .gArr .win{position:absolute;inset:0;overflow:hidden;
-      background:rgba(6,6,6,.42);border:1px solid rgba(236,236,232,.30);
+      background:rgba(237,231,217,.42);border:1px solid rgba(19,18,13,.30);
       -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
       transition:border-color .22s}
 /* 小窗里装的是那个抽屉的真内容，不是画一张示意图：把抽屉的 innerHTML 原样搬进
@@ -662,7 +668,7 @@ html.lux #esBrand b{color:#4a4237}
 .gArr .mmap{position:absolute;left:0;top:0;width:100%;height:100%;display:block;opacity:.92}
 /* 左下角探出窗外的那枚标记：方的，不是方圆；一道细边、纯黑底、金线图形 */
 .gArr .ic{position:absolute;left:-11px;bottom:-7px;width:22px;height:22px;
-      background:#0a0a0a;border:1px solid rgba(236,236,232,.34);
+      background:#e9e3d6;border:1px solid rgba(19,18,13,.34);
       display:flex;align-items:center;justify-content:center;
       color:var(--gold-hi);transition:border-color .22s,color .22s}
 .gArr .ic svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.4;
@@ -685,11 +691,11 @@ html.lux #esBrand b{color:#4a4237}
      所以窗再收一档（34×23），名字反过来放大到 9px 并提亮——
      手机上名字才是主角，缩略图退成陪衬。 */
   .gArr{width:34px;height:23px}
-  .gArr .win{background:rgba(6,6,6,.20)}
+  .gArr .win{background:rgba(237,231,217,.20)}
   .gArr .ic{left:-7px;bottom:-4px;width:14px;height:14px}
   .gArr .ic svg{width:8px;height:8px}
-  .gArr .t{left:0;bottom:-14px;font-size:9px;letter-spacing:.06em;color:#c8c8c2}
-  .gMfd.mvDeck .mvCard.thumb .cfr{background:rgba(6,6,6,.20) !important}
+  .gArr .t{left:0;bottom:-14px;font-size:9px;letter-spacing:.06em;color:#35342b}
+  .gMfd.mvDeck .mvCard.thumb .cfr{background:rgba(237,231,217,.20) !important}
   /* 情报台在手机上是整整一页，不是右边那一条。
      .mvDeck 那句 width:min(56vw,680px) 在 390 的屏上算出来只有 218，
      这一页就缩成了一条竖带（窗还被挤到 left:-43）。选择器同权、它在后面，
@@ -708,8 +714,8 @@ html.lux #esBrand b{color:#4a4237}
   #game .gPanel{display:block !important;position:absolute !important;
         left:50px !important;right:6px !important;width:auto !important;
         top:calc(46px*var(--ui) - 8px) !important;bottom:52px !important;
-        border:1px solid rgba(236,236,232,.20) !important;
-        box-shadow:0 14px 34px rgba(0,0,0,.5) !important;
+        border:1px solid rgba(19,18,13,.20) !important;
+        box-shadow:0 14px 34px rgba(242,236,222,.5) !important;
         transform:translateX(-18px) scale(.96) !important;
         opacity:0 !important;pointer-events:none !important;
         transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease !important}
@@ -723,8 +729,8 @@ html.lux #esBrand b{color:#4a4237}
   #game.mvOpen .gMfd.mvDeck .mvWin.on{opacity:1;pointer-events:auto}
   /* 手机上金边＝「这一扇开着」。窗收起来之后 .on 还留在那一枚上（它仍是当前段），
      金边就成了没有窗的空亮。收起时把边框退回常态，开着才亮。 */
-  #game:not(.mvOpen) .gMfd.mvDeck .mvCard.on .cfr{border-color:rgba(236,236,232,.30) !important}
-  #game:not(.mvOpen) .gMfd.mvDeck .mvCard.on .ic{border-color:rgba(236,236,232,.34) !important;background:#0a0a0a !important}
+  #game:not(.mvOpen) .gMfd.mvDeck .mvCard.on .cfr{border-color:rgba(19,18,13,.30) !important}
+  #game:not(.mvOpen) .gMfd.mvDeck .mvCard.on .ic{border-color:rgba(19,18,13,.34) !important;background:#e9e3d6 !important}
   /* ▲▼／列表那一条是分页时代留下的：现在点缩略窗就能切段，它只会和输入行打架。撤掉。 */
   .gMfd.mvDeck .mvFoot{display:none !important}
   /* 输入层原来为了让开底部胶囊留了 34px；胶囊已经撤了，这一段跟着收回来，
@@ -745,14 +751,14 @@ html.lux #esBrand b{color:#4a4237}
   /* 桌面那几扇是嵌在让出来的一条里、身后是空的，可以透到 .08；
      手机上它们是盖在正文上的浮层，透成那样两层字会叠在一起没法读。
      加实到 .62——仍是毛玻璃，但字站得住。 */
-  #game .gMfd.mvDeck .mvWin{background:rgba(6,6,6,.62) !important}
-  #game .gPanel{background:rgba(6,6,6,.62) !important}
+  #game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,.62) !important}
+  #game .gPanel{background:rgba(237,231,217,.62) !important}
   /* 名字在桌面是从缩略窗左沿往右写的；手机上缩略列贴着屏幕最右缘，
      再往右写就出界被切了。改成靠右对齐，往左长。 */
   /* 权重要压得过后面那条 .mvCard.thumb .mvGhost{left:15px;text-align:left}——
      同权而它在后面，写在这儿会被它盖掉，所以带上 #game 与 .mvDeck。 */
   #game .gMfd.mvDeck .mvCard.thumb .mvGhost{left:auto;right:1px;bottom:-14px;text-align:right}
-  #game .gMfd.mvDeck .mvCard.thumb .mvGhost .g3{font-size:9px;letter-spacing:.06em;color:#c8c8c2}
+  #game .gMfd.mvDeck .mvCard.thumb .mvGhost .g3{font-size:9px;letter-spacing:.06em;color:#35342b}
 }
 .gArr .m3d{position:absolute;inset:0;width:100%;height:100%;display:block}
 /* 正在开着的那一枚：转正、往右挪、贴金边 */
@@ -761,14 +767,14 @@ html.lux #esBrand b{color:#4a4237}
 #game.mapOpen #arrMap .win,#game.armOpen #arrArm .win,#game.shopOpen #arrShop .win,#game.txOpen #arr3d .win{
       border-color:var(--gold)}
 #game.mapOpen #arrMap .ic,#game.armOpen #arrArm .ic,#game.shopOpen #arrShop .ic,#game.txOpen #arr3d .ic{
-      border-color:var(--gold);background:var(--gold);color:#0a0a0a}
+      border-color:var(--gold);background:var(--gold);color:#e9e3d6}
 #game.mapOpen #arrMap .t,#game.armOpen #arrArm .t,#game.shopOpen #arrShop .t,#game.txOpen #arr3d .t{color:var(--gold-hi)}
 /* 档位写在名字上：一眼知道再点一下会怎样 */
 #game.txOpen.tx2 #arr3d .t::after{content:'·放大'}
 #game.txOpen.txBig #arr3d .t::after{content:'·全屏'}
 .gPanel{position:absolute;left:96px;width:min(42vw,500px);z-index:30;
-      background:rgba(6,6,6,.34);border:1px solid rgba(236,236,232,.20);
-      box-shadow:0 14px 34px rgba(0,0,0,.5);
+      background:rgba(237,231,217,.34);border:1px solid rgba(19,18,13,.20);
+      box-shadow:0 14px 34px rgba(242,236,222,.5);
       backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
       /* 与右边情报台那扇窗镜像：那边 rotateY(-10deg)，这边 +10deg，
          正好各自朝着自己那一列缩略窗（左列 +17°、右列 −17°）的方向收。
@@ -784,78 +790,78 @@ html.lux #esBrand b{color:#4a4237}
 #pnArm{top:42px;bottom:10px}
 #pnArm::before{
   content:'';position:absolute;left:0;right:0;top:0;height:62px;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg,rgba(6,6,6,.92) 0%,rgba(6,6,6,.62) 46%,rgba(6,6,6,0) 100%);
+  background:linear-gradient(180deg,rgba(237,231,217,.92) 0%,rgba(237,231,217,.62) 46%,rgba(237,231,217,0) 100%);
   -webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);
-  -webkit-mask-image:linear-gradient(180deg,#000 44%,transparent 100%);
-          mask-image:linear-gradient(180deg,#000 44%,transparent 100%)}
+  -webkit-mask-image:linear-gradient(180deg,#f2ecde 44%,transparent 100%);
+          mask-image:linear-gradient(180deg,#f2ecde 44%,transparent 100%)}
 
 #game.mapOpen #pnMap,#game.armOpen #pnArm,#game.shopOpen #pnShop{
       transform:perspective(620px) rotateY(var(--gpTilt)) scaleY(var(--gpFit));
       opacity:1;pointer-events:auto;z-index:33}
 #pnShop{top:42px;bottom:10px}
 
-.shRow{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid rgba(236,236,232,.07)}
-.shRow:hover{background:rgba(236,236,232,.045)}
+.shRow{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid rgba(19,18,13,.07)}
+.shRow:hover{background:rgba(19,18,13,.045)}
 .shRow .ic{width:22px;height:22px;flex:0 0 22px;opacity:.82}
 .shRow .nm{flex:1;font-size:12px;letter-spacing:.04em;color:var(--txt)}
 .shRow .nm i{display:block;font-style:normal;font-size:9px;color:var(--mut);letter-spacing:.16em}
 .shRow .pr{font-size:11px;color:var(--gold2);letter-spacing:.06em;min-width:56px;text-align:right}
-.shRow .bu{font-size:10px;letter-spacing:.18em;padding:3px 9px;cursor:pointer;border:1px solid rgba(236,236,232,.28);color:var(--mut);white-space:nowrap}
+.shRow .bu{font-size:10px;letter-spacing:.18em;padding:3px 9px;cursor:pointer;border:1px solid rgba(19,18,13,.28);color:var(--mut);white-space:nowrap}
 .shRow .bu:hover{color:var(--gold-hi);border-color:var(--gold)}
 .shRow.no .pr{color:var(--mut)}
 .shRow.no .bu{opacity:.38;cursor:not-allowed}
-.shHead{padding:10px 12px 8px;background:rgba(6,6,6,.92);border-bottom:1px solid rgba(236,236,232,.14)}
+.shHead{padding:10px 12px 8px;background:rgba(237,231,217,.92);border-bottom:1px solid rgba(19,18,13,.14)}
 .shHead b{font-size:15px;color:var(--gold2);letter-spacing:.04em}
 .shHead span{font-size:9px;color:var(--mut);letter-spacing:.2em;display:block;margin-top:3px}
-.shTabs{position:sticky;top:0;z-index:4;display:flex;flex-wrap:wrap;gap:0;background:rgba(6,6,6,.94);border-bottom:1px solid rgba(236,236,232,.14)}
+.shTabs{position:sticky;top:0;z-index:4;display:flex;flex-wrap:wrap;gap:0;background:rgba(237,231,217,.94);border-bottom:1px solid rgba(19,18,13,.14)}
 .shTabs span{flex:1 1 auto;text-align:center;padding:8px 4px;font-size:10px;letter-spacing:.22em;color:var(--mut);cursor:pointer;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
 .shTabs span:hover{color:var(--txt)}
 .shTabs span.on{color:var(--gold-hi);border-bottom-color:var(--gold)}
-.shSec{padding:9px 12px 4px;font-size:9px;letter-spacing:.34em;color:var(--gold);border-bottom:1px solid rgba(236,236,232,.10)}
+.shSec{padding:9px 12px 4px;font-size:9px;letter-spacing:.34em;color:var(--gold);border-bottom:1px solid rgba(19,18,13,.10)}
 .shWrap{position:absolute;inset:34px 0 0;overflow-y:auto;overflow-x:hidden}
 .shNote{padding:10px 12px 22px;font-size:10px;line-height:1.85;color:var(--mut);letter-spacing:.04em}
 /* ARMA: Ghost-style slot cards + 46px cell grid + detail card */
 .armWrap{position:absolute;left:0;right:0;top:44px;bottom:0;overflow-y:auto;padding:14px 18px 46px}
 .armSec{font-size:9px;letter-spacing:.3em;color:var(--gold);margin:14px 0 8px}
 .slotGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.aSlot{display:flex;align-items:center;gap:10px;border:1px solid rgba(236,236,232,.16);
+.aSlot{display:flex;align-items:center;gap:10px;border:1px solid rgba(19,18,13,.16);
       padding:6px 8px;cursor:pointer;color:var(--gold);transition:border-color .18s}
 .aSlot:hover{border-color:var(--gold)}
 .aSlot.on{border-color:var(--gold-hi);color:var(--gold-hi)}
 .aSlot .ic{width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center;
-      border:1px solid rgba(212,166,72,.35)}
+      border:1px solid rgba(122,78,0,.35)}
 .aSlot.empty{cursor:default}
-.aSlot.empty .ic{border-style:dashed;color:rgba(212,166,72,.28)}
+.aSlot.empty .ic{border-style:dashed;color:rgba(122,78,0,.28)}
 .aSlot b{display:block;font-weight:400;font-size:9px;letter-spacing:.16em;color:var(--txt)}
 .aSlot i{font-style:normal;font-size:8px;letter-spacing:.12em;color:var(--mut);display:block;margin-top:2px}
 .aSlot.on b{color:var(--gold-hi)}
 .bagGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px}
-.bCell{position:relative;aspect-ratio:1;border:1px solid rgba(236,236,232,.18);
+.bCell{position:relative;aspect-ratio:1;border:1px solid rgba(19,18,13,.18);
       display:flex;align-items:center;justify-content:center;color:var(--gold);cursor:pointer;transition:border-color .18s}
 .bCell:hover{border-color:var(--gold)}
 .bCell.on{border-color:var(--gold-hi);color:var(--gold-hi)}
-.bCell.emptyc{border-style:dashed;border-color:rgba(236,236,232,.10);cursor:default}
+.bCell.emptyc{border-style:dashed;border-color:rgba(19,18,13,.10);cursor:default}
 .bCell .n{position:absolute;right:3px;bottom:1px;font-size:8px;font-style:normal;color:var(--gold-hi)}
-.armDet{margin-top:14px;border:1px solid rgba(236,236,232,.16);padding:10px 12px;min-height:76px}
+.armDet{margin-top:14px;border:1px solid rgba(19,18,13,.16);padding:10px 12px;min-height:76px}
 .armDet .tt{font-size:10px;letter-spacing:.2em;color:var(--gold-hi)}
 .armDet .tt i{font-style:normal;color:var(--mut);font-size:8.5px;letter-spacing:.12em}
 .armDet .ds{font-size:9.5px;line-height:1.9;letter-spacing:.05em;color:var(--txt);margin-top:6px;opacity:.85}
 .armDet .ops{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.armDet .ops span{font-size:9px;letter-spacing:.2em;border:1px solid rgba(236,236,232,.25);
+.armDet .ops span{font-size:9px;letter-spacing:.2em;border:1px solid rgba(19,18,13,.25);
       padding:4px 10px;cursor:pointer;color:var(--mut);transition:color .18s,border-color .18s}
 .armDet .ops span:hover{color:var(--gold-hi);border-color:var(--gold)}
-.armDet .ops span.warn{color:#e5533d;border-color:rgba(229,83,61,.55)}
+.armDet .ops span.warn{color:#f36a4b;border-color:rgba(243,106,75,.55)}
 .pnTitle{position:absolute;left:20px;top:14px;font-size:9px;letter-spacing:.34em;color:var(--txt);z-index:3}
 .pnTitle i{font-style:normal;color:var(--gold)}
 #gmapCv{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
 .pFade{position:absolute;left:0;right:0;bottom:0;height:120px;pointer-events:none;z-index:2;
       -webkit-
-      -webkit-mask-image:linear-gradient(to bottom,transparent,#000 72%);
-      mask-image:linear-gradient(to bottom,transparent,#000 72%);
-      background:linear-gradient(to bottom,rgba(4,4,4,0),rgba(4,4,4,.9))}
+      -webkit-mask-image:linear-gradient(to bottom,transparent,#f2ecde 72%);
+      mask-image:linear-gradient(to bottom,transparent,#f2ecde 72%);
+      background:linear-gradient(to bottom,rgba(239,233,219,0),rgba(239,233,219,.9))}
 .armList{position:absolute;inset:0;padding:50px 26px 60px;overflow-y:auto}
 .aRow{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
-      border-bottom:1px solid rgba(236,236,232,.12);padding:13px 0}
+      border-bottom:1px solid rgba(19,18,13,.12);padding:13px 0}
 .aRow .slot{font-size:8px;letter-spacing:.22em;color:var(--mut);width:72px;flex:none}
 .aRow .itm{flex:1;font-size:11px;letter-spacing:.16em;color:var(--txt)}
 .aRow .itm em{font-style:normal;font-size:9px;color:var(--mut);margin-left:8px;letter-spacing:.12em}
@@ -863,22 +869,22 @@ html.lux #esBrand b{color:#4a4237}
 /* game dialogs */
 .genBar{display:flex;align-items:center;gap:10px;margin:2px 0 16px}
 .genBar .gbTrack{position:relative;flex:1;height:22px;overflow:hidden;
-  border:1px solid rgba(236,236,232,.22);background:rgba(236,236,232,.03)}
+  border:1px solid rgba(19,18,13,.22);background:rgba(19,18,13,.03)}
 .genBar .gbTrack i{position:absolute;left:0;top:0;bottom:0;width:0;
-  background:linear-gradient(90deg,rgba(201,155,63,.16),rgba(201,155,63,.34));transition:width .25s linear}
+  background:linear-gradient(90deg,rgba(132,88,0,.16),rgba(132,88,0,.34));transition:width .25s linear}
 .genBar .gbTrack span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:9.5px;letter-spacing:.14em;color:var(--gold-hi);white-space:nowrap}
 .genBar .gbStop{flex:none;cursor:pointer;font-size:9px;letter-spacing:.18em;padding:5px 11px;
-  border:1px solid rgba(200,64,46,.45);color:#c8402e}
-.genBar .gbStop:hover{border-color:#c8402e;box-shadow:0 0 9px rgba(200,64,46,.3)}
+  border:1px solid rgba(255,127,99,.45);color:#ff7f63}
+.genBar .gbStop:hover{border-color:#ff7f63;box-shadow:0 0 9px rgba(255,127,99,.3)}
 /* 遮罩从 .86 减到 .58：窗体要换成半透明毛玻璃，身后压一层近乎不透的黑，
    糊出来还是一片黑，等于白换。减薄之后底下的对局界面透得出来，玻璃才成立。
    遮罩本身不加 backdrop-filter——带了它就成了子元素的「背景采样根」，
    窗体的毛玻璃反而只能采到这一层空壳（情报台那六扇就是栽在这上面）。 */
 .gDlg{position:fixed;inset:0;z-index:86;display:none;align-items:center;justify-content:center;
-      background:rgba(4,4,4,.58)}
-.gDlg .box{border:1px solid rgba(236,236,232,.4);
-      background:rgba(6,6,6,.24);box-shadow:0 18px 48px rgba(0,0,0,.55);
+      background:rgba(239,233,219,.58)}
+.gDlg .box{border:1px solid rgba(19,18,13,.4);
+      background:rgba(237,231,217,.24);box-shadow:0 18px 48px rgba(242,236,222,.55);
       -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
       padding:34px 42px;
       min-width:min(calc(92vw/var(--ui)),360px);max-width:min(calc(94vw/var(--ui)),680px);max-height:calc(92vh/var(--ui));overflow:auto}
@@ -896,12 +902,12 @@ html.lux #esBrand b{color:#4a4237}
 #dlgCfg .aIn{font-size:11.5px}
 #dlgCfg .esc2{font-size:10px}
 #dlgCfg textarea,#dlgCfg select{font-size:11px !important}
-#dlgCfg .gt,#dlgApi .gt{font-size:10.5px;letter-spacing:.2em;color:var(--mut);border:1px solid rgba(236,236,232,.22);padding:5px 10px 4px;cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap}
+#dlgCfg .gt,#dlgApi .gt{font-size:10.5px;letter-spacing:.2em;color:var(--mut);border:1px solid rgba(19,18,13,.22);padding:5px 10px 4px;cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap}
 #dlgCfg .gt:hover,#dlgApi .gt:hover{color:var(--gold-hi);border-color:var(--gold)}
 .gDlg h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:var(--txt);margin:20px 0 8px}
 .gDlg .sub{font-size:9px;letter-spacing:.22em;color:var(--mut);line-height:2}
 .sRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 40px;
-      border-bottom:1px solid rgba(236,236,232,.12);padding:13px 0;font-size:9px;
+      border-bottom:1px solid rgba(19,18,13,.12);padding:13px 0;font-size:9px;
       letter-spacing:.24em;color:var(--mut)}
 .sRow /* 拉条：原来只给了一句 accent-color，其余全是浏览器默认——圆头胶囊、圆滑轨道，
    跟全站这套直角冷线完全不是一路。自绘一套：1px 细轨、方头把手、走过的一段填金。
@@ -910,16 +916,16 @@ html.lux #esBrand b{color:#4a4237}
 input[type=range]{-webkit-appearance:none;appearance:none;width:150px;height:16px;margin:0;
       cursor:pointer;border:0;padding:0;
       background:linear-gradient(90deg,var(--gold) 0 calc(var(--rv,0)*100%),
-                 rgba(236,236,232,.26) calc(var(--rv,0)*100%) 100%) no-repeat center/100% 1px}
+                 rgba(19,18,13,.26) calc(var(--rv,0)*100%) 100%) no-repeat center/100% 1px}
 input[type=range]:focus{outline:none}
 input[type=range]::-webkit-slider-runnable-track{height:1px;background:transparent;border:0}
 input[type=range]::-moz-range-track{height:1px;background:transparent;border:0}
 input[type=range]::-moz-range-progress{height:1px;background:transparent}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
       width:8px;height:14px;margin-top:-6.5px;border:0;border-radius:0;
-      background:var(--gold);box-shadow:0 0 0 1px rgba(6,6,6,.85)}
+      background:var(--gold);box-shadow:0 0 0 1px rgba(237,231,217,.85)}
 input[type=range]::-moz-range-thumb{width:8px;height:14px;border:0;border-radius:0;
-      background:var(--gold);box-shadow:0 0 0 1px rgba(6,6,6,.85)}
+      background:var(--gold);box-shadow:0 0 0 1px rgba(237,231,217,.85)}
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--gold-hi)}
 input[type=range]:hover::-moz-range-thumb,
@@ -928,102 +934,102 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 1px var(-
 input[type=range]:focus-visible::-moz-range-thumb{box-shadow:0 0 0 1px var(--gold-hi)}
 input[type=range]:disabled{opacity:.4;cursor:default}
 .sSeg{display:flex;flex-wrap:wrap;gap:4px} /* 选项多时换行，永不被右缘裁切 */
-.sSeg span{border:1px solid rgba(236,236,232,.2);padding:5px 12px 4px;cursor:pointer;font-size:9px;
+.sSeg span{border:1px solid rgba(19,18,13,.2);padding:5px 12px 4px;cursor:pointer;font-size:9px;
       letter-spacing:.18em;color:var(--mut);transition:all .2s}
-.sSeg span.on{background:var(--gold);color:#0a0a0a;border-color:var(--gold)}
+.sSeg span.on{background:var(--gold);color:#e9e3d6;border-color:var(--gold)}
 .cxTabs{display:flex;gap:6px;margin-top:16px}
-.cxTab{flex:1;text-align:center;border:1px solid rgba(236,236,232,.22);padding:10px 0 8px;
+.cxTab{flex:1;text-align:center;border:1px solid rgba(19,18,13,.22);padding:10px 0 8px;
       font-size:11.5px;letter-spacing:.26em;color:var(--mut);cursor:pointer;transition:all .2s}
-.cxTab.on{background:var(--gold);color:#0a0a0a;border-color:var(--gold);font-weight:600}
+.cxTab.on{background:var(--gold);color:#e9e3d6;border-color:var(--gold);font-weight:600}
 .cxTab:not(.on):hover{color:var(--gold-hi);border-color:var(--gold)}
 .cxWrap{display:flex;min-height:300px;max-height:calc(56vh/var(--ui));margin-top:12px}
 #dlgBook .box{max-height:calc(88vh/var(--ui));overflow:hidden;display:flex;flex-direction:column}
 #dlgBook .cxWrap{flex:1 1 auto;min-height:0;max-height:none;height:calc(58vh/var(--ui))}
-.cxCats{width:118px;flex:none;border-right:1px solid rgba(236,236,232,.14);overflow-y:auto}
+.cxCats{width:118px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}
 .cxCat{font-size:12px;letter-spacing:.22em;color:var(--mut);padding:10px 11px;cursor:pointer;transition:all .15s}
-.cxCat.on{color:#0a0a0a;background:var(--paper)}
+.cxCat.on{color:#e9e3d6;background:var(--paper)}
 .cxCat:not(.on):hover{color:var(--txt)}
-.cxEnts{width:194px;flex:none;border-right:1px solid rgba(236,236,232,.14);overflow-y:auto;padding:0 4px}
+.cxEnts{width:194px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto;padding:0 4px}
 .cxEnt{font-size:11px;letter-spacing:.06em;line-height:1.7;color:var(--mut);padding:8px 9px;cursor:pointer}
-.cxEnt.on{color:var(--gold-hi);background:rgba(201,155,63,.10)}
+.cxEnt.on{color:var(--gold-hi);background:rgba(132,88,0,.10)}
 .cxEnt:not(.on):hover{color:var(--txt)}
 .cxBody{flex:1;padding:2px 0 2px 20px;overflow-y:auto}
 .cxBody h3{font-size:14px;letter-spacing:.2em;color:var(--gold-hi);font-weight:400;margin-bottom:14px}
-.cxBody p{font-size:12.5px;letter-spacing:.04em;line-height:2.05;color:#cfcfc9;white-space:pre-wrap}
+.cxBody p{font-size:12.5px;letter-spacing:.04em;line-height:2.05;color:#2e2d25;white-space:pre-wrap}
 /* era box: line tabs + direct opening chips */
 .ebTabs{display:flex;gap:6px;margin:18px 0 4px}
-.ebTab{flex:1;text-align:center;border:1px solid rgba(236,236,232,.22);padding:8px 0 6px;
+.ebTab{flex:1;text-align:center;border:1px solid rgba(19,18,13,.22);padding:8px 0 6px;
       font-size:10px;letter-spacing:.3em;color:var(--mut);cursor:pointer;transition:all .2s}
-.ebTab.on{background:var(--gold);color:#0a0a0a;border-color:var(--gold);font-weight:600}
+.ebTab.on{background:var(--gold);color:#e9e3d6;border-color:var(--gold);font-weight:600}
 .ebOps{max-height:200px;overflow-y:auto;margin-top:14px;text-align:left}
-.ebOp{border:1px solid rgba(236,236,232,.14);padding:9px 12px 8px;margin:6px 0;cursor:pointer;
+.ebOp{border:1px solid rgba(19,18,13,.14);padding:9px 12px 8px;margin:6px 0;cursor:pointer;
       transition:border-color .2s}
 .ebOp:hover{border-color:var(--gold)}
 .ebOp b{display:block;font-weight:400;font-size:10px;letter-spacing:.2em;color:var(--txt)}
 .ebOp span{font-size:8.5px;letter-spacing:.14em;color:var(--mut)}
 .ebOp:hover b{color:var(--gold-hi)}
 /* MFD mvu render */
-.mNpc{border:1px solid rgba(236,236,232,.12);padding:10px 12px 9px;margin:8px 0}
+.mNpc{border:1px solid rgba(19,18,13,.12);padding:10px 12px 9px;margin:8px 0}
 .mNpc .nHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .mNpc .nName{font-size:12px;letter-spacing:.22em;color:var(--txt)}
 .mNpc .nRole{font-size:10px;letter-spacing:.14em;color:var(--mut)}
-.mNpc .nLine{font-size:10.5px;letter-spacing:.1em;line-height:1.8;color:#c9c9c3;margin-top:5px}
+.mNpc .nLine{font-size:10.5px;letter-spacing:.1em;line-height:1.8;color:#34332a;margin-top:5px}
 .mMind{font-size:9px;letter-spacing:.1em;line-height:1.8;color:var(--gold-hi);font-style:normal;
-  border-left:1px solid rgba(201,155,63,.55);padding:3px 0 3px 9px;margin:3px 0 2px}
-.mMind.mute{color:var(--mut);font-style:normal;border-left-color:rgba(236,236,232,.18)}
+  border-left:1px solid rgba(132,88,0,.55);padding:3px 0 3px 9px;margin:3px 0 2px}
+.mMind.mute{color:var(--mut);font-style:normal;border-left-color:rgba(19,18,13,.18)}
 .mMind.mute b{color:var(--gold);font-weight:400}
 .mNpc .nMind{font-size:10.5px;letter-spacing:.1em;line-height:1.7;color:var(--gold);margin-top:3px;font-style:normal}
-.mNpc .nEye{font-size:9.5px;letter-spacing:.1em;line-height:1.7;color:var(--mut);margin-top:2px;border-left:2px solid rgba(236,200,120,.35);padding-left:6px}
+.mNpc .nEye{font-size:9.5px;letter-spacing:.1em;line-height:1.7;color:var(--mut);margin-top:2px;border-left:2px solid rgba(82,48,0,.35);padding-left:6px}
 .mCap{font-size:10px;letter-spacing:.2em;color:var(--gold-hi);margin-top:4px}
 .mGlyph{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--mut);letter-spacing:.12em;margin-top:8px}
 .mGlyph b{font-size:17px;font-weight:400}
 .svSlot{display:flex;justify-content:space-between;align-items:baseline;gap:30px;
-      border:1px solid rgba(236,236,232,.18);padding:14px 18px;margin:10px 0;cursor:pointer;
+      border:1px solid rgba(19,18,13,.18);padding:14px 18px;margin:10px 0;cursor:pointer;
       transition:border-color .2s}
 .svSlot:hover{border-color:var(--gold)}
 .svSlot .n{font-size:11px;letter-spacing:.3em;color:var(--txt)}
 .svSlot .d{font-size:9px;letter-spacing:.18em;color:var(--mut)}
 /* ══ ARCHIVVM 目录场：档案夹卡浮于透视线场，随滑鼠／倾斜视差 ══ */
-#dlgSave{background:#040404;overflow:hidden;touch-action:none}
+#dlgSave{background:#efe9db;overflow:hidden;touch-action:none}
 #svBg{position:absolute;inset:0;width:100%;height:100%;will-change:transform}
 .svhud{position:absolute;font-size:9px;letter-spacing:.3em;color:var(--mut);z-index:4}
 .svhud i{font-style:normal;color:var(--gold)}
 #svField{position:absolute;inset:0;z-index:2}
 .svFold{position:absolute;display:flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;cursor:pointer;
   -webkit-backdrop-filter:blur(9px) saturate(140%);backdrop-filter:blur(9px) saturate(140%);
-  background:rgba(6,6,6,.24);border:1px solid rgba(236,236,232,.30);white-space:nowrap;
+  background:rgba(237,231,217,.24);border:1px solid rgba(19,18,13,.30);white-space:nowrap;
   transform:translate(-50%,-50%);will-change:transform;transition:border-color .18s,background .18s}
-.svFold .tab{position:absolute;left:-1px;top:-7px;width:38%;height:7px;background:rgba(6,6,6,.24);
+.svFold .tab{position:absolute;left:-1px;top:-7px;width:38%;height:7px;background:rgba(237,231,217,.24);
   -webkit-backdrop-filter:blur(9px) saturate(140%);backdrop-filter:blur(9px) saturate(140%);
-  border:1px solid rgba(236,236,232,.30);border-bottom:0}
-.svFold .num{font-size:14px;font-weight:400;letter-spacing:.04em;color:rgba(220,220,215,.55);
-  border:1px solid rgba(236,236,232,.22);padding:1px 5px 0}
-.svFold .lb{font-size:6.5px;letter-spacing:.2em;line-height:1.6;color:rgba(200,200,196,.55)}
+  border:1px solid rgba(19,18,13,.30);border-bottom:0}
+.svFold .num{font-size:14px;font-weight:400;letter-spacing:.04em;color:rgba(34,33,26,.55);
+  border:1px solid rgba(19,18,13,.22);padding:1px 5px 0}
+.svFold .lb{font-size:6.5px;letter-spacing:.2em;line-height:1.6;color:rgba(53,52,45,.55)}
 /* 手机：卡片缩小、标题移上方，避免挤压 */
 #svField.sm .svFold{padding:3px 6px 3px 3px;gap:4px}
 #svField.sm .svFold .num{font-size:10px;padding:0 3px}
 #svField.sm .svFold .lb{font-size:5px;letter-spacing:.1em;line-height:1.4}
 #svField.sm .svFold .tab{top:-5px;height:5px}
 
-.svFold.on{border-color:rgba(236,236,232,.7)}
-.svFold.on .tab{border-color:rgba(236,236,232,.7)}
-.svFold.on .num{color:#ececec;border-color:rgba(236,236,232,.5)}
-.svFold.on .lb{color:rgba(226,226,222,.9)}
-.svFold.sel{border-color:#fff;background:rgba(20,20,20,.92);box-shadow:0 0 14px rgba(255,255,255,.28)}
-.svFold.sel .tab{border-color:#fff;background:rgba(20,20,20,.92)}
+.svFold.on{border-color:rgba(19,18,13,.7)}
+.svFold.on .tab{border-color:rgba(19,18,13,.7)}
+.svFold.on .num{color:#121211;border-color:rgba(19,18,13,.5)}
+.svFold.on .lb{color:rgba(28,27,22,.9)}
+.svFold.sel{border-color:#000000;background:rgba(223,218,205,.92);box-shadow:0 0 14px rgba(0,0,0,.28)}
+.svFold.sel .tab{border-color:#000000;background:rgba(223,218,205,.92)}
 .svFold:hover{border-color:var(--gold-hi)}
 #svCore{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center;pointer-events:none;width:min(60vw,380px);will-change:transform}
-#svCoreT{font-size:clamp(15px,2.6vw,22px);letter-spacing:.55em;text-indent:.55em;color:#ececec}
-#svCoreSub{display:inline-block;margin:12px auto 0;font-size:7.5px;letter-spacing:.3em;color:rgba(226,226,222,.85);
-  line-height:1.7;border:1px solid rgba(236,236,232,.28);background:rgba(14,14,14,.85);padding:5px 14px;max-width:min(52vw,270px)}
+#svCoreT{font-size:clamp(15px,2.6vw,22px);letter-spacing:.55em;text-indent:.55em;color:#121211}
+#svCoreSub{display:inline-block;margin:12px auto 0;font-size:7.5px;letter-spacing:.3em;color:rgba(28,27,22,.85);
+  line-height:1.7;border:1px solid rgba(19,18,13,.28);background:rgba(229,223,210,.85);padding:5px 14px;max-width:min(52vw,270px)}
 #svCoreBtns{margin-top:14px;display:flex;gap:9px;justify-content:center;flex-wrap:wrap;pointer-events:auto}
-.svAct{border:1px solid rgba(236,236,232,.35);padding:7px 14px 6px;font-size:9px;letter-spacing:.26em;color:var(--txt);cursor:pointer;background:rgba(5,5,5,.8)}
+.svAct{border:1px solid rgba(19,18,13,.35);padding:7px 14px 6px;font-size:9px;letter-spacing:.26em;color:var(--txt);cursor:pointer;background:rgba(238,232,218,.8)}
 .svAct:hover{border-color:var(--gold);color:var(--gold-hi)}
-.svAct.warn{border-color:rgba(200,64,46,.5);color:#c8402e}
-#svClock{position:absolute;transform:translateX(-50%);z-index:4;font-size:13px;letter-spacing:.4em;text-indent:.4em;color:#ececec;pointer-events:none}
-#svRedX{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border:1px solid rgba(200,64,46,.7);border-radius:50%;
-  display:flex;align-items:center;justify-content:center;color:#c8402e;font-size:12px;cursor:pointer;z-index:4;background:rgba(5,5,5,.5)}
-#svRedX:hover{border-color:#c8402e;box-shadow:0 0 10px rgba(200,64,46,.35)}
+.svAct.warn{border-color:rgba(255,127,99,.5);color:#ff7f63}
+#svClock{position:absolute;transform:translateX(-50%);z-index:4;font-size:13px;letter-spacing:.4em;text-indent:.4em;color:#121211;pointer-events:none}
+#svRedX{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border:1px solid rgba(255,127,99,.7);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#ff7f63;font-size:12px;cursor:pointer;z-index:4;background:rgba(238,232,218,.5)}
+#svRedX:hover{border-color:#ff7f63;box-shadow:0 0 10px rgba(255,127,99,.35)}
 #svFootBar{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;justify-content:space-between;align-items:center;
   gap:10px 14px;padding:9px 16px;font-size:8px;letter-spacing:.22em;color:var(--mut);flex-wrap:wrap}
 .svfbtn{cursor:pointer;color:var(--txt);white-space:nowrap}
@@ -1050,7 +1056,7 @@ input[type=range]:disabled{opacity:.4;cursor:default}
       opacity:1;pointer-events:auto;border:0;box-shadow:none}
   /* 舆·备一页：地图上、装备下（Ghost 式上下布局省空间） */
   #game[data-pg=map] #pnMap{display:block;top:46px;bottom:auto;height:calc((100dvh - 80px)*.52)}
-  #game[data-pg=map] #pnArm{display:block;top:calc(46px + (100dvh - 80px)*.52);bottom:0;padding-bottom:40px;border-top:1px solid rgba(236,236,232,.16);overflow-y:auto}
+  #game[data-pg=map] #pnArm{display:block;top:calc(46px + (100dvh - 80px)*.52);bottom:0;padding-bottom:40px;border-top:1px solid rgba(19,18,13,.16);overflow-y:auto}
   /* ARMA·装备 这行标题原本只是浮在内容上的一行字，行囊图标滑到它下面时两者糊在一起。
      在标题这一带铺一条渐变毛玻璃：上沿实、往下化开，内容从底下穿过去而不是被硬挡住。
      z-index 夹在内容(1)与标题(3)之间，所以糊的是内容、不糊标题本身。
@@ -1064,12 +1070,12 @@ input[type=range]:disabled{opacity:.4;cursor:default}
   #game[data-pg=map] .gMain,#game[data-pg=mfd] .gMain,#game[data-pg=shop] .gMain{display:none}
   /* Ghost 式小岛切换条：底部居中小胶囊，点选或左右滑切页 */
   .gNav{display:flex;position:absolute;left:50%;transform:translateX(-50%);bottom:5px;height:24px;z-index:40;
-      border:1px solid rgba(236,236,232,.22);background:rgba(6,6,6,.72);touch-action:pan-x;
+      border:1px solid rgba(19,18,13,.22);background:rgba(237,231,217,.72);touch-action:pan-x;
       -webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%)}
   .gNav span{display:flex;align-items:center;padding:0 15px;color:var(--mut);cursor:pointer}
   .gNav span b{display:none}
   .gNav span svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter;display:block}
-  .gNav span.on{color:#0a0a0a;background:var(--gold)}
+  .gNav span.on{color:#e9e3d6;background:var(--gold)}
   /* 弹窗里成排的按钮原本是照桌面宽度排的：手机上不换行就会顶出右缘，
      像「清除」那样整颗按钮落到屏幕外点都点不到。收窄字距内距并允许换行。 */
   .gDlg .box{padding:26px 20px}
@@ -1117,11 +1123,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     width:auto;flex:none;display:flex;flex-direction:row;gap:6px;
     overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
     -webkit-overflow-scrolling:touch;touch-action:pan-x;
-    border-right:0;border-bottom:1px solid rgba(236,236,232,.14);padding:0 0 6px}
+    border-right:0;border-bottom:1px solid rgba(19,18,13,.14);padding:0 0 6px}
   #dlgBook .cxCats::-webkit-scrollbar,#dlgBook .cxEnts::-webkit-scrollbar{display:none}
   #dlgBook .cxEnts{margin-top:6px}
   #dlgBook .cxCat,#dlgBook .cxEnt{
-    flex:none;white-space:nowrap;border:1px solid rgba(236,236,232,.16);
+    flex:none;white-space:nowrap;border:1px solid rgba(19,18,13,.16);
     padding:7px 12px;letter-spacing:.12em;line-height:1.4}
   #dlgBook .cxEnt{font-size:11.5px}
   #dlgBook .cxCat{font-size:11.5px}
@@ -1139,66 +1145,66 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 @media (prefers-reduced-motion:reduce){ body{--motion:0} }
 /* ══ 人物图谱 × 长程记忆（ROME 本地化皮肤：纸白线框×鎏金，直角铁则）══ */
 .zjP,.fd-ov{
- --t-bg0:#060606;--t-bg1:#0d0d0c;--t-bg2:#111110;--t-grid:#2a2a27;
- --t-g0:#ecece8;--t-g1:#ecc878;--t-g1b:#d9d9d4;--t-g2:#c99b3f;--t-g3:#6b6b66;--t-g4:#4a4a46;--t-paper:#ecece8;
- --t-a1:#ecc878;--t-a2:#c99b3f;--t-a3:#8a6d2f;--t-r1:#c8402e;--t-ink:#0a0a0a;
- --fg-data:#ecece8;--fg-label:#8f8f89;--fg-dim:#6b6b66;
- --br:rgba(236,236,232,.18);--br-hi:#c99b3f;--br-corner:#9c9c98;--corner-inset:0px;--inv-bg:#c99b3f;
+ --t-bg0:#ede7d9;--t-bg1:#e6e1d2;--t-bg2:#e2ddcf;--t-grid:#cbc6b7;
+ --t-g0:#13120d;--t-g1:#523000;--t-g1b:#25241d;--t-g2:#845800;--t-g3:#8d8a7d;--t-g4:#ada89b;--t-paper:#13120d;
+ --t-a1:#523000;--t-a2:#845800;--t-a3:#a38540;--t-r1:#ff7f63;--t-ink:#e9e3d6;
+ --fg-data:#13120d;--fg-label:#6b695d;--fg-dim:#8d8a7d;
+ --br:rgba(19,18,13,.18);--br-hi:#845800;--br-corner:#5f5c53;--corner-inset:0px;--inv-bg:#845800;
  --fMono:var(--mono);--fUI:var(--mono);
- --ink:#ecece8;--ink2:#d9d9d4;--gold:#c99b3f;--gold2:#ecc878;--gold3:#ecece8;
- --mut:#9c9c98;--grn2:#c99b3f;--red:#c8402e;--red2:#ecc878;
+ --ink:#13120d;--ink2:#25241d;--gold:#845800;--gold2:#523000;--gold3:#13120d;
+ --mut:#5f5c53;--grn2:#845800;--red:#ff7f63;--red2:#523000;
 }
 .zjP{display:block;font-family:var(--mono);text-align:left}
 .zjP *{border-radius:0!important}
 .zjP .btn{cursor:pointer;transition:border-color .15s,color .15s,background .15s,opacity .15s}
 .zjP .btn:active{transform:scale(.97)}
-.zjP .gbtn{cursor:pointer;background:var(--gold);border:1px solid var(--gold);color:#0a0a0a;font-family:var(--mono);font-weight:600;letter-spacing:.08em}
-.zjP .gbtn:hover{filter:brightness(1.12)}
-.zjP .obtn{cursor:pointer;background:transparent;border:1px solid rgba(236,236,232,.22);color:var(--mut);transition:all .15s}
-.zjP .obtn:hover{border-color:var(--gold);color:#d9d9d4;background:rgba(236,236,232,.04)}
+.zjP .gbtn{cursor:pointer;background:var(--gold);border:1px solid var(--gold);color:#e9e3d6;font-family:var(--mono);font-weight:600;letter-spacing:.08em}
+.zjP .gbtn:hover{filter:brightness(.918) contrast(1.22)}
+.zjP .obtn{cursor:pointer;background:transparent;border:1px solid rgba(19,18,13,.22);color:var(--mut);transition:all .15s}
+.zjP .obtn:hover{border-color:var(--gold);color:#25241d;background:rgba(19,18,13,.04)}
 .zjP .fade{animation:zjfadeup .25s steps(4)}
 @keyframes zjfadeup{0%{opacity:0}100%{opacity:1}}
 .zjP .zjSecH{display:flex;align-items:baseline;cursor:pointer}
 .zjP .zjSecH .zjCar{margin-left:auto;color:var(--mut);letter-spacing:0;font-size:10px}
-.zjP input::placeholder,.zjP textarea::placeholder{color:#6b6b66}
+.zjP input::placeholder,.zjP textarea::placeholder{color:#8d8a7d}
 .zjP .gph-hint{font-size:11px;color:var(--mut);line-height:1.85;margin:2px 0 8px;letter-spacing:.08em}
-#zjGraphSvg .gph-nm{font-family:var(--mono);letter-spacing:.08em;fill:#d9d9d4;pointer-events:none}
+#zjGraphSvg .gph-nm{font-family:var(--mono);letter-spacing:.08em;fill:#25241d;pointer-events:none}
 /* 这四条原来用 filter:drop-shadow 做高亮。CSS filter 会让浏览器给每个被悬停／选中的
    节点单独开一层合成缓冲再做高斯模糊；鼠标扫过图谱时逐个节点建了又拆，
    Windows 的 GPU 光栅化路径上显存抖得最厉害。改成只换描边和字色，零合成层。 */
-#zjGraphSvg g[data-npc]:hover .fd-fold>rect:first-child{stroke:#ecc878;stroke-opacity:1}
-#zjGraphSvg g[data-npc]:hover .gph-nm{fill:#ecc878}
-#zjGraphSvg g.gph-sel .fd-fold>rect:first-child{stroke:#ecc878;stroke-opacity:1;stroke-width:1.6}
-#zjGraphSvg g.gph-sel .gph-nm{fill:#ecc878}
+#zjGraphSvg g[data-npc]:hover .fd-fold>rect:first-child{stroke:#523000;stroke-opacity:1}
+#zjGraphSvg g[data-npc]:hover .gph-nm{fill:#523000}
+#zjGraphSvg g.gph-sel .fd-fold>rect:first-child{stroke:#523000;stroke-opacity:1;stroke-width:1.6}
+#zjGraphSvg g.gph-sel .gph-nm{fill:#523000}
 .fd-ov,.fd-ov *{border-radius:0!important}
 /* 档案窗不再是「凭空出现在屏幕正中」的一块，而是接在情报台那一扇的左沿上：
    缩略列 → 情报台的窗 → 档案窗，一环接一环往左排。遮罩因此要压得淡，
    不然身后那一环全被糊掉，接不接得上就看不出来了。 */
-.fd-ov{position:fixed;inset:0;z-index:2147481300;display:flex;align-items:center;justify-content:flex-end;background:rgba(4,4,4,.30);font-family:var(--mono)}
-.fd-win{border:1px solid rgba(236,236,232,.4);
-  background:rgba(6,6,6,.24);box-shadow:0 18px 48px rgba(0,0,0,.55);
+.fd-ov{position:fixed;inset:0;z-index:2147481300;display:flex;align-items:center;justify-content:flex-end;background:rgba(239,233,219,.30);font-family:var(--mono)}
+.fd-win{border:1px solid rgba(19,18,13,.4);
+  background:rgba(237,231,217,.24);box-shadow:0 18px 48px rgba(242,236,222,.55);
   -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
-  padding:24px 26px 20px;width:min(46vw,330px);max-height:66vh;overflow-y:auto;color:#d9d9d4;font-family:var(--mono);
+  padding:24px 26px 20px;width:min(46vw,330px);max-height:66vh;overflow-y:auto;color:#25241d;font-family:var(--mono);
   /* 与情报台那几扇同向同角（−10°）。perspective 写进自己的 transform，
      不能给祖先加——给祖先加会切断 backdrop 根，毛玻璃当场变成一块不透的黑。
      角度走变量，好让 tiltBind 那一套（左侧三扇、情报台六扇都在用）直接接上：
      在这块面上横拖即可自行在 0° 与 −10° 之间调，竖拖照旧滚内容。 */
   --fdTilt:-10deg;--fdFit:.93;
   transform:perspective(620px) rotateY(var(--fdTilt)) scaleY(var(--fdFit))}
-.fd-win h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:#ecece8;margin:18px 0 6px}
-.fd-row{display:flex;gap:22px;font-size:12px;line-height:1.8;padding:11px 0;border-bottom:1px solid rgba(236,236,232,.12);letter-spacing:.04em}
-.fd-k{flex:0 0 74px;font-size:10px;letter-spacing:.24em;color:#9c9c98;padding-top:3px;white-space:nowrap}
-.fd-v{flex:1;min-width:0;color:#ecece8;overflow-wrap:break-word;word-break:break-word}
-.fd-nd{color:#8f8f89;letter-spacing:.16em}
-.fd-bar{height:3px;background:rgba(236,236,232,.10);position:relative;margin-top:7px}
+.fd-win h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:#13120d;margin:18px 0 6px}
+.fd-row{display:flex;gap:22px;font-size:12px;line-height:1.8;padding:11px 0;border-bottom:1px solid rgba(19,18,13,.12);letter-spacing:.04em}
+.fd-k{flex:0 0 74px;font-size:10px;letter-spacing:.24em;color:#5f5c53;padding-top:3px;white-space:nowrap}
+.fd-v{flex:1;min-width:0;color:#13120d;overflow-wrap:break-word;word-break:break-word}
+.fd-nd{color:#6b695d;letter-spacing:.16em}
+.fd-bar{height:3px;background:rgba(19,18,13,.10);position:relative;margin-top:7px}
 .fd-bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--gold)}
-.fd-quote{display:block;padding:2px 0;line-height:1.9;color:#ecc878;font-style:normal}
-.fd-last{margin-top:16px;font-size:9.5px;color:#9c9c98;letter-spacing:.3em}
-.fd-btn{cursor:pointer;display:inline-block;border:1px solid rgba(236,236,232,.35);background:transparent;color:#d9d9d4;font-size:10px;letter-spacing:.25em;padding:7px 16px 6px;user-select:none;transition:border-color .2s,color .2s}
+.fd-quote{display:block;padding:2px 0;line-height:1.9;color:#523000;font-style:normal}
+.fd-last{margin-top:16px;font-size:9.5px;color:#5f5c53;letter-spacing:.3em}
+.fd-btn{cursor:pointer;display:inline-block;border:1px solid rgba(19,18,13,.35);background:transparent;color:#25241d;font-size:10px;letter-spacing:.25em;padding:7px 16px 6px;user-select:none;transition:border-color .2s,color .2s}
 .fd-btn:hover{border-color:var(--gold);color:var(--gold-hi)}
-.fd-btn.fd-warn{color:#c8402e;border-color:rgba(200,64,46,.5)}
+.fd-btn.fd-warn{color:#ff7f63;border-color:rgba(255,127,99,.5)}
 .fd-foot{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
-.fd-nav{cursor:pointer;border:1px solid rgba(236,236,232,.35);color:#d9d9d4;font-size:10px;letter-spacing:.3em;padding:8px 18px 7px;user-select:none;transition:border-color .2s,color .2s}
+.fd-nav{cursor:pointer;border:1px solid rgba(19,18,13,.35);color:#25241d;font-size:10px;letter-spacing:.3em;padding:8px 18px 7px;user-select:none;transition:border-color .2s,color .2s}
 .fd-nav:hover{border-color:var(--gold);color:var(--gold-hi)}
 @media (max-width:919px){
  /* 原来手机端把档案窗做成「贴底、全宽、只有上边框」的抽屉——半块屏幕被它占住，
@@ -1224,12 +1230,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    再从顶栏底下让开 10px——那三扇是 top:56（46+10），这一扇也浮起来，
    不然它焊在顶栏上，只有下沿一条边，怎么看都不是同一族的窗。 */
 #pnTx{position:absolute;left:100px;right:calc(322px*var(--ui));top:calc(46px*var(--ui) - 4px);height:min(24vh,215px);z-index:25;
-      background:rgba(6,6,6,.34);border:1px solid rgba(236,236,232,.20);
-      box-shadow:0 14px 34px rgba(0,0,0,.5);
+      background:rgba(237,231,217,.34);border:1px solid rgba(19,18,13,.20);
+      box-shadow:0 14px 34px rgba(242,236,222,.5);
       -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
       visibility:hidden;transform:translateY(-113%) translateZ(0);transition:transform .45s cubic-bezier(.2,.85,.25,1),height .3s,visibility .45s;overflow:hidden;font-family:var(--mono)}
-/* 里头两层场景宿主本来没底色；现代城那层原是实心 #030303，改成半透。 */
-#pnTx #modScene3D{background:rgba(3,3,3,.72) !important}
+/* 里头两层场景宿主本来没底色；现代城那层原是实心 #f0eadc，改成半透。 */
+#pnTx #modScene3D{background:rgba(240,234,220,.72) !important}
 /* ── 三维画面：只做一点点统调，不许抽色 ──
    上一版按「并入黑金单色」去调，saturate 压到 .26，等于把游戏做成了黑白片——
    这是我把「面板要有玻璃质感」误读成「画面也要变单色」。
@@ -1239,18 +1245,17 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #pnTx #zjScene3D>canvas,#pnTx #mdScene3D>canvas,#pnTx #modScene3D>canvas{
       filter:saturate(.58) brightness(.94) contrast(1.05) sepia(.16)}
 /* 白昼模式那条整站反色照旧先生效 */
-html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx #modScene3D>canvas{
-      filter:invert(1) hue-rotate(180deg) saturate(.58) contrast(1.05) sepia(.12)}
+/* 滤镜已卸（3d 已停用） */
 /* 玻璃罩：把这扇窗自己的底色罩在画面上，再收一圈暗角——
    看着才像「隔着这扇毛玻璃窗往外看」，而不是把一张外来的图钉在框里。
    z-index:3 压在画布之上；引擎那几枚小片也在这层底下，罩子因此给得很淡。 */
 #pnTx::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;
-      background:linear-gradient(180deg,rgba(6,6,6,.20) 0%,rgba(6,6,6,0) 40%,rgba(10,8,5,.22) 100%);
-      box-shadow:inset 0 0 48px rgba(0,0,0,.30)}
+      background:linear-gradient(180deg,rgba(237,231,217,.20) 0%,rgba(237,231,217,0) 40%,rgba(236,229,212,.22) 100%);
+      box-shadow:inset 0 0 48px rgba(242,236,222,.30)}
 /* 画面里那几枚小片（地名、年号、营造、关闭、营造台整套）以前是引擎自带的棕褐圆角，
    和全站这副方角冷玻璃不是一套。上一版用内联样式子串在这里粗暴接管，一律压成
    同一个底色，激活态、危险态也一并压平了。现在改成在引擎里按记号换色——
-   底色走 rgba(6,6,6,*)、边框走 rgba(236,236,232,.22)、激活走 rgba(201,155,63,*)、
+   底色走 rgba(237,231,217,*)、边框走 rgba(19,18,13,.22)、激活走 rgba(132,88,0,*)、
    圆角一律归零，与另一台引擎（8e2ad10c77b4）早先换好的那一套完全对齐。
    源头对了，这里就不该再有覆盖规则——留着反而把引擎分好的层级又抹平。 */
 #game.tx2 #pnTx{height:min(58vh,540px)}
@@ -1259,11 +1264,11 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
    这一档不再挂毛玻璃：整屏的 backdrop 每帧重算，而它背后已被自己盖满，
    模糊出来谁也看不见，纯属白烧一层合成。底色相应加实。 */
 #game.txBig #pnTx{left:10px;right:10px;height:calc(100% - 46px*var(--ui) - 6px);
-      background:rgba(6,6,6,.45);
+      background:rgba(237,231,217,.45);
       -webkit-backdrop-filter:none;backdrop-filter:none}
 #game.txOpen #pnTx{visibility:visible;transform:translateZ(0)}
 /* 箭头恒朝下：此钮语义=向下逐级展开游戏画面 */
-#txHint{position:absolute;left:12px;bottom:44px;z-index:3;font-size:11.5px;color:#d9a06a;text-shadow:0 1px 3px #000}
+#txHint{position:absolute;left:12px;bottom:44px;z-index:3;font-size:11.5px;color:#804a0f;text-shadow:0 1px 3px #f2ecde}
 @keyframes zj3dMarq{to{transform:translateX(-50%)}}
 .zj3dMarq{animation:zj3dMarq linear infinite}
 @media(max-width:760px){ /* 手机版三维照常可用：全宽三档，TERRA 拉手居中 */
@@ -1375,7 +1380,7 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 .gMfd.mvRing .mSec{margin-bottom:0;animation:none!important}
 .mvBg{position:absolute;inset:0;width:100%;height:100%;opacity:.58;pointer-events:none}
 .mvVig{position:absolute;inset:0;pointer-events:none;
-       background:radial-gradient(ellipse 92% 76% at 50% 46%,transparent 48%,rgba(0,0,0,.66) 100%)}
+       background:radial-gradient(ellipse 92% 76% at 50% 46%,transparent 48%,rgba(242,236,222,.66) 100%)}
 .mvStage{position:absolute;left:0;right:16px;top:0;bottom:calc(var(--mvNav,0px) + 34px);
          perspective:520px;perspective-origin:50% 48%;touch-action:pan-y;overflow:hidden}
 .mvTrack{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
@@ -1385,9 +1390,9 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
    所以外框改由 SVG 逐帧描：一段弧的上下两条边是平行于轮轴的直线（照旧是直的），
    左右两条边才是弧——中线离眼最近、最宽，往上下两端退后去，于是收窄。
    同一条轮廓再当作 clip-path 扣在卡上，正文被这条弧裁住，整块才读得出是弯的。 */
-.mvCard .cfr{position:absolute;inset:0;background:rgba(6,6,6,.60)}
+.mvCard .cfr{position:absolute;inset:0;background:rgba(237,231,217,.60)}
 /* 毛玻璃只给正前那张：六张卡同时糊背景，在三维变换里是实打实的六层离屏合成。 */
-.mvCard.on .cfr{background:rgba(6,6,6,.66);
+.mvCard.on .cfr{background:rgba(237,231,217,.66);
        -webkit-backdrop-filter:blur(7px) saturate(140%);backdrop-filter:blur(7px) saturate(140%)}
 .mvCard .cedge{position:absolute;inset:0;width:100%;height:100%;overflow:visible;
        pointer-events:none;z-index:4;fill:none}
@@ -1409,13 +1414,13 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
    所以要抬只能抬它，给里面的卡写 z-index 出不去。 */
 .gMfd.mvDeck .mvTrack{pointer-events:none;z-index:3}
 .gMfd.mvDeck .mvFoot{left:auto;right:0;width:212px;pointer-events:auto;
-      border-left:1px solid #232320}
+      border-left:1px solid #d2ccbd}
 .gMfd.mvDeck .mvFoot .l{display:none}
 /* 情报台的每一扇窗，就是地图／装备／商店那一扇窗：底色、边、投影、模糊
    四项照抄 .gPanel，一个数都不改。边框交回 CSS，SVG 那一套在卡叠里停用——
    尺寸改由 CSS 过渡插值，逐帧重描的 SVG 反倒跟不上。 */
-.gMfd.mvDeck .mvCard .cfr{background:rgba(6,6,6,.78);border:1px solid rgba(236,236,232,.20);
-      box-shadow:0 14px 34px rgba(0,0,0,.5);
+.gMfd.mvDeck .mvCard .cfr{background:rgba(237,231,217,.78);border:1px solid rgba(19,18,13,.20);
+      box-shadow:0 14px 34px rgba(242,236,222,.5);
       -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
       transition:border-color .26s ease,box-shadow .26s ease}
 .gMfd.mvDeck .mvCard .cedge{display:none}
@@ -1434,10 +1439,10 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
    名字同样写在窗外下面一行。上了台的那扇窗才用 .gPanel 那一套（带投影的玻璃）。 */
 .mvCard.thumb .mvBody{overflow:hidden;pointer-events:none}
 .mvCard.thumb .ftag,.mvCard.thumb .fnum{display:none}
-.gMfd.mvDeck .mvCard.thumb .cfr{background:rgba(6,6,6,.42) !important;
-      border-color:rgba(236,236,232,.30);box-shadow:none}
+.gMfd.mvDeck .mvCard.thumb .cfr{background:rgba(237,231,217,.42) !important;
+      border-color:rgba(19,18,13,.30);box-shadow:none}
 .mvCard .ic{position:absolute;left:-11px;bottom:-7px;width:22px;height:22px;z-index:5;
-      background:#0a0a0a;border:1px solid rgba(236,236,232,.34);opacity:0;
+      background:#e9e3d6;border:1px solid rgba(19,18,13,.34);opacity:0;
       display:flex;align-items:center;justify-content:center;
       font-size:8.5px;letter-spacing:.02em;color:var(--gold-hi);
       transition:opacity .26s ease,border-color .22s,color .22s}
@@ -1475,15 +1480,15 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
    （原先玻璃在子元素 .cfr 上、透视在祖先上，采样被截断，糊不出来。）
    mvFit 抵掉近边被透视放大的那一点，免得上下顶出台子。 */
 .gMfd.mvDeck .mvWin{position:absolute;transform-origin:50% 50%;--mvTilt:-10deg;--mvFit:.93;
-      background:rgba(6,6,6,.10);border:1px solid rgba(236,236,232,.20);
-      box-shadow:0 14px 34px rgba(0,0,0,.5);
+      background:rgba(237,231,217,.10);border:1px solid rgba(19,18,13,.20);
+      box-shadow:0 14px 34px rgba(242,236,222,.5);
       /* 这一扇背后只有那层细线框（灰度 4~16），blur(9px) 把 1px 的线摊开近二十像素，
          峰值只剩百分之一二，再被面板底色压一道，等于什么都看不见。
          实测：模糊半径几乎不影响，起决定作用的是亮度增益。
          所以半径收到 6px、补一道 2.6 倍增益——线这才透得出来。
          左边三扇不用这么补：它们背后是打了光的三维画面，本来就亮。 */
-      -webkit-backdrop-filter:blur(6px) brightness(2.6) saturate(140%);
-              backdrop-filter:blur(6px) brightness(2.6) saturate(140%);
+      -webkit-backdrop-filter:blur(6px) saturate(140%);
+              backdrop-filter:blur(6px) saturate(140%);
       transform:perspective(620px) translateX(26px) scale(.955) rotateY(var(--mvTilt)) scaleY(var(--mvFit));
       opacity:0;pointer-events:none;
       transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease}
@@ -1515,9 +1520,9 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 .gMfd.mvDeck .mvCard .mw{position:absolute;top:1px;left:1px;overflow:hidden;
       transform-origin:0 0;pointer-events:none;padding:12px 8px 10px}
 /* 正在看的那一枚：转正、往前挪一点、镶一道金边——与左边开着的那扇抽屉同一套。 */
-.gMfd.mvDeck .mvCard.on .cfr{border-color:rgba(201,155,63,.72) !important}
-.gMfd.mvDeck .mvCard.on .ic{border-color:rgba(201,155,63,.8);
-      background:rgba(201,155,63,.16);color:var(--gold-hi)}
+.gMfd.mvDeck .mvCard.on .cfr{border-color:rgba(132,88,0,.72) !important}
+.gMfd.mvDeck .mvCard.on .ic{border-color:rgba(132,88,0,.8);
+      background:rgba(132,88,0,.16);color:var(--gold-hi)}
 .gMfd.mvDeck .mvCard.on .mvGhost .g3{color:var(--gold-hi)}
 /* 挂载那一刻 .gMfd 还没被 CSS 铺到 min(56vw,680px)，量到的台宽只有一两百，
    按它算出来的窗位是负的（实测 left:-52px、313×560），窗会先甩到正文上面
@@ -1545,16 +1550,16 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 .mvGhost{position:absolute;right:12px;bottom:9px;line-height:1;pointer-events:none;text-align:right}
 .mvGhost .g1{display:block;font-size:8px;letter-spacing:.3em;color:var(--mut);margin-bottom:6px}
 .mvGhost .g2{font-size:44px;font-weight:700;color:transparent;line-height:.86;
-             -webkit-text-stroke:1px rgba(236,236,232,.62);font-variant-numeric:tabular-nums}
+             -webkit-text-stroke:1px rgba(19,18,13,.62);font-variant-numeric:tabular-nums}
 .mvGhost .g3{margin-top:7px;font-size:10px;letter-spacing:.22em;color:var(--txt);white-space:nowrap}
 .mvRail{position:absolute;right:0;top:0;width:16px;cursor:ns-resize;touch-action:none;
         height:calc(100% - var(--mvNav,0px) - 34px)}
 .mvFoot{position:absolute;left:0;right:0;bottom:var(--mvNav,0px);height:34px;z-index:4;
-        border-top:1px solid #232320;display:flex;align-items:center;justify-content:space-between;
-        padding:0 9px;font-size:9px;letter-spacing:.22em;color:var(--mut);background:rgba(6,6,6,.72)}
+        border-top:1px solid #d2ccbd;display:flex;align-items:center;justify-content:space-between;
+        padding:0 9px;font-size:9px;letter-spacing:.22em;color:var(--mut);background:rgba(237,231,217,.72)}
 .mvFoot .r{display:flex;align-items:center;gap:7px}
 .mvFoot b{font-weight:400;color:var(--gold-hi);letter-spacing:.16em}
-.mvFoot .go{border:1px solid rgba(236,236,232,.26);padding:4px 7px 3px;cursor:pointer;color:var(--txt);
+.mvFoot .go{border:1px solid rgba(19,18,13,.26);padding:4px 7px 3px;cursor:pointer;color:var(--txt);
             line-height:1;transition:border-color .2s,color .2s}
 .mvFoot .go:hover{border-color:var(--gold);color:var(--gold-hi)}
 @media (max-width:760px){ .mvFoot .l{display:none} }
@@ -1610,9 +1615,9 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 .svFold{transition:border-color var(--t-ui) var(--e-io),
                    background-color var(--t-ui) var(--e-io),
                    box-shadow var(--t-ui) var(--e-io)}
-.svFold:hover{border-color:rgba(201,155,63,.75);
-              box-shadow:0 0 0 1px rgba(201,155,63,.25),0 4px 14px rgba(0,0,0,.5)}
-.svFold:active{background:rgba(201,155,63,.16)}
+.svFold:hover{border-color:rgba(132,88,0,.75);
+              box-shadow:0 0 0 1px rgba(132,88,0,.25),0 4px 14px rgba(242,236,222,.5)}
+.svFold:active{background:rgba(132,88,0,.16)}
 
 /* —— 三维面板本体：换档时高度／左右都要平滑（最大档还要横着铺满） —— */
 #pnTx{transition:height var(--t-view) var(--e-io),
@@ -1669,6 +1674,9 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
 </div>
 
 <style>
+/* 这几个变量根上那份已烘成 G(原色)；真彩三层要的是原色，按烘前的值重声一遍。 */
+#menu:not(.gbg):not(.era),#eraSel,#feWrap{--cream:#fcfcfc;--gold:#c99b3f;--gold-hi:#ecc878;--ink:#060606;--mut:#6b6b66;--paper:#ecece8;--txt:#d9d9d4}
+
 /* ═══════ 纪年 ANNALES ═══════
    与剧情线 lineSel 同一层级、同一套外壳：满屏、不透光、底条在下、说明块在左。
    只有转轴不一样——线是竖排三张，纪年是横排四十二张，所以这里走横向卷轴：
@@ -1678,8 +1686,8 @@ html.lux #pnTx #zjScene3D>canvas,html.lux #pnTx #mdScene3D>canvas,html.lux #pnTx
    底色走奶油，与菜单一致——所以要先从全局反色里豁免出来（再反一次抵消），
    不然整层会被翻成负片。这一条必须排在 luxpatch 那一段之后才压得住，
    而本段就在纪年页样式的前面，位置是对的。 */
-html.lux #feWrap{filter:invert(1) hue-rotate(180deg)}
-html.lux #feWrap img{filter:none}
+/* 滤镜已卸：这一层本来就是真彩 */
+/* 滤镜已卸 */
 
 #feWrap{position:fixed;inset:0;z-index:47;display:none;background:#fcfcfc;
   color:#4a4237;font-family:var(--mono);touch-action:manipulation}
@@ -2056,7 +2064,7 @@ html.lux #feWrap img{filter:none}
       <span class="t">装备</span></div>
   </div>
 
-  <div id="pnTx"><div id="zjScene3D" style="position:absolute;inset:0"></div><div id="mdScene3D" style="position:absolute;inset:0;display:none;outline:none"></div><div id="modScene3D" style="position:absolute;inset:0;display:none;background:#030303"><canvas id="mcGl" style="position:absolute;inset:0;width:100%;height:100%"></canvas><canvas id="mcOv" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none"></canvas></div>
+  <div id="pnTx"><div id="zjScene3D" style="position:absolute;inset:0"></div><div id="mdScene3D" style="position:absolute;inset:0;display:none;outline:none"></div><div id="modScene3D" style="position:absolute;inset:0;display:none;background:#f0eadc"><canvas id="mcGl" style="position:absolute;inset:0;width:100%;height:100%"></canvas><canvas id="mcOv" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none"></canvas></div>
     <div id="txHint"></div>
   </div>
   <div class="g3dRail">
@@ -2101,7 +2109,7 @@ html.lux #feWrap img{filter:none}
       <div class="sRow"><span>MVSICA&nbsp;·&nbsp;配乐</span><input type="range" id="cfgBgm" min="0" max="100" value="55"></div>
       <div class="sRow"><span>MOTVS&nbsp;·&nbsp;动效</span><span class="sSeg" id="sgMotus"><span class="on">全开</span><span>减弱（低配）</span></span></div>
       <div class="sRow"><span>VELOCITAS&nbsp;·&nbsp;文字速度</span><span class="sSeg" id="sgVelo"><span>缓</span><span class="on">中</span><span>疾</span><span>瞬</span></span></div>
-      <div class="sRow"><span>LITTERAE&nbsp;·&nbsp;正文字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgNarr" min="12" max="30" step="1" value="17" inputmode="numeric" style="width:84px;text-align:right;background:rgba(236,236,232,.04);border:1px solid rgba(236,236,232,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgNarrVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">17px</b></span></div><div class="sub">只改叙事正文那一栏的字号，单位像素，12–30，17 为默认。界面其余部分不动。</div><div class="sRow"><span>INTERFACIES&nbsp;·&nbsp;界面字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgUi" min="0" max="100" step="1" value="22" inputmode="numeric" style="width:84px;text-align:right;background:rgba(236,236,232,.04);border:1px solid rgba(236,236,232,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgUiVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">22%</b></span></div><div class="sub">填 0-100 的整数整体缩放界面——情报台状态栏、顶栏、输入区与全部弹窗（含本设置与世界书）一同放大缩小；正文另有上面那一档，三维场景不受影响。0 最小、100 最大，22 为原始尺寸；输入后回车或点开生效，上下箭头可 1% 微调。</div><div class="sRow"><span>LVX&nbsp;·&nbsp;白昼模式</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgLux" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">把全站换成浅色（白昼）配色，正文黑字白底更近纸面；三维画面与配图保持原貌。主菜单右上角的&nbsp;☀/☾&nbsp;也能随时切换，两处同步。</div><div class="sRow"><span>CONSILIVM&nbsp;·&nbsp;四选项</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgSugg" checked style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">开启后，每一幕落定就由参谋按当下局势拟四条可点选的下一步，点哪条便照哪条发出（并自动切到对应的输入模式）；第四条恒为冒险策。输入区上方那枚「参谋四策」也能随时开关，两处同步。未接 AI 时给的是本地拟的朴素四条。</div>
+      <div class="sRow"><span>LITTERAE&nbsp;·&nbsp;正文字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgNarr" min="12" max="30" step="1" value="17" inputmode="numeric" style="width:84px;text-align:right;background:rgba(19,18,13,.04);border:1px solid rgba(19,18,13,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgNarrVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">17px</b></span></div><div class="sub">只改叙事正文那一栏的字号，单位像素，12–30，17 为默认。界面其余部分不动。</div><div class="sRow"><span>INTERFACIES&nbsp;·&nbsp;界面字体</span><span style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end"><input type="number" id="cfgUi" min="0" max="100" step="1" value="22" inputmode="numeric" style="width:84px;text-align:right;background:rgba(19,18,13,.04);border:1px solid rgba(19,18,13,.25);color:var(--txt);padding:6px 8px;font-family:var(--mono);font-size:13px"><b id="cfgUiVal" style="font-weight:400;font-size:10px;letter-spacing:.1em;color:var(--gold-hi);min-width:3.6em;text-align:right">22%</b></span></div><div class="sub">填 0-100 的整数整体缩放界面——情报台状态栏、顶栏、输入区与全部弹窗（含本设置与世界书）一同放大缩小；正文另有上面那一档，三维场景不受影响。0 最小、100 最大，22 为原始尺寸；输入后回车或点开生效，上下箭头可 1% 微调。</div><div class="sRow"><span>LVX&nbsp;·&nbsp;白昼模式</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgLux" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">把全站换成浅色（白昼）配色，正文黑字白底更近纸面；三维画面与配图保持原貌。主菜单右上角的&nbsp;☀/☾&nbsp;也能随时切换，两处同步。</div><div class="sRow"><span>CONSILIVM&nbsp;·&nbsp;四选项</span><span style="flex:1;text-align:right"><input type="checkbox" id="cfgSugg" checked style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer"></span></div><div class="sub">开启后，每一幕落定就由参谋按当下局势拟四条可点选的下一步，点哪条便照哪条发出（并自动切到对应的输入模式）；第四条恒为冒险策。输入区上方那枚「参谋四策」也能随时开关，两处同步。未接 AI 时给的是本地拟的朴素四条。</div>
       <div class="sub">透明度：拖动即时生效——拉到最左＝完全透明（直接看穿到后面的动态背景）；拉到最右＝完全不透明（纯色纸底，彻底看不穿）。开低配模式时模糊被关闭。版式：自动依屏幕宽窄选择版式，也可强制使用电脑或手机布局。</div>
       <div class="sRow"><span>OBSCVRITAS&nbsp;·&nbsp;面板透明度</span><input type="range" id="cfgGlass" min="0" max="100" value="80"></div>
       <div class="sRow"><span>FORMA&nbsp;·&nbsp;版式</span><span class="sSeg" id="sgForma"><span class="on">自动</span><span>桌面</span><span>手机</span></span></div>
@@ -2111,9 +2119,9 @@ html.lux #feWrap img{filter:none}
       <div class="sub" id="dispMsg" style="margin-top:8px"></div>
     </div>
     <div class="cfgPane" id="cp_img" style="display:none">
-      <div id="imgNaiHelp" style="display:none;border:1px solid rgba(201,155,63,.4);padding:12px;margin-top:10px">
+      <div id="imgNaiHelp" style="display:none;border:1px solid rgba(132,88,0,.4);padding:12px;margin-top:10px">
         <div style="font-size:10px;letter-spacing:.2em;color:var(--gold-hi)">NovelAI&nbsp;必做&nbsp;·&nbsp;先建你的专属中转</div>
-        <div class="sub" style="margin-top:8px;line-height:2">NovelAI&nbsp;不允许网页直接连（浏览器会拦掉），<b style="color:#e86a52">不做就一张图都看不到</b>。需一个免费中转，约&nbsp;2&nbsp;分钟。中转建在<b style="color:var(--gold-hi)">你自己的账号</b>里——token&nbsp;与图片只走你专属的通道，不经任何人转手。不用&nbsp;NovelAI&nbsp;出图可无视本节。</div>
+        <div class="sub" style="margin-top:8px;line-height:2">NovelAI&nbsp;不允许网页直接连（浏览器会拦掉），<b style="color:#d35d3d">不做就一张图都看不到</b>。需一个免费中转，约&nbsp;2&nbsp;分钟。中转建在<b style="color:var(--gold-hi)">你自己的账号</b>里——token&nbsp;与图片只走你专属的通道，不经任何人转手。不用&nbsp;NovelAI&nbsp;出图可无视本节。</div>
         <div style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap">
           <a class="eBtn" style="margin-top:0;text-decoration:none" href="https://deploy.workers.cloudflare.com/?url=https://github.com/Ekibenya/nai-proxy" target="_blank" rel="noopener">⚡&nbsp;一键部署我的专属中转</a>
           <span class="sub">登录&nbsp;Cloudflare&nbsp;→&nbsp;授权&nbsp;GitHub&nbsp;→&nbsp;点&nbsp;Deploy&nbsp;→&nbsp;复制生成的链接（https://nai-proxy.你的用户名.workers.dev）→&nbsp;贴到下面「接口地址」</span>
@@ -2124,7 +2132,7 @@ html.lux #feWrap img{filter:none}
         <details style="margin-top:6px"><summary class="sub" style="cursor:pointer">▸&nbsp;没有／不想用&nbsp;GitHub？（方法二：复制代码手动贴）</summary>
           <div style="display:flex;gap:12px;align-items:center;margin-top:8px"><span class="eBtn" id="imgCopyWorker" style="margin-top:0">复制中转代码</span><span class="sub">复制后按下面&nbsp;5&nbsp;步贴到&nbsp;Cloudflare</span></div>
           <div class="sub" style="line-height:2.1;margin-top:8px">①&nbsp;打开&nbsp;dash.cloudflare.com，注册／登录（免费）<br>②&nbsp;左侧点&nbsp;Compute&nbsp;(Workers)<br>③&nbsp;Create&nbsp;Worker&nbsp;→&nbsp;起名&nbsp;→&nbsp;Deploy<br>④&nbsp;Edit&nbsp;code&nbsp;→&nbsp;原代码全删，贴上刚复制的&nbsp;→&nbsp;再点&nbsp;Deploy<br>⑤&nbsp;复制它给你的网址，填到下面「接口地址」</div>
-          <textarea id="imgWorkerTa" readonly rows="4" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(236,236,232,.2);color:#9fb4c8;font-family:inherit;font-size:9px;line-height:1.6;padding:6px;outline:none"></textarea>
+          <textarea id="imgWorkerTa" readonly rows="4" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(19,18,13,.2);color:#3a4b5a;font-family:inherit;font-size:9px;line-height:1.6;padding:6px;outline:none"></textarea>
         </details>
         <div class="sub" style="margin-top:10px">✎&nbsp;参谋拼网址（懒得找长链接就填这两框）：左框＝Worker&nbsp;名（没改名留空，默认&nbsp;nai-proxy）；右框＝workers.dev&nbsp;子域名（xxx.workers.dev&nbsp;的&nbsp;xxx，常与&nbsp;GitHub&nbsp;用户名一致）</div>
         <div style="display:flex;gap:8px;margin-top:6px"><input class="aIn" id="naiWkName" placeholder="nai-proxy" style="width:110px"><input class="aIn" id="naiWkSub" placeholder="你的子域名" style="width:130px"></div>
@@ -2140,10 +2148,10 @@ html.lux #feWrap img{filter:none}
       <div class="sRow"><span>图片显示尺寸</span><span class="sSeg" id="sgImgDisp"><span>迷你</span><span>小</span><span class="on">中</span><span>大</span></span></div>
       <div class="sub">管单图在正文里显示多大；多图那轮自动小图并排。</div>
       <div class="sRow"><span>接口风格</span><span class="sSeg" id="sgImgStyle"><span class="on">NovelAI&nbsp;官方</span><span>OpenAI&nbsp;兼容</span><span>SD·A1111</span><span>本地&nbsp;ComfyUI</span><span>自定义&nbsp;JSON</span></span></div>
-      <div id="imgComfyHelp" style="display:none;border:1px solid rgba(201,155,63,.4);padding:12px;margin-top:10px">
+      <div id="imgComfyHelp" style="display:none;border:1px solid rgba(132,88,0,.4);padding:12px;margin-top:10px">
         <div class="sub" style="line-height:2.1">本地&nbsp;ComfyUI：启动时加&nbsp;<b style="color:var(--gold-hi)">--enable-cors-header</b>&nbsp;允许网页调用（127.0.0.1&nbsp;不受&nbsp;https&nbsp;混合内容限制）。「接口地址」填&nbsp;<b style="color:var(--gold-hi)">http://127.0.0.1:8188</b>，「模型」填&nbsp;checkpoint&nbsp;文件名（如&nbsp;sd_xl_base_1.0.safetensors），采样参数照常填。<br>进阶：下方可贴你自己的&nbsp;API&nbsp;格式工作流（ComfyUI&nbsp;里&nbsp;Save&nbsp;(API&nbsp;Format)&nbsp;导出），用&nbsp;%prompt%&nbsp;%negative%&nbsp;%seed%&nbsp;%steps%&nbsp;%cfg%&nbsp;%width%&nbsp;%height%&nbsp;%ckpt%&nbsp;作占位符；留空用内置默认&nbsp;txt2img。</div>
-        <div style="display:flex;gap:12px;margin-top:8px"><span class="eBtn" id="comfyPull" style="margin-top:0">拉取模型</span><select id="comfyModels" style="display:none;background:#0a0a0a;border:1px solid rgba(236,236,232,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"></select></div>
-        <textarea id="imgWorkflow" rows="3" placeholder="（可选）API 格式工作流 JSON…" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(236,236,232,.2);color:#9fb4c8;font-family:inherit;font-size:9px;line-height:1.6;padding:6px;outline:none"></textarea>
+        <div style="display:flex;gap:12px;margin-top:8px"><span class="eBtn" id="comfyPull" style="margin-top:0">拉取模型</span><select id="comfyModels" style="display:none;background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"></select></div>
+        <textarea id="imgWorkflow" rows="3" placeholder="（可选）API 格式工作流 JSON…" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(19,18,13,.2);color:#3a4b5a;font-family:inherit;font-size:9px;line-height:1.6;padding:6px;outline:none"></textarea>
       </div>
       <div class="sRow"><span>接口地址</span><input class="aIn" id="imgBase" placeholder="https://api.example.com/v1" style="width:260px"></div>
       <div class="sRow"><span>密钥（本地&nbsp;SD／Comfy&nbsp;可留空）</span><input class="aIn" id="imgKey" type="password" style="width:200px"></div>
@@ -2196,13 +2204,13 @@ html.lux #feWrap img{filter:none}
         <span class="eBtn" id="loreExp" style="margin-top:0">导出备份</span>
         <input type="file" id="loreFile" accept=".json" style="display:none"><span class="sub" id="loreMsg"></span>
       </div>
-      <div id="loreForm" style="display:none;margin-top:12px;border:1px solid rgba(201,155,63,.35);padding:12px">
+      <div id="loreForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:12px">
         <div class="sRow"><span>条目名</span><input class="aIn" id="lfTtl" style="width:220px"></div>
         <div class="sRow"><span>触发词（逗号分隔）</span><input class="aIn" id="lfKeys" style="width:220px"></div>
         <div class="sRow"><span>次级关键词（可选·须同时命中）</span><input class="aIn" id="lfKeys2" style="width:180px"></div>
         <div class="sRow"><span>顺序&nbsp;/&nbsp;概率%</span><span style="display:flex;gap:8px"><input class="aIn" id="lfOrd" value="100" style="width:60px"><input class="aIn" id="lfProb" value="100" style="width:60px"></span></div>
         <div class="sRow"><span>常驻（每轮必注入）</span><span class="sSeg" id="sgLfConst"><span class="on">否</span><span>是</span></span></div>
-        <textarea id="lfTxt" rows="4" placeholder="写给神谕看的背景资料…" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(236,236,232,.2);color:#c8c8c2;font-family:inherit;font-size:10px;line-height:1.9;padding:8px;outline:none"></textarea>
+        <textarea id="lfTxt" rows="4" placeholder="写给神谕看的背景资料…" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(19,18,13,.2);color:#35342b;font-family:inherit;font-size:10px;line-height:1.9;padding:8px;outline:none"></textarea>
         <div style="display:flex;gap:12px;margin-top:10px"><span class="eBtn" id="lfSave" style="margin-top:0">保存</span><span class="eBtn" id="lfCancel" style="margin-top:0">取消</span></div>
       </div>
     </div>
@@ -2215,7 +2223,7 @@ html.lux #feWrap img{filter:none}
         <span class="eBtn" id="rxExp" style="margin-top:0">导出</span>
         <input type="file" id="rxFile" accept=".json" style="display:none" multiple><span class="sub" id="rxMsg"></span>
       </div>
-      <div id="rxForm" style="display:none;margin-top:12px;border:1px solid rgba(201,155,63,.35);padding:12px">
+      <div id="rxForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:12px">
         <div class="sRow"><span>名称</span><input class="aIn" id="rxfName" style="width:200px"></div>
         <div class="sRow"><span>查找</span><input class="aIn" id="rxfFind" placeholder="/悄悄话.*?$/gm 或裸文本" style="width:260px"></div>
         <div class="sRow"><span>替换为</span><input class="aIn" id="rxfRep" placeholder="留空即删除命中" style="width:260px"></div>
@@ -2231,15 +2239,15 @@ html.lux #feWrap img{filter:none}
         <span class="eBtn" id="jsImp" style="margin-top:0">导入.js</span>
         <input type="file" id="jsFileI" accept=".js,.txt" style="display:none"><span class="sub" id="jsMsg"></span>
       </div>
-      <div id="jsForm" style="display:none;margin-top:12px;border:1px solid rgba(201,155,63,.35);padding:12px">
+      <div id="jsForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:12px">
         <div class="sRow"><span>脚本名</span><input class="aIn" id="jsfName" style="width:220px"></div>
-        <textarea id="jsfTxt" rows="4" placeholder="return text + '\n——编年已录。';" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(236,236,232,.2);color:#9fb4c8;font-family:inherit;font-size:10px;line-height:1.8;padding:8px;outline:none"></textarea>
+        <textarea id="jsfTxt" rows="4" placeholder="return text + '\n——编年已录。';" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(19,18,13,.2);color:#3a4b5a;font-family:inherit;font-size:10px;line-height:1.8;padding:8px;outline:none"></textarea>
         <div style="display:flex;gap:12px;margin-top:10px"><span class="eBtn" id="jsfSave" style="margin-top:0">保存</span><span class="eBtn" id="jsfCancel" style="margin-top:0">取消</span></div>
       </div>
     </div>
     <div class="cfgPane" id="cp_api" style="display:none">
       <div class="sub">主接口在&nbsp;ORACVLVM&nbsp;弹窗（顶栏）配置&nbsp;·&nbsp;此处为档案／副模型／采样</div>
-      <div class="sRow"><span>接口档案</span><span style="display:flex;gap:8px;align-items:center"><select id="apProfs" style="background:#0a0a0a;border:1px solid rgba(236,236,232,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:150px"></select><span class="gt" id="apProfSave">存当前</span><span class="gt" id="apProfDel">删</span><span class="gt" id="apOpen">主接口⇗</span></span></div>
+      <div class="sRow"><span>接口档案</span><span style="display:flex;gap:8px;align-items:center"><select id="apProfs" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:150px"></select><span class="gt" id="apProfSave">存当前</span><span class="gt" id="apProfDel">删</span><span class="gt" id="apOpen">主接口⇗</span></span></div>
       <div class="sub" style="margin-top:14px">副模型&nbsp;·&nbsp;杂务分工（可选&nbsp;·&nbsp;OpenAI&nbsp;兼容）：配好后，绘图提示词、摘要、密语闲聊等杂务自动改走副模型，省钱提速；正文仍由主模型执笔。留空则全部走主模型。</div>
       <div class="sRow"><span>副&nbsp;BASE</span><input class="aIn" id="subBase" style="width:240px"></div>
       <div class="sRow"><span>副密钥</span><input class="aIn" id="subKey" type="password" style="width:200px"></div>
@@ -2260,10 +2268,10 @@ html.lux #feWrap img{filter:none}
         <span class="eBtn" id="preExp" style="margin-top:0">导出</span>
         <input type="file" id="preFile" accept=".json,.txt" style="display:none"><span class="sub" id="preMsg"></span>
       </div>
-      <div id="preForm" style="display:none;margin-top:12px;border:1px solid rgba(201,155,63,.35);padding:12px">
+      <div id="preForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:12px">
         <div class="sRow"><span>名称</span><input class="aIn" id="pfName" style="width:200px"></div>
         <div class="sRow"><span>注入位置</span><span class="sSeg" id="sgPrePos"><span class="on">前置</span><span>末位</span></span></div>
-        <textarea id="pfTxt" rows="4" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(236,236,232,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;line-height:1.8;padding:8px;outline:none"></textarea>
+        <textarea id="pfTxt" rows="4" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;line-height:1.8;padding:8px;outline:none"></textarea>
         <div style="display:flex;gap:12px;margin-top:10px"><span class="eBtn" id="pfSave2" style="margin-top:0">保存</span><span class="eBtn" id="pfCancel" style="margin-top:0">取消</span></div>
       </div>
     </div>
@@ -2275,8 +2283,8 @@ html.lux #feWrap img{filter:none}
         <span class="eBtn" id="memAuto" style="margin-top:0">自动摘要近幕</span>
         <span class="sub" id="memMsg"></span>
       </div>
-      <div id="memForm" style="display:none;margin-top:12px;border:1px solid rgba(201,155,63,.35);padding:12px">
-        <textarea id="mfTxt" rows="3" style="width:100%;background:transparent;border:1px solid rgba(236,236,232,.2);color:#c8c8c2;font-family:inherit;font-size:10px;line-height:1.9;padding:8px;outline:none"></textarea>
+      <div id="memForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:12px">
+        <textarea id="mfTxt" rows="3" style="width:100%;background:transparent;border:1px solid rgba(19,18,13,.2);color:#35342b;font-family:inherit;font-size:10px;line-height:1.9;padding:8px;outline:none"></textarea>
         <div style="display:flex;gap:12px;margin-top:10px"><span class="eBtn" id="mfSave" style="margin-top:0">保存</span><span class="eBtn" id="mfCancel" style="margin-top:0">取消</span></div>
       </div>
     </div>
@@ -2289,7 +2297,7 @@ html.lux #feWrap img{filter:none}
         <span class="eBtn" id="bakImp" style="margin-top:0">导入（全量或任一单项档）</span>
         <input type="file" id="bakFile" accept=".json" style="display:none">
       </div>
-      <div class="sub" style="margin-top:18px">一键清除：抹掉本游戏存在此浏览器的<b style="color:#e86a52">全部资料</b>——设置、AI接口、预设、记忆、正则、脚本、自写世界书、角色卡、全部存档、装备、图库缓存、三维偏好。自定义字体与周纪线各自数据不动。执行后自动刷新。</div>
+      <div class="sub" style="margin-top:18px">一键清除：抹掉本游戏存在此浏览器的<b style="color:#d35d3d">全部资料</b>——设置、AI接口、预设、记忆、正则、脚本、自写世界书、角色卡、全部存档、装备、图库缓存、三维偏好。自定义字体与周纪线各自数据不动。执行后自动刷新。</div>
       <div style="display:flex;gap:12px;margin-top:8px">
         <span class="eBtn" id="bakWipe" style="margin-top:0">一键清除全部资料…</span>
       </div>
@@ -2321,11 +2329,11 @@ html.lux #feWrap img{filter:none}
       <input type="file" id="cxFile" accept=".json" style="display:none">
       <span class="sub" id="cxMsg"></span>
     </div>
-    <div id="cxForm" style="display:none;margin-top:12px;border:1px solid rgba(201,155,63,.35);padding:14px">
+    <div id="cxForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:14px">
       <div class="sRow"><span>分类</span><input class="aIn" id="cxfCat" placeholder="自写" style="width:120px"></div>
       <div class="sRow"><span>标题</span><input class="aIn" id="cxfTtl" style="width:240px"></div>
       <div class="sRow"><span>触发词（逗号分隔）</span><input class="aIn" id="cxfKeys" style="width:240px"></div>
-      <textarea id="cxfTxt" rows="4" placeholder="条目内容…" style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(236,236,232,.2);color:#c8c8c2;font-family:inherit;font-size:10px;line-height:1.9;padding:8px;outline:none"></textarea>
+      <textarea id="cxfTxt" rows="4" placeholder="条目内容…" style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(19,18,13,.2);color:#35342b;font-family:inherit;font-size:10px;line-height:1.9;padding:8px;outline:none"></textarea>
       <div style="display:flex;gap:12px;margin-top:12px"><span class="eBtn" id="cxfSave" style="margin-top:0">存入此卷</span><span class="eBtn" id="cxfCancel" style="margin-top:0">取消</span></div>
     </div>
     <div class="esc2">ESC&nbsp;//&nbsp;RETVRN</div>
@@ -2357,14 +2365,14 @@ html.lux #feWrap img{filter:none}
     <div class="sRow"><span>BASE&nbsp;URL</span><input class="aIn" id="apiBase" placeholder="https://api.example.com/v1" style="width:280px"></div>
     <div class="sRow"><span>密钥&nbsp;KEY</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiKey" type="password" placeholder="sk-…" style="width:220px"><span class="gt" id="apiEye" title="显示/隐藏密钥">目</span></span></div>
     <div class="sRow"><span>MODEL</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiModel" placeholder="模型名 · 或点击拉取" style="width:180px"><span class="gt" id="apiPull">拉取模型</span></span></div>
-    <div class="sRow" id="apiModelsRow" style="display:none"><span>可用模型</span><select id="apiModels" style="background:#0a0a0a;border:1px solid rgba(236,236,232,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:6px;max-width:280px"></select></div>
+    <div class="sRow" id="apiModelsRow" style="display:none"><span>可用模型</span><select id="apiModels" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:6px;max-width:280px"></select></div>
     <div class="sRow"><span>生图接口（可选）</span><input class="aIn" id="apiImg" placeholder="https://…（暂存配置）" style="width:280px"></div>
     <div style="display:flex;gap:12px;margin-top:22px">
       <span class="eBtn" id="apiTest">PROBARE&nbsp;测试</span>
       <span class="eBtn" id="apiSave">SERVARE&nbsp;储存</span>
       <span class="eBtn" id="apiClear">清除</span>
     </div>
-    <div style="margin-top:22px;border-top:1px solid rgba(236,236,232,.14);padding-top:16px">
+    <div style="margin-top:22px;border-top:1px solid rgba(19,18,13,.14);padding-top:16px">
       <div class="sub">开局前的快速接入&nbsp;·&nbsp;不必先进游戏</div>
       <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
         <span class="eBtn" id="qkPre" style="margin-top:0">导入预设</span>
@@ -2381,7 +2389,7 @@ html.lux #feWrap img{filter:none}
     <span class="tag">VOCES</span>
     <h2>密语频道</h2>
     <div class="sub">与在场之人的闲谈侧线&nbsp;·&nbsp;不推进正剧</div>
-    <div id="vocLog" style="max-height:260px;overflow-y:auto;margin:14px 0;border:1px solid rgba(236,236,232,.12);padding:10px 12px"></div>
+    <div id="vocLog" style="max-height:260px;overflow-y:auto;margin:14px 0;border:1px solid rgba(19,18,13,.12);padding:10px 12px"></div>
     <div style="display:flex;gap:10px">
       <input class="aIn" id="vocIn" placeholder="低声说点什么…" style="flex:1">
       <span class="gSend" id="vocSend" style="width:34px;height:34px">➤</span>
@@ -2400,7 +2408,7 @@ html.lux #feWrap img{filter:none}
       <span class="sub" id="bgNow" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.1em">未在播放</span>
     </div>
     <div class="sRow"><span>音量</span><input type="range" id="bgVol" min="0" max="100" value="60"></div>
-    <div id="bgList" style="margin-top:12px;max-height:min(46vh,340px);overflow-y:auto;border:1px solid rgba(236,236,232,.12)"></div>
+    <div id="bgList" style="margin-top:12px;max-height:min(46vh,340px);overflow-y:auto;border:1px solid rgba(19,18,13,.12)"></div>
     <div class="esc2">ESC&nbsp;//&nbsp;RETVRN</div>
   </div>
 </div>
@@ -2422,7 +2430,7 @@ html.lux #feWrap img{filter:none}
   <div class="box" style="max-width:460px">
     <span class="tag">ITER</span>
     <h2 id="itTitle"></h2>
-    <div class="sub" id="itBrief" style="font-size:11px;line-height:2.2;letter-spacing:.08em;color:#c8c8c2;margin-top:14px"></div>
+    <div class="sub" id="itBrief" style="font-size:11px;line-height:2.2;letter-spacing:.08em;color:#35342b;margin-top:14px"></div>
     <div style="display:flex;gap:14px;margin-top:26px">
       <span class="eBtn" id="itGo" style="margin-top:0;flex:1;text-align:center">PROFICISCI&nbsp;·&nbsp;确认前往&nbsp;⏎</span>
       <span class="eBtn" id="itNo" style="margin-top:0">取消</span>
@@ -2434,7 +2442,7 @@ html.lux #feWrap img{filter:none}
   <div class="box" style="max-width:480px">
     <span class="tag">INITIVM</span>
     <h2 id="opTitle"></h2>
-    <div class="sub" id="opBrief" style="font-size:11px;line-height:2.2;letter-spacing:.08em;color:#c8c8c2;margin-top:14px"></div>
+    <div class="sub" id="opBrief" style="font-size:11px;line-height:2.2;letter-spacing:.08em;color:#35342b;margin-top:14px"></div>
     <div style="display:flex;gap:14px;margin-top:26px">
       <span class="eBtn" id="opGo" style="margin-top:0;flex:1;text-align:center">INTRARE&nbsp;·&nbsp;进入&nbsp;⏎</span>
       <span class="eBtn" id="opNo" style="margin-top:0">返回</span>
@@ -2734,15 +2742,15 @@ function terrainPaint(g,W,H,t,travel,par,q){
       var hs=hash(c,Math.floor((z+zoff)*.01));
       if(hs>.986&&fade>.15){
         g.save();g.globalAlpha=.55*fade;
-        g.fillStyle=(hs>.9965)?'#c99b3f':'#d9d9d4';
+        g.fillStyle=(hs>.9965)?'#845800':'#25241d';
         g.fillRect(sx,sy-1.2,1.6,1.6);g.restore();
       }
     }
-    g.strokeStyle='rgba(156,156,152,'+alpha.toFixed(3)+')';
+    g.strokeStyle='rgba(95,92,83,'+alpha.toFixed(3)+')';
     g.lineWidth=1;
     g.stroke();
   }
-  g.strokeStyle='rgba(156,156,152,.07)';
+  g.strokeStyle='rgba(95,92,83,.07)';
   for(var c2=0;c2<=cols;c2+=6){
     g.beginPath();
     for(var r2=0;r2<rows;r2++){
@@ -2978,7 +2986,7 @@ function columnDraw(C,d){
   g.clearRect(0,0,W,H);
   /* ground: dashed survey ellipse + centre tick */
   var gy=cy+S*.52;
-  g.strokeStyle='rgba(217,217,212,.22)';g.lineWidth=1;
+  g.strokeStyle='rgba(37,36,29,.22)';g.lineWidth=1;
   g.setLineDash([3*DPR,5*DPR]);
   g.beginPath();g.ellipse(cx,gy,S*.19,S*.055,0,0,Math.PI*2);g.stroke();
   g.setLineDash([]);
@@ -3019,12 +3027,12 @@ function railDraw(){
   var W=rc.width,H=rc.height;
   rg.clearRect(0,0,W,H);
   var m=W*.09,span=W-2*m,y=H*.52;
-  rg.strokeStyle='rgba(217,217,212,.4)';rg.lineWidth=1;
+  rg.strokeStyle='rgba(37,36,29,.4)';rg.lineWidth=1;
   rg.beginPath();rg.moveTo(m,y);rg.lineTo(W-m,y);rg.stroke();
   var fine=N*6;
   for(var q=0;q<=fine;q++){
     var x=m+span*q/fine,major=q%6===0;
-    rg.strokeStyle=major?'rgba(217,217,212,.55)':'rgba(217,217,212,.16)';
+    rg.strokeStyle=major?'rgba(37,36,29,.55)':'rgba(37,36,29,.16)';
     rg.beginPath();rg.moveTo(x,y);rg.lineTo(x,y-(major?9:4)*DPR);rg.stroke();
   }
   rg.font=(9*DPR)+'px '+'ui-monospace,Menlo,monospace';
@@ -3032,16 +3040,16 @@ function railDraw(){
   for(var i=0;i<N;i++){
     var x2=m+span*i/(N-1);
     var cur=i===mod(Math.round(pos),N);
-    rg.fillStyle=cur?'rgba(236,200,120,.95)':'rgba(107,107,102,.9)';
+    rg.fillStyle=cur?'rgba(82,48,0,.95)':'rgba(141,138,125,.9)';
     rg.fillText(i===0?'✦':pad(i-1),x2,y+16*DPR);
   }
   var fp=mod(pos,N);var nx=m+span*Math.min(fp/(N-1),1);
   rg.beginPath();rg.arc(nx,y,11*DPR,0,Math.PI*2);
-  rg.fillStyle='rgba(6,6,6,.9)';rg.fill();
-  rg.strokeStyle='rgba(236,236,232,.9)';rg.stroke();
+  rg.fillStyle='rgba(237,231,217,.9)';rg.fill();
+  rg.strokeStyle='rgba(19,18,13,.9)';rg.stroke();
   rg.beginPath();rg.arc(nx,y,14.5*DPR,0,Math.PI*2);
-  rg.strokeStyle='rgba(201,155,63,.55)';rg.stroke();
-  rg.fillStyle='#ecece8';
+  rg.strokeStyle='rgba(132,88,0,.55)';rg.stroke();
+  rg.fillStyle='#13120d';
   var selR=mod(Math.round(pos),N);
   rg.fillText(selR===0?'✦':pad(selR-1),nx,y+3.5*DPR);
 }
@@ -3338,8 +3346,8 @@ function introText(){
   if(tw<2||th<2)return; /* 视口未就绪（宽 0）：getImageData 会炸掉整个脚本，跳过，resize 时自动重建 */
   var oc=document.createElement('canvas');oc.width=tw;oc.height=th;
   var og=oc.getContext('2d');
-  og.fillStyle='#000';og.fillRect(0,0,tw,th);
-  og.fillStyle='#fff';og.textBaseline='middle';
+  og.fillStyle='#f2ecde';og.fillRect(0,0,tw,th);
+  og.fillStyle='#000000';og.textBaseline='middle';
   var fs=th*.80;og.font='700 '+fs+'px KMT,"Segoe UI Historic","Noto Sans Egyptian Hieroglyphs",Georgia,serif';
   var chars=TITLE_CHARS,sp=fs*.24;
   var wdt=chars.map(function(c){return og.measureText(c).width;});
@@ -3406,12 +3414,12 @@ function introDraw(){
     var nearFade=clamp01((zrel-.3)/1.1);       /* soften rings sweeping past the camera */
     var A=(.03+.34*t*t)*nearFade;
     var vs=ringVs(k);
-    ig.strokeStyle='rgba(201,155,63,'+A.toFixed(3)+')';
+    ig.strokeStyle='rgba(132,88,0,'+A.toFixed(3)+')';
     ig.beginPath();
     for(var s2=0;s2<=TSEG;s2++){var v=vs[s2%TSEG];if(s2===0)ig.moveTo(v[0],v[1]);else ig.lineTo(v[0],v[1]);}
     ig.stroke();
     if(prevVs){                                /* triangulate tunnel wall to the ring behind */
-      ig.strokeStyle='rgba(201,155,63,'+(A*.6).toFixed(3)+')';
+      ig.strokeStyle='rgba(132,88,0,'+(A*.6).toFixed(3)+')';
       ig.beginPath();
       for(var s3=0;s3<TSEG;s3++){
         ig.moveTo(vs[s3][0],vs[s3][1]);ig.lineTo(prevVs[s3][0],prevVs[s3][1]);
@@ -3421,8 +3429,8 @@ function introDraw(){
     }
     for(var s4=0;s4<TSEG;s4++){
       if(hash(k,s4)>.80){
-        ig.fillStyle=(hash(k,s4)>.95)?'rgba(240,208,132,'+(A*1.6).toFixed(2)+')'
-                                     :'rgba(212,166,72,'+A.toFixed(2)+')';
+        ig.fillStyle=(hash(k,s4)>.95)?'rgba(72,42,0,'+(A*1.6).toFixed(2)+')'
+                                     :'rgba(122,78,0,'+A.toFixed(2)+')';
         ig.fillRect(vs[s4][0],vs[s4][1],1.6*DPR,1.6*DPR);
       }
     }
@@ -3568,8 +3576,8 @@ function menuText(){
   MSTEP=Math.max(3,Math.round(tw/200));
   var oc=document.createElement('canvas');oc.width=tw;oc.height=th;
   var og=oc.getContext('2d');
-  og.fillStyle='#000';og.fillRect(0,0,tw,th);
-  og.fillStyle='#fff';og.textBaseline='middle';
+  og.fillStyle='#f2ecde';og.fillRect(0,0,tw,th);
+  og.fillStyle='#000000';og.textBaseline='middle';
   if(!KMT_READY){menuScatter();return;}     /* 字体未就绪先不出字，就绪回调会重建 */
   var fs2=th*.80;og.font='700 '+fs2+'px KMT,"Segoe UI Historic","Noto Sans Egyptian Hieroglyphs",Georgia,serif';
   var chars=TITLE_CHARS,sp=fs2*.24;
@@ -3645,13 +3653,13 @@ function eraDraw(){
   var zs=Math.sqrt(ERA.zoom||1);                /* dots swell gently as you zoom in */
   mg.clearRect(0,0,mW,mH);
   var hg=mg.createRadialGradient(cx,cy,0,cx,cy,R*1.12);
-  hg.addColorStop(0,'rgba(255,148,38,0)');
-  hg.addColorStop(.86,'rgba(255,148,38,0)');
-  hg.addColorStop(.905,'rgba(255,148,38,.20)');
-  hg.addColorStop(1,'rgba(255,148,38,0)');
+  hg.addColorStop(0,'rgba(173,74,0,0)');
+  hg.addColorStop(.86,'rgba(173,74,0,0)');
+  hg.addColorStop(.905,'rgba(173,74,0,.20)');
+  hg.addColorStop(1,'rgba(173,74,0,0)');
   mg.fillStyle=hg;mg.beginPath();mg.arc(cx,cy,R*1.12,0,Math.PI*2);mg.fill();
   var RG=R*1.22;
-  mg.strokeStyle='rgba(201,155,63,.09)';mg.lineWidth=1;
+  mg.strokeStyle='rgba(132,88,0,.09)';mg.lineWidth=1;
   mg.beginPath();
   for(var ge=0;ge<GEO.length;ge++){
     var E=GEO[ge],q=[null,null],vis=true;
@@ -3712,10 +3720,10 @@ function eraDraw(){
   for(var vj=0;vj<vis.length;vj++){
     var V=vis[vj],st2=V.s,mx=V.x,my=V.y,pe=V.pe,hov=V.i===hovI;
     mg.globalAlpha=pe;
-    mg.fillStyle=hov?'rgba(255,222,150,1)':'rgba(240,208,132,.95)';
+    mg.fillStyle=hov?'rgba(59,28,0,1)':'rgba(72,42,0,.95)';
     var ms=(hov?4.6:3.4)*DPR*pe;
     mg.fillRect(mx-ms/2,my-ms/2,ms,ms);
-    mg.strokeStyle=hov?'rgba(255,208,104,.9)':'rgba(212,166,72,.55)';mg.lineWidth=1;
+    mg.strokeStyle=hov?'rgba(84,40,0,.9)':'rgba(122,78,0,.55)';mg.lineWidth=1;
     mg.beginPath();mg.arc(mx,my,(hov?12:9)*DPR*pe,0,Math.PI*2);mg.stroke();
     mg.font=(9.5*DPR)+'px ui-monospace,Menlo,monospace';
     var lw=mg.measureText(st2.n).width;
@@ -3729,9 +3737,9 @@ function eraDraw(){
       boxes.push(side?bxL:bxR);
       var tx=side?mx-14*DPR:mx+14*DPR;
       mg.textAlign=side?'right':'left';
-      mg.fillStyle=hov?'rgba(255,236,190,1)':'rgba(236,236,232,.88)';
+      mg.fillStyle=hov?'rgba(34,17,0,1)':'rgba(19,18,13,.88)';
       mg.fillText(st2.n,tx,my-1*DPR);
-      mg.fillStyle=hov?'rgba(255,208,104,.95)':'rgba(154,154,148,.8)';
+      mg.fillStyle=hov?'rgba(84,40,0,.95)':'rgba(97,95,83,.8)';
       mg.font=(8.5*DPR)+'px ui-monospace,Menlo,monospace';
       mg.fillText(st2.cn,tx,my+11*DPR);
       mg.textAlign='left';
@@ -3766,7 +3774,7 @@ function gbgDraw(){
   var now=performance.now(),el=now-GBG.t0;
   var S=mH*.80,cx=mW*.40,cy=mH*.47,i,p;
   var gl=mg.createRadialGradient(cx,cy,0,cx,cy,S*.60);
-  gl.addColorStop(0,'rgba(212,166,72,.09)');gl.addColorStop(1,'rgba(212,166,72,0)');
+  gl.addColorStop(0,'rgba(122,78,0,.09)');gl.addColorStop(1,'rgba(122,78,0,0)');
   mg.fillStyle=gl;mg.fillRect(cx-S*.65,cy-S*.62,S*1.3,S*1.24);
   /* no shatter: order swap is a GRAVITY re-forming — each particle is pulled
      along a curled free-fall path straight into its slot in the next order */
@@ -3798,15 +3806,15 @@ function gbgDraw(){
     var X=cx+px*S*per,Y=cy+(.52-y)*S*per;
     if(X<-30||X>mW+30||Y<-30||Y>mH+30)continue;
     var al=Math.min(.98,Math.max(.16,.24+(per-.93)*8)*1.4);
-    if(p.hi){mg.fillStyle='rgba(240,208,132,'+al.toFixed(2)+')';
+    if(p.hi){mg.fillStyle='rgba(72,42,0,'+al.toFixed(2)+')';
       var s1=4.2*per*DPR;mg.fillRect(X,Y,s1,s1);}
-    else{mg.fillStyle='rgba(212,166,72,'+(al*.85).toFixed(2)+')';
+    else{mg.fillStyle='rgba(122,78,0,'+(al*.85).toFixed(2)+')';
       var s2=3.2*per*DPR;mg.fillRect(X,Y,s2,s2);}
   }
   mg.globalCompositeOperation='source-over';
   var ca2=REDUCED?1:(GBG.phase===0?Math.min(1,el/900):1);
   if(ca2>0){
-    mg.fillStyle='rgba(212,166,72,'+(.55*ca2).toFixed(2)+')';
+    mg.fillStyle='rgba(122,78,0,'+(.55*ca2).toFixed(2)+')';
     mg.font=(9.5*DPR)+'px ui-monospace,Menlo,monospace';
     mg.textAlign='center';mg.textBaseline='alphabetic';
     mg.fillText('◆  '+COL_CYC[GBG.ord][1].split('').join(' ')+'  ◆',cx,cy+S*.575);
@@ -5871,7 +5879,7 @@ function lsTick(){
     var ca=Math.cos(rot),sa=Math.sin(rot);
     g.clearRect(0,0,W,H);
     var gy=cy+S*.50;
-    g.strokeStyle='rgba(217,217,212,.20)';g.lineWidth=1;
+    g.strokeStyle='rgba(37,36,29,.20)';g.lineWidth=1;
     g.setLineDash([3*dpr,5*dpr]);
     g.beginPath();g.ellipse(cx,gy,S*.50,S*.115,0,0,Math.PI*2);g.stroke();
     g.setLineDash([]);
@@ -5945,7 +5953,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=106;
+var BUILD=107;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -6183,6 +6191,19 @@ function gameExit(){
 /* 对局屏的地图：与择地那一步同一幅罗马马赛克世界图，同一套投影。
    原来挂的是半颗粒子地球（球心压在面板左缘、只露右半边），
    与择地那一屏风马牛不相及，玩家在两处看到的是两个世界。 */
+/* 地图底图要贴「预反色」那一份：这几张画布上的颜色全是按「隔着整页滤镜」
+   写的预反值，滤镜烘掉之后，真彩的 locus.png 直接贴上去会亮暗颠倒。
+   开局第一次用时经 ctx.filter 反一份存起来，后面一直用它。 */
+function gmMI(){
+  if(gmMI._c)return gmMI._c;
+  if(!(FE&&FE.mi&&FE.mi.width))return null;
+  var c=document.createElement('canvas');
+  c.width=FE.mi.width;c.height=FE.mi.height;
+  var g=c.getContext('2d');
+  g.filter='invert(1) hue-rotate(180deg)';
+  var im=FE.mi;g.drawImage(im,0,0);   /* 换个写法，免得底下那次批量替换把这一行也卷进去 */
+  gmMI._c=c;return c;
+}
 function gmMM(){try{return (FE&&FE.mm&&FE.mi&&FE.mi.width)?FE.mm:null;}catch(_){return null;}}
 function gmBox(){
   /* 镜头对着这一代的地点群，视野至少两百度——先认出是世界的哪一边，再看是哪一处。
@@ -6226,13 +6247,13 @@ function gmapDraw(){
   var B=gmBox();
   if(!B){                                   /* 图还没到：先空着，下一帧再说 */
     gmapDraw._sig='';                       /* 这一帧画的是占位，别把它记成已画好 */
-    gmc.fillStyle='rgba(236,236,232,.35)';
+    gmc.fillStyle='rgba(19,18,13,.35)';
     gmc.font=(11*DPR)+'px ui-monospace,Menlo,monospace';
     gmc.fillText('TABVLA…',14*DPR,20*DPR);
     return;
   }
   gmc.imageSmoothingEnabled=false;          /* 马赛克要的就是硬边 */
-  gmc.drawImage(FE.mi,B.L,B.T,B.bw,B.bh);
+  gmc.drawImage(gmMI()||FE.mi,B.L,B.T,B.bw,B.bh);
   gmc.textBaseline='middle';
   var A=ERA.act||[],vis=[],i,hovI=-1,hb=52;
   for(i=0;i<A.length;i++){
@@ -6253,19 +6274,19 @@ function gmapDraw(){
     var V=vis[vj],st=V.s,mx2=V.x,my2=V.y,hov=V.i===hovI;
     /* 底图是浅色的马赛克，点位得压得住：先一枚深底方砖，再一点金心 */
     var ms=(hov?9:7)*DPR;
-    gmc.fillStyle='rgba(24,18,10,.82)';
+    gmc.fillStyle='rgba(230,219,198,.82)';
     gmc.fillRect(mx2-ms/2,my2-ms/2,ms,ms);
-    gmc.fillStyle=hov?'rgba(255,222,150,1)':'rgba(240,208,132,.95)';
+    gmc.fillStyle=hov?'rgba(59,28,0,1)':'rgba(72,42,0,.95)';
     gmc.fillRect(mx2-ms/4,my2-ms/4,ms/2,ms/2);
     if(GAME.dest===st.n){
       /* 原来这一圈按时间搏动。搏动就意味着这张画布每帧都在变，
          上面那道「没变就不重画」的闸也就白设了。改成不动的双圈，一样认得出来。 */
-      gmc.strokeStyle='rgba(196,120,40,.95)';gmc.lineWidth=1.6*DPR;
+      gmc.strokeStyle='rgba(179,107,21,.95)';gmc.lineWidth=1.6*DPR;
       gmc.beginPath();gmc.arc(mx2,my2,12*DPR,0,Math.PI*2);gmc.stroke();
-      gmc.strokeStyle='rgba(196,120,40,.45)';gmc.lineWidth=1;
+      gmc.strokeStyle='rgba(179,107,21,.45)';gmc.lineWidth=1;
       gmc.beginPath();gmc.arc(mx2,my2,17*DPR,0,Math.PI*2);gmc.stroke();
     }else if(hov){
-      gmc.strokeStyle='rgba(196,120,40,.8)';gmc.lineWidth=1;
+      gmc.strokeStyle='rgba(179,107,21,.8)';gmc.lineWidth=1;
       gmc.beginPath();gmc.arc(mx2,my2,11*DPR,0,Math.PI*2);gmc.stroke();
     }
     gmc.font=(9*DPR)+'px ui-monospace,Menlo,monospace';
@@ -6281,15 +6302,15 @@ function gmapDraw(){
     if(bx){
       boxes.push(bx);
       if(off>1){                               /* 挪开了就拉一条细线回真正的那一点 */
-        gmc.strokeStyle='rgba(24,18,10,.5)';gmc.lineWidth=1;
+        gmc.strokeStyle='rgba(230,219,198,.5)';gmc.lineWidth=1;
         gmc.beginPath();gmc.moveTo(mx2+2*DPR,my2);gmc.lineTo(bx.x0,my2+off);gmc.stroke();
       }
       /* 浅底上写字要垫一层，不然金字压在金砖上读不出来 */
-      gmc.fillStyle='rgba(24,18,10,.78)';
+      gmc.fillStyle='rgba(230,219,198,.78)';
       gmc.fillRect(bx.x0,bx.y0,bx.x1-bx.x0,bx.y1-bx.y0);
-      gmc.fillStyle=hov?'rgba(255,236,190,1)':'rgba(240,234,220,.92)';
+      gmc.fillStyle=hov?'rgba(34,17,0,1)':'rgba(25,19,4,.92)';
       gmc.fillText(st.n,mx2+13*DPR,my2-1*DPR+off);
-      gmc.fillStyle=hov?'rgba(255,208,104,.95)':'rgba(206,198,178,.8)';
+      gmc.fillStyle=hov?'rgba(84,40,0,.95)':'rgba(61,53,30,.8)';
       gmc.font=(8*DPR)+'px ui-monospace,Menlo,monospace';
       gmc.fillText(st.cn,mx2+13*DPR,my2+10*DPR+off);
       shown[st.n]=1;
@@ -6857,7 +6878,7 @@ function invRender(){
       +'&nbsp;&nbsp;<i>'+dit.cat+(dit.slot?('&nbsp;/&nbsp;'+ARM_SLOTS[dit.slot][1]):'')+'</i></div>';
     var ds=armDesc(did);
     h+='<div class="ds">'+(ds?esc2(ds.slice(0,110))+(ds.length>110?'…':''):'（世界书中尚无此物条目）')+'</div>';
-    if(dit.use)h+='<div class="ds" style="color:var(--gold,#c9a34a)">效用&nbsp;·&nbsp;'
+    if(dit.use)h+='<div class="ds" style="color:var(--gold,#785300)">效用&nbsp;·&nbsp;'
       +esc2(dit.use.eff)+'</div>';
     if(dit.price!=null)h+='<div class="ds">市价&nbsp;·&nbsp;'+dit.price
       +'&nbsp;钱　　现钱&nbsp;·&nbsp;'+walletRead()+'&nbsp;钱</div>';
@@ -9024,7 +9045,7 @@ function bgmListRender(){
   var ls=$('#bgList');if(!ls||ls.children.length)return;
   BGM_LIST.forEach(function(x,i){
     var r=document.createElement('div');
-    r.style.cssText='padding:7px 12px;font-size:9.5px;letter-spacing:.1em;color:var(--mut);cursor:pointer;border-bottom:1px solid rgba(236,236,232,.07);display:flex;gap:10px';
+    r.style.cssText='padding:7px 12px;font-size:9.5px;letter-spacing:.1em;color:var(--mut);cursor:pointer;border-bottom:1px solid rgba(19,18,13,.07);display:flex;gap:10px';
     r.innerHTML='<span style="opacity:.5;width:20px;flex:none">'+String(i+1).padStart(2,'0')+'</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.t+'</span>';
     r.addEventListener('click',function(){bgmPlay(i);bgmUi();});
     ls.appendChild(r);
@@ -9136,20 +9157,20 @@ function applyGlass(){
   /* 这一层跟着 CSS 里那条改成暗角：平铺的黑会把山脉盖成灰纸。
      拉杆只调四角收多深，中间那 55% 一律不压。 */
   glassCss.textContent='#game::before{background:radial-gradient(ellipse 90% 80% at 50% 42%,'
-    +'transparent 55%,rgba(0,0,0,'+(.20+.42*a).toFixed(2)+') 100%) !important}'
-    +'#game .gMfd{background:rgba(8,8,8,'+(.06+.25*a).toFixed(2)+') !important}'
-    +'#game .gInput{background:linear-gradient(0deg,rgba(6,6,6,'+(.55+.4*a).toFixed(2)+') 0%,rgba(6,6,6,'+(.35+.35*a).toFixed(2)+') 42%,rgba(6,6,6,0) 76%) !important}'
+    +'transparent 55%,rgba(242,236,222,'+(.20+.42*a).toFixed(2)+') 100%) !important}'
+    +'#game .gMfd{background:rgba(235,229,215,'+(.06+.25*a).toFixed(2)+') !important}'
+    +'#game .gInput{background:linear-gradient(0deg,rgba(237,231,217,'+(.55+.4*a).toFixed(2)+') 0%,rgba(237,231,217,'+(.35+.35*a).toFixed(2)+') 42%,rgba(237,231,217,0) 76%) !important}'
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
-    +'.gPanel,#pnTx{background:rgba(6,6,6,'+(.04+.16*a).toFixed(2)+') !important}'
+    +'.gPanel,#pnTx{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
     /* 情报台那六扇单独一档更透的：它们背后只有一层细线框，底色跟左边三扇一样厚的话
        线全被压掉，看着就是六块不透的黑板。同一根拉杆，系数减半。 */
-    +'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.02+.08*a).toFixed(2)+') !important}'
+    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.02+.08*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
-    +'#game.txBig #pnTx{background:rgba(6,6,6,'+(.28+.18*a).toFixed(2)+') !important}'
+    +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
     +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,#game .gmMenu'
-    +'{background:rgba(6,6,6,'+(.09+.19*a).toFixed(2)+') !important}';
+    +'{background:rgba(237,231,217,'+(.09+.19*a).toFixed(2)+') !important}';
 }
 applyGlass();
 /* 帧时表：网址后面加 ?perf=1 就出现，平时一行代码都不跑。
@@ -9227,7 +9248,7 @@ if(/[?&]perf=1/.test(location.search))(function(){
   el.id='perfHud';
   el.style.cssText='position:fixed;left:8px;top:8px;z-index:2147483646;pointer-events:none;'
     +'font:11px/1.5 ui-monospace,Menlo,monospace;color:#0f0;background:rgba(0,0,0,.75);'
-    +'padding:5px 8px;white-space:pre;filter:invert(1) hue-rotate(180deg)';
+    +'padding:5px 8px;white-space:pre';
   document.body.appendChild(el);
   var last=performance.now(),acc=[],t0=last;
   (function tick(){
@@ -9266,7 +9287,7 @@ $('#cfgGlass').addEventListener('input',function(){SET.glass=+this.value;
 var formaCss=document.createElement('style');document.head.appendChild(formaCss);
 function applyForma(){
   if(SET.forma===1)formaCss.textContent='@media(max-width:760px){#game .gMain{left:64px;right:322px;bottom:0}#game .gMfd{display:block}.gRail{display:flex}.gNav{display:none}}';
-  else if(SET.forma===2)formaCss.textContent='#game .gMain{left:0;right:0;bottom:0}#game .gMfd{display:none;left:0;right:0;width:auto;bottom:0;padding-bottom:40px;border-left:0}.gRail{display:none}.gPanel{display:none;transform:none;transition:none;width:auto;left:0;right:0;opacity:1;pointer-events:auto;border:0;border-radius:0;box-shadow:none}.gNav{display:flex;position:absolute;left:50%;transform:translateX(-50%);bottom:5px;height:24px;z-index:40;border:1px solid rgba(236,236,232,.22);background:rgba(6,6,6,.72);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);touch-action:pan-x}.gNav span{display:flex;align-items:center;padding:0 15px;color:var(--mut);cursor:pointer}.gNav span b{display:none}.gNav span svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter;display:block}.gNav span.on{color:#0a0a0a;background:var(--gold)}#game[data-pg=map] #pnMap{display:block;transform:none;top:46px;bottom:auto;height:calc((100dvh - 80px)*.52);width:100%}#game[data-pg=map] #pnArm{display:block;transform:none;top:calc(46px + (100dvh - 80px)*.52);bottom:0;padding-bottom:40px;width:100%;border-top:1px solid rgba(236,236,232,.16);overflow-y:auto}#pnArm::before{content:\'\';position:absolute;left:0;right:0;top:0;height:62px;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(6,6,6,.92) 0%,rgba(6,6,6,.62) 46%,rgba(6,6,6,0) 100%);-webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);-webkit-mask-image:linear-gradient(180deg,#000 44%,transparent 100%);mask-image:linear-gradient(180deg,#000 44%,transparent 100%)}#game[data-pg=mfd] .gMfd{display:block;top:46px;bottom:0;padding-bottom:40px}#game[data-pg=shop] #pnShop{display:block;transform:none;top:46px;bottom:0;width:100%}#game[data-pg=shop] .shWrap{padding-bottom:44px}#game[data-pg=map] .gMain,#game[data-pg=mfd] .gMain,#game[data-pg=shop] .gMain{display:none}';
+  else if(SET.forma===2)formaCss.textContent='#game .gMain{left:0;right:0;bottom:0}#game .gMfd{display:none;left:0;right:0;width:auto;bottom:0;padding-bottom:40px;border-left:0}.gRail{display:none}.gPanel{display:none;transform:none;transition:none;width:auto;left:0;right:0;opacity:1;pointer-events:auto;border:0;border-radius:0;box-shadow:none}.gNav{display:flex;position:absolute;left:50%;transform:translateX(-50%);bottom:5px;height:24px;z-index:40;border:1px solid rgba(19,18,13,.22);background:rgba(237,231,217,.72);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);touch-action:pan-x}.gNav span{display:flex;align-items:center;padding:0 15px;color:var(--mut);cursor:pointer}.gNav span b{display:none}.gNav span svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter;display:block}.gNav span.on{color:#e9e3d6;background:var(--gold)}#game[data-pg=map] #pnMap{display:block;transform:none;top:46px;bottom:auto;height:calc((100dvh - 80px)*.52);width:100%}#game[data-pg=map] #pnArm{display:block;transform:none;top:calc(46px + (100dvh - 80px)*.52);bottom:0;padding-bottom:40px;width:100%;border-top:1px solid rgba(19,18,13,.16);overflow-y:auto}#pnArm::before{content:\'\';position:absolute;left:0;right:0;top:0;height:62px;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(237,231,217,.92) 0%,rgba(237,231,217,.62) 46%,rgba(237,231,217,0) 100%);-webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);-webkit-mask-image:linear-gradient(180deg,#f2ecde 44%,transparent 100%);mask-image:linear-gradient(180deg,#f2ecde 44%,transparent 100%)}#game[data-pg=mfd] .gMfd{display:block;top:46px;bottom:0;padding-bottom:40px}#game[data-pg=shop] #pnShop{display:block;transform:none;top:46px;bottom:0;width:100%}#game[data-pg=shop] .shWrap{padding-bottom:44px}#game[data-pg=map] .gMain,#game[data-pg=mfd] .gMain,#game[data-pg=shop] .gMain{display:none}';
   else formaCss.textContent='';
 }
 applyForma();setSeg('#sgForma',SET.forma);
@@ -9451,7 +9472,7 @@ function iloreRender(){
     var d=document.createElement('div');d.className='lRow'+(e.on===false?' off':'');
     d.innerHTML='<b>'+esc2(e.k||'（常驻）')+'</b><span style="flex:1">'+esc2(e.f)+'</span>'
       +'<span class="op" data-a="t">'+(e.on===false?'停':'启')+'</span>'
-      +'<span class="op" data-a="d" style="color:#c8402e">删</span>';
+      +'<span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){e.on=e.on===false;setStore();iloreRender();});
     d.querySelector('[data-a=d]').addEventListener('click',function(){SET.img.ilore.splice(i,1);setStore();iloreRender();});
     host.appendChild(d);
@@ -9669,7 +9690,7 @@ function insertImg(url,multi){
   p.style.display='inline-block';p.style.marginRight='8px';
   var us=String(url).replace(/"/g,'&quot;').replace(/</g,'%3C');
   p.innerHTML='<img src="'+us+'" style="max-width:'+(multi?'180px':DISPW[SET.img.disp])
-    +';border:1px solid rgba(201,155,63,.4)">';
+    +';border:1px solid rgba(132,88,0,.4)">';
   if(url.indexOf('data:')===0){
     var arr=imgsGet();arr.push({u:url,t:new Date().toLocaleString()});imgsPut(arr);
   }
@@ -9723,11 +9744,11 @@ function imgcRender(){
   arr.slice().reverse().forEach(function(o,ri){
     var i=arr.length-1-ri;
     var d=document.createElement('div');d.style.cssText='position:relative';
-    d.innerHTML='<img src="'+o.u+'" style="width:100%;display:block;border:1px solid rgba(236,236,232,.2);cursor:pointer">'
-      +'<span data-di="'+i+'" style="position:absolute;top:2px;right:4px;color:#c8402e;cursor:pointer">✕</span>';
+    d.innerHTML='<img src="'+o.u+'" style="width:100%;display:block;border:1px solid rgba(19,18,13,.2);cursor:pointer">'
+      +'<span data-di="'+i+'" style="position:absolute;top:2px;right:4px;color:#ff7f63;cursor:pointer">✕</span>';
     d.querySelector('img').addEventListener('click',function(){
       var ov=document.createElement('div');
-      ov.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;cursor:pointer';
+      ov.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(242,236,222,.92);display:flex;align-items:center;justify-content:center;cursor:pointer';
       ov.innerHTML='<img src="'+o.u+'" style="max-width:92vw;max-height:92vh">';
       ov.addEventListener('click',function(){ov.remove();});
       document.body.appendChild(ov);
@@ -9754,7 +9775,7 @@ function loreRender(){
     var d=document.createElement('div');d.className='lRow'+(e.on===false?' off':'');
     d.innerHTML='<b>'+esc2(e.title)+'</b><span>'+(e.constant?'常驻':esc2((e.keys||[]).join(',')))+'</span>'
       +'<span class="op" data-a="t">'+(e.on===false?'停用中':'启用中')+'</span>'
-      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#c8402e">删</span>';
+      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){
       e.on=e.on===false;arr[i]=e;loreCustomPut(arr);loreSync();loreRender();});
     d.querySelector('[data-a=e]').addEventListener('click',function(){
@@ -9867,7 +9888,7 @@ function rxRender(){
     var d=document.createElement('div');d.className='lRow'+(r.on===false?' off':'');
     d.innerHTML='<b>'+esc2(r.name||('#'+(i+1)))+'</b><span>'+(r.scope===1?'显示并发送':'仅显示')+'</span>'
       +'<span class="op" data-a="t">'+(r.on===false?'停用中':'启用中')+'</span>'
-      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#c8402e">删</span>';
+      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){r.on=r.on===false;setStore();rxRender();});
     d.querySelector('[data-a=e]').addEventListener('click',function(){
       RXEDIT=i;$('#rxForm').style.display='';
@@ -9956,7 +9977,7 @@ function jsRender(){
     var d=document.createElement('div');d.className='lRow'+(s.on===false?' off':'');
     d.innerHTML='<b>'+esc2(s.name)+'</b>'
       +'<span class="op" data-a="t">'+(s.on===false?'停用中':'启用中')+'</span>'
-      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#c8402e">删</span>';
+      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){s.on=s.on===false;setStore();jsRender();});
     d.querySelector('[data-a=e]').addEventListener('click',function(){
       JSEDIT=i;$('#jsForm').style.display='';$('#jsfName').value=s.name;$('#jsfTxt').value=s.code;});
@@ -10041,7 +10062,7 @@ function preRender(){
     var d=document.createElement('div');d.className='lRow'+(p.on===false?' off':'');
     d.innerHTML='<b>'+esc2(p.name||('#'+(i+1)))+'</b><span>'+(p.pos===1?'末位注入':'前置注入')+'</span>'
       +'<span class="op" data-a="t">'+(p.on===false?'停用中':'启用中')+'</span>'
-      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#c8402e">删</span>';
+      +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){p.on=p.on===false;setStore();preRender();});
     d.querySelector('[data-a=e]').addEventListener('click',function(){
       PREEDIT=i;$('#preForm').style.display='';
@@ -10118,7 +10139,7 @@ function memRender(){
     var d=document.createElement('div');d.className='lRow'+(m.on===false?' off':'');
     d.innerHTML='<b style="flex:1;white-space:normal">'+esc2(m.text.slice(0,60))+(m.text.length>60?'…':'')+'</b>'
       +'<span class="op" data-a="t">'+(m.on===false?'停':'启')+'</span>'
-      +'<span class="op" data-a="e">编</span><span class="op" data-a="d" style="color:#c8402e">删</span>';
+      +'<span class="op" data-a="e">编</span><span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){m.on=m.on===false;setStore();memRender();});
     d.querySelector('[data-a=e]').addEventListener('click',function(){
       MEMEDIT=i;$('#memForm').style.display='';$('#mfTxt').value=m.text;});
@@ -10194,7 +10215,7 @@ function cardRender(){
     var d=document.createElement('div');d.className='lRow'+(c.on===false?' off':'');
     d.innerHTML='<b>'+esc2(c.name)+'</b><span>'+c.n+'&nbsp;条设定</span>'
       +'<span class="op" data-a="t">'+(c.on===false?'停用中':'启用中')+'</span>'
-      +'<span class="op" data-a="d" style="color:#c8402e">移除</span>';
+      +'<span class="op" data-a="d" style="color:#ff7f63">移除</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){
       c.on=c.on===false;
       var arr=loreCustomGet();
@@ -11105,13 +11126,13 @@ function fdLampCol(o){ /* 状态灯色阶：高=绿 中=琥珀 低/敌意=红 �
   return fv>=70?'var(--t-g2)':fv>=40?'var(--t-a2)':'var(--t-r1)';
 }
 function fdFolderSvg(lamp,self){ /* 罗马名牌 TABVLA：方框+四角刻线+状态灯，本体=鎏金框 */
-  var st=self?'#ecc878':'#9c9c98';
+  var st=self?'#523000':'#5f5c53';
   return '<svg class="fd-fold" width="44" height="34" viewBox="0 0 44 34" aria-hidden="true">'
-    +'<rect x="4.5" y="5.5" width="35" height="23" fill="#0b0b0a" stroke="'+st+'" stroke-width="1"'+(self?'':' stroke-opacity=".75"')+'/>'
-    +'<path d="M1.5 9.5 V1.5 H9.5 M34.5 1.5 H42.5 V9.5 M42.5 24.5 V32.5 H34.5 M9.5 32.5 H1.5 V24.5" fill="none" stroke="'+(self?'#c99b3f':'#5a5a55')+'" stroke-width="1"/>'
+    +'<rect x="4.5" y="5.5" width="35" height="23" fill="#e8e2d4" stroke="'+st+'" stroke-width="1"'+(self?'':' stroke-opacity=".75"')+'/>'
+    +'<path d="M1.5 9.5 V1.5 H9.5 M34.5 1.5 H42.5 V9.5 M42.5 24.5 V32.5 H34.5 M9.5 32.5 H1.5 V24.5" fill="none" stroke="'+(self?'#845800':'#9e9a8c')+'" stroke-width="1"/>'
     +'<path d="M9 23.5 H'+(self?'30':'24')+'" fill="none" stroke="'+st+'" stroke-width="1" opacity=".4"/>'
     +(self
-      ?'<text x="9" y="17.5" font-size="'+'9'+'" fill="#ecc878" font-family="var(--mono)" letter-spacing="2">'+zjL().tag+'</text>'
+      ?'<text x="9" y="17.5" font-size="'+'9'+'" fill="#523000" font-family="var(--mono)" letter-spacing="2">'+zjL().tag+'</text>'
       :'<rect x="32" y="9" width="5" height="5" fill="'+lamp+'"/>')
     +'</svg>';
 }
@@ -11176,7 +11197,7 @@ function graphInner(){
     if(!hub[o.name])return;
     var cp=pos[o.name]||{x:cx,y:cy},pp=pos['__c'];
     var fv=Number(o.favor);if(!isFinite(fv))fv=50;
-    var col=fv>=70?'#ecc878':'#c99b3f';
+    var col=fv>=70?'#523000':'#845800';
     var sel=S.memNpc===o.name;
     hubLines+='<line data-a="__c" data-b="'+esc(o.name)+'" x1="'+pp.x.toFixed(1)+'" y1="'+pp.y.toFixed(1)+'" x2="'+cp.x.toFixed(1)+'" y2="'+cp.y.toFixed(1)+'" stroke="'+col+'" stroke-opacity="'+(sel?'.92':'.5')+'" stroke-width="'+(1+Math.min(2.4,o.n/3)).toFixed(1)+'"/>';
   });
@@ -11186,7 +11207,7 @@ function graphInner(){
     var a=pos[ab[0]],b=pos[ab[1]],cnt=pc[k];if(!a||!b)return;
     var w=Math.min(2,.6+cnt*.3);
     var seld=(S.memNpc===ab[0]||S.memNpc===ab[1]);
-    webLines+='<line data-a="'+esc(ab[0])+'" data-b="'+esc(ab[1])+'" x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="#9c9c98" stroke-opacity="'+(seld?'.8':'.4')+'" stroke-width="'+w.toFixed(1)+'"'+(cnt<2?' stroke-dasharray="5 4"':'')+'/>';
+    webLines+='<line data-a="'+esc(ab[0])+'" data-b="'+esc(ab[1])+'" x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="#5f5c53" stroke-opacity="'+(seld?'.8':'.4')+'" stroke-width="'+w.toFixed(1)+'"'+(cnt<2?' stroke-dasharray="5 4"':'')+'/>';
   });
   var lines=webLines+hubLines;
   var nodes=''; /* 节点=缩小版终端文件夹（44×34+状态灯）+姓名小字；物理层只动 g.transform */
@@ -11202,13 +11223,13 @@ function graphInner(){
   var center='<g data-gcenter="1" class="gph-n gph-c" data-x="'+cx+'" data-y="'+cy+'" transform="translate('+cx+','+cy+')" style="cursor:grab">'
     +'<g transform="translate(-33,-38) scale(1.4)" style="pointer-events:none">'+fdFolderSvg('',true)+'</g>'
     +'<rect x="-34" y="-39" width="68" height="78" fill="transparent"/>'
-    +'<text x="0" y="28" text-anchor="middle" font-size="13.5" style="fill:#ecc878;font-family:var(--mono);letter-spacing:.05em;pointer-events:none">本体│'+esc(zjSelf())+'</text></g>';
+    +'<text x="0" y="28" text-anchor="middle" font-size="13.5" style="fill:#523000;font-family:var(--mono);letter-spacing:.05em;pointer-events:none">本体│'+esc(zjSelf())+'</text></g>';
   var hid=(S.graphHidden||[]).length;
   var resetLine=hid?'<div style="text-align:right;margin-top:6px"><span class="btn" data-act="npcUnhide" style="cursor:pointer;font-size:12px;color:var(--mut)">已移除 '+hid+' 人 · 还原全部</span></div>':'';
-  return '<div class="gph-hint">人物图谱：常现之人系于本体、结成一张网——节点=人物名牌（状态灯示好感 <span style="color:#ecc878">金亲</span>·<span style="color:#c99b3f">褐平</span>·<span style="color:#c8402e">赤疏</span>），同幕共处者细线互连（虚线=仅一面之缘），孤身偶现者外环漂浮。名牌可拖拽、轻点开人物档案——手机双指、电脑 Ctrl+滚轮放大细看，拖背景平移。</div>'
+  return '<div class="gph-hint">人物图谱：常现之人系于本体、结成一张网——节点=人物名牌（状态灯示好感 <span style="color:#523000">金亲</span>·<span style="color:#845800">褐平</span>·<span style="color:#ff7f63">赤疏</span>），同幕共处者细线互连（虚线=仅一面之缘），孤身偶现者外环漂浮。名牌可拖拽、轻点开人物档案——手机双指、电脑 Ctrl+滚轮放大细看，拖背景平移。</div>'
     +'<div id="zjGraphWrap" style="position:relative;overflow:hidden">'
     +'<svg id="zjGraphSvg" data-bw="'+W+'" data-bh="'+H+'" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;touch-action:none">'+lines+center+nodes+'</svg>'
-    +'<span data-act="graphZoomReset" class="btn" style="position:absolute;right:8px;bottom:8px;font-size:11px;letter-spacing:.15em;color:var(--mut);background:rgba(6,6,6,.85);border:1px solid rgba(236,236,232,.25);padding:3px 10px;cursor:pointer">复位</span>'
+    +'<span data-act="graphZoomReset" class="btn" style="position:absolute;right:8px;bottom:8px;font-size:11px;letter-spacing:.15em;color:var(--mut);background:rgba(237,231,217,.85);border:1px solid rgba(19,18,13,.25);padding:3px 10px;cursor:pointer">复位</span>'
     +'</div>'+resetLine;
 }
 function gphMark(){ /* 选中态即时刷（fd窗开关/◀▶切换时调用，不整树重渲） */
@@ -11550,13 +11571,13 @@ function axisInner(){
   var lastE=null;
   var items=ms.map(function(m,i){
     var eraChip='';
-    if((m.e||'')&&m.e!==lastE){lastE=m.e;eraChip='<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px"><div style="flex:none;font-size:11.5px;color:var(--gold2);letter-spacing:.18em;border:1px solid rgba(201,155,63,.45);padding:3px 12px 2px;background:rgba(201,155,63,.08)">'+esc(m.e)+'</div><div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,155,63,.4),transparent)"></div></div>';}
+    if((m.e||'')&&m.e!==lastE){lastE=m.e;eraChip='<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px"><div style="flex:none;font-size:11.5px;color:var(--gold2);letter-spacing:.18em;border:1px solid rgba(132,88,0,.45);padding:3px 12px 2px;background:rgba(132,88,0,.08)">'+esc(m.e)+'</div><div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(132,88,0,.4),transparent)"></div></div>';}
     return eraChip+'<div style="position:relative;padding:0 0 16px 22px">'
-      +'<div style="position:absolute;left:4px;top:9px;bottom:-3px;width:1px;background:rgba(236,236,232,.14)"></div>'
-      +'<div style="position:absolute;left:1px;top:6px;width:7px;height:7px;background:'+(m.manual?'#ecece8':'var(--gold)')+'"></div>'
+      +'<div style="position:absolute;left:4px;top:9px;bottom:-3px;width:1px;background:rgba(19,18,13,.14)"></div>'
+      +'<div style="position:absolute;left:1px;top:6px;width:7px;height:7px;background:'+(m.manual?'#13120d':'var(--gold)')+'"></div>'
       +'<div style="font-size:10.5px;color:var(--mut);letter-spacing:.12em">第'+(i+1)+'笔'+(m.d?(' · '+esc(m.d)):'')+(m.manual?' · <span style="color:var(--gold2)">手记</span>':'')+'</div>'
-      +(m.a?'<div style="font-size:11.5px;color:#c9c9c3;margin-top:3px;letter-spacing:.06em">我：'+esc(m.a)+'</div>':'')
-      +(m.s?'<div style="font-size:12px;color:#d9d9d4;line-height:1.8;margin-top:3px;letter-spacing:.05em">'+esc(m.s)+'</div>':'')
+      +(m.a?'<div style="font-size:11.5px;color:#34332a;margin-top:3px;letter-spacing:.06em">我：'+esc(m.a)+'</div>':'')
+      +(m.s?'<div style="font-size:12px;color:#25241d;line-height:1.8;margin-top:3px;letter-spacing:.05em">'+esc(m.s)+'</div>':'')
       +'</div>';
   }).join('');
   return '<div style="max-height:420px;overflow-y:auto;padding:4px 2px 0">'+items+'</div>';
@@ -11566,25 +11587,25 @@ function memPaneInner(compact){
   var n=S.mem?S.mem.length:0;
   var chars=0;S.mem.forEach(function(m){chars+=(m.a||'').length+(m.s||'').length+(m.e||'').length;});
   var on=S.memOn!==false;
-  var min='width:100%;background:rgba(236,236,232,.03);border:1px solid rgba(236,236,232,.22);color:var(--ink);padding:7px 10px;font-size:12px;font-family:var(--mono)';
+  var min='width:100%;background:rgba(19,18,13,.03);border:1px solid rgba(19,18,13,.22);color:var(--ink);padding:7px 10px;font-size:12px;font-family:var(--mono)';
   /* 同上：记忆列表也只渲最近 60 笔 */
   var _mAll=S.mem||[],_MCAP=60,_mUse=_mAll.length>_MCAP?_mAll.slice(-_MCAP):_mAll;
   var rows=_mUse.slice().reverse().map(function(m,ri){
     var i=n-1-ri;
     if(S.memEdit===i){
-      return '<div style="border:1px solid rgba(201,155,63,.6);padding:11px 12px;margin-bottom:6px;background:rgba(236,236,232,.02)">'
+      return '<div style="border:1px solid rgba(132,88,0,.6);padding:11px 12px;margin-bottom:6px;background:rgba(19,18,13,.02)">'
         +'<div style="display:flex;gap:8px"><input id="zjMeE" value="'+esc(m.e||'')+'" placeholder="纪年" style="'+min+';flex:1"><input id="zjMeD" value="'+esc(m.d||'')+'" placeholder="时地" style="'+min+';flex:1"></div>'
         +'<input id="zjMeA" value="'+esc(m.a||'')+'" placeholder="我之举" style="'+min+';margin-top:7px">'
         +'<textarea id="zjMeS" placeholder="史笔" style="'+min+';margin-top:7px;min-height:64px;resize:vertical;font-family:inherit;line-height:1.6">'+esc(m.s||'')+'</textarea>'
         +'<div style="display:flex;gap:9px;margin-top:9px;justify-content:flex-end"><button data-act="memCancel" class="obtn btn" style="font-size:11.5px;letter-spacing:.15em;padding:6px 14px">取消</button><button data-act="memSave" class="gbtn btn" style="font-size:11.5px;letter-spacing:.18em;padding:6px 16px">保 存</button></div></div>';
     }
-    return '<div style="display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(236,236,232,.12);padding:9px 12px;margin-bottom:6px;background:rgba(236,236,232,.015)">'
+    return '<div style="display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(19,18,13,.12);padding:9px 12px;margin-bottom:6px;background:rgba(19,18,13,.015)">'
       +'<div style="flex:none;font-size:11px;color:var(--mut);min-width:26px;text-align:right;padding-top:2px">'+(i+1)+'</div>'
       +'<div style="flex:1;min-width:0"><div style="font-size:11.5px;color:var(--gold);letter-spacing:.08em">'+esc((m.e||'')+(m.d?('·'+m.d):''))+(m.manual?' · <span style="color:var(--gold2)">手记</span>':'')+'</div>'
-      +(m.a?'<div style="font-size:11.5px;color:#c9c9c3;margin-top:3px;letter-spacing:.06em">我：'+esc(m.a)+'</div>':'')
+      +(m.a?'<div style="font-size:11.5px;color:#34332a;margin-top:3px;letter-spacing:.06em">我：'+esc(m.a)+'</div>':'')
       +(m.s?'<div style="font-size:12px;color:var(--ink2);line-height:1.8;margin-top:3px;letter-spacing:.05em">'+esc(m.s)+'</div>':'')+'</div>'
-      +'<div class="btn" data-medit="'+(i+1)+'" style="flex:none;cursor:pointer;font-size:11px;color:var(--gold);border:1px solid rgba(201,155,63,.4);padding:2px 8px">编辑</div>'
-      +'<div class="btn" data-mdel="'+i+'" style="flex:none;cursor:pointer;font-size:11px;color:#c8402e;border:1px solid rgba(200,64,46,.4);padding:2px 8px">删</div></div>';
+      +'<div class="btn" data-medit="'+(i+1)+'" style="flex:none;cursor:pointer;font-size:11px;color:var(--gold);border:1px solid rgba(132,88,0,.4);padding:2px 8px">编辑</div>'
+      +'<div class="btn" data-mdel="'+i+'" style="flex:none;cursor:pointer;font-size:11px;color:#ff7f63;border:1px solid rgba(255,127,99,.4);padding:2px 8px">删</div></div>';
   }).join('');
   if(!rows)rows='<div style="text-align:center;padding:30px 0;font-size:11.5px;letter-spacing:.25em;color:var(--mut)">长卷尚空 · 行过一轮自动记一笔</div>';
   var intro=compact
@@ -11592,11 +11613,11 @@ function memPaneInner(compact){
     :'<div style="font-size:11px;line-height:1.9;color:var(--ink2)">长程记忆替你记性好：<b style="color:var(--gold2)">每一轮</b>的纪年、时地、我之举与史笔都会自动摘成一条纪要，<b style="color:var(--gold2)">永久保存并每轮全文送呈 AI</b>——即使你的模型上下文很短、正文历史被截断，它也始终知道这一局发生过什么。</div>';
   return intro
     +'<div style="display:flex;gap:12px;align-items:center;margin:16px 0;flex-wrap:wrap">'
-    +'<div class="btn" data-act="memToggle" style="cursor:pointer;padding:7px 14px;font-size:11.5px;letter-spacing:.18em;border:1px solid '+(on?'rgba(201,155,63,.55)':'rgba(236,236,232,.2)')+';color:'+(on?'var(--gold2)':'var(--mut)')+'">'+(on?'✓ 注入中':'已停用')+'</div>'
+    +'<div class="btn" data-act="memToggle" style="cursor:pointer;padding:7px 14px;font-size:11.5px;letter-spacing:.18em;border:1px solid '+(on?'rgba(132,88,0,.55)':'rgba(19,18,13,.2)')+';color:'+(on?'var(--gold2)':'var(--mut)')+'">'+(on?'✓ 注入中':'已停用')+'</div>'
     +'<div style="font-size:11px;letter-spacing:.08em;color:var(--mut)">'+n+' 条 · 约'+chars+'字'+(chars>7000?'（超长部分自动中略，首尾保留）':'')+'</div>'
-    +'<div class="btn" data-act="memExport" style="cursor:pointer;margin-left:auto;font-size:11.5px;letter-spacing:.15em;color:var(--gold2);border:1px solid rgba(201,155,63,.4);padding:6px 12px">导出长卷</div>'
-    +'<div class="btn" data-act="memClear" style="cursor:pointer;font-size:11.5px;letter-spacing:.15em;color:#c8402e;border:1px solid rgba(200,64,46,.4);padding:6px 12px">清空长卷</div></div>'
-    +'<div style="display:flex;gap:8px;margin-bottom:14px"><input id="zjMemAdd" placeholder="手记一笔（重要设定/约定/伏笔，AI 会永远记住）…" style="flex:1;background:rgba(236,236,232,.03);border:1px solid rgba(236,236,232,.2);color:#ecece8;font-size:12px;padding:9px 12px;font-family:var(--mono)" autocomplete="off"><button data-act="memAdd" class="obtn btn" style="flex:none;font-size:11.5px;letter-spacing:.2em;padding:0 16px">记 入</button></div>'
+    +'<div class="btn" data-act="memExport" style="cursor:pointer;margin-left:auto;font-size:11.5px;letter-spacing:.15em;color:var(--gold2);border:1px solid rgba(132,88,0,.4);padding:6px 12px">导出长卷</div>'
+    +'<div class="btn" data-act="memClear" style="cursor:pointer;font-size:11.5px;letter-spacing:.15em;color:#ff7f63;border:1px solid rgba(255,127,99,.4);padding:6px 12px">清空长卷</div></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:14px"><input id="zjMemAdd" placeholder="手记一笔（重要设定/约定/伏笔，AI 会永远记住）…" style="flex:1;background:rgba(19,18,13,.03);border:1px solid rgba(19,18,13,.2);color:#13120d;font-size:12px;padding:9px 12px;font-family:var(--mono)" autocomplete="off"><button data-act="memAdd" class="obtn btn" style="flex:none;font-size:11.5px;letter-spacing:.2em;padding:0 16px">记 入</button></div>'
     +(compact?'<div style="max-height:340px;overflow-y:auto">'+rows+'</div>':rows);
 }
 /* 折叠节头（Ghost 侧栏 head() 同款） */
@@ -12176,7 +12197,7 @@ var MODCITY=(function(){
       LB.push({x:p[0],y:p[1],n:q.n,poi:1,wx:q.x,wz:q.z});
       if(q.rk>=2||cam.dist<5000){
         g.font=(10.5*dpr)+'px ui-monospace,Menlo,monospace';
-        g.fillStyle='rgba(236,200,120,.92)';
+        g.fillStyle='rgba(82,48,0,.92)';
         g.fillText('◇ '+q.n,p[0]+6*dpr,p[1]);}}
     M.d1=LB.length;
     if(cam.dist<2600){
@@ -12187,7 +12208,7 @@ var MODCITY=(function(){
         best.push({x:p[0],y:p[1],n:s2.n,d:p[2],wx:s2.x,wz:s2.z});}
       best.sort(function(a,b){return a.d-b.d;});
       g.font=(9.5*dpr)+'px ui-monospace,Menlo,monospace';
-      g.fillStyle='rgba(226,120,80,.78)';
+      g.fillStyle='rgba(189,90,43,.78)';
       for(i=0;i<Math.min(22,best.length);i++){var b3=best[i];
         g.fillText('· '+b3.n,b3.x+5*dpr,b3.y);
         LB.push({x:b3.x,y:b3.y,n:b3.n,poi:0,wx:b3.wx,wz:b3.wz});}}
@@ -12197,19 +12218,19 @@ var MODCITY=(function(){
       var pt=project(vp,M.here.x,210,M.here.z,W,Hh);
       if(p&&pt){
         var grd=g.createLinearGradient(p[0],p[1],pt[0],pt[1]);
-        grd.addColorStop(0,'rgba(240,204,120,.95)');grd.addColorStop(1,'rgba(240,204,120,0)');
+        grd.addColorStop(0,'rgba(79,45,0,.95)');grd.addColorStop(1,'rgba(79,45,0,0)');
         g.strokeStyle=grd;g.lineWidth=2.2*dpr;
         g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(pt[0],pt[1]);g.stroke();
         var rp=((now*.0009)%1);
-        g.strokeStyle='rgba(240,204,120,'+(0.55*(1-rp)).toFixed(2)+')';g.lineWidth=1.4*dpr;
+        g.strokeStyle='rgba(79,45,0,'+(0.55*(1-rp)).toFixed(2)+')';g.lineWidth=1.4*dpr;
         g.beginPath();g.ellipse(p[0],p[1],rp*46*dpr,rp*17*dpr,0,0,Math.PI*2);g.stroke();
         g.font=(10.5*dpr)+'px ui-monospace,Menlo,monospace';
-        g.fillStyle='rgba(240,204,120,.95)';
+        g.fillStyle='rgba(79,45,0,.95)';
         g.fillText('▾ '+(M.here.n||''),pt[0]+5*dpr,pt[1]+8*dpr);}}
     M.d3=1;
     M.labels=LB;
     g.font=(10*dpr)+'px ui-monospace,Menlo,monospace';
-    g.fillStyle='rgba(180,180,172,.66)';
+    g.fillStyle='rgba(72,71,59,.66)';
     g.fillText({tokyo:'东京',nyc:'纽约',osaka:'大阪'}[M.cur]+' · 粒子沙盘  —  拖拽环视 / 滚轮缩放 / 点击地名前往',10*dpr,14*dpr);
     M.raf=requestAnimationFrame(tick);}
   function hit(px,py,dpr){
@@ -12294,7 +12315,7 @@ var MODCITY=(function(){
     }).catch(function(err){
       try{var ov=document.getElementById('mcOv'),g=ov.getContext('2d');
         ov.width=ov.clientWidth||300;ov.height=ov.clientHeight||150;
-        g.font='11px ui-monospace,monospace';g.fillStyle='rgba(200,120,90,.9)';
+        g.font='11px ui-monospace,monospace';g.fillStyle='rgba(174,99,62,.9)';
         g.fillText('粒子沙盘资材加载失败：'+String(err&&err.message||err),10,20);}catch(_){}
     });}
   function hide(){if(M.vis){M.vis=false;cancelAnimationFrame(M.raf);}}
@@ -12412,14 +12433,14 @@ MODCITY.setTravel(function(name,isPoi,wx,wz){
       :('「'+name+'」——'+cityCN+'轨道网的一站。站口的人流与店招，是这座城最诚实的切面。'));
     var d=document.createElement('div');d.id='mcDlg';
     d.style.cssText='position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:30;'
-      +'max-width:min(520px,92%);background:rgba(6,6,6,.93);border:1px solid rgba(201,155,63,.55);'
+      +'max-width:min(520px,92%);background:rgba(237,231,217,.93);border:1px solid rgba(132,88,0,.55);'
       +'padding:12px 16px 10px;font-family:var(--mono);backdrop-filter:blur(4px)';
     d.innerHTML='<div style="font-size:12.5px;letter-spacing:.22em;color:var(--gold-hi)">'
       +(isPoi?'◇ ':'· ')+cityCN+' · '+name+'</div>'
-      +'<div style="font-size:11.5px;line-height:1.85;color:#c9c9c3;margin-top:7px;letter-spacing:.05em">'+intro+'</div>'
+      +'<div style="font-size:11.5px;line-height:1.85;color:#34332a;margin-top:7px;letter-spacing:.05em">'+intro+'</div>'
       +'<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">'
-      +'<span id="mcDlgNo" class="btn" style="cursor:pointer;font-size:11px;letter-spacing:.2em;color:var(--mut);border:1px solid rgba(236,236,232,.25);padding:5px 12px">返 回</span>'
-      +'<span id="mcDlgGo" class="btn" style="cursor:pointer;font-size:11px;letter-spacing:.24em;color:#0a0a0a;background:var(--gold);padding:5px 14px">移 动 ⏎</span></div>';
+      +'<span id="mcDlgNo" class="btn" style="cursor:pointer;font-size:11px;letter-spacing:.2em;color:var(--mut);border:1px solid rgba(19,18,13,.25);padding:5px 12px">返 回</span>'
+      +'<span id="mcDlgGo" class="btn" style="cursor:pointer;font-size:11px;letter-spacing:.24em;color:#e9e3d6;background:var(--gold);padding:5px 14px">移 动 ⏎</span></div>';
     host.appendChild(d);
     d.querySelector('#mcDlgNo').addEventListener('pointerup',function(ev){ev.stopPropagation();d.remove();});
     d.querySelector('#mcDlgGo').addEventListener('pointerup',function(ev){
@@ -13039,11 +13060,11 @@ function svDiscMake(){
     var rr=R*(.30+ri/20*.70),n=Math.max(6,Math.round(rr/(2.8*DPR)));
     for(var k=0;k<n;k++){
       var aa=k/n*Math.PI*2+ri*.21,d=(1-ri/20)*.55+.16;
-      g.fillStyle='rgba(216,216,212,'+(d*(.25+svRnd(ri*97+k,11)*.5)).toFixed(3)+')';
+      g.fillStyle='rgba(38,37,31,'+(d*(.25+svRnd(ri*97+k,11)*.5)).toFixed(3)+')';
       g.fillRect(cx+Math.cos(aa)*rr,cy+Math.sin(aa)*rr,1.5*DPR,1.5*DPR);
     }
   }
-  g.strokeStyle='rgba(236,236,232,.16)';g.lineWidth=DPR;
+  g.strokeStyle='rgba(19,18,13,.16)';g.lineWidth=DPR;
   g.beginPath();g.arc(cx,cy,R*.42,0,Math.PI*2);g.stroke();
   SVDISC=c;
 }
@@ -13079,7 +13100,7 @@ function svFx(t){
     var r1=L.r1*DIAG;
     var ca=Math.cos(aa),sa=Math.sin(aa);
     /* 底线：全长连续、恒在（不断线） */
-    g.strokeStyle='rgba(236,236,232,'+(L.al*sh*.72).toFixed(3)+')';
+    g.strokeStyle='rgba(19,18,13,'+(L.al*sh*.72).toFixed(3)+')';
     g.lineWidth=L.w*DPR*.8;
     g.beginPath();g.moveTo(cx+ca*r0,cy+sa*r0);g.lineTo(cx+ca*r1,cy+sa*r1);g.stroke();
     /* 高光：沿同一条线由内向外加速奔行＝穿梭动感（叠加在底线上，底线不受影响） */
@@ -13088,14 +13109,14 @@ function svFx(t){
     if(h1>r1)h1=r1;
     var hf=Math.sin(Math.PI*hp);                    /* 正弦包络：进出皆平滑，无突现突灭 */
     if(hf>.02){
-      g.strokeStyle='rgba(244,244,240,'+(L.al*.80*hf).toFixed(3)+')';
+      g.strokeStyle='rgba(11,11,6,'+(L.al*.80*hf).toFixed(3)+')';
       g.lineWidth=L.w*DPR*1.0;
       g.beginPath();g.moveTo(cx+ca*h0,cy+sa*h0);g.lineTo(cx+ca*h1,cy+sa*h1);g.stroke();
     }
   }
   for(var q=0;q<SVLS.length;q++){
     var S=SVLS[q],x=((S.x+t*S.sp)%1-.05)*W,y=S.y*H,ln=S.len*W;
-    g.strokeStyle='rgba(236,236,232,'+S.al.toFixed(3)+')';g.lineWidth=DPR*.8;
+    g.strokeStyle='rgba(19,18,13,'+S.al.toFixed(3)+')';g.lineWidth=DPR*.8;
     g.beginPath();g.moveTo(x,y);g.lineTo(x+ln,y);
     g.moveTo(x-W,y);g.lineTo(x-W+ln,y);      /* 环绕副本：卷回不闪断 */
     g.stroke();
@@ -13806,7 +13827,7 @@ function mvShell(C,w,h,R,P,a,curve){
     C.k=k0;
     var x0=.5,x1=w-.5,t0=.5,t1=h-.5,bb=7;
     C.p1.setAttribute('d','M'+x0+' '+t0+'H'+x1.toFixed(1)+'V'+t1.toFixed(1)+'H'+x0+'Z');
-    C.p1.setAttribute('stroke','rgba(236,236,232,.5)');C.p1.setAttribute('stroke-width','1');
+    C.p1.setAttribute('stroke','rgba(19,18,13,.5)');C.p1.setAttribute('stroke-width','1');
     C.p2.setAttribute('d','M'+x0+' '+(t0+bb)+'V'+t0+'H'+(x0+bb)
       +'M'+(x1-bb).toFixed(1)+' '+t0+'H'+x1.toFixed(1)+'V'+(t0+bb)
       +'M'+x1.toFixed(1)+' '+(t1-bb).toFixed(1)+'V'+t1.toFixed(1)+'H'+(x1-bb).toFixed(1)
@@ -13840,7 +13861,7 @@ function mvShell(C,w,h,R,P,a,curve){
        +'H'+(cx-hw1).toFixed(1)
        +'Q'+(cx-qx).toFixed(1)+' '+ym.toFixed(1)+' '+(cx-hw1).toFixed(1)+' '+y0.toFixed(1)+'Z';
   C.p1.setAttribute('d',d);
-  C.p1.setAttribute('stroke','rgba(236,236,232,.5)');
+  C.p1.setAttribute('stroke','rgba(19,18,13,.5)');
   C.p1.setAttribute('stroke-width','1');
   /* 四角括号：跟着弧走，钉在轮廓的四个角上 */
   var b=7;
@@ -13926,7 +13947,7 @@ function mvDeck(){
       C.el.style.transform='translate(-50%,-50%) translate('+thumbX.toFixed(1)+'px,'+y.toFixed(1)+'px)'
         +(pop?' translateX(-7px) translateZ(22px) rotateY(0deg)':' rotateY(-17deg)');
       C.el.classList.toggle('on',on);
-      C.fr.style.filter=pop?'none':'brightness(.86)';
+      C.fr.style.filter=pop?'none':'contrast(.77) brightness(1.116)';
       if(C.win)C.win.classList.toggle('on',on);
     }
     /* 微缩按整窗宽度排版，再整体缩到缩略窗那么大——这样它和真窗是同一份版式。 */
@@ -13984,7 +14005,7 @@ function mvLayout(){
     var th=(C.h||1)/R, lum=[], q;
     for(q=0;q<=4;q++){
       var dl=(q/4-.5)*th*180/Math.PI;
-      lum.push('rgba(0,0,0,'+(0.94*(1-Math.pow(clamp01(Math.cos((a+dl)*Math.PI/180)),.9))).toFixed(3)+') '+(q*25)+'%');
+      lum.push('rgba(242,236,222,'+(0.94*(1-Math.pow(clamp01(Math.cos((a+dl)*Math.PI/180)),.9))).toFixed(3)+') '+(q*25)+'%');
     }
     C.fr.style.filter='brightness('+(.46+.54*Math.pow(clamp01(c),.7)).toFixed(3)+')';
     C.shade.style.background='linear-gradient(to bottom,'+lum.join(',')+')';
@@ -14010,19 +14031,19 @@ function mvRailDraw(){
   g.clearRect(0,0,W,H);
   var m=H*.08,span=H-2*m,x=W*.5;
   g.lineWidth=1;
-  g.strokeStyle='rgba(217,217,212,.42)';
+  g.strokeStyle='rgba(37,36,29,.42)';
   g.beginPath();g.moveTo(x,m);g.lineTo(x,H-m);g.stroke();
   var sel=mvWrap(Math.round(MV.pos));
   for(var i=0;i<MV.n;i++){
     var y=m+span*(MV.n>1?i/(MV.n-1):.5),cur=(i===sel);
-    g.strokeStyle=cur?'rgba(236,200,120,.95)':'rgba(217,217,212,.40)';
+    g.strokeStyle=cur?'rgba(82,48,0,.95)':'rgba(37,36,29,.40)';
     g.beginPath();g.moveTo(x-(cur?5:3)*d,y);g.lineTo(x+(cur?5:3)*d,y);g.stroke();
   }
   var f=MV.n>1?Math.max(0,Math.min(1,mvWrap(MV.pos)/(MV.n-1))):.5;
   var fy=m+span*f;
   g.beginPath();g.arc(x,fy,4.2*d,0,Math.PI*2);
-  g.fillStyle='rgba(6,6,6,.9)';g.fill();
-  g.strokeStyle='rgba(236,236,232,.9)';g.stroke();
+  g.fillStyle='rgba(237,231,217,.9)';g.fill();
+  g.strokeStyle='rgba(19,18,13,.9)';g.stroke();
 }
 function mvBgDraw(now){
   if(!MV.bgx)return;
@@ -14215,11 +14236,11 @@ function railMapThumb(){
   var sc=Math.min(W/mm.w,H/mm.h),bw=mm.w*sc,bh=mm.h*sc;
   var L=(W-bw)/2,T=(H-bh)/2;
   g.imageSmoothingEnabled=false;
-  g.drawImage(FE.mi,L,T,bw,bh);
+  g.drawImage(gmMI()||FE.mi,L,T,bw,bh);
   var A=ERA.act||[];
   for(var i=0;i<A.length;i++){
     var x=L+((A[i].lo0+180)/360)*bw,y=T+((mm.laTop-A[i].la)/(mm.laTop-mm.laBot))*bh;
-    g.fillStyle=(GAME.dest===A[i].n)?'rgba(226,110,40,.95)':'rgba(24,18,10,.8)';
+    g.fillStyle=(GAME.dest===A[i].n)?'rgba(208,100,23,.95)':'rgba(230,219,198,.8)';
     g.fillRect(x-1.5,y-1.5,3,3);
   }
 }
@@ -14255,14 +14276,14 @@ function rail3dThumb(){
   /* 示意：一条地平线 + 几道退远的横线，与选局那张山脉底同一种笔触 */
   g.clearRect(0,0,W,H);
   var hor=H*.52,r;
-  g.strokeStyle='rgba(156,156,152,.34)';g.lineWidth=1;
+  g.strokeStyle='rgba(95,92,83,.34)';g.lineWidth=1;
   g.beginPath();g.moveTo(0,hor);g.lineTo(W,hor);g.stroke();
   for(r=1;r<=5;r++){
     var y=hor+Math.pow(r/5,1.7)*(H-hor-2);
-    g.strokeStyle='rgba(156,156,152,'+(.26-r*.04).toFixed(2)+')';
+    g.strokeStyle='rgba(95,92,83,'+(.26-r*.04).toFixed(2)+')';
     g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();
   }
-  g.fillStyle='rgba(201,155,63,.55)';
+  g.fillStyle='rgba(132,88,0,.55)';
   g.fillRect(W*.34,hor-9,2,9);g.fillRect(W*.46,hor-14,2,14);g.fillRect(W*.60,hor-7,2,7);
 }
 function railSync(){

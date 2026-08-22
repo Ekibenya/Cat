@@ -25,4 +25,5 @@ python3 tools/felinia/build.py
 python3 tools/felinia/thumbs.py
 python3 tools/felinia/cardmeta.py
 python3 tools/cardbuild.py
+python3 tools/felinia/bake.py
 echo '重打完成。'
