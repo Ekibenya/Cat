@@ -379,6 +379,10 @@ canvas{display:block}
    整站一次反色＋色相回正（黑金 → 白金），三维画面与图片再反一次保持原貌。
    全卡内联颜色数以百计，逐处重配不现实；这条滤镜路是黑白模式的标准做法。
    html 高度即视口（overflow hidden），filter 形成的包含块不影响 fixed 布局。 */
+/* GLASSOFF · 毛玻璃总闸。二十处 blur() 隔着整页滤镜去取背景，
+   视网膜屏上一次面板开合就是五百万像素乘二十次模糊。整批撤掉。
+   删掉这一条就全部回来。 */
+*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}
 html.lux #zjScene3D canvas,html.lux #mdScene3D canvas,html.lux img{filter:invert(1) hue-rotate(180deg)}
 /* 反色出来的近纯白太刺眼：正片叠底罩一层暖纸色，白压成米黄羊皮纸面，
@@ -5936,7 +5940,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=100;
+var BUILD=101;
 /* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
    在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
    球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
@@ -9123,26 +9127,55 @@ function setStore(){lsSet('rome_set',JSON.stringify(SET))}
 /* —— 显示：透明度 / 版式 / 字体 —— */
 var glassCss=document.createElement('style');document.head.appendChild(glassCss);
 function applyGlass(){
+  /* 毛玻璃撤了（见 GLASSOFF）。原来那几档底色是配着模糊定的：
+     模糊本身就把身后糊成一片，薄薄一层底色就够压住。现在身后是清晰的正文，
+     同样的薄度会透字，所以每一档的起点都往上抬一截。拉杆照旧管用。 */
   var a=SET.glass/100;
   /* 这一层跟着 CSS 里那条改成暗角：平铺的黑会把山脉盖成灰纸。
      拉杆只调四角收多深，中间那 55% 一律不压。 */
   glassCss.textContent='#game::before{background:radial-gradient(ellipse 90% 80% at 50% 42%,'
     +'transparent 55%,rgba(0,0,0,'+(.20+.42*a).toFixed(2)+') 100%) !important}'
-    +'#game .gMfd{background:rgba(8,8,8,'+(.06+.25*a).toFixed(2)+') !important}'
+    +'#game .gMfd{background:rgba(8,8,8,'+(.10+.25*a).toFixed(2)+') !important}'
     +'#game .gInput{background:linear-gradient(0deg,rgba(6,6,6,'+(.55+.4*a).toFixed(2)+') 0%,rgba(6,6,6,'+(.35+.35*a).toFixed(2)+') 42%,rgba(6,6,6,0) 76%) !important}'
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
-    +'.gPanel,#pnTx{background:rgba(6,6,6,'+(.04+.16*a).toFixed(2)+') !important}'
+    +'.gPanel,#pnTx{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}'
     /* 情报台那六扇单独一档更透的：它们背后只有一层细线框，底色跟左边三扇一样厚的话
        线全被压掉，看着就是六块不透的黑板。同一根拉杆，系数减半。 */
-    +'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.02+.08*a).toFixed(2)+') !important}'
+    +'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.06+.08*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(6,6,6,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
     +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,#game .gmMenu'
-    +'{background:rgba(6,6,6,'+(.09+.19*a).toFixed(2)+') !important}';
+    +'{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}';
 }
 applyGlass();
+/* 帧时表：网址后面加 ?perf=1 就出现，平时一行代码都不跑。
+   报三个数：帧率、最近半秒里最长的一帧、超过 50 毫秒的帧数。
+   卡不卡看的是后两个——平均帧率好看而偶尔一帧两百毫秒，手上就是一顿一顿的。 */
+if(/[?&]perf=1/.test(location.search))(function(){
+  var el=document.createElement('div');
+  el.id='perfHud';
+  el.style.cssText='position:fixed;left:8px;top:8px;z-index:2147483646;pointer-events:none;'
+    +'font:11px/1.5 ui-monospace,Menlo,monospace;color:#0f0;background:rgba(0,0,0,.75);'
+    +'padding:5px 8px;white-space:pre;filter:invert(1) hue-rotate(180deg)';
+  document.body.appendChild(el);
+  var last=performance.now(),acc=[],t0=last;
+  (function tick(){
+    var t=performance.now();acc.push(t-last);last=t;
+    if(t-t0>=500){
+      var n=acc.length,sum=0,worst=0,over=0,i;
+      for(i=0;i<n;i++){sum+=acc[i];if(acc[i]>worst)worst=acc[i];if(acc[i]>50)over++;}
+      var scr='菜单';
+      try{scr=GAME.on?'对局屏':(ES.on?'纪年页':((typeof feIsOpen==='function'&&feIsOpen())?'铸局':'菜单'));}catch(_){}
+      el.textContent=[scr+'  '+(1000/(sum/n)).toFixed(0)+' fps',
+                      '最长一帧 '+worst.toFixed(0)+' ms',
+                      '>50ms  '+over+' 帧/半秒'].join(String.fromCharCode(10));
+      acc=[];t0=t;
+    }
+    requestAnimationFrame(tick);
+  })();
+})();
 /* 拉条走过的那一段是用背景渐变画的，分界点存在 --rv 里；这里统一喂值。
    捕获期监听盖住全站所有 range（含三维营造台里现搭的那几条），
    再定期补一遍——有些条的值是程序改的，不经过 input 事件。 */

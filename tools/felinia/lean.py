@@ -450,9 +450,79 @@ def main():
     sub('图版异步解码', '''      b.innerHTML='<img alt="">';''',
         '''      b.innerHTML='<img alt="" decoding="async">';''')
 
+    # ⑰ 毛玻璃整批撤掉
+    #    全站二十处 backdrop-filter: blur()。毛玻璃要先把身后那一片按原样取一份、
+    #    模糊、再贴回去；而这一页的根元素上还挂着 invert+hue-rotate，
+    #    于是每一块毛玻璃都得隔着整页的滤镜去取那一份。视网膜屏是二倍像素，
+    #    一次面板开合就是五百万像素上的二十次模糊——顿的就是这一下。
+    #    要把毛玻璃请回来：删掉下面这条 GLASSOFF 规则即可。
+    sub('毛玻璃总闸',
+        'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}',
+        '/* GLASSOFF · 毛玻璃总闸。二十处 blur() 隔着整页滤镜去取背景，'
+        + chr(10) + '   视网膜屏上一次面板开合就是五百万像素乘二十次模糊。整批撤掉。'
+        + chr(10) + '   删掉这一条就全部回来。 */'
+        + chr(10) + '*{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'
+        + chr(10) + 'html.lux{filter:invert(1) hue-rotate(180deg);color-scheme:light}')
+
+    # 没了模糊，面板底色要加实一档才压得住底下的正文
+    sub('面板底色加实',
+        "function applyGlass(){" + chr(10) + "  var a=SET.glass/100;",
+        "function applyGlass(){" + chr(10)
+        + "  /* 毛玻璃撤了（见 GLASSOFF）。原来那几档底色是配着模糊定的：" + chr(10)
+        + "     模糊本身就把身后糊成一片，薄薄一层底色就够压住。现在身后是清晰的正文，" + chr(10)
+        + "     同样的薄度会透字，所以每一档的起点都往上抬一截。拉杆照旧管用。 */" + chr(10)
+        + "  var a=SET.glass/100;")
+    # 罩在正文上头的那几扇（地图、商店、装备、全部弹窗）改成实底。
+    # 原来它们敢那么透，全靠毛玻璃先把身后糊成一片；毛玻璃撤了，同样的透明度
+    # 就是正文直接透上来，一个字也读不成。压在背景上的那两处（情报台一栏、
+    # 六扇小窗）照旧留透——它们身后是山，不是字。
+    for old, new in [
+        ("'#game .gMfd{background:rgba(8,8,8,'+(.06+.25*a).toFixed(2)+') !important}'",
+         "'#game .gMfd{background:rgba(8,8,8,'+(.10+.25*a).toFixed(2)+') !important}'"),
+        ("+'.gPanel,#pnTx{background:rgba(6,6,6,'+(.04+.16*a).toFixed(2)+') !important}'",
+         "+'.gPanel,#pnTx{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}'"),
+        ("+'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.02+.08*a).toFixed(2)+') !important}'",
+         "+'.gMfd.mvDeck .mvWin{background:rgba(6,6,6,'+(.06+.08*a).toFixed(2)+') !important}'"),
+        ("+'{background:rgba(6,6,6,'+(.09+.19*a).toFixed(2)+') !important}';",
+         "+'{background:rgba(6,6,6,'+(.90+.08*a).toFixed(2)+') !important}';"),
+    ]:
+        sub('底色·' + old[12:26], old, new)
+
+    # ⑱ 帧时表：网址后加 ?perf=1 打开
+    #    这台机器跑的是软件光栅，量不准别人的机器。把尺子做进页面里，
+    #    让实际那台机器自己报数，比在这边猜快得多。
+    sub('帧时表', "applyGlass();" + chr(10) + "/* 拉条走过的那一段",
+        """applyGlass();
+/* 帧时表：网址后面加 ?perf=1 就出现，平时一行代码都不跑。
+   报三个数：帧率、最近半秒里最长的一帧、超过 50 毫秒的帧数。
+   卡不卡看的是后两个——平均帧率好看而偶尔一帧两百毫秒，手上就是一顿一顿的。 */
+if(/[?&]perf=1/.test(location.search))(function(){
+  var el=document.createElement('div');
+  el.id='perfHud';
+  el.style.cssText='position:fixed;left:8px;top:8px;z-index:2147483646;pointer-events:none;'
+    +'font:11px/1.5 ui-monospace,Menlo,monospace;color:#0f0;background:rgba(0,0,0,.75);'
+    +'padding:5px 8px;white-space:pre;filter:invert(1) hue-rotate(180deg)';
+  document.body.appendChild(el);
+  var last=performance.now(),acc=[],t0=last;
+  (function tick(){
+    var t=performance.now();acc.push(t-last);last=t;
+    if(t-t0>=500){
+      var n=acc.length,sum=0,worst=0,over=0,i;
+      for(i=0;i<n;i++){sum+=acc[i];if(acc[i]>worst)worst=acc[i];if(acc[i]>50)over++;}
+      var scr='菜单';
+      try{scr=GAME.on?'对局屏':(ES.on?'纪年页':((typeof feIsOpen==='function'&&feIsOpen())?'铸局':'菜单'));}catch(_){}
+      el.textContent=[scr+'  '+(1000/(sum/n)).toFixed(0)+' fps',
+                      '最长一帧 '+worst.toFixed(0)+' ms',
+                      '>50ms  '+over+' 帧/半秒'].join(String.fromCharCode(10));
+      acc=[];t0=t;
+    }
+    requestAnimationFrame(tick);
+  })();
+})();""" + chr(10) + "/* 拉条走过的那一段")
+
     # ⑪ 版号：换没换到新的一版，看一眼页脚就知道
     #    （每次要上线的改动，把下面这个数字往上加一。）
-    sub('版号', 'var BUILD=95;', 'var BUILD=100;')
+    sub('版号', 'var BUILD=95;', 'var BUILD=101;')
     sub('页脚落版号',
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;",
         "function menuEnter(){MENU.gen=(MENU.gen||0)+1;MENU.exiting=false;MENU.on=true;\n"
