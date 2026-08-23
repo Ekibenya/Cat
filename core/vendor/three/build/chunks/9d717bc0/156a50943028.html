@@ -1087,6 +1087,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 @media (max-width:760px){
   #menu .mItems{flex-direction:column;align-items:center;gap:24px;top:50%}
+  /* 11px 配 .42em 的字距，在手機上又小又散；頁腳 9px 還比視口寬
+     （實測寬 397 > 390，左右兩頭被馬賽克蓋掉）。字放大，字距收緊。 */
+  #menu .mItem{font-size:13.5px;letter-spacing:.24em;padding:12px 18px 10px}
+  #menu .mFoot{font-size:9.5px;letter-spacing:.16em;bottom:20px;
+      max-width:88vw;overflow:hidden;text-overflow:ellipsis}
   #mission{left:50%;top:calc(44% + var(--fs)/2);transform:translate(-50%,26px);text-align:center}
   #mission .ttl{align-items:center}
   #mission .era{max-width:80vw}
@@ -3582,7 +3587,11 @@ function mosFit(){
   mosDPR=Math.min(devicePixelRatio||1,2);
   mosCv.width=Math.round(vw*mosDPR); mosCv.height=Math.round(vh*mosDPR);
   mosSet.width=mosCv.width; mosSet.height=mosCv.height;
-  var B=MOS_B, cols=Math.max(8,Math.floor(vw/B)), rows=Math.max(8,Math.floor(vh/B));
+  /* 磚原本寫死 26：桌面 1440 寬時單邊邊框佔 5%，手機 390 寬時佔到 19%，
+     左右加起來吃掉三成八，中間那張圖只剩 242 像素寬。窄螢幕上磚跟內距一起收。 */
+  var mosNarrow = vw < 560;
+  var B = mosNarrow ? 15 : MOS_B;
+  var cols=Math.max(8,Math.floor(vw/B)), rows=Math.max(8,Math.floor(vh/B));
   var bx=(vw-cols*B)/2, by=(vh-rows*B)/2;
   var ring=[],seen={},k,r,c;
   function add(c,r){var key=c+','+r; if(seen[key])return; seen[key]=1;
@@ -3591,7 +3600,9 @@ function mosFit(){
   for(r=2;r<rows-2;r++){add(cols-1,r);add(cols-2,r);}
   for(c=cols-1;c>=0;c--){add(c,rows-1);add(c,rows-2);}
   for(r=rows-3;r>=2;r--){add(0,r);add(1,r);}
-  var padX=2*B+22, padTop=2*B+18, padBot=2*B+Math.max(96,vh*0.14);
+  var padX  = 2*B + (mosNarrow ? 8 : 22);
+  var padTop= 2*B + (mosNarrow ? 8 : 18);
+  var padBot= 2*B + (mosNarrow ? Math.max(56,vh*0.09) : Math.max(96,vh*0.14));
   var aw=vw-padX*2, ah=vh-padTop-padBot;
   var sc=Math.min(aw/MOS.w, ah/MOS.h);
   var ox=(vw-MOS.w*sc)/2, oy=padTop+(ah-MOS.h*sc)/2;

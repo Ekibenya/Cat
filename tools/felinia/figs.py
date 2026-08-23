@@ -6,7 +6,13 @@
 现在的来路只有两条，缺一不可：
 
   · 是谁      —— tools/felinia/roster.py。真名、真身、真事迹，一位不许编。
-  · 说什么话  —— st/data/figures/*.zh.lore.json。那是韩语封闭沙盒写完再译回来的。
+  · 说什么话  —— st/data/figures/*.zh.lore.json。
+
+來路分兩段，翻卡的時候要分得清：
+  紀年一到十六   韓語封閉沙盒寫完再譯回來的。
+  紀年十七往後   委託人交代直接用中文（台灣繁體）照著前十六代的寫法續寫，
+                 不再走沙盒。這一段的字是這邊寫的，寫的時候只照名冊與事實卡，
+                 一位不許編、一件事蹟不許改。
 
 所以这里只有搬运和挑拣，没有创作。要是某一代的沙盒成品还没回来，
 build 就在这里停住并说清楚缺哪一批 —— 这是有意的：
@@ -94,7 +100,10 @@ def _load(era):
 
 def _quotes(entries, who):
     """从「说话的样子」那一条里原样取两句。改写一个字都不许。"""
-    say = [e for e in entries if e['title'].endswith('说话的样子')]
+    # 第六項那一條的名字，簡繁兩種都認。紀年十七往後的條目是繁體寫的，
+    # 只認簡體的話，build 會在這裡說「沒有說話的樣子那一條」然後停住。
+    say = [e for e in entries
+           if e['title'].endswith('说话的样子') or e['title'].endswith('說話的樣子')]
     if not say:
         raise SystemExit('%s 没有「说话的样子」那一条' % who)
     body = say[0]['content']
