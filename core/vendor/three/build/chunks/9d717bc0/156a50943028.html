@@ -1795,10 +1795,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   color:#4a4237;font-size:9px;letter-spacing:.14em}
 /* 玻璃本身单独一层：模糊挂在它身上，内容压在上面另走一层，
    这样内容滚动时不会带着毛玻璃一起重算。 */
-.feGl{position:absolute;inset:0;background:rgba(252,252,252,.84);
+/* 底色原来是 .84 —— 那已经不是玻璃，是一块纸，底下那张图一点都透不出来。
+   压到 .40，同时把模糊从 9px 提到 14px：底下是马赛克世界图，颗粒很碎，
+   透过来不多糊一道，字会被底纹搅得读不动。薄一档和糊一档要一起做。 */
+.feGl{position:absolute;inset:0;background:rgba(252,252,252,.40);
   border:1px solid rgba(154,116,42,.34);
   box-shadow:0 16px 38px rgba(74,66,55,.18),0 2px 0 rgba(255,255,255,.5) inset;
-  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%)}
+  -webkit-backdrop-filter:blur(14px) saturate(120%);backdrop-filter:blur(14px) saturate(120%)}
 /* 四角的括号：与选局环、情报台同一套记号 */
 .feGl::before,.feGl::after{content:"";position:absolute;width:13px;height:13px;
   border:1px solid rgba(154,116,42,.55);pointer-events:none}
@@ -5383,12 +5386,14 @@ function feStep(s){
 }
 function feFootSync(){
   var go=$('#feGo'),hint=$('#feHint');
-  var ok=true,txt='PERGERE&nbsp;⏎';
+  /* 中文在前、拉丁文缩成小字当记号 —— 与底栏那一版写法一致。
+     这里原来整句盖成 'PERGERE ⏎'，把标记里写好的中文冲掉了。 */
+  var ok=true,txt='下一步<i>PERGERE ⏎</i>';
   if(FE.step==='loc'){ok=!!FE.loc;hint.textContent='● LOCVS　在图上拣一处';}
   if(FE.step==='per'){ok=!!(FE.hero&&String(FE.hero.n||'').trim());
     hint.textContent='● PERSONA　这一局你扮演的人';}
   if(FE.step==='soc'){hint.textContent='● SOCII　已选 '+FE.soc.length+' 位（可以一位不选）';}
-  if(FE.step==='sit'){txt='INCIPERE&nbsp;·&nbsp;铸局';hint.textContent='● SITVS　写完就开局';}
+  if(FE.step==='sit'){txt='铸局<i>INCIPERE ⏎</i>';hint.textContent='● SITVS　写完就开局';}
   go.innerHTML=txt;
   go.classList.toggle('off',!ok);
 }
@@ -9543,14 +9548,17 @@ function applyGlass(){
   /* 这一层跟着 CSS 里那条改成暗角：平铺的黑会把山脉盖成灰纸。
      拉杆只调四角收多深，中间那 55% 一律不压。 */
   glassCss.textContent='#game::before{background:radial-gradient(ellipse 90% 80% at 50% 42%,'
-    +'transparent 55%,rgba(242,236,222,'+(.20+.42*a).toFixed(2)+') 100%) !important}'
-    +'#game .gMfd{background:rgba(235,229,215,'+(.04+.18*a).toFixed(2)+') !important}'
+    +'transparent 55%,rgba(242,236,222,'+(.12+.28*a).toFixed(2)+') 100%) !important}'
+    +'#game .gMfd{background:rgba(235,229,215,'+(.02+.10*a).toFixed(2)+') !important}'
     +'#game .gInput{background:linear-gradient(0deg,rgba(237,231,217,'+(.55+.4*a).toFixed(2)+') 0%,rgba(237,231,217,'+(.35+.35*a).toFixed(2)+') 42%,rgba(237,231,217,0) 76%) !important}'
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
-    /* 情报台那六扇并进这一条：委托人要两边是同一种窗，底色就不该分两档。 */
-    +'.gPanel,#pnTx,.gMfd.mvDeck .mvWin'
-    +'{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
+    +'.gPanel,#pnTx{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
+    /* 情报台那六扇又拆出来单给一档更薄的。
+       先前并进上面那一条，是为了跟左边三扇长得一样 —— 是长一样了，
+       可这六扇身后还压着台底（.gMfd）和暗角，三层奶油叠起来就成了实心板。
+       发黄那一次的病根是 saturate，已经拆掉；薄这一件事得单独再压一道。 */
+    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.02+.09*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
@@ -9560,8 +9568,8 @@ function applyGlass(){
        同样带 #game 才压得住余下的规则，拉杆这才对手机也管用。
        系数比宽屏高一档但远低于原来的 .62——浮在正文上的窗要留一点底。 */
     +'@media (max-width:760px){'
-    +'#game .gPanel,#game .gMfd.mvDeck .mvWin'
-    +'{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
+    +'#game .gPanel{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
+    +'#game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.05+.12*a).toFixed(2)+') !important}'
     +'}';
 }
 applyGlass();
