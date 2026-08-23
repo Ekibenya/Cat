@@ -65,7 +65,9 @@ VOICE_FALLBACK = ['v01', 'v03', 'v04', 'v05', 'v14', 'v15', 'v17', 'v20', 'v21',
 
 # 台词起头的记号。句点收两种：译出那一段偶尔把句号落成半角点，
 # 「原文如是.」和「原文如是。」是同一个记号。成品一个字都不改，认记号的这头放宽。
-SAY_HEAD = re.compile('原文如是[。.]')
+# 韩语原稿那一批（konow.py 装进来的 ko-raw）用的是 [[SAY]]。
+# 两种记号都认——认的是记号，取的还是沙盒原样写的那几句。
+SAY_HEAD = re.compile(r'原文如是[。.]|\[\[SAY\]\]')
 LINE = re.compile('(「[^」]+」)')
 
 
@@ -81,7 +83,10 @@ def _voice(era, f):
 def _load(era):
     """把这一代所有批次的中文成品条目并成 名字 -> 条目表。"""
     out = {}
-    for p in sorted(glob.glob(os.path.join(ZHDIR, 'e%02db*.zh.lore.json' % era))):
+    # .ko-raw 是还没译出的韩语原稿（见 konow.py）。同一位若两份都在，
+    # 译好的那份排在后面、后写入，正文以它为准。
+    for p in (sorted(glob.glob(os.path.join(ZHDIR, 'e%02db*.ko-raw.lore.json' % era)))
+              + sorted(glob.glob(os.path.join(ZHDIR, 'e%02db*.zh.lore.json' % era)))):
         for e in json.load(io.open(p, encoding='utf-8')):
             out.setdefault(e['cat'], []).append(e)
     return out

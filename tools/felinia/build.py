@@ -381,7 +381,10 @@ def build_lore(eras):
 
     # 人物。
     for e in sorted(eras, key=lambda x: x['i']):
-        for p in sorted(glob.glob(os.path.join(FIGDIR, 'e%02db*.zh.lore.json' % e['i']))):
+        for p in (sorted(glob.glob(os.path.join(FIGDIR,
+                                                'e%02db*.ko-raw.lore.json' % e['i'])))
+                  + sorted(glob.glob(os.path.join(FIGDIR,
+                                                  'e%02db*.zh.lore.json' % e['i'])))):
             for x in json.load(io.open(p, encoding='utf-8')):
                 lb.append({'title': x['title'], 'cat': '人 · ' + x['cat'],
                            'keys': x['keys'], 'era': e['i'], 'lay': 'figures',

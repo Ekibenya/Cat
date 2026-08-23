@@ -22,6 +22,7 @@ python3 tools/felinia/introskip.py
 python3 tools/felinia/creamfix.py
 python3 tools/felinia/lean.py
 python3 tools/felinia/bookui.py
+python3 tools/felinia/konow.py
 python3 tools/felinia/build.py
 python3 tools/felinia/thumbs.py
 python3 tools/felinia/cardmeta.py
