@@ -88,9 +88,9 @@ CSS_OLD = """@media (max-width:760px){
   #menu .mItems{flex-direction:column;align-items:center;gap:24px;top:50%}"""
 CSS_NEW = """@media (max-width:760px){
   #menu .mItems{flex-direction:column;align-items:center;gap:24px;top:50%}
-  /* 11px 配 .42em 的字距，在手機上又小又散；頁腳 9px 還比視口寬
-     （實測寬 397 > 390，左右兩頭被馬賽克蓋掉）。字放大，字距收緊。 */
-  #menu .mItem{font-size:13.5px;letter-spacing:.24em;padding:12px 18px 10px}
+  /* 選單那四個鈕的字級不動 —— 一度放到 13.5px，委託人說不該放大，還原成 11px。
+     頁腳是另一回事：9px 卻比視口還寬（實測 397 > 390），左右兩頭被馬賽克蓋掉，
+     那是版面壞了，得收。 */
   #menu .mFoot{font-size:9.5px;letter-spacing:.16em;bottom:20px;
       max-width:88vw;overflow:hidden;text-overflow:ellipsis}"""
 
@@ -109,8 +109,8 @@ def main():
         s = s.replace(a, b)
     io.open(DOC, 'w', encoding='utf-8').write(s)
     print('手機選單：磚 26→13、邊框由兩格改一格、單邊 74→18 像素（19%→4.6%）、'
-          '圖案改成按視口寬一點五倍鋪、左右出框且壓在邊框之下；選單字 11→13.5px，'
-          '頁腳收進視口。桌面不動。')
+          '圖案改成按視口寬一點五倍鋪、左右出框且壓在邊框之下；'
+          '選單四個鈕的字級不動，頁腳收進視口。桌面不動。')
 
 
 if __name__ == '__main__':
