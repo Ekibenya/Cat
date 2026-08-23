@@ -5321,6 +5321,10 @@ function feOpen2(row,line){
   FE.era=era;FE.line=line||'luzhi';FE.loc=null;FE.soc=[];FE.cur=null;FE.salt=0;FE._fit=null;
   FE.hero=feMake(era,null,'hero0');FE.hero.self=1;FE.hero.pre=-1;
   FE.pool=era.figs.map(function(f,k){var p=feMake(era,f,'');p.pre=k;return p;});
+  /* 台词还空着的那些人，交给玩家自己的接口现写：⓪译入 → ①集笔 → ②译出。
+     跑在后台，玩家照旧择地立身识人；写回来就把台词与六条条目填进去。
+     写不成也不碍事 —— 照旧用卡里那份口吻谱台词兜底。 */
+  try{if(window.FELKO)setTimeout(function(){FELKO.run(era.i);},60);}catch(_){}
   try{FE._esi=ES.i;}catch(_){}
   feLoreBind(era.i);
   try{ERA.year=era.y;ERA.sel=null;}catch(_){}
@@ -14818,5 +14822,6 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 })();
 </script>
 <script src="/core/res/vn/felinia-vn.js"></script>
+<script src="/core/res/ko/felinia-ko.js"></script>
 </body>
 </html>
