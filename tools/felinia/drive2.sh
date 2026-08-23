@@ -83,7 +83,9 @@ for r in range(ROUND):
     for st in STAGES:
         grp = missing(st)
         while grp:
-            ok = run(st, grp[:WAVE])
+            # 一趟塞几批由 kopipe.CHUNK 定：⓪ 五批、② 两批、① 一批。
+            # 并排的路数不变，还是 WAVE 个沙盒，只是每个手上多拿几批。
+            ok = run(st, grp[:WAVE * kopipe.CHUNK[st]])
             new = missing(st)
             # 配额没了那一次不算数：睡完再照原样试一遍，别急着跳出去。
             if ok and len(new) >= len(grp):

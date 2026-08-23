@@ -53,6 +53,13 @@ sys.path.insert(0, HERE)
 from roster import ROSTER          # noqa: E402
 import figgen                      # noqa: E402
 
+# 一趟塞几批。
+# ⓪ 和 ② 是**翻译**，那里不产生文体，合批不会串味，所以几批并作一趟。
+# ① 是**写**，声音在那里出生，必须一批一沙盒 —— 一个会话写多了会踩着自己的字，
+# 见本的力气被冲淡，人物的口吻往一处收。这一条不许为了快而动。
+# 并排的路数不变：仍旧是六个沙盒同时跑，只是每个沙盒手上多拿几批。
+CHUNK = {'0': 5, '1': 1, '2': 2}
+
 for d in (KO, TAB, ZHMS, PROMPT, LOG):
     if not os.path.isdir(d):
         os.makedirs(d)
@@ -111,12 +118,60 @@ S0 = """把下面这份中文资料整篇译成韩语。
 """
 
 
+S0M_HEAD = """这一趟交给你的不是一份，是 {n} 份。
+
+译的规矩（每一份都一样）：
+· 译文里一个汉字都不许有。人名、地名、族名一律用韩文字母音译。
+· 拉丁字母写的地名（像 FOCVS 这样的）原样保留，不要动。
+· 数字用阿拉伯数字，不要写成汉字。
+· 栏目名也要译成韩语。
+· 不要增删内容，不要加解说。
+
+每一份的开头都写着这一份该存到哪里，照着存。
+一份一份地做完，做完第一份再开始第二份，不要混在一起。
+
+全部存好以后，只用韩语回一句，和每个文件各自的字数。
+"""
+
+S0M_ONE = """
+=================== 第 {i} 份 ===================
+
+译文存到这个文件：
+{ko}
+
+名表存到这个文件：
+{tab}
+名表一行一位，写成「韩文音译＝原来的写法」。这一份里出现过的每一个人名、
+每一个地名都要在表上。
+
+------------------- 要译的资料 -------------------
+
+{body}
+"""
+
+
 def stage0(era, bi):
-    p = paths(era, bi)
-    write(p['zhscene'], figgen.scene(era, bi))
-    body = S0.format(ko=p['koscene'], tab=p['names'], body=read(p['zhscene']))
-    pf = os.path.join(PROMPT, tag(era, bi) + '.s0.txt')
-    write(pf, read(HANDOFF) + '\n\n' + body)
+    return stage0m([(era, bi)])
+
+
+def stage0m(grp):
+    """⓪ 合批。几份资料一趟译完，各存各的。"""
+    if len(grp) == 1:
+        era, bi = grp[0]
+        p = paths(era, bi)
+        write(p['zhscene'], figgen.scene(era, bi))
+        body = S0.format(ko=p['koscene'], tab=p['names'], body=read(p['zhscene']))
+        pf = os.path.join(PROMPT, tag(era, bi) + '.s0.txt')
+        write(pf, read(HANDOFF) + '\n\n' + body)
+        return pf
+    parts = [S0M_HEAD.format(n=len(grp))]
+    for i, (era, bi) in enumerate(grp, 1):
+        p = paths(era, bi)
+        write(p['zhscene'], figgen.scene(era, bi))
+        parts.append(S0M_ONE.format(i=i, ko=p['koscene'], tab=p['names'],
+                                    body=read(p['zhscene'])))
+    pf = os.path.join(PROMPT, '_'.join(tag(e, b) for e, b in grp) + '.s0.txt')
+    write(pf, read(HANDOFF) + '\n\n' + ''.join(parts))
     return pf
 
 
@@ -146,7 +201,32 @@ def stage1(era, bi):
 
 
 # ── ② 译出 ────────────────────────────────────────────────
+MULTI_B = os.path.join(KO, 'multiB.ko.txt')     # 韩语的「这一趟有几份」那段话
+
+
 def stage2(era, bi):
+    return stage2m([(era, bi)])
+
+
+def stage2m(grp):
+    """② 合批。几份原稿一趟译完，各存各的。
+
+    分隔的那段话必须是韩语 —— 这一段提示词整篇是韩语，掺一句中文进去就破了闭。
+    所以那段话是先写中文、由译入沙盒译过来的，存在 multiB.ko.txt，这里只做替换。
+    """
+    if len(grp) == 1:
+        return _stage2one(*grp[0])
+    if not os.path.exists(MULTI_B):
+        raise NotReady('韩语的分隔说明还没有：' + MULTI_B)
+    parts = [read(MULTI_B).replace('[[N]]', str(len(grp)))]
+    for era, bi in grp:
+        parts.append(_body2(era, bi))
+    pf = os.path.join(PROMPT, '_'.join(tag(e, b) for e, b in grp) + '.s2.txt')
+    write(pf, read(HANDOFF) + '\n\n' + '\n\n\n'.join(parts))
+    return pf
+
+
+def _body2(era, bi):
     p = paths(era, bi)
     # 两样都要有。实测出过一次「项目在、原稿没了」的判 —— 沙盒把原稿删了。
     # 那时候不能整波死掉，跳过它，让 ① 重跑一遍就是了。
@@ -166,24 +246,31 @@ def stage2(era, bi):
     d = os.path.dirname(p['zhlore'])
     if not os.path.isdir(d):
         os.makedirs(d)
+    return body + '\n\n' + tail
+
+
+def _stage2one(era, bi):
     pf = os.path.join(PROMPT, tag(era, bi) + '.s2.txt')
-    write(pf, read(HANDOFF) + '\n\n' + body + '\n\n' + tail)
+    write(pf, read(HANDOFF) + '\n\n' + _body2(era, bi))
     return pf
 
 
 STAGES = {'0': (stage0, 's0'), '1': (stage1, 's1'), '2': (stage2, 's2')}
+MULTI = {'0': stage0m, '1': lambda g: stage1(*g[0]), '2': stage2m}
 
 
 def run(stage, jobs):
     fn, sfx = STAGES[stage]
+    ch = CHUNK[stage]
+    groups = [jobs[i:i + ch] for i in range(0, len(jobs), ch)]
     args = []
-    for era, bi in jobs:
+    for g in groups:
         try:
-            pf = fn(era, bi)
+            pf = MULTI[stage](g) if ch > 1 else fn(*g[0])
         except NotReady as e:
             sys.stderr.write('건너뛴다 %s\n' % e)
             continue
-        args.append('%s%s=%s' % (tag(era, bi), sfx, pf))
+        args.append('%s%s=%s' % ('_'.join(tag(e, b) for e, b in g), sfx, pf))
     if not args:
         sys.stderr.write('띄울 것이 없다 (%s)\n' % stage)
         return 0
