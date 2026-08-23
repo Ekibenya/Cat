@@ -1772,6 +1772,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   pointer-events:none;align-items:flex-end;justify-content:center;overflow:visible}
 #feWrap[data-step="per"] #fePerPortrait,
 #feWrap[data-step="soc"] #fePerPortrait{display:flex}
+/* 這顆只在窄螢幕的立身與識人兩步出現，桌面用不著（那裡立繪一直在）。
+   得寫成 #feFoot #feArt —— 上頭 #feFoot .go 那條是 display:inline-block，
+   權重壓得過單一個 #feArt，只寫 id 會被蓋回去照樣顯示。 */
+#feFoot #feArt{display:none}
 #fePerPortraitImg{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;
   opacity:1;visibility:hidden;filter:drop-shadow(0 12px 14px rgba(31,26,19,.22))}
 #fePerPortraitImg.ready{visibility:visible}
@@ -1906,7 +1910,19 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   /* 其余三步地图只是背景，板子可以占满 */
   #feWrap:not([data-step="loc"]) #fePanL{height:34%}
   #feWrap:not([data-step="loc"]) #fePanR{height:calc(66% - 18px)}
-  #fePerPortrait{display:none!important}
+  /* 立繪原本在窄螢幕整個關掉（上下兩塊板佔滿螢幕，中間沒有空檔擺）。
+     改成平時仍然不佔位，按了底下那顆「立繪」才整屏浮出來，兩塊板同時淡掉。 */
+  #feWrap[data-step="per"] #fePerPortrait,
+  #feWrap[data-step="soc"] #fePerPortrait{display:flex;left:0;right:0;top:38px;bottom:46px;
+      z-index:6;opacity:0;pointer-events:none;transition:opacity .26s}
+  #feWrap:not([data-step="per"]):not([data-step="soc"]) #fePerPortrait{display:none}
+  #feWrap.artOn #fePerPortrait{opacity:1}
+  #feWrap.artOn #fePanL,#feWrap.artOn #fePanR{opacity:.06;pointer-events:none;
+      transition:opacity .26s}
+  #feWrap.artOn #fePerPortraitCap{font-size:11px;bottom:14px;letter-spacing:.1em}
+  #feWrap[data-step="per"] #feFoot #feArt,
+  #feWrap[data-step="soc"] #feFoot #feArt{display:inline-block}
+  #feWrap.artOn #feArt{color:var(--gold-hi)}
   .feIn{padding:12px 13px}
   .feMk .nm{font-size:9px}
   .feGrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
@@ -2668,7 +2684,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   </div>
 
   <div id="feFoot">
-    <span class="l"><span class="go back" id="feBack">返回<i>ESC</i></span><span id="feHint">● FELINIA</span></span>
+    <span class="l"><span class="go back" id="feBack">返回<i>ESC</i></span><span class="go" id="feArt">立绘<i>IMAGO</i></span><span id="feHint">● FELINIA</span></span>
     <span><span class="go" id="feGo">下一步<i>PERGERE ⏎</i></span></span>
   </div>
 </div>
@@ -5253,11 +5269,16 @@ function feOpen2(row,line){
   return true;
 }
 function feClose(){$('#feWrap').classList.remove('on');}
+/* 窄螢幕上立繪平時不佔位，按這顆才整屏浮出來，兩塊板同時淡掉。
+   pointerup 跟這一頁其餘的鈕一致（click 在觸控上會慢一拍）。 */
+try{$('#feArt').addEventListener('pointerup',function(e){
+  e.stopPropagation();$('#feWrap').classList.toggle('artOn');});}catch(_){}
 function feIsOpen(){return $('#feWrap').classList.contains('on');}
 
 function feStep(s){
   FE.step=s;
   var w=$('#feWrap');w.setAttribute('data-step',s);
+  w.classList.remove('artOn');       /* 換一步就把立繪收回去 */
   var idx=0,k;
   for(k=0;k<FE_STEPS.length;k++)if(FE_STEPS[k][0]===s)idx=k;
   $('#feStName').textContent=FE_STEPS[idx][1];
