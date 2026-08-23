@@ -938,13 +938,18 @@ input[type=range]:disabled{opacity:.4;cursor:default}
 .cxTab.on{background:var(--gold);color:#e9e3d6;border-color:var(--gold);font-weight:600}
 .cxTab:not(.on):hover{color:var(--gold-hi);border-color:var(--gold)}
 .cxWrap{display:flex;min-height:300px;max-height:calc(56vh/var(--ui));margin-top:12px}
-#dlgBook .box{max-height:calc(88vh/var(--ui));overflow:hidden;display:flex;flex-direction:column}
-#dlgBook .cxWrap{flex:1 1 auto;min-height:0;max-height:none;height:calc(58vh/var(--ui))}
-.cxCats{width:118px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}
+#dlgBook .box{max-width:min(calc(94vw/var(--ui)),1080px);max-height:calc(88vh/var(--ui));overflow:hidden;display:flex;flex-direction:column}
+#dlgBook .cxWrap{flex:1 1 auto;min-height:0;max-height:none;height:calc(66vh/var(--ui))}
+.cxTops{width:112px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}
+.cxTop{font-size:11.5px;letter-spacing:.2em;color:var(--mut);padding:11px 10px;cursor:pointer;transition:all .15s}
+.cxTop.on{color:#e9e3d6;background:var(--gold)}
+.cxTop:not(.on):hover{color:var(--gold-hi)}
+.cxTop i{float:right;font-style:normal;font-size:9px;letter-spacing:0;opacity:.5}
+.cxCats{width:150px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}
 .cxCat{font-size:12px;letter-spacing:.22em;color:var(--mut);padding:10px 11px;cursor:pointer;transition:all .15s}
 .cxCat.on{color:#e9e3d6;background:var(--paper)}
 .cxCat:not(.on):hover{color:var(--txt)}
-.cxEnts{width:194px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto;padding:0 4px}
+.cxEnts{width:236px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto;padding:0 4px}
 .cxEnt{font-size:11px;letter-spacing:.06em;line-height:1.7;color:var(--mut);padding:8px 9px;cursor:pointer}
 .cxEnt.on{color:var(--gold-hi);background:rgba(132,88,0,.10)}
 .cxEnt:not(.on):hover{color:var(--txt)}
@@ -1114,18 +1119,20 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      被压成一列，一个字一行。手机上改成上下三段：类目、条目各成一条可横滑的小胶囊行，
      正文吃掉剩下的全部高度与全部宽度。 */
   #dlgBook .cxWrap{flex-direction:column;height:calc(64vh/var(--ui))}
-  #dlgBook .cxCats,#dlgBook .cxEnts{
+  #dlgBook .cxTops,#dlgBook .cxCats,#dlgBook .cxEnts{
     width:auto;flex:none;display:flex;flex-direction:row;gap:6px;
     overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
     -webkit-overflow-scrolling:touch;touch-action:pan-x;
     border-right:0;border-bottom:1px solid rgba(19,18,13,.14);padding:0 0 6px}
-  #dlgBook .cxCats::-webkit-scrollbar,#dlgBook .cxEnts::-webkit-scrollbar{display:none}
-  #dlgBook .cxEnts{margin-top:6px}
-  #dlgBook .cxCat,#dlgBook .cxEnt{
+  #dlgBook .cxTops::-webkit-scrollbar,#dlgBook .cxCats::-webkit-scrollbar,#dlgBook .cxEnts::-webkit-scrollbar{display:none}
+  #dlgBook .cxCats,#dlgBook .cxEnts{margin-top:6px}
+  #dlgBook .cxTop,#dlgBook .cxCat,#dlgBook .cxEnt{
     flex:none;white-space:nowrap;border:1px solid rgba(19,18,13,.16);
     padding:7px 12px;letter-spacing:.12em;line-height:1.4}
   #dlgBook .cxEnt{font-size:11.5px}
   #dlgBook .cxCat{font-size:11.5px}
+  #dlgBook .cxTop{font-size:11.5px}
+  #dlgBook .cxTop i{float:none;margin-left:6px}
   #dlgBook .cxBody{flex:1 1 auto;min-height:0;padding:12px 0 2px}
   #dlgBook .cxBody p{font-size:13px;line-height:1.95}
   #dlgCfg .sRow{flex-wrap:wrap;row-gap:6px}
@@ -1580,7 +1587,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* —— 可点元素：统一的状态过渡 + 按下反馈 —— */
 #game .gm,#game .gsug,#game .gAux,#game .gSend,#game .gt,
 .gDlg .sSeg span,.gDlg .cfgTabs span,
-.cxTab,.cxCat,.cxEnt,.op,#gNarr .op{
+.cxTab,.cxTop,.cxCat,.cxEnt,.op,#gNarr .op{
   transition:color var(--t-ui) var(--e-io),
              background-color var(--t-ui) var(--e-io),
              border-color var(--t-ui) var(--e-io),
@@ -2388,13 +2395,14 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   </div>
 </div>
 <div class="gDlg" id="dlgBook">
-  <div class="box" style="width:min(calc(94vw/var(--ui)),680px)">
+  <div class="box" style="width:min(calc(94vw/var(--ui)),1080px)">
     <span class="tag">LIBER</span>
     <h2>资料库&nbsp;[DB]&nbsp;·&nbsp;世界书</h2>
     <div class="cxTabs">
       <span class="cxTab on" data-side="luzhi">FELINIA</span>
     </div>
     <div class="cxWrap">
+      <div class="cxTops" id="cxTops"></div>
       <div class="cxCats" id="cxCats"></div>
       <div class="cxEnts" id="cxEnts"></div>
       <div class="cxBody"><h3 id="cxTtl"></h3><p id="cxTxt"></p></div>
@@ -10808,36 +10816,85 @@ try{(JSON.parse(localStorage.getItem('rome_lore_custom')||'[]')||[]).forEach(fun
   if(e&&e.title&&e.content)CARDS.luzhi.lorebook.push(e);
 });}catch(_){}
 var ACTIVE='luzhi';                       /* which card drives the running game session */
-var BOOK={side:'luzhi',cat:0,ent:0};
+var BOOK={side:'luzhi',top:0,cat:0,ent:0};
+/* 左边那一列原来只有「类目」一层，而类目是按条目自己的 cat 分的：
+   一百六十八个人、四十一代、三十四个横断门类、通史、研究册、通则、文字六组，
+   两百五十多行并成一列，翻到底也找不到东西。现在先分大母项，再分类目。
+   分法跟世界书自己的层（lay）一致；玩家自写的与请入的角色卡另立一项。 */
+var BOOK_TOPS=['母条目','通则','文字','纪年','横断','通史','研究册','人物','自写与角色卡','其他'];
+function bookTop(e){
+  if(!e)return '其他';
+  if(e.custom||e.cat==='自写'||e.cat==='角色卡')return '自写与角色卡';
+  if(e.lay==='core')return (e.ord<10)?'母条目':'通则';
+  if(e.lay==='style')return '文字';
+  if(e.lay==='figures')return '人物';
+  if(e.lay==='world'){
+    if(e.cat==='通史')return '通史';
+    if(e.cat==='研究册')return '研究册';
+    return e.era?'纪年':'横断';
+  }
+  return '其他';
+}
+/* 条目栏里的名字：把跟类目重复的那截前缀去掉。
+   「〔前10000年 · 史前窝群〕国家」在「前10000年 史前窝群」这一类下只写「国家」，
+   「刑天 · 第一项 · 概要」在「人 · 刑天」这一类下只写「第一项 · 概要」。
+   对不上的前缀（同在通史类下的〔卷首〕〔表一〕〔卷一〕）原样留着，那是有用的。 */
+function bookLabel(t,c){
+  t=String(t==null?'':t);c=String(c==null?'':c);
+  var m=/^〔([^〕]*)〕([\s\S]+)$/.exec(t);
+  if(m&&c&&c.replace(/[·\s]/g,'')===m[1].replace(/[·\s]/g,''))return m[2];
+  var tail=c.split(' · ').pop();
+  if(tail&&tail!==c&&t.indexOf(tail+' · ')===0)return t.slice(tail.length+3);
+  return t;
+}
+/* 两层目录：大母项 → 类目 → 条目下标。次序按 BOOK_TOPS，表上没有的排在最后。 */
 function bookCats(side){
-  var lb=CARDS[side].lorebook||[],order=[],map={};
-  for(var i=0;i<lb.length;i++){var c=lb[i].cat||'其他';
-    if(!map[c]){map[c]=[];order.push(c);}map[c].push(i);}
-  return{order:order,map:map};
+  var lb=(CARDS[side]&&CARDS[side].lorebook)||[],tops=[],tmap={},i;
+  for(i=0;i<lb.length;i++){
+    var t=bookTop(lb[i]),c=lb[i].cat||'其他';
+    if(!tmap[t]){tmap[t]={order:[],map:{},n:0};tops.push(t);}
+    var g=tmap[t];
+    if(!g.map[c]){g.map[c]=[];g.order.push(c);}
+    g.map[c].push(i);g.n++;
+  }
+  tops.sort(function(a,b){
+    var ia=BOOK_TOPS.indexOf(a),ib=BOOK_TOPS.indexOf(b);
+    if(ia<0)ia=99;if(ib<0)ib=99;return ia-ib;});
+  return{tops:tops,tmap:tmap};
 }
 function bookRender(){
   var side=BOOK.side,lb=CARDS[side].lorebook||[],bc=bookCats(side);
   var tabs=document.querySelectorAll('#dlgBook .cxTab');
   for(var t=0;t<tabs.length;t++)tabs[t].classList.toggle('on',tabs[t].getAttribute('data-side')===side);
-  var catsEl=$('#cxCats'),entsEl=$('#cxEnts');
+  var topsEl=$('#cxTops'),catsEl=$('#cxCats'),entsEl=$('#cxEnts');
+  if(topsEl)topsEl.innerHTML='';
   catsEl.innerHTML='';entsEl.innerHTML='';
   if(!lb.length){
     $('#cxTtl').textContent='陆之卷';
     $('#cxTxt').textContent='—— 本卷writing中，正在灌注。 ——';
     return;
   }
-  if(BOOK.cat>=bc.order.length)BOOK.cat=0;
-  bc.order.forEach(function(c,ci){
+  if(BOOK.top>=bc.tops.length)BOOK.top=0;
+  bc.tops.forEach(function(t,ti){
+    var g=bc.tmap[t],d=document.createElement('div');
+    d.className='cxTop'+(ti===BOOK.top?' on':'');d.textContent=t;
+    var b=document.createElement('i');b.textContent=g.n;d.appendChild(b);
+    d.addEventListener('click',function(){BOOK.top=ti;BOOK.cat=0;BOOK.ent=0;bookRender();});
+    if(topsEl)topsEl.appendChild(d);
+  });
+  var grp=bc.tmap[bc.tops[BOOK.top]];
+  if(BOOK.cat>=grp.order.length)BOOK.cat=0;
+  grp.order.forEach(function(c,ci){
     var d=document.createElement('div');d.className='cxCat'+(ci===BOOK.cat?' on':'');d.textContent=c;
     d.addEventListener('click',function(){BOOK.cat=ci;BOOK.ent=0;bookRender();});
     catsEl.appendChild(d);
   });
-  var ids=bc.map[bc.order[BOOK.cat]];
+  var ids=grp.map[grp.order[BOOK.cat]];
   if(BOOK.ent>=ids.length)BOOK.ent=0;
   ids.forEach(function(li,ei){
     var e=lb[li],d=document.createElement('div');
     d.className='cxEnt'+(ei===BOOK.ent?' on':'');
-    d.textContent=e.title;
+    d.textContent=bookLabel(e.title,e.cat);
     d.addEventListener('click',function(){BOOK.ent=ei;bookRender();});
     entsEl.appendChild(d);
   });
@@ -10848,7 +10905,7 @@ function bookRender(){
      或读回上次的选择），玩家只看得见开头几颗，不知道自己停在哪一条。滚到眼前来。
      正文也要回到顶部，否则换条目后还停在上一条读到的位置。 */
   try{
-    ['#cxCats','#cxEnts'].forEach(function(sel){
+    ['#cxTops','#cxCats','#cxEnts'].forEach(function(sel){
       var host=$(sel);if(!host)return;
       if(host.scrollWidth<=host.clientWidth+1)return;      /* 桌面是竖排，不用管 */
       var on=host.querySelector('.on');if(!on)return;
@@ -10860,7 +10917,7 @@ function bookRender(){
 (function(){
   var tabs=document.querySelectorAll('#dlgBook .cxTab');
   for(var i=0;i<tabs.length;i++)(function(tb){
-    tb.addEventListener('click',function(){BOOK.side=tb.getAttribute('data-side');BOOK.cat=0;BOOK.ent=0;bookRender();});
+    tb.addEventListener('click',function(){BOOK.side=tb.getAttribute('data-side');BOOK.top=0;BOOK.cat=0;BOOK.ent=0;bookRender();});
   })(tabs[i]);
 })();
 
