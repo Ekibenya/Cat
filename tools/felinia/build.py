@@ -238,17 +238,20 @@ def check(eras, ann, partial=False):
         assert len(e['dress']) >= 4, '纪年 %d 的服装太少' % i
         # 死规则：一代至少十位家喻户晓的真人，可以再加三到五位小众的。
         # 上限不卡。名册那边另有一道卡名人数目的关。
-        if partial and len(e['figs']) < 10:
-            short.append((i, len(e['figs'])))
-        else:
-            assert len(e['figs']) >= 10, '纪年 %d 的人物不足十位：%d' % (i, len(e['figs']))
+        pend = sum(1 for f in e['figs'] if f.get('pend'))
+        if partial and pend:
+            short.append((i, pend, len(e['figs'])))
+        assert len(e['figs']) >= 10, '纪年 %d 的人物不足十位：%d' % (i, len(e['figs']))
         nms = set()
         for f in e['figs']:
             assert f['n'] not in nms, '纪年 %d 有重名：%s' % (i, f['n'])
             nms.add(f['n'])
             assert f['sp'] in ('cat', 'human'), '纪年 %d 的 %s 物种不对' % (i, f['n'])
             assert f['v'] in vkeys, '纪年 %d 的 %s 口吻谱不存在：%s' % (i, f['n'], f['v'])
-            assert len(f['q']) == 2, '纪年 %d 的 %s 签名台词不是两句' % (i, f['n'])
+            # pend＝条目还没写，台词空着。名字与事迹照旧要齐，只是台词免检。
+            # 台词是沙盒写的东西，没写就是没写，这里不许拿别处的凑。
+            assert len(f['q']) == 2 or (f.get('pend') and not f['q']), \
+                '纪年 %d 的 %s 签名台词不是两句' % (i, f['n'])
             for q in f['q']:
                 assert q.startswith('「') and '」' in q, \
                     '纪年 %d 的 %s 台词没有用直角引号：%s' % (i, f['n'], q)
@@ -256,9 +259,8 @@ def check(eras, ann, partial=False):
         # 这是一张猫娘卡。哪一代的名人再怎么清一色是男的，
         # 也得再找几位同代的真人女子补上来，不能一代只剩一两位猫娘。
         cats = sum(1 for f in e['figs'] if f['sp'] == 'cat')
-        if not (partial and len(e['figs']) < 10):
-            assert cats >= 4, '纪年 %d 的猫娘太少：%d/%d' % (i, cats, len(e['figs']))
-            assert cats < len(e['figs']), '纪年 %d 一个人类都没有' % i
+        assert cats >= 4, '纪年 %d 的猫娘太少：%d/%d' % (i, cats, len(e['figs']))
+        assert cats < len(e['figs']), '纪年 %d 一个人类都没有' % i
         assert i in LORE, '纪年 %d 没有世界书原料' % i
         assert HOME.get(i), '纪年 %d 没有写住处' % i
         assert COIN.get(i), '纪年 %d 没有写钱的尺子' % i
@@ -270,11 +272,11 @@ def check(eras, ann, partial=False):
     assert set(LORE) == want, '世界书原料对不上，多出 %s' % sorted(set(LORE) - want)
     pools.check()
     if short:
-        from roster import ROSTER
-        n = sum(len(e['figs']) for e in eras)
-        print('还没写完的纪年 %d 代，人物共 %d 位（写满是 %d 位）：'
-              % (len(short), n, sum(len(ROSTER[e['i']]) for e in eras)))
-        print('    ' + '  '.join('%d 代 %d 位' % t for t in short))
+        tot = sum(len(e['figs']) for e in eras)
+        pen = sum(t[1] for t in short)
+        print('人物 %d 位全在卡里；其中 %d 位的条目还没写，台词空着（%d 代）：'
+              % (tot, pen, len(short)))
+        print('    ' + '  '.join('%d 代 %d/%d' % t for t in short))
     return True
 
 

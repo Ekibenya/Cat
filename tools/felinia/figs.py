@@ -110,24 +110,26 @@ def build(era, partial=False):
     这两件事常被混为一谈，所以写在这里：这一版拦的是编造，不是不全。
     """
     lore = _load(era)
-    if not lore:
-        if partial:
-            return []
-        raise SystemExit('纪年 %d 的封闭沙盒成品还没回来：%s/e%02db*.zh.lore.json'
-                         % (era, ZHDIR, era))
     out, seen = [], set()
     for f in ROSTER[era]:
         if f['n'] in seen:
             raise SystemExit('纪年 %d 名册上有重名：%s' % (era, f['n']))
         seen.add(f['n'])
+        one = {'n': f['n'], 'sp': f['sp'], 'ti': f['kind'],
+               'v': _voice(era, f), 'd': f['fact']}
         ent = lore.get(f['n'])
-        if not ent:
-            if partial:
-                continue
+        if ent:
+            one['q'] = _quotes(ent, '纪年 %d 的 %s' % (era, f['n']))
+        elif partial:
+            # 条目还没写。名字、身份、事迹照放 —— 这三样出自名册，是真人史实，
+            # 不是编的，本来就该进卡。**只有台词空着**，因为台词必须是沙盒写的。
+            # 早先这里是整个人一起跳过，于是二十九代的立身与识人是空的；
+            # 那是把「不许编造」错当成了「不许不全」。
+            one['q'] = []
+            one['pend'] = 1
+        else:
             raise SystemExit('纪年 %d 的 %s 还没有沙盒成品' % (era, f['n']))
-        out.append({'n': f['n'], 'sp': f['sp'], 'ti': f['kind'],
-                    'v': _voice(era, f), 'd': f['fact'],
-                    'q': _quotes(ent, '纪年 %d 的 %s' % (era, f['n']))})
+        out.append(one)
     return out
 
 
