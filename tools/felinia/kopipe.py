@@ -116,10 +116,14 @@ def stage0(era, bi):
 
 
 # ── ① 集笔 ────────────────────────────────────────────────
+class NotReady(Exception):
+    """这一批还差前一段的东西。跳过它，别把整个波次拖死。"""
+
+
 def stage1(era, bi):
     p = paths(era, bi)
     if not os.path.exists(p['koscene']):
-        sys.exit('%s 的韩语场面文件还没有' % tag(era, bi))
+        raise NotReady('%s 的韩语场面文件还没有' % tag(era, bi))
     out = subprocess.run([sys.executable, BUILD, p['koscene']],
                          capture_output=True)
     if out.returncode != 0:
@@ -137,9 +141,11 @@ def stage1(era, bi):
 # ── ② 译出 ────────────────────────────────────────────────
 def stage2(era, bi):
     p = paths(era, bi)
+    # 两样都要有。实测出过一次「项目在、原稿没了」的判 —— 沙盒把原稿删了。
+    # 那时候不能整波死掉，跳过它，让 ① 重跑一遍就是了。
     for k in ('koms', 'kolore'):
         if not os.path.exists(p[k]):
-            sys.exit('%s 的 %s 还没有' % (tag(era, bi), k))
+            raise NotReady('%s 的 %s 还没有' % (tag(era, bi), k))
     notation = read(p['names']) if os.path.exists(p['names']) else ''
     out = subprocess.run([sys.executable, BUILD, '--tr', p['koms'], notation],
                          capture_output=True)
@@ -165,8 +171,15 @@ def run(stage, jobs):
     fn, sfx = STAGES[stage]
     args = []
     for era, bi in jobs:
-        pf = fn(era, bi)
+        try:
+            pf = fn(era, bi)
+        except NotReady as e:
+            sys.stderr.write('건너뛴다 %s\n' % e)
+            continue
         args.append('%s%s=%s' % (tag(era, bi), sfx, pf))
+    if not args:
+        sys.stderr.write('띄울 것이 없다 (%s)\n' % stage)
+        return 0
     # --뜸：先只放一个出去，等它把开头那一大段（规矩加八篇见本，约四十千字节）
     # 刻进缓存，再放其余的。实测这一批记录里读出六千九百四十六万、刻入五百三十三万，
     # 读出远大于刻入，说明确实在分着用同一份开头 —— 运营指针要求先量再开，量过了。

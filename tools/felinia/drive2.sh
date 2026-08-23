@@ -18,11 +18,16 @@ def missing(st):
     out = []
     for e, b in jobs:
         p = kopipe.paths(e, b)
+        # ① 이 다 되었다는 것은 원고와 항목이 **둘 다** 있다는 뜻이다.
+        # 항목만 있고 원고가 없는 판이 실제로 나왔다(샌드박스가 원고를 지웠다).
+        # 한쪽만 보면 그 판이 ② 로 넘어가고, ② 는 원고가 없다며 그 자리에서
+        # 통째로 죽는다 — 같은 물결에 실린 다른 판까지 같이 죽는다.
+        ko = os.path.exists(p['koms']) and os.path.exists(p['kolore'])
         if st == '0' and not os.path.exists(p['koscene']):
             out.append((e, b))
-        elif st == '1' and os.path.exists(p['koscene']) and not os.path.exists(p['kolore']):
+        elif st == '1' and os.path.exists(p['koscene']) and not ko:
             out.append((e, b))
-        elif st == '2' and os.path.exists(p['kolore']) and not os.path.exists(p['zhlore']):
+        elif st == '2' and ko and not os.path.exists(p['zhlore']):
             out.append((e, b))
     return out
 
