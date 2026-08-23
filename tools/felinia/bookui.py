@@ -120,6 +120,12 @@ function bookLabel(t,c){
   if(tail&&tail!==c&&t.indexOf(tail+' · ')===0)return t.slice(tail.length+3);
   return t;
 }
+/* 类目栏的名字：去掉「人 · 」「文字 · 」这两个前缀。
+   左边那一栏已经写着是「人物」还是「怎么写」了，每一行再重复一遍是白占地方。
+   去的只是显示，条目自己的 cat 不动——酒馆那一边和母条目的门类表还照旧用它。 */
+function bookCatLabel(c){
+  return String(c==null?'':c).replace(/^(人|文字)\s*·\s*/,'');
+}
 /* 两层目录：大母项 → 类目 → 条目下标。次序按 BOOK_TOPS，表上没有的排在最后。 */
 function bookCats(side){
   var lb=(CARDS[side]&&CARDS[side].lorebook)||[],tops=[],tmap={},i;
@@ -160,7 +166,8 @@ JS_NEW3 = """  if(BOOK.top>=bc.tops.length)BOOK.top=0;
   var grp=bc.tmap[bc.tops[BOOK.top]];
   if(BOOK.cat>=grp.order.length)BOOK.cat=0;
   grp.order.forEach(function(c,ci){
-    var d=document.createElement('div');d.className='cxCat'+(ci===BOOK.cat?' on':'');d.textContent=c;
+    var d=document.createElement('div');d.className='cxCat'+(ci===BOOK.cat?' on':'');
+    d.textContent=bookCatLabel(c);
     d.addEventListener('click',function(){BOOK.cat=ci;BOOK.ent=0;bookRender();});
     catsEl.appendChild(d);
   });
