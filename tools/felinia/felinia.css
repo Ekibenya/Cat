@@ -74,7 +74,8 @@
    不挂半透明、模糊或渐变遮罩；长图贴底按完整身形显示。 */
 #fePerPortrait{display:none;position:absolute;z-index:3;left:30%;right:38%;top:3%;bottom:1%;
   pointer-events:none;align-items:flex-end;justify-content:center;overflow:visible}
-#feWrap[data-step="per"] #fePerPortrait{display:flex}
+#feWrap[data-step="per"] #fePerPortrait,
+#feWrap[data-step="soc"] #fePerPortrait{display:flex}
 #fePerPortraitImg{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;
   opacity:1;visibility:hidden;filter:drop-shadow(0 12px 14px rgba(31,26,19,.22))}
 #fePerPortraitImg.ready{visibility:visible}

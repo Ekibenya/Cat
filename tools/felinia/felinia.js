@@ -725,9 +725,10 @@ function fePerSync(){
   fePerDoss();fePerPortrait();feFootSync();
 }
 
-function fePerPortrait(){
-  var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=FE.hero;
-  if(!img||!cap||!h||!FE.vn){return;}
+function fePerPortrait(person,empty){
+  var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=empty?null:(person||FE.hero);
+  if(!img||!cap||!FE.vn){return;}
+  if(!h){img.removeAttribute('src');img.classList.remove('ready');img.alt='';cap.textContent='';return;}
   var era=null,i;
   for(i=0;i<FE.vn.eras.length;i++)if(FE.vn.eras[i].eraIndex===FE.era.i){era=FE.vn.eras[i];break;}
   if(!era){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
@@ -772,8 +773,10 @@ function feSocTap(k){
 }
 function feSocDoss(){
   var el=$('#feDoss');
-  if(FE.cur==null){el.textContent='点左边任意一位，这里出档案。再点一下，才把她带进这一局。';return;}
+  if(FE.cur==null){fePerPortrait(null,true);
+    el.textContent='点左边任意一位，这里出档案。再点一下，才把她带进这一局。';return;}
   var p=FE.pool[FE.cur];
+  fePerPortrait(p);
   el.innerHTML=feDossHtml(p)
     +'\n\n'+(FE.soc.indexOf(FE.cur)>=0?'—— 已带进这一局。再点一下取消。'
                                       :'—— 再点一下，把她带进这一局。');
