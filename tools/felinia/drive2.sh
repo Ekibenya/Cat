@@ -12,6 +12,12 @@
 # 每一段跑完重查一遍还缺什么，缺的重跑。断了可以再开，做完的会跳过。
 set -u
 cd /home/user/cat
+# 把自己的号码写下来。看门的靠这个号码认人 ——
+# 拿 ps 去找命令行里的字，会找到叫它的那口壳（壳里正抄着这个脚本的全文）。
+# 实测：看门的因此以为驱动器活着，白站了一个钟头。
+PIDFILE=/tmp/cattest/ko/drv.pid
+echo $$ > "$PIDFILE"
+trap 'rm -f "$PIDFILE"' EXIT INT TERM
 WAVE=${WAVE:-6}
 ROUND=${ROUND:-400}
 # 只跑哪几段。默认三段都跑，从后往前 —— 先把快做完的推出去。
