@@ -27,8 +27,8 @@ GUARD = 'BOOK_TOPS'
 
 CSS_OLD = ".cxCats{width:118px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}"
 CSS_NEW = (
-    ".cxTops{width:130px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}\n"
-    ".cxTop{font-size:11.5px;letter-spacing:.2em;color:var(--mut);padding:11px 10px;"
+    ".cxTops{width:176px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}\n"
+    ".cxTop{font-size:11px;letter-spacing:.08em;color:var(--mut);padding:11px 10px;"
     "cursor:pointer;transition:all .15s}\n"
     ".cxTop.on{color:#e9e3d6;background:var(--gold)}\n"
     ".cxTop:not(.on):hover{color:var(--gold-hi)}\n"
@@ -41,14 +41,14 @@ REPS = [
     ('<div class="gDlg" id="dlgBook">\n'
      '  <div class="box" style="width:min(calc(94vw/var(--ui)),680px)">',
      '<div class="gDlg" id="dlgBook">\n'
-     '  <div class="box" style="width:min(calc(94vw/var(--ui)),1080px)">'),
+     '  <div class="box" style="width:min(calc(94vw/var(--ui)),1160px)">'),
     ('#dlgBook .cxWrap{flex:1 1 auto;min-height:0;max-height:none;height:calc(58vh/var(--ui))}',
      '#dlgBook .cxWrap{flex:1 1 auto;min-height:0;max-height:none;height:calc(66vh/var(--ui))}'),
     # 光把行内 width 放到 1080 没用：.gDlg .box 上有一条
     # max-width:min(94vw/--ui,680px)，把每个弹窗都夹在 680。这一页要自己解开。
     ('#dlgBook .box{max-height:calc(88vh/var(--ui));overflow:hidden;'
      'display:flex;flex-direction:column}',
-     '#dlgBook .box{max-width:min(calc(94vw/var(--ui)),1080px);'
+     '#dlgBook .box{max-width:min(calc(94vw/var(--ui)),1160px);'
      'max-height:calc(88vh/var(--ui));overflow:hidden;'
      'display:flex;flex-direction:column}'),
 
@@ -93,20 +93,43 @@ JS_NEW = """var BOOK={side:'luzhi',top:0,cat:0,ent:0};
 /* 名字一律用白话：母条目→目录、通则→基本规矩、文字→怎么写、
    纪年→各个时代、横断→专题、通史→世界史、研究册→地区与书目。
    条目自己的 cat 不动，改的只是这一栏显示的名。 */
-var BOOK_TOPS=['目录','基本规矩','怎么写','各个时代','专题','世界史',
-               '地区与书目','人物','自己写的','其他'];
+var BOOK_TOPS=['目录','基本规矩','怎么写','各个时代','专题','世界史','地区与书目'];
+/* 人物一栏原来是一整坨：十六代两百多人挤在一个大母项底下，
+   点进去中间那一列要翻两百多行。改成按纪年拆开，名字写成「10000BC-人物」。
+
+   年份不从 FE.eras 取 —— FE 关在闭包里，这一段够不着（试过，整栏退成了
+   「纪年1-人物」）。改成从世界书自己身上认：本代那几条的分类名就写着年份，
+   长这样「前10000年 史前窝群」「850年 阿拔斯时代的商队」，取前头那一截就够。 */
+var _BKY={};
+function bookYearScan(lb){
+  _BKY={};
+  for(var i=0;i<lb.length;i++){var e=lb[i];
+    if(!e||e.lay!=='world'||!e.era||_BKY[e.era])continue;
+    var m=/^(前)?([0-9]+)年/.exec(e.cat||'');
+    if(m)_BKY[e.era]=m[1]?(m[2]+'BC'):(m[2]+'AD');}
+}
+function bookYear(era){
+  return _BKY[era]||('纪年'+era);
+}
 function bookTop(e){
   if(!e)return '其他';
   if(e.custom||e.cat==='自写'||e.cat==='角色卡')return '自己写的';
   if(e.lay==='core')return (e.ord<10)?'目录':'基本规矩';
   if(e.lay==='style')return '怎么写';
-  if(e.lay==='figures')return '人物';
+  if(e.lay==='figures')return bookYear(e.era)+'-人物';
   if(e.lay==='world'){
     if(e.cat==='通史')return '世界史';
     if(e.cat==='研究册')return '地区与书目';
     return e.era?'各个时代':'专题';
   }
   return '其他';
+}
+/* 排序用的号。表上有名字的按表；人物按纪年往后排；自己写的与其他垫底。 */
+function bookRank(t,e){
+  var i=BOOK_TOPS.indexOf(t);
+  if(i>=0)return i;
+  if(e&&e.lay==='figures')return 100+(e.era||0);
+  return (t==='自己写的')?300:301;
 }
 /* 条目栏里的名字：把跟类目重复的那截前缀去掉。
    「〔前10000年 · 史前窝群〕国家」在「前10000年 史前窝群」这一类下只写「国家」，
@@ -151,17 +174,16 @@ function bookCatLabel(c){
 /* 两层目录：大母项 → 类目 → 条目下标。次序按 BOOK_TOPS，表上没有的排在最后。 */
 function bookCats(side){
   var lb=(CARDS[side]&&CARDS[side].lorebook)||[],tops=[],tmap={},i;
+  bookYearScan(lb);
   for(i=0;i<lb.length;i++){
     if(bookHide(lb[i]))continue;
     var t=bookTop(lb[i]),c=lb[i].cat||'其他';
-    if(!tmap[t]){tmap[t]={order:[],map:{},n:0};tops.push(t);}
+    if(!tmap[t]){tmap[t]={order:[],map:{},n:0,r:bookRank(t,lb[i])};tops.push(t);}
     var g=tmap[t];
     if(!g.map[c]){g.map[c]=[];g.order.push(c);}
     g.map[c].push(i);g.n++;
   }
-  tops.sort(function(a,b){
-    var ia=BOOK_TOPS.indexOf(a),ib=BOOK_TOPS.indexOf(b);
-    if(ia<0)ia=99;if(ib<0)ib=99;return ia-ib;});
+  tops.sort(function(a,b){return tmap[a].r-tmap[b].r;});
   return{tops:tops,tmap:tmap};
 }"""
 
