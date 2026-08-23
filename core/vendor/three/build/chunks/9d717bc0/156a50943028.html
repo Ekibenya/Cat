@@ -1437,12 +1437,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 .gMfd.mvDeck /* 这条边框是情报台那六扇窗背后唯一的东西。1 像素、0.30 的近黑，
    对比约五十五个灰阶；隔着毛玻璃一摊，峰值只剩三四个灰阶，等于没有。
    病根是线太细 —— 加粗到 2 像素、压深到 0.55，让它经得起摊。 */
-  .mvCard.thumb .cfr{background:rgba(237,231,217,.42) !important;box-shadow:none}
-/* 未选中的缩略卡那条边框，加粗压深。权重要够：同一条边框另有三条规则在争，
-   其中两条带 !important，而 .gMfd.mvDeck .mvCard .cfr 的类数还比这条多。
-   所以带上 #game、排除 .on（选中的那张本来就是金色，不归这里管）、加 !important。 */
-#game .gMfd.mvDeck .mvCard.thumb:not(.on) .cfr{
-  border-width:2px !important;border-color:rgba(19,18,13,.55) !important}
+  .mvCard.thumb .cfr{background:rgba(237,231,217,.42) !important;
+      border-color:rgba(19,18,13,.30);box-shadow:none}
+/* 这条边框曾被加粗到 2px、压深到 .55，为的是让它隔着毛玻璃还看得见。
+   撤了：那条线不只在窗背后，缩略卡列本身也一直露在外面 ——
+   一压深，整条列就变成一圈灰框。窗后那点透视，不值这个代价。
+   要让线透出来，只该动窗那一侧（模糊半径），不该动线本身。 */
 .mvCard .ic{position:absolute;left:-11px;bottom:-7px;width:22px;height:22px;z-index:5;
       background:#e9e3d6;border:1px solid rgba(19,18,13,.34);opacity:0;
       display:flex;align-items:center;justify-content:center;
