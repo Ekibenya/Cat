@@ -6,12 +6,17 @@ set -u
 cd /home/user/cat
 WAVE=${WAVE:-6}
 ROUND=${ROUND:-60}
-python3 - "$WAVE" "$ROUND" <<'PY'
+# 只跑哪几段。默认三段都跑，从后往前。
+# 另开一头只跑 ⓪ 的时候用得着：⓪ 与 ①② 走的是不同的批，互不碰同一个文件，
+# 所以两头一起跑不打架，前面那一段的活能早点备好。
+STAGES=${STAGES:-210}
+python3 - "$WAVE" "$ROUND" "$STAGES" <<'PY'
 import subprocess, sys, os
 sys.path.insert(0, 'tools/felinia')
 import figgen, kopipe
 from roster import ROSTER
 WAVE, ROUND = int(sys.argv[1]), int(sys.argv[2])
+STAGES = sys.argv[3] if len(sys.argv) > 3 else '210'
 jobs = [(e, b) for e in sorted(ROSTER) for b in range(len(figgen.batches(e)))]
 
 def missing(st):
@@ -39,14 +44,14 @@ def run(st, grp):
 
 for r in range(ROUND):
     left = {st: missing(st) for st in '012'}
-    tot = sum(len(v) for v in left.values())
+    tot = sum(len(left[st]) for st in STAGES)
     sys.stderr.write('== %d bakwi · left 0:%d 1:%d 2:%d ==\n'
                      % (r + 1, len(left['0']), len(left['1']), len(left['2'])))
     sys.stderr.flush()
     if tot == 0:
         sys.stderr.write('== ALL DONE ==\n')
         break
-    for st in ('2', '1', '0'):
+    for st in STAGES:
         grp = missing(st)
         while grp:
             run(st, grp[:WAVE])
