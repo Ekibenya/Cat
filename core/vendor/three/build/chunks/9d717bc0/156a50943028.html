@@ -5028,9 +5028,16 @@ function esEnter(d){
   /* 这一代有铸局资料就走 FELINIA 四步；没有（资料没加载上、或这一代没写）
      就照旧退回选局环——本层坏掉最多是回到从前，不会把纪年页堵死。 */
   try{if(typeof feOpen==='function'&&feOpen(d,ES.line))return;}catch(_){}
-  esClose();rebuildRing(ES.line);menuExit();
+  /* 铸局资料开不了就退回主菜单。原来退的是选局环（那一屏也是粒子），
+     玩家看到的是「点一下纪年，蹦出一屏没见过的东西」。 */
+  esClose();menuEnter();
 }
-function esBackToLines(){esClose();lsOpen();}
+/* 返回＝回主菜单。
+   原来回的是「三线选择」那一屏（#lineSel），它整屏是点云动画 ——
+   那就是点了返回看见的一团粒子。而这张卡的入口本来就是
+   主菜单 → 开始 → 纪年页（miMiss 里 esHas 恒为真，从来不经过三线那一屏），
+   所以返回该回主菜单，回三线是上一版留下的路。 */
+function esBackToLines(){esClose();menuEnter();}
 /* ═══════════════ FELINIA · 铸局四步 ═══════════════
    择地 LOCVS → 立身 PERSONA → 识人 SOCII → 此刻 SITVS → 铸局
 
@@ -5348,7 +5355,7 @@ function feOpen(row,line){
      玩家看到的还是从前那条路，不会卡在纪年页上。 */
   feLoad(function(ok){
     if(ok&&feOpen2(row,line))return;
-    try{esClose();rebuildRing(line);menuExit();}catch(_){}
+    try{esClose();menuEnter();}catch(_){}
   });
   return true;
 }
