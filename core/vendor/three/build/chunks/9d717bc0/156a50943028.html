@@ -178,35 +178,7 @@ canvas{display:block}
       padding:11px 30px 9px;border:1px solid transparent;
       transition:color .2s,border-color .2s,text-shadow .2s}
 #menu .mItem i{font-style:normal;color:var(--gold)}
-#lineSel{position:fixed;inset:0;z-index:46;display:none;background:rgba(6,6,5,.97);
-  perspective:1800px;perspective-origin:50% 42%;touch-action:none}
-#lineSel.on{display:block}
-#lsTrack{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
-#lineSel .card{cursor:pointer}
-#lineSel .cframe canvas{position:absolute;inset:0;width:100%;height:100%}
-#lsMission{position:fixed;top:38%;left:calc(50% - var(--fs)/2);transform:translate(-62%,-50%);
-  z-index:48;line-height:1;pointer-events:none}
-#lsMission .m-tag{margin-bottom:12px}
-#lsMission .m-tag .tag{background:var(--gold);color:#090909}
-#lsMission .num{display:inline-block;background:var(--paper);color:#090909;font-weight:700;
-  font-size:clamp(34px,4.6vw,58px);padding:6px 12px 3px;letter-spacing:.06em}
-#lsMission .ttl{margin-top:10px;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
-#lsMission .ttl span{display:inline-block;background:var(--paper);color:#090909;font-weight:700;
-  font-size:clamp(13px,1.35vw,19px);letter-spacing:.14em;padding:5px 9px 3px;white-space:nowrap}
-#lsMission .era{margin-top:14px;max-width:40ch;font-size:10px;line-height:1.9;letter-spacing:.12em;color:var(--mut)}
-#lsFoot{position:fixed;left:0;right:0;bottom:0;min-height:40px;z-index:48;
-  border-top:1px solid #21201c;display:flex;align-items:center;justify-content:space-between;
-  padding:4px 30px calc(4px + env(safe-area-inset-bottom,0px));
-  font-size:9px;letter-spacing:.22em;color:var(--mut);background:rgba(6,6,5,.72)}
-#lsFoot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;
-  padding:9px 14px;margin-left:8px;border:1px solid rgba(189,142,54,.45);
-  background:rgba(189,142,54,.07);letter-spacing:.18em}
-#lsFoot .go:hover{color:var(--gold-hi)}
 @media (max-width:760px){
-  #lsMission{top:auto;bottom:120px;left:12px;transform:none}
-  #lsFoot{padding-left:12px;padding-right:12px}
-  #lsFoot .lbl{display:none}
-  #lsFoot .go{padding:12px 16px;font-size:11px}
 }
 #menu .mItem:hover{color:var(--gold-hi);border-color:rgba(189,142,54,.45);
       text-shadow:0 0 14px rgba(222,184,104,.5)}
@@ -1685,19 +1657,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   <span class="r"><span class="lbl">DRAG / WHEEL / ← → / A D TO ROTATE</span><span class="go" id="lineTg" title="切换剧情线">LINEA ⇄ 周</span><span class="go" id="goBtn" tabindex="0">ENGAGE ⏎</span></span>
 </div>
 
-<div id="lineSel">
-  <div id="lsTrack"></div>
-  <div id="lsMission">
-    <div class="m-tag"><span class="tag">剧情线</span></div>
-    <div><span class="num" id="lsNum">01</span></div>
-    <div class="ttl" id="lsTtl"><span></span><span></span></div>
-    <div class="era" id="lsEra"></div>
-  </div>
-  <div id="lsFoot">
-    <span>● LINEA SELECT&nbsp;&nbsp;|&nbsp;&nbsp;<span class="lbl">DRAG / WHEEL / ← → TO ROTATE</span></span>
-    <span class="r"><span class="go" id="lsBack">ESC&nbsp;·&nbsp;RETVRN</span><span class="go" id="lsGo">ENGAGE&nbsp;⏎</span></span>
-  </div>
-</div>
+
 
 <style>
 /* 这几个变量根上那份已烘成 G(原色)。纪年页与铸局用原色（它们自带暖纸罩）；菜单用乘过暖纸的值（它的罩子已折进颜色）。 */
@@ -4660,7 +4620,10 @@ prEl.addEventListener('pointerup',function(e){if(e.target===prEl)prClose();});
 
 $('#miMiss').addEventListener('pointerup',function(e){e.stopPropagation();
   /* 这张卡只有一条线，中间那一层选线的屏没有意义：开始就是选图版 */
-  if(typeof esHas==='function'&&esHas(ACTIVE))esOpen(ACTIVE);else lsOpen();});
+  if(typeof esHas==='function'&&esHas(ACTIVE))esOpen(ACTIVE);});
+/* 原来这里还有一条 else lsOpen() —— 打开「三线选择」那一屏。
+   这张卡的 esHas 恒为真（四十二行纪年轴都在），那条从来没走到过，
+   而它是唯一还指着三线那一屏的入口。整屏连同它的代码一并撤掉。 */
 /* ═══════════ INITIVM · 三线选择面板（粒子构筑物） ═══════════
    秦的高台大殿——与开场 SPQR 同一套「粒子聚形」语言：
    把剪影画到离屏画布上采样成目标点，粒子从散乱中逐个归位，归位后保持微颤与偶发高光。 */
@@ -4669,150 +4632,7 @@ function linesEnabled(){
 }
 var LS_META={
   luzhi:{tag:'FELINIA',name:'猫娘世界史 · 四十一幅图版',sub:'由初民至一九〇〇年 —— 年代、地点与人由你定',draw:'hall'}};
-var LS={on:false,raf:0,cards:[]};
-/* 聚形时长。原来 2600ms、粒子起步还各自随机拖 0~650ms，合计能到三秒多——
-   很多人一进来就点过去了，压根没看见楼起来。收到 1100ms，起步错开也收到 0~260ms。 */
-var LS_ASM=1100;
-/* 三座构筑物的 3D 点云——与选局环罗马柱（colPts/columnDraw）同一套语言：
-   单位空间 y∈0..1，绕竖轴自转，透视 F=2.6，金尘配色，聚形-悬停两段式。 */
-function lsPts(kind){
-  var seed=kind==='pyramid'?11.3:(kind==='pantheon'?23.7:37.9);
-  function rnd(){seed=Math.sin(seed*127.1+311.7)*43758.5453;return seed-Math.floor(seed);}
-  var pts=[];
-  function push(x,y,z,hi){pts.push({x:x,y:y,z:z,hi:hi||rnd()<.055});}
-  var k,t1,u,s;
-  if(kind==='pyramid'){
-    var B=.54,H=.94;
-    for(k=0;k<1150;k++){
-      t1=Math.sqrt(rnd());var w=B*(1-t1),y=t1*H;
-      var f=Math.floor(rnd()*4);u=(rnd()*2-1)*w;
-      if(f===0)push(u,y,w);else if(f===1)push(u,y,-w);
-      else if(f===2)push(w,y,u);else push(-w,y,u);
-    }
-    for(k=0;k<120;k++){
-      t1=rnd();var w2=B*(1-t1);
-      var e=Math.floor(rnd()*4),ex=(e<2?1:-1)*w2,ez=(e%2?1:-1)*w2;
-      push(ex,t1*H,ez,rnd()<.5);
-    }
-    for(k=0;k<170;k++){var a=rnd()*Math.PI*2,r=.58+rnd()*.14;push(r*Math.cos(a),rnd()*.012,r*Math.sin(a));}
-  }else if(kind==='pantheon'){
-    /* 希腊罗马式列柱神庙：三级台基、前后各八柱、两侧列柱、檐部、双山花、两坡顶 */
-    function slab(y0,y1,hw,dp,n){for(var q=0;q<n;q++){
-      var s4=Math.floor(rnd()*4),u4=rnd()*2-1,yq=y0+rnd()*(y1-y0);
-      var p4=[[u4*hw,dp],[hw,u4*dp],[u4*hw,-dp],[-hw,u4*dp]][s4];push(p4[0],yq,p4[1]);}}
-    slab(0,.03,.50,.33,150);slab(.03,.06,.47,.305,120);slab(.06,.09,.44,.28,100);
-    function col(cx,cz){   /* 科林斯柱：柱础+凹槽柱身（带卷杀）+钟形叶饰柱头+方冠 */
-      var q,aq,fq,rq;
-      for(q=0;q<8;q++){aq=rnd()*Math.PI*2;push(cx+.021*Math.cos(aq),.09+rnd()*.012,cz+.021*Math.sin(aq));}
-      for(q=0;q<40;q++){fq=rnd();aq=rnd()*Math.PI*2;
-        rq=.0155*(1-.12*fq)*(1+.035*Math.sin(Math.PI*fq));
-        rq*=1-.09*(0.5+0.5*Math.cos(8*aq));
-        push(cx+rq*Math.cos(aq),.102+fq*.30,cz+rq*Math.sin(aq));}
-      for(q=0;q<18;q++){var tq=rnd();aq=rnd()*Math.PI*2;
-        rq=(.013+.014*tq*tq)*(1+.17*Math.max(0,Math.sin(4*aq+tq*3))*tq);
-        push(cx+rq*Math.cos(aq),.402+tq*.030,cz+rq*Math.sin(aq),tq>.75&&rnd()<.35);}
-      for(q=0;q<6;q++)push(cx+(rnd()-.5)*.052,.432+rnd()*.010,cz+(rnd()-.5)*.052,rnd()<.3);
-    }
-    var ci;
-    for(ci=0;ci<8;ci++){var cxx=-.385+ci*.11;col(cxx,.235);col(cxx,-.235);}   /* 前后柱列 */
-    for(ci=1;ci<4;ci++){col(-.385,-.235+ci*.1175);col(.385,-.235+ci*.1175);}  /* 两侧柱列 */
-    slab(.44,.485,.42,.255,190);                  /* 檐部围一圈 */
-    for(k=0;k<190;k++){                           /* 双山花（前后三角） */
-      t1=rnd();var hwp=.42*(1-t1);u=(rnd()*2-1)*hwp;
-      var zf=rnd()<.5?.255:-.255;
-      push(u,.485+t1*.125,zf+(rnd()-.5)*.02,t1>.88&&rnd()<.5);
-    }
-    for(k=0;k<330;k++){                           /* 两坡顶 */
-      s=rnd();u=rnd()*2-1;var sd=rnd()<.5?1:-1;
-      push(u*.40,.61-s*.125,sd*s*.255,s<.06&&rnd()<.2);
-    }
-    for(k=0;k<40;k++){u=(rnd()*2-1)*.38;push(u,.610+rnd()*.012,(rnd()-.5)*.015,rnd()<.25);}  /* 正脊线 */
-  }else{
-    /* 秦的高台大殿：三级夯土台 + 陛 + 木柱列 + 檐 + 四阿顶 + 两阙。
-       秦人以关中四塞为墙，宫不设城墙，所以这里没有围墙，只有台与阙。 */
-    function slabq(y0,y1,hw,dp,n){for(var q=0;q<n;q++){
-      var s5=Math.floor(rnd()*4),u5=rnd()*2-1,yq=y0+rnd()*(y1-y0);
-      var p5=[[u5*hw,dp],[hw,u5*dp],[u5*hw,-dp],[-hw,u5*dp]][s5];push(p5[0],yq,p5[1]);}}
-    slabq(0,.085,.520,.360,300);          /* 一级台：夯土，最宽 */
-    slabq(.085,.170,.455,.315,240);       /* 二级台 */
-    slabq(.170,.245,.395,.275,190);       /* 三级台，殿就坐在这上面 */
-    for(k=0;k<130;k++){                   /* 陛：正面当心一道踏道，直上三级 */
-      t1=rnd();u=(rnd()*2-1)*.075;
-      push(u,t1*.245,.275+(.360-.275)*(1-t1)+.055*(1-t1),rnd()<.05);}
-    for(k=0;k<90;k++){var ah=rnd()*Math.PI*2,rh=.60+rnd()*.10;   /* 台外踩实的地面 */
-      push(rh*Math.cos(ah),rnd()*.010,rh*Math.sin(ah));}
-    function pillar(cx,cz){               /* 木柱：直柱，柱下有础石，柱头出栌斗 */
-      var q,aq,fq,rq;
-      for(q=0;q<7;q++){aq=rnd()*Math.PI*2;push(cx+.026*Math.cos(aq),.246+rnd()*.014,cz+.026*Math.sin(aq));}
-      for(q=0;q<34;q++){fq=rnd();aq=rnd()*Math.PI*2;rq=.019*(1-.10*fq);
-        push(cx+rq*Math.cos(aq),.260+fq*.300,cz+rq*Math.sin(aq));}
-      for(q=0;q<9;q++)push(cx+(rnd()-.5)*.058,.560+rnd()*.026,cz+(rnd()-.5)*.058,rnd()<.30);
-    }
-    var pi2;
-    for(pi2=0;pi2<7;pi2++){var pxx=-.315+pi2*.105;pillar(pxx,.215);pillar(pxx,-.215);}
-    for(pi2=1;pi2<4;pi2++){pillar(-.315,-.215+pi2*.1075);pillar(.315,-.215+pi2*.1075);}
-    slabq(.586,.628,.360,.250,220);       /* 阑额与檐枋围一圈 */
-    for(k=0;k<680;k++){                   /* 四阿顶：四面坡，坡面向上收到一条正脊 */
-      var t2=rnd();                        /* t2=0 檐口，t2=1 脊 */
-      var hw2=.400+(.105-.400)*t2, dp2=.290+(0-.290)*t2;
-      var y2=.628+t2*.245, f2=Math.floor(rnd()*4), u2=rnd()*2-1;
-      if(f2===0)push(u2*hw2,y2,dp2);
-      else if(f2===1)push(u2*hw2,y2,-dp2);
-      else if(f2===2)push(hw2,y2,u2*dp2);
-      else push(-hw2,y2,u2*dp2);
-    }
-    for(k=0;k<160;k++){                   /* 四条垂脊：四角到脊端，压瓦的那一条 */
-      var t3=rnd(),e3=Math.floor(rnd()*4);
-      var hx=(e3<2?1:-1)*(.400+(.105-.400)*t3), hz=(e3%2?1:-1)*(.290+(0-.290)*t3);
-      push(hx,.628+t3*.245,hz,rnd()<.22);
-    }
-    for(k=0;k<110;k++){u=(rnd()*2-1)*.105;push(u,.873+rnd()*.014,(rnd()-.5)*.016,rnd()<.30);}
-    for(k=0;k<26;k++){                    /* 脊两端的瓦当兽头：恒亮 */
-      var sd3=rnd()<.5?1:-1;push(sd3*(.105+rnd()*.028),.876+rnd()*.026,(rnd()-.5)*.020,true);}
-    function que(cx){                     /* 阙：台前左右各一座方台望楼 */
-      var q;
-      for(q=0;q<150;q++){var s6=Math.floor(rnd()*4),u6=rnd()*2-1,y6=rnd()*.30;
-        var w6=.062-.014*(y6/.30);
-        var p6=[[cx+u6*w6,.44+w6],[cx+w6,.44+u6*w6],[cx+u6*w6,.44-w6],[cx-w6,.44+u6*w6]][s6];
-        push(p6[0],y6,p6[1]);}
-      for(q=0;q<70;q++){var s7=Math.floor(rnd()*4),u7=rnd()*2-1,y7=.30+rnd()*.11;
-        var w7=.074;
-        var p7=[[cx+u7*w7,.44+w7],[cx+w7,.44+u7*w7],[cx+u7*w7,.44-w7],[cx-w7,.44+u7*w7]][s7];
-        push(p7[0],y7,p7[1],rnd()<.10);}
-      for(q=0;q<60;q++){var t7=rnd(),f7=Math.floor(rnd()*4),u8=rnd()*2-1;   /* 阙顶小四阿 */
-        var w8=.086*(1-t7);
-        var p8=[[cx+u8*w8,.44+w8],[cx+w8,.44+u8*w8],[cx+u8*w8,.44-w8],[cx-w8,.44+u8*w8]][f7];
-        push(p8[0],.41+t7*.085,p8[1],t7>.85&&rnd()<.4);}
-    }
-    que(-.455);que(.455);
-  }
-  return pts;
-}
-function lsBuild(){
-  var trk=$('#lsTrack');trk.innerHTML='';LS.cards=[];
-  LS.order=['luzhi'].filter(function(l){return linesEnabled().indexOf(l)>=0;});
-  var NUMR=['01','02','03'];
-  LS.order.forEach(function(line,i){
-    var m=LS_META[line];
-    var el=document.createElement('div');el.className='card';
-    el.innerHTML='<div class="cframe"><span class="ftag">LINEA ORDER // '+m.tag+'</span>'
-      +'<span class="fnum">SIG_0'+(i+1)+'/0'+LS.order.length+'</span><canvas></canvas></div>'
-      +'<div class="ghost"><span class="lbl">'+m.tag+'</span><div class="num">'+NUMR[i]+'</div>'
-      +'<div class="name">'+m.name+'</div></div>';
-    trk.appendChild(el);
-    el.addEventListener('pointerup',function(e){
-      if(LS.moved>6)return;
-      var n=LS.order.length,fi=((Math.round(LS.pos)%n)+n)%n;
-      if(fi===i)lsPick(i);else LS.tgt=Math.round(LS.pos)+lsDelta(i,fi,n);
-    });
-    LS.cards.push({el:el,cv:el.querySelector('canvas'),g:null,kind:m.draw,pts:null,cur:null,t0:0,d:0});
-  });
-}
-function lsDelta(i,fi,n){var d=i-fi;if(d>n/2)d-=n;if(d<-n/2)d+=n;return d;}
 
-/* ═══════════ ANNALES · 纪年选择（横向卷轴） ═══════════
-   排在剧情线与选局环之间。数据取自卡的 annals 字段，卡里没有就用 ANNALS_DEF。
-   选中那张按本身比例摊开，其余收成窄条；底下一条纪年轴，纪元分段对齐图版顺序。 */
 var ANNALS_DEF=[{"i":0,"src":"/core/res/img/annals/00.jpg","era":"卷首","y":"","ys":-99999,"t":"《猫娘世界通史》","s":"全四十二图 · 卷首至近代","r":0.6667},{"i":1,"src":"/core/res/img/annals/01.jpg","era":"先史","y":"约前一万年","ys":-10000,"t":"史前窝群","s":"姐妹分工、共同照护与低位居所","r":1.5},{"i":2,"src":"/core/res/img/annals/02.jpg","era":"先史","y":"前六千纪","ys":-6000,"t":"河岸聚落","s":"夜哨、捕鱼与共同照护","r":1.5},{"i":3,"src":"/core/res/img/annals/03.jpg","era":"古代","y":"前二九〇〇年","ys":-2900,"t":"两河城邦","s":"兵籍、泥板登记与专业分工","r":1.5},{"i":4,"src":"/core/res/img/annals/04.jpg","era":"古代","y":"前二五〇〇年","ys":-2500,"t":"印度河城市","s":"排水、屋顶通行与多尺度设施","r":1.5},{"i":5,"src":"/core/res/img/annals/05.jpg","era":"古代","y":"前一四五〇年","ys":-1450,"t":"克里特港口","s":"货封、船工与修船","r":1.5},{"i":6,"src":"/core/res/img/annals/06.jpg","era":"古代","y":"前一四〇〇年","ys":-1400,"t":"新王国尼罗河神庙粮仓","s":"封印、洪水刻度与王权登记","r":1.5},{"i":7,"src":"/core/res/img/annals/07.jpg","era":"古代","y":"前四三〇年","ys":-430,"t":"古典雅典的柱廊之外","s":"受表彰的勇敢与被拒绝的公民资格","r":1.5},{"i":8,"src":"/core/res/img/annals/08.jpg","era":"古代","y":"五〇年","ys":50,"t":"罗马家内","s":"解放文书与仍未消失的身份等级","r":1.5},{"i":9,"src":"/core/res/img/annals/09.jpg","era":"古代","y":"一〇〇年","ys":100,"t":"汉代边塞","s":"瞭望、军报与烽燧警讯","r":1.5},{"i":10,"src":"/core/res/img/annals/10.jpg","era":"古代","y":"四〇〇年","ys":400,"t":"萨珊波斯的驿站黄昏","s":"货封、路线判断与长途疲劳","r":1.5},{"i":11,"src":"/core/res/img/annals/11.jpg","era":"中世","y":"五五〇年","ys":550,"t":"拜占庭君士坦丁堡港口","s":"货封、呼船与海关怀疑","r":1.5},{"i":12,"src":"/core/res/img/annals/12.jpg","era":"中世","y":"八〇〇年","ys":800,"t":"中世纪修院","s":"冬季庇护、誓约与服务债务","r":1.4981},{"i":13,"src":"/core/res/img/annals/13.jpg","era":"中世","y":"八五〇年","ys":850,"t":"阿拔斯时代的商队","s":"夜哨、路线翻译与长途疲劳","r":1.5},{"i":14,"src":"/core/res/img/annals/14.jpg","era":"中世","y":"九五〇年","ys":950,"t":"北海冬夜","s":"称量、船只与修理","r":1.5},{"i":15,"src":"/core/res/img/annals/15.jpg","era":"中世","y":"一一〇〇年","ys":1100,"t":"北宋夜市与屋顶交通","s":"包裹、灯火和外勤","r":1.5},{"i":16,"src":"/core/res/img/annals/16.jpg","era":"中世","y":"一一二〇年","ys":1120,"t":"宋代城市青楼","s":"表演劳动、债务与受限离场","r":1.3333},{"i":17,"src":"/core/res/img/annals/17.jpg","era":"中世","y":"一二五〇年","ys":1250,"t":"中世纪行会仓库","s":"夜巡、工资与外来窝群","r":1.5},{"i":18,"src":"/core/res/img/annals/18.jpg","era":"中世","y":"一二五〇年","ys":1251,"t":"蒙古驿路","s":"雪地搜索、呼救与伤员处置","r":1.5},{"i":19,"src":"/core/res/img/annals/19.jpg","era":"中世","y":"一三三〇年","ys":1330,"t":"马里帝国的跨撒哈拉商路","s":"金衡、警讯与水源","r":1.5},{"i":20,"src":"/core/res/img/annals/20.jpg","era":"中世","y":"一三四八年","ys":1348,"t":"黑死病时期的城市照护","s":"分区经验、劳作与怀疑","r":1.5},{"i":21,"src":"/core/res/img/annals/21.jpg","era":"中世","y":"一三五〇年","ys":1350,"t":"南方水城","s":"水门、长路与工具","r":1.5},{"i":22,"src":"/core/res/img/annals/22.jpg","era":"中世","y":"一四二〇年","ys":1420,"t":"威尼斯港","s":"木料、船台与急件","r":1.5},{"i":23,"src":"/core/res/img/annals/23.jpg","era":"近世","y":"一五〇〇年","ys":1500,"t":"大航海时代","s":"海图、索具与晕船","r":1.5},{"i":24,"src":"/core/res/img/annals/24.jpg","era":"近世","y":"一五二〇年","ys":1520,"t":"十六世纪中美洲的初次接触","s":"翻译、质疑与离开殖民者的选择","r":1.5},{"i":25,"src":"/core/res/img/annals/25.jpg","era":"近世","y":"一六〇〇年","ys":1600,"t":"莫卧儿印度洋港口","s":"海运文书、调度与伤口照护","r":1.5},{"i":26,"src":"/core/res/img/annals/26.jpg","era":"近世","y":"一七〇〇年","ys":1700,"t":"凡尔赛附近","s":"非束腰礼服、外勤与宫廷观看","r":1.5},{"i":27,"src":"/core/res/img/annals/27.jpg","era":"近代","y":"一七五〇年","ys":1750,"t":"清代城市宅院","s":"外勤差事、门禁与被羡慕的行动空间","r":1.5},{"i":28,"src":"/core/res/img/annals/28.jpg","era":"近代","y":"一七六〇年","ys":1760,"t":"启蒙时代的巴黎沙龙","s":"独立外勤与被陪同的贵妇","r":1.5},{"i":29,"src":"/core/res/img/annals/29.jpg","era":"近代","y":"一七九三年","ys":1793,"t":"革命时期的市民登记","s":"军功、姓氏与有限资格","r":1.5},{"i":30,"src":"/core/res/img/annals/30.jpg","era":"近代","y":"一八四〇年","ys":1840,"t":"奥斯曼改革时期的港务站","s":"登记、军医与适体制服","r":1.5},{"i":31,"src":"/core/res/img/annals/31.jpg","era":"近代","y":"一八四八年","ys":1848,"t":"一八四八年的印刷工场","s":"校字、油墨与街头政治","r":1.5},{"i":32,"src":"/core/res/img/annals/32.jpg","era":"近代","y":"一八六〇年","ys":1860,"t":"工业工厂","s":"机器危险、固定工时与劳工争执","r":1.5},{"i":33,"src":"/core/res/img/annals/33.jpg","era":"近代","y":"一八七〇年","ys":1870,"t":"近代技术学堂","s":"分段教学、实作与共同受益","r":1.5},{"i":34,"src":"/core/res/img/annals/34.jpg","era":"近代","y":"一八七五年","ys":1875,"t":"工业铁路城市","s":"站台警报、电报与现场救护","r":1.5},{"i":35,"src":"/core/res/img/annals/35.jpg","era":"近代","y":"一八八〇年","ys":1880,"t":"十九世纪都市医院","s":"独立血液链与综合医疗","r":1.5},{"i":36,"src":"/core/res/img/annals/36.jpg","era":"近代","y":"一八八五年","ys":1885,"t":"明治日本的迟来引入","s":"港口登记、测量与争辩","r":1.5},{"i":37,"src":"/core/res/img/annals/37.jpg","era":"近代","y":"一八九五年","ys":1895,"t":"世纪末百货","s":"适体服装、身体边界与商业模仿","r":1.5},{"i":38,"src":"/core/res/img/annals/38.jpg","era":"近代","y":"一九〇〇年","ys":1900,"t":"一九〇〇年北京危机","s":"同类识别、国家军职与侵略伦理","r":1.5},{"i":39,"src":"/core/res/img/annals/39.jpg","era":"近代","y":"一九〇〇年","ys":1901,"t":"一九〇〇年巴黎万国大展会","s":"观看与反观看","r":1.5},{"i":40,"src":"/core/res/img/annals/40.jpg","era":"近代","y":"一九〇五年","ys":1905,"t":"混合家庭的城市住宅","s":"分别登记与多尺度生活","r":1.5},{"i":41,"src":"/core/res/img/annals/41.jpg","era":"近代","y":"一九一六年","ys":1916,"t":"工业战争的混编阵地","s":"警报、指挥与救护","r":1.5}];
 var ES={on:false,i:0,line:null,rows:[],pls:[],pips:[],bands:[]};
 
@@ -6161,151 +5981,7 @@ function feSyncEngine(){
   $('#esGo').addEventListener('pointerup',function(){esEngage();});
   $('#esBack').addEventListener('pointerup',function(){esBackToLines();});
 })();
-function lsPick(i){
-  var line=LS.order[i];
-  try{$('#lineTg').textContent=LINE_LBL[line]+' ⇄';}catch(_){}
-  /* 有纪年图版的线，先过 ANNALES 这一层；没有的照旧直入选局环 */
-  if(typeof esHas==='function'&&esHas(line)){lsClose();esOpen(line);return;}
-  lsClose();rebuildRing(line);
-  menuExit();
-}
-function lsSeed(c){
-  var r=c.cv.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
-  var w=Math.max(2,Math.round(r.width*dpr)),h=Math.max(2,Math.round(r.height*dpr));
-  if(w<4||h<4)return;
-  c.cv.width=w;c.cv.height=h;c.dpr=dpr;c.g=c.cv.getContext('2d');
-  c.pts=lsPts(c.kind);
-  (function(){  /* 归一化：投影层假设 x/z∈±.6、y∈0..1，超界形状等比压回 */
-    var xs=1e9,xb=-1e9,ys=1e9,yb=-1e9,zs=1e9,zb=-1e9,k2,p2;
-    for(k2=0;k2<c.pts.length;k2++){p2=c.pts[k2];
-      if(p2.x<xs)xs=p2.x;if(p2.x>xb)xb=p2.x;
-      if(p2.y<ys)ys=p2.y;if(p2.y>yb)yb=p2.y;
-      if(p2.z<zs)zs=p2.z;if(p2.z>zb)zb=p2.z;}
-    var rx=Math.max(xb-xs,zb-zs,1e-6),ry=Math.max(yb-ys,1e-6);
-    var s=Math.min(1.10/rx,0.96/ry);
-    if(s<1){var mx=(xs+xb)/2,mz=(zs+zb)/2;
-      for(k2=0;k2<c.pts.length;k2++){p2=c.pts[k2];
-        p2.x=(p2.x-mx)*s;p2.z=(p2.z-mz)*s;p2.y=(p2.y-ys)*s;}}
-  })();
-  c.cur=[];
-  for(var k=0;k<c.pts.length;k++){var p=c.pts[k];
-    c.cur.push({x:p.x+(Math.random()-.5)*1.5,y:p.y+(Math.random()-.5)*1.5,
-                z:p.z+(Math.random()-.5)*1.5,delay:Math.random()*260});}
-  c.t0=performance.now();
-}
-function lsLayout(){
-  /* 三张卡不能用 360/n=120°：侧卡直接转到环背面，一次只见一张。
-     围城圈观感=定角 34° 的弧面，左右两张始终侧立在旁（与选局环视觉一致）。 */
-  var n=LS.order.length,step=34;
-  var fs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fs'))||420;
-  var R=fs*.60/Math.tan(step*Math.PI/360);
-  /* 与选局环同法：整条轨道前移 R，让正面卡片落回屏幕平面（不缩小、不偏移） */
-  $('#lsTrack').style.transform='translateZ('+R.toFixed(1)+'px)';
-  var posm=((LS.pos%n)+n)%n;
-  for(var i=0;i<n;i++){
-    var d=i-posm;if(d>n/2)d-=n;if(d<-n/2)d+=n;
-    var C=LS.cards[i],a=-d*step,rad=a*Math.PI/180,cc=Math.cos(rad);
-    C.d=d;
-    C.el.style.transform='translate(-50%,-50%) rotateY('+a.toFixed(2)+'deg) translateZ('+(-R).toFixed(1)+'px)';
-    var op=cc<=.12?0:Math.min(1,(cc-.12)/.88);
-    C.el.style.opacity=op.toFixed(3);
-    C.el.style.pointerEvents=op>.5?'auto':'none';
-  }
-  var fi=((Math.round(LS.pos)%n)+n)%n,m=LS_META[LS.order[fi]];
-  if(LS.lastFi!==fi){
-    var _prevFi=LS.lastFi;LS.lastFi=fi;
-    /* 同上：这一屏刚立起来的那一次不算「换了一条线」 */
-    if(_prevFi>=0&&window.SX)SX('slide');
-    $('#lsNum').textContent=['01','02','03'][fi];
-    var sp=$('#lsTtl').children;sp[0].textContent=m.tag;sp[1].textContent=m.name;
-    $('#lsEra').textContent=m.sub;
-  }
-}
-function lsTick(){
-  if(!LS.on)return;
-  var now=performance.now();
-  if(!LS.drag){
-    if(LS.tgt!=null){LS.pos+=(LS.tgt-LS.pos)*.14;if(Math.abs(LS.tgt-LS.pos)<.002){LS.pos=LS.tgt;LS.tgt=null;}}
-    else{LS.pos+=LS.vel;LS.vel*=.90;if(Math.abs(LS.vel)<.0015){LS.tgt=Math.round(LS.pos);}}
-  }
-  lsLayout();
-  LS.cards.forEach(function(c){
-    if(!c.pts){lsSeed(c);if(!c.pts)return;}
-    if(parseFloat(c.el.style.opacity)<=0)return;
-    var g=c.g,W=c.cv.width,H=c.cv.height,cx=W/2,cy=H/2;
-    var S=H*(c.kind==='pyramid'?.72:.80),F=2.6,dpr=c.dpr||1;
-    /* 转角：正面起步，聚形完成之后才开始慢慢转。
-       原来写的是 now*.00028——now 是页面打开至今的绝对毫秒数，
-       于是聚形结束时停在哪个角度全看用户在前面停留了多久，多半停在侧面。
-       改成从这张卡自己的 t0 起算；再加一个 π——几何上正面（有陛那一面）在 +z，
-       而 rot=0 时 +z 是背对镜头的，转半圈才是正脸。 */
-    var asm0=now-c.t0,done0=asm0>LS_ASM;
-    var rot=Math.PI-c.d*.85+(done0?(asm0-LS_ASM)*.00022:0);
-    var ca=Math.cos(rot),sa=Math.sin(rot);
-    g.clearRect(0,0,W,H);
-    var gy=cy+S*.50;
-    g.strokeStyle='rgba(37,36,29,.20)';g.lineWidth=1;
-    g.setLineDash([3*dpr,5*dpr]);
-    g.beginPath();g.ellipse(cx,gy,S*.50,S*.115,0,0,Math.PI*2);g.stroke();
-    g.setLineDash([]);
-    g.globalCompositeOperation='lighter';
-    var asm=asm0,settled=done0;
-    for(var k=0;k<c.pts.length;k++){
-      var p=c.pts[k],q=c.cur[k];
-      if(!settled){var kk=(asm>q.delay)?.15:.02;      /* 归位速度从 .085 提到 .15 */
-        q.x+=(p.x-q.x)*kk;q.y+=(p.y-q.y)*kk;q.z+=(p.z-q.z)*kk;}
-      else{q.x=p.x;q.y=p.y;q.z=p.z;}
-      var x=q.x+Math.sin(now*.0011+k*1.7)*.0022,y=q.y,z=q.z+Math.cos(now*.0009+k)*.0022;
-      var px=x*ca+z*sa,pz2=-x*sa+z*ca;
-      var per=F/(F+pz2);
-      var sx=cx+px*S*per,sy=cy+(.50-y)*S*per;
-      var al=Math.max(.16,Math.min(.95,.24+(per-.93)*8));
-      var sz=(p.hi?2.5:1.8)*per*dpr*.75;
-    /* 逐点写 fillStyle＝逐点解析一次 CSS 颜色字符串。Chrome 会把它优化掉，
-       WebKit（酒馆的 macOS 客户端）不会：粒子成千上万，每帧就是上万次颜色解析。
-       改走分桶：alpha 量化 32 档，同色同档攒成一条 path 一次填。 */
-      if(p.hi)GB_push(1,(al*GB_N)|0,sx,sy,sz,sz);
-      else GB_push(3,(al*.85*GB_N)|0,sx,sy,sz,sz);
-    }
-    GB_flush(g);
-    g.globalCompositeOperation='source-over';
-  });
-  LS.raf=requestAnimationFrame(lsTick);
-}
-function lsOpen(){
-  lsBuild();
-  LS.pos=0;LS.vel=0;LS.tgt=null;LS.lastFi=-1;LS.moved=0;
-  $('#lineSel').classList.add('on');LS.on=true;
-  LS.cards.forEach(function(c){c.pts=null;});
-  cancelAnimationFrame(LS.raf);LS.raf=requestAnimationFrame(lsTick);
-}
-function lsClose(){LS.on=false;cancelAnimationFrame(LS.raf);$('#lineSel').classList.remove('on');}
-(function(){
-  var el=$('#lineSel'),drag=null;
-  el.addEventListener('pointerdown',function(e){
-    if(e.target.closest&&(e.target.closest('#lsFoot')||e.target.closest('#lsMission')))return;
-    drag={x:e.clientX,p:LS.pos};LS.drag=true;LS.moved=0;LS.tgt=null;
-    /* 不做指针捕获：捕获会把 pointerup 重定向到容器，三张卡就此点不动。 */
-  });
-  el.addEventListener('pointermove',function(e){
-    if(!drag)return;
-    var dx=e.clientX-drag.x;LS.moved=Math.max(LS.moved,Math.abs(dx));
-    var np=drag.p-dx/220;LS.vel=(np-LS.pos)*.5;LS.pos=np;
-  });
-  function up(){if(!drag)return;drag=null;LS.drag=false;}
-  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
-  el.addEventListener('wheel',function(e){if(!LS.on)return;e.preventDefault();LS.tgt=null;LS.vel+=e.deltaY*.00045;},{passive:false});
-  addEventListener('keydown',function(e){
-    if(!LS.on)return;
-    if(e.key==='ArrowRight'){LS.tgt=Math.round(LS.pos)+1;}
-    else if(e.key==='ArrowLeft'){LS.tgt=Math.round(LS.pos)-1;}
-    else if(e.key==='Enter'){var n=LS.order.length;lsPick(((Math.round(LS.pos)%n)+n)%n);}
-    else if(e.key==='Escape'){e.stopPropagation();lsClose();}
-  },true);
-  $('#lsGo').addEventListener('pointerup',function(e){e.stopPropagation();var n=LS.order.length;lsPick(((Math.round(LS.pos)%n)+n)%n);});
-  $('#lsBack').addEventListener('pointerup',function(e){e.stopPropagation();lsClose();});
-  addEventListener('resize',function(){if(LS.on)LS.cards.forEach(function(c){c.pts=null;});});
-})();
+
 /* 网页版隐藏世界书里的艳后卷页签 */
 try{if(linesEnabled().indexOf('cleo')<0){var _tb=document.querySelector('.cxTab[data-side="cleo"]');if(_tb)_tb.style.display='none';}}catch(_){}
 $('#miCont').addEventListener('pointerup',function(e){
