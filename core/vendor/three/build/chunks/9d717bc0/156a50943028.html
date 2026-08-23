@@ -9324,6 +9324,32 @@ function auPluck(){
 }
 /* —— 幕间乐：真曲库（古乐 34 + 攻壳 13，Fons Vitae 为首曲；按曲点播、放完自动下一首循环） —— */
 var BGM_LIST=[
+ /* 前二十二首搬自三叶那一份，排在最前，所以开机第一首就是它们
+    （BGM.i 初值是 0，进门放的是 bgmPlay(0)）。原先这一卡的四十七首顺次排在后面。
+    那边的 .dat 是裸的 mp3，这边的 .dat 要按本卡那道滚动异或写过一遍，
+    否则 bgmSrc 解出来是噪声 —— 搬的时候是重新编过的，不是原样拷贝。 */
+ {d:'7b00ad3944',t:"Nino Ferrer - La Marseillaise · 马赛曲"},
+ {d:'682ab3828b',t:"Édith Piaf - Le ça ira · 一切会好"},
+ {d:'4bb42ce62a',t:"Armand Mestral - L'Internationale · 国际歌"},
+ {d:'8bfd40e7e1',t:"Les Cœurs Révolutionnaires - Le drapeau rouge · 红旗"},
+ {d:'d3df449cb9',t:"Les Cœurs Révolutionnaires - En avant la classe ouvrière"},
+ {d:'5a1c4eb660',t:"Les Cœurs Révolutionnaires - Le front des travailleurs"},
+ {d:'89bd5db6d6',t:"Armand Mestral - Le chant des partisans · 游击队之歌"},
+ {d:'362eec6760',t:"Armand Mestral - Le chant des ouvriers · 工人之歌"},
+ {d:'8858cb89a4',t:"Yves Montand - Le temps des cerises · 樱桃时节"},
+ {d:'4f11d3bfd0',t:"Yves Montand - La butte rouge · 红色山丘"},
+ {d:'58237b42f2',t:"Yves Montand - Les canuts · 里昂织工"},
+ {d:'1f4e007409',t:"Yves Montand - Le galérien"},
+ {d:'ea29e27a9d',t:"Yves Montand - J'avions reçu commandement"},
+ {d:'438fb119b5',t:"Yves Montand - Rendez-vous avec la liberté · 与自由有约"},
+ {d:'bce0b304d4',t:"Catherine Sauvage - La grève · 罢工"},
+ {d:'fe42ec1336',t:"Catherine Sauvage - L'affiche rouge · 红色布告"},
+ {d:'d1cf730107',t:"Mouloudji - L'insurgé · 起义者"},
+ {d:'db5b3c56c9',t:"Mouloudji - Le déserteur · 逃兵"},
+ {d:'d033661abb',t:"Germaine Montero - Complainte des assassins"},
+ {d:'f356773c9b',t:"Les Compagnons De La Chanson - Aux marches du palais · 宫阶之上"},
+ {d:'b3a1b33d0f',t:"Léo Ferré - Graine d'ananar"},
+ {d:'3dd92967d2',t:"André Dassary - Maréchal nous voilà"},
  {d:'ccad07e1de',t:"Fons Vitae"},
  {d:'61916d8641',t:"Aenaoi Nefelai"},
  {d:'80979164f0',t:"Anakrousis - Orestes Stasimo"},
