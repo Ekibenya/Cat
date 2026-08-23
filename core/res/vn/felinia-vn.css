@@ -1,0 +1,59 @@
+/* FELINIA visual-novel stage */
+#pnTx,.g3dRail{display:block!important}
+#pnTx{background:#15120d!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#pnTx::after{display:none!important}
+#vnIsle{position:absolute;inset:0;overflow:hidden;background:#15120d;isolation:isolate}
+#vnBgA,#vnBgB{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity 1.05s ease;filter:saturate(.9) contrast(1.03)}
+#vnWash{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:none;box-shadow:none}
+#vnCast,#vnEnsemble{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+#vnEnsemble{z-index:2}
+#vnCast .vnActor{position:absolute;top:3%;bottom:auto;left:50%;height:240%;max-width:84%;object-fit:contain;
+  object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.66));
+  opacity:1;transition:left .8s cubic-bezier(.3,.1,.25,1),filter .55s ease,transform .55s ease}
+#vnCast .vnActor.speaking{filter:drop-shadow(0 8px 20px rgba(0,0,0,.72)) brightness(1.08);
+  transform:translateX(-50%) translateY(-1.5%) scale(1.025)}
+#vnEnsemble img,#vnEnsemble canvas{position:absolute;left:50%;top:3%;bottom:auto;width:120%;height:240%;object-fit:contain;
+  object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.64));opacity:1}
+#game.tx2 #vnCast .vnActor{top:2%;bottom:auto;height:160%;max-width:62%}
+#game.tx2 #vnEnsemble img,#game.tx2 #vnEnsemble canvas{top:2%;bottom:auto;width:108%;height:160%}
+#game.txBig #vnCast .vnActor{top:auto;bottom:0;height:94%;max-width:46%}
+#game.txBig #vnEnsemble img,#game.txBig #vnEnsemble canvas{top:auto;bottom:0;width:96%;height:94%}
+#vnEra{position:absolute;left:13px;top:10px;z-index:5;max-width:62%;padding:5px 8px;
+  color:#f3ead8;background:rgba(22,16,9,.66);border-left:2px solid rgba(201,155,63,.8);
+  font:10px/1.45 var(--mono);letter-spacing:.12em;text-shadow:0 1px 4px #000}
+#vnEra b{display:block;font-weight:500;color:#d7b56d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vnEra span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(243,234,216,.76)}
+#vnLoc{position:absolute;right:12px;top:10px;z-index:5;writing-mode:vertical-rl;max-height:65%;overflow:hidden;
+  color:rgba(230,204,150,.86);font:11px/1.5 var(--mono);letter-spacing:.25em;text-shadow:0 1px 6px #000}
+#vnSpeaker{position:absolute;left:13px;bottom:10px;z-index:5;padding:4px 8px;border:1px solid rgba(201,155,63,.45);
+  background:rgba(18,13,7,.72);color:#f1e7d2;font:10px/1.2 var(--mono);letter-spacing:.12em;opacity:0;transition:opacity .35s ease}
+#vnSpeaker.on{opacity:1}
+#vnCoverage{position:absolute;right:10px;bottom:9px;z-index:6;padding:4px 7px;border:1px solid rgba(235,219,184,.3);
+  background:rgba(18,13,7,.66);color:rgba(241,231,210,.82);font:9px/1.2 var(--mono);letter-spacing:.1em;cursor:pointer}
+#vnCoverage:hover{border-color:rgba(201,155,63,.7);color:#fff}
+#vnAudit{position:absolute;right:8px;bottom:34px;z-index:8;width:min(310px,72%);padding:10px 12px;
+  border:1px solid rgba(201,155,63,.58);background:rgba(17,13,8,.92);color:#e9dfca;font:10px/1.65 var(--mono);
+  box-shadow:0 10px 30px rgba(0,0,0,.45);display:none}
+#vnAudit.on{display:block}
+#vnAudit b{color:#d6b267;font-weight:500}
+#vnAudit .ok{color:#b7c68b}
+#arr3d .t{font-size:0}
+#arr3d .t::before{content:'绘卷';font-size:8px}
+#game.txOpen.tx2 #arr3d .t::after{content:'·放大';font-size:8px}
+#game.txOpen.txBig #arr3d .t::after{content:'·全屏';font-size:8px}
+@media(max-width:760px){
+  #vnCast .vnActor{top:2%;height:240%;max-width:90%}
+  #vnEnsemble img,#vnEnsemble canvas{top:2%;height:240%;width:130%}
+  #game.tx2 #vnCast .vnActor{height:150%;max-width:68%}
+  #game.tx2 #vnEnsemble img,#game.tx2 #vnEnsemble canvas{height:150%;width:114%}
+  #game.txBig #vnCast .vnActor{top:auto;height:92%;max-width:52%}
+  #game.txBig #vnEnsemble img,#game.txBig #vnEnsemble canvas{top:auto;height:92%;width:102%}
+  #vnEra{left:8px;top:7px;max-width:68%;font-size:8px}
+  #vnLoc{right:7px;top:7px;font-size:9px}
+  #vnSpeaker{left:8px;bottom:7px;font-size:8px}
+  #vnCoverage{right:7px;bottom:6px;font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){#vnBgA,#vnBgB,#vnCast .vnActor{transition:none}}

@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/core/res/icon/favicon-32.png">
 <link rel="apple-touch-icon" href="/core/res/icon/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=2">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -149,7 +150,7 @@ canvas{display:block}
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/></filter><rect width='260' height='260' filter='url(%23p)' opacity='.5'/></svg>");
   background-size:260px 260px}
 /* 三维天下整层停用，面板与那一列钮一并收起，免得对局屏上留一块空框 */
-#pnTx,.g3dRail{display:none!important}
+#pnTx,.g3dRail{display:block!important}
 #menu #mosCv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
   transform:translateZ(0)}
 #menu.era #mosCv,#menu.gbg #mosCv{display:none}
@@ -2144,14 +2145,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <span class="t">装备</span></div>
   </div>
 
-  <div id="pnTx"><div id="zjScene3D" style="position:absolute;inset:0"></div><div id="mdScene3D" style="position:absolute;inset:0;display:none;outline:none"></div><div id="modScene3D" style="position:absolute;inset:0;display:none;background:#f0eadc"><canvas id="mcGl" style="position:absolute;inset:0;width:100%;height:100%"></canvas><canvas id="mcOv" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none"></canvas></div>
-    <div id="txHint"></div>
+  <div id="pnTx"><div id="vnIsle"><img id="vnBgA" alt=""><img id="vnBgB" alt=""><div id="vnEnsemble"></div><div id="vnWash"></div><div id="vnCast"></div><div id="vnEra"></div><div id="vnLoc"></div><div id="vnSpeaker"></div><button id="vnCoverage" type="button">图库载入中</button><div id="vnAudit"></div></div>
   </div>
   <div class="g3dRail">
-    <div class="gArr" id="arr3d" title="3D 场景　点一下换一档：默认 → 放大 → 全屏 → 收起">
+    <div class="gArr" id="arr3d" title="视觉小说绘卷　点一下换一档：默认 → 放大 → 全屏 → 收起">
       <div class="win"><canvas class="m3d" width="128" height="88"></canvas></div>
       <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2.6 21 7.4v9.2L12 21.4 3 16.6V7.4z"/><path d="M3 7.4l9 4.8 9-4.8M12 12.2v9.2"/></svg></div>
-      <span class="t">3D场景</span></div>
+      <span class="t">绘卷</span></div>
   </div>
   <div class="gPanel" id="pnMap">
     <canvas id="gmapCv"></canvas>
@@ -6255,7 +6255,7 @@ function gameShow(){
   }else if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));
   GAME.on=true;gEl.classList.add('show');gEl.setAttribute('data-pg','narr');
   /* 桌面端进入游戏默认展开天下面板（默认条档） */
-  if(false){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');try{localStorage.setItem('med3d_tier','0');}catch(_){}setTimeout(zj3dTick,600);} /* 手机亦默认开三维（默认条档，LOD 自动降耗） */
+  if(true){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');setTimeout(zj3dTick,300);} /* 视觉小说绘卷默认展开 */
   /* 这里直接改了 txOpen 与 class，绕过了展开／收起两钮的重绘——不补这一脚，
      钮的灰态会一直停在「脚本刚解析时」的样子。 */
   try{if(window.__arrPaint)window.__arrPaint();}catch(_){}
@@ -10679,7 +10679,16 @@ document.querySelector('#game .gMfd').addEventListener('click',function(e){
   op.classList.add('on');
 });
 /* dialogs */
-function gDlgShow(id){$(id).style.display='flex';}
+function gDlgShow(id){
+  /* 弹窗必须互斥。旧实现只把新窗设成 flex，已经打开的窗仍完整留在下面；
+     每一层 .gDlg .box 都会再做一次 backdrop-filter，Chrome 会逐层重采样整页，
+     连开数窗后 GPU 合成负担会成倍增长。先释放旧层，再显示目标窗；视觉效果不变。 */
+  var target=$(id);
+  if(!target)return;
+  var ds=document.querySelectorAll('.gDlg');
+  for(var i=0;i<ds.length;i++)if(ds[i]!==target)ds[i].style.display='none';
+  target.style.display='flex';
+}
 $('#gtCfg').addEventListener('click',function(){applyCfg();gDlgShow('#dlgCfg');});
 $('#gtBook').addEventListener('click',function(){bookRender();gDlgShow('#dlgBook');});
 $('#gtSave').addEventListener('click',function(){svOpen();});
@@ -11969,6 +11978,12 @@ function currentPanel(){
   }
   return acc;
 }
+window.__FELVN_STATE__=function(){
+  var text='';
+  try{for(var i=TURNS.length-1;i>=0;i--)if(TURNS[i].role==='assistant'){text=String(TURNS[i].content||'');break;}}catch(_){}
+  var hero='';try{hero=heroName()||'';}catch(_){}
+  return {panel:currentPanel()||{npcs:[],world:{}},op:GAME.op||null,text:text,hero:hero};
+};
 var ZJ_LOCS=[
   {name:'洛邑',ch:'周',kind:'cap',x:430,y:322,note:'周王城 · 天下之中'},
   {name:'咸阳',ch:'秦',kind:'cap',x:148,y:295,note:'秦都 · 据崤函之固'},
@@ -12751,6 +12766,7 @@ MODCITY.setTravel(function(name,isPoi,wx,wz){
   }catch(_){}});
 function zj3dTick(){
   try{
+    if(window.FELVN&&FELVN.tick){FELVN.tick(window.__FELVN_STATE__?window.__FELVN_STATE__():null);return;}
     /* 三维那一层停用了。这里再挡一道：存档里带着旧的展开档位、
        或是别处把 txOpen 打开，都不该把资材包与现代城的点云拉起来。 */
     if(window.__ZJ3D_OFF__)return;
@@ -14742,5 +14758,6 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
   try{ctx();}catch(e){}
 })();
 </script>
+<script src="/core/res/vn/felinia-vn.js"></script>
 </body>
 </html>
