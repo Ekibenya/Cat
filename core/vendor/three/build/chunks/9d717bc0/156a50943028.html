@@ -1734,13 +1734,18 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   perspective:1700px;perspective-origin:50% 50%;pointer-events:none}
 /* 高度跟着内容走，竖向居中：内容少的那一步（择地）就是两块小板浮在图上，
    内容多的（立身、识人）撑到接近满高为止。整块占满屏反而不像「浮着」。 */
-.fePan{position:absolute;top:50%;height:auto;max-height:calc(100% - 32px);
-  pointer-events:auto;transform-origin:50% 50%;--feTilt:8deg;--feFit:.985;
+/* feFit 原来是挂在 transform 上的 scaleY(.985)，用来抵掉近边被透视放大的那一点。
+   代价是：边框那一像素和四角的角标落在同一个「旋转过又非等比缩放过」的平面上，
+   光栅化时各自取整到不同的物理像素行 —— 近的那一边（放大最多的一边）就裂开一道，
+   看着像框漏了一小块没对齐。
+   改成从高度上直接减掉这 1.5%：一样不顶出台子，而平面只剩纯旋转，边框不再被拉伸。 */
+.fePan{position:absolute;top:50%;height:auto;max-height:calc((100% - 32px) * .985);
+  pointer-events:auto;transform-origin:50% 50%;--feTilt:8deg;
   display:flex;transition:transform .34s cubic-bezier(.2,.85,.25,1)}
 #fePanL{left:3%;width:27%;
-  transform:translateY(-50%) rotateY(var(--feTilt)) scaleY(var(--feFit))}
+  transform:translateY(-50%) rotateY(var(--feTilt))}
 #fePanR{right:3%;width:35%;
-  transform:translateY(-50%) rotateY(calc(var(--feTilt) * -1)) scaleY(var(--feFit))}
+  transform:translateY(-50%) rotateY(calc(var(--feTilt) * -1))}
 
 /* 立身时把左右板之间原本露出的空档交给当前人物。立绘保持真彩与实色，
    不挂半透明、模糊或渐变遮罩；长图贴底按完整身形显示。 */
