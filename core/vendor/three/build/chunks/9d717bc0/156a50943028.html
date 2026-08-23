@@ -9294,8 +9294,11 @@ function applyGlass(){
        先前并进上面那一条，是为了跟左边三扇长得一样 —— 是长一样了，
        可这六扇身后还压着台底（.gMfd）和暗角，三层奶油叠起来就成了实心板。
        发黄那一次的病根是 saturate，已经拆掉；薄这一件事得单独再压一道。 */
-    +'.gMfd.mvDeck .mvWin,.feGl'      /* 铸局四步那两扇与情报台同一档 */
-    +'{background:rgba(237,231,217,'+(.02+.09*a).toFixed(2)+') !important}'
+    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.02+.09*a).toFixed(2)+') !important}'
+    /* 铸局四步那两扇：玻璃配方照抄情报台（边框·投影·blur(3px) 都一样），
+       只有底色单开一档更实的 —— 情报台那六扇身后是三维画面，透到 .09 也读得动；
+       这两扇身后是整幅马赛克世界图，颗粒碎、明暗跳，透到那一档字就浮起来了。 */
+    +'.feGl{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
