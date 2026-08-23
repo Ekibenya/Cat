@@ -1769,13 +1769,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   color:#4a4237;font-size:9px;letter-spacing:.14em}
 /* 玻璃本身单独一层：模糊挂在它身上，内容压在上面另走一层，
    这样内容滚动时不会带着毛玻璃一起重算。 */
-/* 底色原来是 .84 —— 那已经不是玻璃，是一块纸，底下那张图一点都透不出来。
-   压到 .40，同时把模糊从 9px 提到 14px：底下是马赛克世界图，颗粒很碎，
-   透过来不多糊一道，字会被底纹搅得读不动。薄一档和糊一档要一起做。 */
-.feGl{position:absolute;inset:0;background:rgba(252,252,252,.28);
-  border:1px solid rgba(154,116,42,.34);
-  box-shadow:0 16px 38px rgba(74,66,55,.18),0 2px 0 rgba(255,255,255,.5) inset;
-  -webkit-backdrop-filter:blur(14px) saturate(120%);backdrop-filter:blur(14px) saturate(120%)}
+/* 配方与情报台那六扇（.gMfd.mvDeck .mvWin）一个数不差：底色、边框、投影、模糊全抄。
+   底色这一行只是兜底，真正生效的是 applyGlass 里跟拉杆算出来的那一档 —— 这两扇
+   已经并进情报台那一条选择器，所以「面板透明度」一拉，两处一起动。 */
+.feGl{position:absolute;inset:0;background:rgba(237,231,217,.34);
+  border:1px solid rgba(19,18,13,.20);
+  box-shadow:0 14px 34px rgba(242,236,222,.5);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .feIn{position:relative;z-index:1;flex:1 1 auto;min-width:0;overflow-y:auto;
   padding:16px 18px;scrollbar-width:thin}
 .feIn::-webkit-scrollbar{width:6px}
@@ -2581,10 +2581,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   <div id="feBg"><div id="feMap"><div id="feMapIn"><img id="feMapImg" alt=""></div></div></div>
 
   <div id="feHead">
-    <span><b>FELINIA</b>&nbsp;·&nbsp;<span class="st" id="feStName">择地</span></span>
+    <span><b>FELINIA</b>&nbsp;·&nbsp;<span class="st" id="feStName">地点</span></span>
     <span id="feSteps">
-      <i data-i="loc">LOCVS&nbsp;择地</i><i data-i="per">PERSONA&nbsp;立身</i>
-      <i data-i="soc">SOCII&nbsp;识人</i><i data-i="sit">SITVS&nbsp;此刻</i>
+      <i data-i="loc">LOCVS&nbsp;地点</i><i data-i="per">PERSONA&nbsp;人物</i>
+      <i data-i="soc">SOCII&nbsp;同伴</i><i data-i="sit">SITVS&nbsp;开场</i>
     </span>
     <span class="er" id="feEraLbl"></span>
   </div>
@@ -4885,7 +4885,7 @@ function esBackToLines(){esClose();menuEnter();}
 var FE={ld:0,eras:null,gen:null,lore:null,ko:null,mm:null,mi:null,vn:null,
         era:null,line:null,loc:null,hero:null,soc:[],cur:null,pool:[],
         step:'loc',salt:0};
-var FE_STEPS=[['loc','择地'],['per','立身'],['soc','识人'],['sit','此刻']];
+var FE_STEPS=[['loc','地点'],['per','人物'],['soc','同伴'],['sit','开场']];
 var FE_BASE='/core/res/data/felinia/';
 
 /* ── 取数：五样一次取齐，缺一样就算没取到 ── */
@@ -9294,7 +9294,8 @@ function applyGlass(){
        先前并进上面那一条，是为了跟左边三扇长得一样 —— 是长一样了，
        可这六扇身后还压着台底（.gMfd）和暗角，三层奶油叠起来就成了实心板。
        发黄那一次的病根是 saturate，已经拆掉；薄这一件事得单独再压一道。 */
-    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.02+.09*a).toFixed(2)+') !important}'
+    +'.gMfd.mvDeck .mvWin,.feGl'      /* 铸局四步那两扇与情报台同一档 */
+    +'{background:rgba(237,231,217,'+(.02+.09*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
