@@ -328,12 +328,20 @@ def build_lore(eras):
              这一层不计进世界书的八百到一千二百条里，那个数只数前端加后端。
 
     哪一层的成品没回来就在这里停住。宁可造不出卡，不许放没走过沙盒的字进去。
+
+    两栏各管各的：lay 决定归到哪个文件，ord 决定一回合里谁先拿注入预算。
+    原来两件事挤在 ord 一栏里，想把本代的条目提到文字案例前面，
+    四个文件就跟着散架。分开以后各调各的，互不牵连。
+
+      ord  5 母条目 · 10—17 通则 · 21 文字铁则 · 30 本代 ·
+           35 文字案例 · 50 横断 · 55 背景 · 60 人物
+      lay  core · style · world · figures
     """
     import wb as wbpkg
     lb, ord_ = [], 10
     for c in CORE:
         lb.append({'title': '〔通则〕' + c['t'], 'cat': '通则', 'keys': c['k'],
-                   'constant': True, 'on': True, 'ord': ord_,
+                   'lay': 'core', 'constant': True, 'on': True, 'ord': ord_,
                    'content': NL.join('· ' + x for x in c['c'])})
         ord_ += 1
 
@@ -346,15 +354,27 @@ def build_lore(eras):
         raise SystemExit('文风条目还没从封闭沙盒回来：' + STYLE)
     st = json.load(io.open(STYLE, encoding='utf-8'))
     for e in st:
+        always = e['cat'] in ALWAYS
         lb.append({'title': e['title'], 'cat': '文字 · ' + e['cat'],
-                   'keys': e['keys'], 'on': True,
-                   'constant': e['cat'] in ALWAYS, 'ord': 20,
+                   'keys': e['keys'], 'on': True, 'lay': 'style',
+                   'constant': always, 'ord': 21 if always else 35,
                    'content': e['content']})
 
-    # 后端。
+    # 后端。层号决定谁先拿注入预算——这一桶只有五千字，装不下全部命中的条目。
+    #   30 本代   玩家正在这一代里，先给它。排在文字案例前面
+    #   50 横断   哪一代都在的门类条目
+    #   55 背景   通史与研究册，最后拿
+    # 原来这三种一律 50，于是按数组次序抢：通史排在前面，本代那十四条每回合
+    # 全被挤掉——实测纪年十三在集市里，本代十四条一条都没进过提示词。
     for e in wbpkg.load():
-        d = {'title': e['title'], 'cat': e['cat'], 'keys': e['keys'],
-             'on': True, 'constant': False, 'ord': 50, 'content': e['content']}
+        if e.get('era'):
+            o = 30
+        elif e['cat'] in ('通史', '研究册'):
+            o = 55
+        else:
+            o = 50
+        d = {'title': e['title'], 'cat': e['cat'], 'keys': e['keys'], 'lay': 'world',
+             'on': True, 'constant': False, 'ord': o, 'content': e['content']}
         if e.get('era'):
             d['era'] = e['era']
         lb.append(d)
@@ -364,18 +384,91 @@ def build_lore(eras):
         for p in sorted(glob.glob(os.path.join(FIGDIR, 'e%02db*.zh.lore.json' % e['i']))):
             for x in json.load(io.open(p, encoding='utf-8')):
                 lb.append({'title': x['title'], 'cat': '人 · ' + x['cat'],
-                           'keys': x['keys'], 'era': e['i'],
+                           'keys': x['keys'], 'era': e['i'], 'lay': 'figures',
                            'on': True, 'constant': False, 'ord': 60,
                            'content': x['content']})
+    lb.insert(0, build_index(lb))
     return lb
+
+
+def build_index(lb):
+    """母条目：这本书里有什么、想查什么念哪个词。
+
+    一千九百条按词触发，神谕看不见箱子里有什么，只能撞词——撞不上的条目
+    等于不存在。这一条是常驻的目录，每回合都在，把层次、门类和取词的办法
+    摆给它看。条数与门类是从装好的条目现数的，不是手写的，所以不会写错。
+    """
+    import collections
+    lay = collections.Counter()
+    for e in lb:
+        lay[e['ord'] if e['ord'] < 20 else (e['ord'] // 5) * 5] += 1
+    n_core = sum(v for k, v in lay.items() if k < 20)
+    n_fix = sum(1 for e in lb if e['ord'] == 21)
+    n_case = sum(1 for e in lb if e['ord'] == 35)
+    n_era = sum(1 for e in lb if e['ord'] == 30)
+    n_cross = sum(1 for e in lb if e['ord'] == 50)
+    n_bg = sum(1 for e in lb if e['ord'] == 55)
+    n_fig = sum(1 for e in lb if e['ord'] == 60)
+    n_era_each = n_era // max(1, len(set(e['era'] for e in lb if e['ord'] == 30)))
+    who = len(set(e['cat'] for e in lb if e['ord'] == 60))
+    cross = collections.Counter(e['cat'] for e in lb if e['ord'] == 50)
+
+    L = ['这一条是目录，不是设定。目录里的话一个字都不许写进正文。',
+         '全书 %d 条。分七层，层号小的先摆，先摆的先拿注入预算。' % (len(lb) + 1),
+         '层 5 · 母条目 1 条 · 每回合都在 · 就是这一条。',
+         '层 10 · 通则 %d 条 · 每回合都在 · 身体、血与卫生、窝群与生育、'
+         '军务、服装、情绪与尾语、同类沟通，外加一份常错清单。' % n_core,
+         '层 21 · 文字铁则 %d 条 · 每回合都在 · 叙法八条与禁止八条，'
+         '每一句正文都要照。' % n_fix,
+         '层 30 · 本代 %d 条 · 念到词才出 · 定了纪年就只发这一代的，'
+         '每代 %d 条，别代一条不发。' % (n_era, n_era_each),
+         '层 35 · 文字案例 %d 条 · 念到词才出 · 说话的样子、往来的话、'
+         '心里话、身份口吻。' % n_case,
+         '层 50 · 横断 %d 条 · 念到词才出 · 哪一代都在，按门类分。' % n_cross,
+         '层 55 · 背景 %d 条 · 念到词才出 · 通史与研究册，最后才拿预算。' % n_bg,
+         '层 60 · 人物 %d 条 · 念到词才出 · %d 位，每位 %d 条，念名字就出来。'
+         % (n_fig, who, n_fig // max(1, who)),
+         '一回合装得下大约五千字。上面这些不会一起进来，只进念到的那几条。',
+         '',
+         '本代那 %d 条各管一件事，取词的办法：' % n_era_each,
+         '国家、历史、地点、这一代该照的母本条款 —— 写出这一代的地名就出。',
+         '政治 —— 写：告状、规矩、官府、管事、争执、谁说了算。',
+         '事件 —— 写：出事、丢了、失踪、吵起来、报官、闹。',
+         '野史 —— 写：都说、听说、传闻、据说、邪门、不干净。',
+         '身份与差事 —— 写：差事、当差、活计、雇、工头、派活。',
+         '服装 —— 写：衣裳、穿、袍、制服、鞋、围裙。',
+         '住处与钱 —— 写：钱、房钱、租、工钱、价、住处。',
+         '军务 —— 写：军、兵、巡、哨、操练、号令。',
+         '家与窝群 —— 写：窝、姊妹、母亲、女儿、娘家、生养。',
+         '在场的人、在场的小人物 —— 写人名。',
+         '',
+         '横断那 %d 条按门类分。要哪一门，正文里就把门类名写出来：' % n_cross]
+    row = []
+    for k, v in sorted(cross.items(), key=lambda x: (-x[1], x[0])):
+        row.append('%s %d' % (k, v))
+        if len(row) == 6:
+            L.append('、'.join(row))
+            row = []
+    if row:
+        L.append('、'.join(row))
+    L += ['',
+          '用法：这一回合写到的词，决定下一回合哪几条进来。要用某一门的料，'
+          '先在正文里把那个词写出来。',
+          '禁止：把层号、条数、门类名、这张目录本身写进正文。',
+          '禁止：因为某一条这回合没进来，就自己编一条顶上。没进来就不写那件事。']
+    return {'title': '〔母条目〕世界书总目：有什么、怎么查',
+            'cat': '母条目', 'lay': 'core',
+            'keys': ['世界书', '总目', '目录', '条目', '怎么查', '母条目'],
+            'constant': True, 'on': True, 'ord': 5,
+            'content': NL.join('· ' + x if x else '' for x in L)}
 
 
 def lore_tally(lb):
     """按层数一遍。人物那一层不计进八百到一千二百。"""
-    core = sum(1 for e in lb if e['ord'] < 20)
-    front = sum(1 for e in lb if e['ord'] == 20)
-    back = sum(1 for e in lb if e['ord'] == 50)
-    figs = sum(1 for e in lb if e['ord'] == 60)
+    core = sum(1 for e in lb if e['lay'] == 'core' and e['ord'] >= 10)
+    front = sum(1 for e in lb if e['lay'] == 'style')
+    back = sum(1 for e in lb if e['lay'] == 'world')
+    figs = sum(1 for e in lb if e['lay'] == 'figures')
     return core, front, back, figs
 
 
@@ -401,9 +494,9 @@ def main(partial=False):
     locs = sum(len(e['locs']) for e in ERAS)
     lb = data[2][1]
     core, front, back, fent = lore_tally(lb)
-    ln = [len(e['content']) for e in lb if e['ord'] in (20, 50)]
+    ln = [len(e['content']) for e in lb if e['lay'] in ('style', 'world')]
     print('已编译 · 纪年 %d 条 · 地点 %d 处 · 人物 %d 位' % (len(ERAS), locs, nfig))
-    print('世界书 · 通则 %d ＋ 前端 %d ＋ 后端 %d ＝ %d 条（八百到一千二百之间）'
+    print('世界书 · 母条目 1 ＋ 通则 %d ＋ 前端 %d ＋ 后端 %d ＝ %d 条（八百到一千二百之间）'
           % (core, front, back, front + back))
     print('        每条平均 %d 字（母本卡一百六十五字的 %.1f 倍）· 人物条目另计 %d 条'
           % (sum(ln) // max(1, len(ln)), sum(ln) / max(1, len(ln)) / 165.0, fent))

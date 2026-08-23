@@ -258,15 +258,20 @@ def main():
 
     # 世界书按层分成四份。cardbuild.py 按文件名序拼，core.json 排最前。
     # 分开摆是为了看得见：哪一层出自封闭沙盒，哪一层不是。
-    #   core    通则。常驻，每回合都在
-    #   style   文字。前端 —— 叙法·禁止·说话的样子·对白与心声案例·身份口吻
-    #   world   世界。后端 —— 背景与时代，免走沙盒
-    #   figures 人物。每人六条，出自封闭沙盒；不计进世界书那八百到一千二百条
+    #   core    母条目与通则。常驻，每回合都在
+    #   style   文字。铁则（常驻）与案例
+    #   world   世界。本代 · 横断 · 背景
+    #   figures 人物。每人六条；不计进世界书那八百到一千二百条
+    # 原来 core 是按「常驻」筛的，于是十六条文字铁则被算进通则那一份，
+    # 四个文件对不上四层。现在按条目自带的 lay 切，文件与层一一对上；
+    # ord 那一栏只管注入次序，两件事各调各的。
     lore = json.load(io.open(os.path.join(FEL, 'lore.json'), encoding='utf-8'))
-    part = [('core', [e for e in lore if e.get('constant')]),
-            ('style', [e for e in lore if not e.get('constant') and e['ord'] == 20]),
-            ('world', [e for e in lore if not e.get('constant') and e['ord'] == 50]),
-            ('figures', [e for e in lore if e['ord'] == 60])]
+    part = [(n, [e for e in lore if e.get('lay') == n])
+            for n in ('core', 'style', 'world', 'figures')]
+    lost = [e['title'] for e in lore if e.get('lay') not in
+            ('core', 'style', 'world', 'figures')]
+    if lost:
+        raise SystemExit('这些条目没有 lay，装不进任何一份：' + '、'.join(lost[:5]))
     d = os.path.join(DATA, 'lore')
     if not os.path.isdir(d):
         os.makedirs(d)
