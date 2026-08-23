@@ -23,6 +23,12 @@
     if(B)return B;
     B=document.createElement('div');
     B.className='gDlg';B.id='dlgEra';B.style.zIndex='88';
+    /* 遮罩不做淡入。别的弹窗都开在主菜单上，底子本来就是浅奶油，遮罩淡入看不出来；
+       这一扇开在纪年轴上，正中那张图版是深色的 —— 遮罩从 0 走到 1 的那两百毫秒里，
+       整屏由深转浅，看着就是「开窗时颜色变一下」。
+       实测那条时间线：一百二十毫秒遮罩才起步，一百八十毫秒盒子才露头，
+       五百毫秒才走完。遮罩改成一上来就到位，底子一次定死，只剩盒子浮起来。 */
+    B.style.animation='none';
     B.innerHTML='<div class="box" role="dialog" aria-modal="true" aria-labelledby="erTtl"'
       +' style="max-width:min(calc(94vw/var(--ui)),640px)">'
       +'<span class="tag">ANNALES</span>'
@@ -92,9 +98,13 @@
     build();
     ST.ok=ok;ST.no=no;ST.row=row;
     fill(row, eraOf(row.i));
-    /* display 一换，.gDlg 的 mvFade 与 .box 的 mvRise 就各自重放一遍 */
-    B.style.display='none';
-    void B.offsetWidth;
+    /* 关着的时候本来就是 display:none，直接改成 flex 动画就会重放一遍。
+       原先这里多写了一句「先设回 none，再强制读一次 offsetWidth」——
+       那一下强制同步布局把元素在合成器里拆了重建，头一帧还没有
+       backdrop-filter 的图层，于是按「没有滤镜」先画一次：实测中央平均色
+       (122,115,104)，下一帧滤镜到位跳到 (182,173,157)，就是开窗那一下变色。
+       卡里自带的弹窗（gDlgShow）从来只写 display='flex'，实测色差是 0。
+       所以那两句不是必要的，是这一处独有的病根。 */
     B.style.display='flex';
     try{B.querySelector('#erGo').focus();}catch(_){}
     /* 资料是异步取的：先用手头这点摆上，取回来再补齐。
