@@ -1434,8 +1434,15 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    名字同样写在窗外下面一行。上了台的那扇窗才用 .gPanel 那一套（带投影的玻璃）。 */
 .mvCard.thumb .mvBody{overflow:hidden;pointer-events:none}
 .mvCard.thumb .ftag,.mvCard.thumb .fnum{display:none}
-.gMfd.mvDeck .mvCard.thumb .cfr{background:rgba(237,231,217,.42) !important;
-      border-color:rgba(19,18,13,.30);box-shadow:none}
+.gMfd.mvDeck /* 这条边框是情报台那六扇窗背后唯一的东西。1 像素、0.30 的近黑，
+   对比约五十五个灰阶；隔着毛玻璃一摊，峰值只剩三四个灰阶，等于没有。
+   病根是线太细 —— 加粗到 2 像素、压深到 0.55，让它经得起摊。 */
+  .mvCard.thumb .cfr{background:rgba(237,231,217,.42) !important;box-shadow:none}
+/* 未选中的缩略卡那条边框，加粗压深。权重要够：同一条边框另有三条规则在争，
+   其中两条带 !important，而 .gMfd.mvDeck .mvCard .cfr 的类数还比这条多。
+   所以带上 #game、排除 .on（选中的那张本来就是金色，不归这里管）、加 !important。 */
+#game .gMfd.mvDeck .mvCard.thumb:not(.on) .cfr{
+  border-width:2px !important;border-color:rgba(19,18,13,.55) !important}
 .mvCard .ic{position:absolute;left:-11px;bottom:-7px;width:22px;height:22px;z-index:5;
       background:#e9e3d6;border:1px solid rgba(19,18,13,.34);opacity:0;
       display:flex;align-items:center;justify-content:center;
@@ -1485,7 +1492,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
          同处撤掉的还有 brightness(.955)——旁边注释说要 2.6 倍增益，
          写下的却是 .955（那是同一行 scale(.955) 的数，抄串了行），
          实际在压暗而不是提亮。两道一起去掉，配方就与左边合一。 */
-      -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
+      /* 半径从 9px 收到 3px。高斯模糊把一条 1 像素的线摊成约 2R 宽的浅影，
+         峰值按 1/(2R) 掉：9px 剩十八分之一，3px 剩六分之一 —— 亮三倍。
+         左边三扇背后是三维画面，大块高对比，糊不掉，所以它们照旧 9px。 */
+      -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
       transform:perspective(620px) translateX(26px) scale(.955) rotateY(var(--mvTilt)) scaleY(var(--mvFit));
       opacity:0;pointer-events:none;
       transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease}
@@ -9289,7 +9299,10 @@ function applyGlass(){
        系数比宽屏高一档但远低于原来的 .62——浮在正文上的窗要留一点底。 */
     +'@media (max-width:760px){'
     +'#game .gPanel{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
-    +'#game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.05+.12*a).toFixed(2)+') !important}'
+    /* 手机上这六扇是浮在正文之上的，背后字压字，透一点都读不动 —— 一律不透。
+       既然不透，毛玻璃也一并关掉：整屏的 backdrop 每帧重算，而它背后已被自己盖满。 */
+    +'#game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,.97) !important;'
+    +'-webkit-backdrop-filter:none !important;backdrop-filter:none !important}'
     +'}';
 }
 applyGlass();
