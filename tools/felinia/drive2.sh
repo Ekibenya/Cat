@@ -23,7 +23,7 @@ ROUND=${ROUND:-400}
 # 只跑哪几段。默认三段都跑，从后往前 —— 先把快做完的推出去。
 STAGES=${STAGES:-210}
 python3 - "$WAVE" "$ROUND" "$STAGES" <<'PY'
-import glob, os, subprocess, sys, time
+import glob, json, os, subprocess, sys, time
 sys.path.insert(0, 'tools/felinia')
 import figgen, kopipe
 from roster import ROSTER
@@ -64,10 +64,27 @@ def capped(since):
             continue
     return False
 
-def run(st, grp):
-    a = [sys.executable, 'tools/felinia/kopipe.py', st]
-    for e, b in grp:
-        a += [str(e), str(b)]
+def wave():
+    """凑一波，六个位子。先给②，再给①，剩下的给⓪。
+
+    一段排空了才走下一段的话，②只剩一批时六个位子空着五个 —— 实测撞上过。
+    """
+    out, slots = [], WAVE
+    for st in ('2', '1', '0'):
+        ch = kopipe.CHUNK[st]
+        left = missing(st)
+        while left and slots > 0:
+            out.append((st, left[:ch]))
+            left = left[ch:]
+            slots -= 1
+    return out
+
+
+def run(plan):
+    a = [sys.executable, '-c',
+         'import sys; sys.path.insert(0, "tools/felinia"); import kopipe, json;'
+         'sys.exit(kopipe.run_mixed(json.loads(sys.argv[1])))',
+         json.dumps([[st, [list(x) for x in g]] for st, g in plan])]
     t0 = time.time()
     subprocess.call(a)
     if capped(t0):
@@ -77,6 +94,7 @@ def run(st, grp):
         return False
     return True
 
+stuck = 0
 for r in range(ROUND):
     left = {st: missing(st) for st in '012'}
     tot = sum(len(left[st]) for st in STAGES)
@@ -86,15 +104,16 @@ for r in range(ROUND):
     if tot == 0:
         sys.stderr.write('== ALL DONE ==\n')
         break
-    for st in STAGES:
-        grp = missing(st)
-        while grp:
-            # 一趟塞几批由 kopipe.CHUNK 定：⓪ 五批、② 两批、① 一批。
-            # 并排的路数不变，还是 WAVE 个沙盒，只是每个手上多拿几批。
-            ok = run(st, grp[:WAVE * kopipe.CHUNK[st]])
-            new = missing(st)
-            # 配额没了那一次不算数：睡完再照原样试一遍，别急着跳出去。
-            if ok and len(new) >= len(grp):
-                break
-            grp = new
+    before = sum(len(left[st]) for st in STAGES)
+    ok = run(wave())
+    after = sum(len(missing(st)) for st in STAGES)
+    # 配额没了那一次不算数：睡完再照原样试一遍，别急着数它。
+    if ok and after >= before:
+        stuck += 1
+        sys.stderr.write('== 没有前进（第 %d 次）==\n' % stuck)
+        if stuck >= 6:
+            sys.stderr.write('== 六次都没动。停手 ==\n')
+            break
+    else:
+        stuck = 0
 PY

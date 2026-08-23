@@ -259,6 +259,31 @@ STAGES = {'0': (stage0, 's0'), '1': (stage1, 's1'), '2': (stage2, 's2')}
 MULTI = {'0': stage0m, '1': lambda g: stage1(*g[0]), '2': stage2m}
 
 
+def run_mixed(waves):
+    """一波里混着几段。
+
+    为什么要混：一段排空了才走下一段的话，②只剩一批的时候
+    六个位子空着五个，一批做完才轮到①。实测就撞上过这个。
+    位子先给靠后的段（②优先，其次①，最后⓪）—— 靠后的做完就能入库，
+    早一点腾出手来。
+    """
+    args = []
+    for stage, g in waves:
+        fn, sfx = STAGES[stage]
+        try:
+            pf = MULTI[stage](g) if len(g) > 1 else fn(*g[0])
+        except NotReady as e:
+            sys.stderr.write('건너뛴다 %s\n' % e)
+            continue
+        args.append('%s%s=%s' % ('_'.join(tag(e, b) for e, b in g), sfx, pf))
+    if not args:
+        sys.stderr.write('띄울 것이 없다\n')
+        return 0
+    cmd = ['sh', SANDBOX, '열기', '--뜸', '30', LOG, ROOT] + args
+    sys.stderr.write('→ %d 개 띄운다 (섞어서)\n' % len(args))
+    return subprocess.call(cmd)
+
+
 def run(stage, jobs):
     fn, sfx = STAGES[stage]
     ch = CHUNK[stage]
