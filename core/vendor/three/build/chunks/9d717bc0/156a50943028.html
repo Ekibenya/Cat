@@ -1755,16 +1755,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   color:#4a4237;font-size:9px;letter-spacing:.14em}
 /* 玻璃本身单独一层：模糊挂在它身上，内容压在上面另走一层，
    这样内容滚动时不会带着毛玻璃一起重算。 */
-/* 配方与世界书那一类弹窗（.gDlg .box）一个数不差 —— 底色、边框、投影、毛玻璃全抄。
-   原先这一扇是自成一套：底色纯白（源里本是奶油 240,234,220，被 creamfix 的
-   全局替换刷成了 252,252,252）、边框是金的、投影是灰褐的、而且值写死、
-   「面板透明度」那根拉杆够不着。整卡是暖纸调，只有这几扇冷白，看着就不是一家的。
-   底色那一行留在这里只作兜底：applyGlass 里已经把 .feGl 并进弹窗那一条，
-   真正生效的是拉杆算出来的值。 */
-.feGl{position:absolute;inset:0;background:rgba(237,231,217,.24);
-  border:1px solid rgba(19,18,13,.4);
-  box-shadow:0 18px 48px rgba(242,236,222,.55);
-  -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)}
+/* 底色原来是 .84 —— 那已经不是玻璃，是一块纸，底下那张图一点都透不出来。
+   压到 .40，同时把模糊从 9px 提到 14px：底下是马赛克世界图，颗粒很碎，
+   透过来不多糊一道，字会被底纹搅得读不动。薄一档和糊一档要一起做。 */
+.feGl{position:absolute;inset:0;background:rgba(252,252,252,.40);
+  border:1px solid rgba(154,116,42,.34);
+  box-shadow:0 16px 38px rgba(74,66,55,.18),0 2px 0 rgba(255,255,255,.5) inset;
+  -webkit-backdrop-filter:blur(14px) saturate(120%);backdrop-filter:blur(14px) saturate(120%)}
 /* 四角的括号：与选局环、情报台同一套记号 */
 .feGl::before,.feGl::after{content:"";position:absolute;width:13px;height:13px;
   border:1px solid rgba(154,116,42,.55);pointer-events:none}
@@ -9282,8 +9279,7 @@ function applyGlass(){
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
-    +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,'
-    +'#game .gmMenu,.feGl'                 /* 铸局四步那两扇并进来：与世界书弹窗同一档 */
+    +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,#game .gmMenu'
     +'{background:rgba(237,231,217,'+(.09+.19*a).toFixed(2)+') !important}'
     /* 窄屏那两扇：原先在样式表里写死 .62 且带 #game，拉杆够不着。挪到这里，
        同样带 #game 才压得住余下的规则，拉杆这才对手机也管用。
