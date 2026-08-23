@@ -772,11 +772,10 @@ html.lux #esBrand b{color:#4a4237}
   #game .gMfd.mvDeck .mvStage{bottom:104px !important}
   /* 情报台的窗要压在三维画面上层（三维 z-index 25） */
   #game .gMfd{z-index:26 !important}
-  /* 桌面那几扇是嵌在让出来的一条里、身后是空的，可以透到 .08；
-     手机上它们是盖在正文上的浮层，透成那样两层字会叠在一起没法读。
-     加实到 .62——仍是毛玻璃，但字站得住。 */
-  #game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,.62) !important}
-  #game .gPanel{background:rgba(237,231,217,.62) !important}
+  /* 窄屏这两扇原先写死 .62，而且带 #game，权重压得过拉杆注入的那一条——
+     于是「面板透明度」拉到底，手机上照旧是两块不透的板。委托人要的就是透。
+     写死的撤掉，值挪进 applyGlass 里跟着拉杆走（那边同样带 #game 才盖得住）。
+     窄屏仍比宽屏实一档：这几扇是浮在正文之上的，一样薄的话两层字会叠着。 */
   /* 名字在桌面是从缩略窗左沿往右写的；手机上缩略列贴着屏幕最右缘，
      再往右写就出界被切了。改成靠右对齐，往左长。 */
   /* 权重要压得过后面那条 .mvCard.thumb .mvGhost{left:15px;text-align:left}——
@@ -9451,19 +9450,26 @@ function applyGlass(){
      拉杆只调四角收多深，中间那 55% 一律不压。 */
   glassCss.textContent='#game::before{background:radial-gradient(ellipse 90% 80% at 50% 42%,'
     +'transparent 55%,rgba(242,236,222,'+(.20+.42*a).toFixed(2)+') 100%) !important}'
-    +'#game .gMfd{background:rgba(235,229,215,'+(.06+.25*a).toFixed(2)+') !important}'
+    +'#game .gMfd{background:rgba(235,229,215,'+(.04+.18*a).toFixed(2)+') !important}'
     +'#game .gInput{background:linear-gradient(0deg,rgba(237,231,217,'+(.55+.4*a).toFixed(2)+') 0%,rgba(237,231,217,'+(.35+.35*a).toFixed(2)+') 42%,rgba(237,231,217,0) 76%) !important}'
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
     +'.gPanel,#pnTx{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
     /* 情报台那六扇单独一档更透的：它们背后只有一层细线框，底色跟左边三扇一样厚的话
        线全被压掉，看着就是六块不透的黑板。同一根拉杆，系数减半。 */
-    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.02+.08*a).toFixed(2)+') !important}'
+    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.01+.05*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
     +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,#game .gmMenu'
-    +'{background:rgba(237,231,217,'+(.09+.19*a).toFixed(2)+') !important}';
+    +'{background:rgba(237,231,217,'+(.09+.19*a).toFixed(2)+') !important}'
+    /* 窄屏那两扇：原先在样式表里写死 .62 且带 #game，拉杆够不着。挪到这里，
+       同样带 #game 才压得住余下的规则，拉杆这才对手机也管用。
+       系数比宽屏高一档但远低于原来的 .62——浮在正文上的窗要留一点底。 */
+    +'@media (max-width:760px){'
+    +'#game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.06+.16*a).toFixed(2)+') !important}'
+    +'#game .gPanel{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
+    +'}';
 }
 applyGlass();
 /* 帧时表：网址后面加 ?perf=1 就出现，平时一行代码都不跑。
