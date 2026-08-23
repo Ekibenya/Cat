@@ -41,6 +41,42 @@ OPTS = ['-', '--min', '20', '--len', '130-420',
         '--voice-mark', '」\\s*—', '--voice-min', '1']
 
 
+# 委托人点名要的十二样：姓名·年龄·身高·体重·毛色·品种·服装·身份地位·
+# 出生地·居住地·性格·人物关系，外加对白与心声。姓名是 cat 那一栏，身份看第一条，
+# 性格·关系·对白各占一条，剩下的都藏在头两条的句子里，所以按词去找。
+# 这些不是写成一栏一栏的表，是写在话里的，所以认的词要放宽 —— 「绑着皮护胫」也算穿。
+NUM = '[0-9\u3007\u96f6\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u767e]'
+FIELD = [
+    ('年龄',  '概要|来历', NUM + r'+\s*岁|岁数|年纪'),
+    ('身高',  '外貌',      NUM + r'+\s*厘米'),
+    ('体重',  '外貌',      NUM + r'+\s*公斤'),
+    ('毛色',  '外貌',      '毛色|头发|发色|[黑白灰褐金银红棕青蓝黄]毛|虎斑|三色|玳瑁|毛是'),
+    ('品种',  '外貌',      '品种|型|人类|没有耳朵|不是猫'),
+    ('服装',  '外貌',      '衣服|衣裳|穿|披|裹|袍|裙|甲|护胫|靴|鞋|布|绑着|系着|戴'),
+    ('出生地', '概要|来历', '生于|生在|出生|出身'),
+    ('居住地', '概要',      '住|待在|落脚'),
+]
+NEED_SEC = ('概要', '外貌', '来历', '性情', '关系', '说话的样子')
+
+
+def fields(path):
+    """一条一条看那十二样在不在。缺了就报，报到人头上。"""
+    per = {}
+    for e in json.load(io.open(path, encoding='utf-8')):
+        per.setdefault(e['cat'], {})[e['title'].split('\u00b7')[-1].strip()] = e['content']
+    bad = []
+    for who in sorted(per):
+        ent = per[who]
+        for sec in NEED_SEC:
+            if not any(sec in k for k in ent):
+                bad.append('%s 少了「%s」这一条' % (who, sec))
+        for name, sec, rx in FIELD:
+            body = ''.join(v for k, v in ent.items() if re.search(sec, k))
+            if not re.search(rx, body):
+                bad.append('%s 没写%s' % (who, name))
+    return bad
+
+
 STYLE = os.path.join(ROOT, 'st/data/style/style.zh.lore.json')
 STYLE_OPTS = ['-', '--min', '40', '--len', '200-900',
               '--voice-mark', '」\\s*—', '--voice-min', '0']
@@ -97,7 +133,8 @@ def main(argv):
                            capture_output=True)
         out = r.stdout.decode('utf-8')
         name = os.path.basename(f).split('.')[0]
-        if r.returncode == 0:
+        fb = fields(f)
+        if r.returncode == 0 and not fb:
             ok += 1
             print('통과  %-8s %s' % (name, out.splitlines()[0][3:]))
         else:
@@ -106,6 +143,8 @@ def main(argv):
             for ln in out.splitlines():
                 if '틀림' in ln:
                     print('   ' + ln.strip())
+            for x in fb:
+                print('   틀림  ' + x)
     if not tags:
         if style():
             bad += 1

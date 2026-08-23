@@ -36,8 +36,13 @@ TAB = os.path.join(ROOT, 'tools/felinia/.ko-tab')        # 名表，带汉字，
 ZHMS = os.path.join(ROOT, 'tools/felinia/.zh-ms')
 PROMPT = '/tmp/cattest/ko/prompt'
 LOG = '/tmp/cattest/ko/log'
-INSTR_A = '/tmp/cattest/ko/instr.ko.txt'
-INSTR_B = '/tmp/cattest/ko/instrB.ko.txt'
+# 两段的指示文。原先摆在 /tmp 底下，通一重开就没了 —— 那是韩语真本，不能放在会没的地方。
+# ① 的那两份零汉字，所以进 data-quiet.ko；② 的那份带四个汉字（「原文如是」这个记号），
+# 只在译出那一段的提示词末尾出现，不进那个不许有汉字的库，所以摆在工具这边。
+INSTR_A = os.path.join(KO, 'instrA.ko.txt')
+# 补丁：外貌与概要那两条里非写不可的东西，再说一遍。实测七十七人里二十五处漏了。
+INSTR_A2 = os.path.join(KO, 'addA.ko.txt')
+INSTR_B = os.path.join(HERE, 'instrB.ko.txt')
 HANDOFF = os.path.join(KOREPO, '넘김말.md')
 # 直接叫那边的 샌드박스.sh 会因为上游握手偶发失败而整批白丢，
 # 所以过一层 sbretry.sh：同一批原样再叫，间隔逐次拉开，最多四次。
@@ -133,6 +138,8 @@ def stage1(era, bi):
             .replace('{{COUNT}}', str(len(figgen.batches(era)[bi])))
             .replace('{{ORIGPATH}}', p['koms'])
             .replace('{{LOREPATH}}', p['kolore']))
+    if os.path.exists(INSTR_A2):
+        tail = tail + '\n\n' + read(INSTR_A2)
     pf = os.path.join(PROMPT, tag(era, bi) + '.s1.txt')
     write(pf, read(HANDOFF) + '\n\n' + body + '\n\n' + tail)
     return pf
