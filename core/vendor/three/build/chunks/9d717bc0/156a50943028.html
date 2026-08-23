@@ -4908,9 +4908,9 @@ function feLoad(cb){
   var img=new Promise(function(res,rej){
     var im=new Image();im.onload=function(){res(im);};im.onerror=rej;
     im.src='/core/res/img/annals/locus.png';});
-  Promise.all([j('eras.json'),j('gen.json'),j('lore.json'),j('ko.json'),j('locus.json'),j('vn-images.json'),img])
+  Promise.all([j('eras.json'),j('gen.json'),j('lore.json'),j('ko.json'),j('locus.json'),j('vn-images.json'),j('goods.json'),img])
     .then(function(a){
-      FE.eras=a[0];FE.gen=a[1];FE.lore=a[2];FE.ko=a[3];FE.mm=a[4];FE.vn=a[5];FE.mi=a[6];
+      FE.eras=a[0];FE.gen=a[1];FE.lore=a[2];FE.ko=a[3];FE.mm=a[4];FE.vn=a[5];FE.goods=a[6];FE.mi=a[7];
       feLoreInstall();
       done(true);
     }).catch(function(){done(false);});
@@ -5822,6 +5822,7 @@ function feForge(){
   /* 先把玩家填的东西灌进引擎原有的那几个位子：
      底稿（condereOp）、系统提示（condereSys）、情报台的人物段都从这里读。 */
   feSyncEngine();
+  feGoodsInstall();          /* 换这一代的货，并记下当前地点 */
   feClose();
 
   /* 底稿的面板照旧由引擎拼（栏名要跟着卡的 panelSpec 走），正文换成本层这一份 */
@@ -5904,6 +5905,33 @@ function feForge(){
   stage0(0);
 }
 
+/* ═══ 这一代的货 ═══
+   商店原先只有一张 ARMDB（七十三件秦的东西），四十一代共用，
+   跟纪年、地区、地点全无关系。这里按 goods.json 把这一代的货换进去：
+   装进来的键一律记在 FEG.keys 里，换一局先按这张单子撤干净，不留上一代的东西。
+   at 那一栏写明哪几处有货，shopGoods 按当前地点滤一道。 */
+var FEG={keys:[],set:null,unit:'钱',note:'',at:''};
+function feGoodsInstall(){
+  var i;
+  for(i=0;i<FEG.keys.length;i++)delete ARMDB[FEG.keys[i]];
+  FEG={keys:[],set:null,unit:'钱',note:'',at:''};
+  try{
+    var g=FE.goods&&FE.era&&FE.goods[String(FE.era.i)];
+    if(!g)return;                       /* 这一代的货单还没写，照旧用原来那张表 */
+    FEG.unit=g.unit||'钱';FEG.note=g.note||'';
+    FEG.at=(FE.loc&&FE.loc.n)||'';
+    for(i=0;i<g.items.length;i++){
+      var o=g.items[i];
+      ARMDB[o.k]={la:o.la,cn:o.cn,cat:o.cat,ic:o.ic,stack:o.stack||1,price:o.price,
+                  spec:o.spec,at:o.at||null,use:o.use||null,slot:'dext'};
+      FEG.keys.push(o.k);
+    }
+    /* 有了这一代的货单，市面上就只卖这一代的东西。
+       原来那七十三件秦的货（粟饭、鱼脍、腌鱼……）留在 ARMDB 里不动 ——
+       背包和装备栏里若已有它们，名目图标还得查得到 —— 只是不再上架。 */
+    FEG.set={};for(i=0;i<FEG.keys.length;i++)FEG.set[FEG.keys[i]]=1;
+  }catch(_){}
+}
 /* 把这一层选的东西灌进引擎原有的位子 */
 function feSyncEngine(){
   var h=FE.hero,e=FE.era,L=FE.loc;
@@ -7048,6 +7076,10 @@ function shopGoods(){
     var it=ARMDB[k];
     if(!it||it.nomkt)continue;
     if(it.price==null&&!it.ban)continue;
+    /* 这一代的货写明了在哪几处有；当前不在那几处就不上架。
+       没写 at 的（以及原来那张秦的表）各处都有，照旧。 */
+    if(FEG.set&&!FEG.set[k])continue;              /* 这一代的货单之外的一律不上架 */
+    if(it.at&&FEG.at&&it.at.indexOf(FEG.at)<0)continue;
     var c=it.cat||'杂物';
     (out[c]=out[c]||[]).push(k);
   }
@@ -7066,8 +7098,9 @@ function shopRender(){
       +esc2(t[0])+'&nbsp;'+cnt+'</span>';
   }
   h+='</div>';
-  h+='<div class="shHead"><b>现钱&nbsp;'+cash+'&nbsp;钱</b>'
-    +'<span>半两钱&nbsp;·&nbsp;粟一石三十钱&nbsp;·&nbsp;布一匹十一钱&nbsp;·&nbsp;居赀日八钱</span></div>';
+  h+='<div class="shHead"><b>现钱&nbsp;'+cash+'&nbsp;'+esc2(FEG.unit)+'</b>'
+    +'<span>'+(FEG.note?esc2(FEG.note.split('。')[0]):
+      '半两钱&nbsp;·&nbsp;粟一石三十钱&nbsp;·&nbsp;布一匹十一钱&nbsp;·&nbsp;居赀日八钱')+'</span></div>';
   var any=false;
   for(var si=0;si<SHOP_SEC.length;si++){
     var sec=SHOP_SEC[si],ks=g[sec];
@@ -7083,15 +7116,17 @@ function shopRender(){
       h+='<div class="shRow'+((banned||poor)?' no':'')+'" data-buy="'+k+'">'
         +'<span class="ic">'+armIcon(it.ic,22)+'</span>'
         +'<span class="nm">'+esc2(it.cn)+'<i>'+esc2(it.la||'')+'</i></span>'
-        +'<span class="pr">'+(banned?esc2(it.ban):(it.price+'&nbsp;钱'))+'</span>'
+        +'<span class="pr">'+(banned?esc2(it.ban):(it.price+'&nbsp;'+esc2(FEG.unit)))+'</span>'
         +'<span class="bu">'+(banned?'禁':(poor?'钱不够':'买&nbsp;入'))+'</span>'
         +'</div>';
     }
   }
   if(!any)h+='<div class="shNote">这一类今日无货。</div>';
+  /* 这一段原先写死了秦的市制。有这一代的货单就换成它自己那一段。 */
   h+='<div class="shNote">'
-    +'秦市有市亭、有市籍，物勒工名，贾人立于肆中。价钱随年成走，'
-    +'这里列的是平年咸阳市的常价。<br>'
+    +(FEG.note?esc2(FEG.note)+'<br>'
+      :('秦市有市亭、有市籍，物勒工名，贾人立于肆中。价钱随年成走，'
+        +'这里列的是平年咸阳市的常价。<br>'))
     +'买进的东西当场进行囊，钱当场从◆钱那一栏扣掉；'
     +'卖出去要在装备里点开那一件，只作价一半。<br>'
     +'官造的兵甲市上不卖，私藏要坐罪。'
