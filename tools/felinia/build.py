@@ -11,12 +11,16 @@
 
 编译前先自检。检查不过就不写文件——半份资料比没有资料更难查。
 """
-import io, json, os, re, sys
+import glob, io, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 OUT  = os.path.join(ROOT, 'core/res/data/felinia')
 ANN  = os.path.join(ROOT, 'core/res/img/annals/annals.json')
+# 封闭沙盒的两处成品。前端文风一处，人物一处。这两处的字主会话一个都不写。
+STYLE  = os.path.join(ROOT, 'st/data/style/style.zh.lore.json')
+FIGDIR = os.path.join(ROOT, 'st/data/figures')
+NL = chr(10)
 
 sys.path.insert(0, HERE)
 import pools                                    # noqa: E402
@@ -27,6 +31,21 @@ from eras_d import ERAS_D                       # noqa: E402
 from lore_data import LORE                      # noqa: E402
 
 ERAS = ERAS_A + ERAS_B + ERAS_C + ERAS_D
+
+
+def attach_figs():
+    """把人物挂到纪年上。**只在真要造卡时才叫**。
+
+    人物是现搭的，不是写死在纪年资料里的：是谁出自真人名册 roster.py，
+    说什么话出自韩语封闭沙盒译回来的成品条目。哪一代的成品还没回来，
+    figs 就在这里叫停 —— 造不出卡也不许放一个没走过沙盒的人物进来。
+
+    这一步不放在文件头，是因为世界书那一层要从这里取 HOME/COIN/CORE，
+    而世界书不该被人物做完没做完卡住。
+    """
+    import figs as figsrc
+    for e in ERAS:
+        e['figs'] = figsrc.build(e['i'])
 
 # ═══════════ 通则：不分纪年，每一局都成立 ═══════════
 # 全部出自母本。这八条是常驻的——它们不是「这一年发生了什么」，
@@ -205,7 +224,9 @@ def check(eras, ann):
             assert L['n'] == L['n'].upper(), '纪年 %d 的拉丁地名要全大写：%s' % (i, L['n'])
         assert len(e['roles']) >= 5, '纪年 %d 的身份太少' % i
         assert len(e['dress']) >= 4, '纪年 %d 的服装太少' % i
-        assert len(e['figs']) == 10, '纪年 %d 的人物不是十位：%d' % (i, len(e['figs']))
+        # 死规则：一代至少十位家喻户晓的真人，可以再加三到五位小众的。
+        # 上限不卡。名册那边另有一道卡名人数目的关。
+        assert len(e['figs']) >= 10, '纪年 %d 的人物不足十位：%d' % (i, len(e['figs']))
         nms = set()
         for f in e['figs']:
             assert f['n'] not in nms, '纪年 %d 有重名：%s' % (i, f['n'])
@@ -217,8 +238,11 @@ def check(eras, ann):
                 assert q.startswith('「') and '」' in q, \
                     '纪年 %d 的 %s 台词没有用直角引号：%s' % (i, f['n'], q)
             assert len(f['d']) >= 10, '纪年 %d 的 %s 事迹太短' % (i, f['n'])
+        # 这是一张猫娘卡。哪一代的名人再怎么清一色是男的，
+        # 也得再找几位同代的真人女子补上来，不能一代只剩一两位猫娘。
         cats = sum(1 for f in e['figs'] if f['sp'] == 'cat')
-        assert 5 <= cats <= 9, '纪年 %d 的猫娘与人类比例失衡：%d/10' % (i, cats)
+        assert cats >= 4, '纪年 %d 的猫娘太少：%d/%d' % (i, cats, len(e['figs']))
+        assert cats < len(e['figs']), '纪年 %d 一个人类都没有' % i
         assert i in LORE, '纪年 %d 没有世界书原料' % i
         assert HOME.get(i), '纪年 %d 没有写住处' % i
         assert COIN.get(i), '纪年 %d 没有写钱的尺子' % i
@@ -268,34 +292,66 @@ def build_gen():
 
 
 def build_lore(eras):
+    """世界书。四层，来路各不相同，装配时不许串。
+
+      通则   八条，每回合都在。写在 CORE 里。
+      前端   文风 · 禁止 · 说话的样子 · 对白案例 · 心声案例 · 身份口吻。
+             这一层一个字都不许在这里写：全部由韩语封闭沙盒写完再译回来，
+             落在 st/data/style/style.zh.lore.json。委托人定的，不容商量。
+      后端   世界背景与时代背景。免走沙盒，但也不许有文风：
+             一行一件事，给神谕扫的说明书，不是给人读的散文。在 tools/felinia/wb/ 。
+      人物   每人六条，同样出自封闭沙盒，落在 st/data/figures/ 。
+             这一层不计进世界书的八百到一千二百条里，那个数只数前端加后端。
+
+    哪一层的成品没回来就在这里停住。宁可造不出卡，不许放没走过沙盒的字进去。
+    """
+    import wb as wbpkg
     lb, ord_ = [], 10
     for c in CORE:
         lb.append({'title': '〔通则〕' + c['t'], 'cat': '通则', 'keys': c['k'],
                    'constant': True, 'on': True, 'ord': ord_,
-                   'content': '\n'.join('· ' + x for x in c['c'])})
+                   'content': NL.join('· ' + x for x in c['c'])})
         ord_ += 1
+
+    # 前端。八条「写法」常驻，其余按键触发。
+    if not os.path.exists(STYLE):
+        raise SystemExit('文风条目还没从封闭沙盒回来：' + STYLE)
+    for e in json.load(io.open(STYLE, encoding='utf-8')):
+        lb.append({'title': e['title'], 'cat': '文字 · ' + e['cat'],
+                   'keys': e['keys'], 'on': True,
+                   'constant': e['cat'].startswith('写法'), 'ord': 20,
+                   'content': e['content']})
+
+    # 后端。
+    for e in wbpkg.load():
+        d = {'title': e['title'], 'cat': e['cat'], 'keys': e['keys'],
+             'on': True, 'constant': False, 'ord': 50, 'content': e['content']}
+        if e.get('era'):
+            d['era'] = e['era']
+        lb.append(d)
+
+    # 人物。
     for e in sorted(eras, key=lambda x: x['i']):
-        i, d = e['i'], LORE[e['i']]
-        head = '〔%s · %s〕' % (year_label(e['y']), e['t'] if 't' in e else '')
-        cat = '%s %s' % (year_label(e['y']), e['t'] if 't' in e else '')
-        keys = ([L['cn'] for L in e['locs']] + [L['n'] for L in e['locs']]
-                + list(e['inst']) + [f['n'] for f in e['figs']])
-        keys = [k for k in keys if len(k) >= 2]
-        def ent(name, lines, extra=None):
-            return {'title': head + name, 'cat': cat, 'keys': keys, 'era': i,
-                    'on': True, 'constant': False, 'ord': 50,
-                    'content': '\n'.join('· ' + x for x in lines)}
-        lb.append(ent('国家', d['guo']))
-        lb.append(ent('历史', [e['w']] + ['地区路线：' + e['reg'],
-                                          '在场的制度：' + '、'.join(e['inst']),
-                                          '取名法：' + e['nm']]))
-        lb.append(ent('政治', d['zheng']))
-        lb.append(ent('事件', d['shi']))
-        lb.append(ent('野史', d['ye'] + ['（以上为传闻。多半不实，但人会照着它行动。）']))
+        for p in sorted(glob.glob(os.path.join(FIGDIR, 'e%02db*.zh.lore.json' % e['i']))):
+            for x in json.load(io.open(p, encoding='utf-8')):
+                lb.append({'title': x['title'], 'cat': '人 · ' + x['cat'],
+                           'keys': x['keys'], 'era': e['i'],
+                           'on': True, 'constant': False, 'ord': 60,
+                           'content': x['content']})
     return lb
 
 
+def lore_tally(lb):
+    """按层数一遍。人物那一层不计进八百到一千二百。"""
+    core = sum(1 for e in lb if e['ord'] < 20)
+    front = sum(1 for e in lb if e['ord'] == 20)
+    back = sum(1 for e in lb if e['ord'] == 50)
+    figs = sum(1 for e in lb if e['ord'] == 60)
+    return core, front, back, figs
+
+
 def main():
+    attach_figs()
     ann = load_annals()
     # eras 里没有 t/s，先从图版补上，check 之后再正式组装
     for e in ERAS:
@@ -312,11 +368,17 @@ def main():
         p = os.path.join(OUT, name)
         io.open(p, 'w', encoding='utf-8').write(
             json.dumps(obj, ensure_ascii=False, separators=(',', ':')))
-    figs = sum(len(e['figs']) for e in ERAS)
+    nfig = sum(len(e['figs']) for e in ERAS)
     locs = sum(len(e['locs']) for e in ERAS)
-    lb = build_lore(ERAS)
-    print('已编译 · 纪年 %d 条 · 地点 %d 处 · 人物 %d 位 · 世界书 %d 条（通则 %d）'
-          % (len(ERAS), locs, figs, len(lb), len(CORE)))
+    lb = data[2][1]
+    core, front, back, fent = lore_tally(lb)
+    ln = [len(e['content']) for e in lb if e['ord'] in (20, 50)]
+    print('已编译 · 纪年 %d 条 · 地点 %d 处 · 人物 %d 位' % (len(ERAS), locs, nfig))
+    print('世界书 · 通则 %d ＋ 前端 %d ＋ 后端 %d ＝ %d 条（八百到一千二百之间）'
+          % (core, front, back, front + back))
+    print('        每条平均 %d 字（母本卡一百六十五字的 %.1f 倍）· 人物条目另计 %d 条'
+          % (sum(ln) // max(1, len(ln)), sum(ln) / max(1, len(ln)) / 165.0, fent))
+    assert 800 <= front + back <= 1200, '世界书条数出界：%d' % (front + back)
     for name, _ in data:
         print('    %-10s %6.1f KB' % (name, os.path.getsize(os.path.join(OUT, name)) / 1024))
 

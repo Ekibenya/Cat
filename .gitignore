@@ -1,2 +1,4 @@
 __pycache__/
 *.pyc
+tools/felinia/.ko-tab/
+tools/felinia/.zh-ms/
