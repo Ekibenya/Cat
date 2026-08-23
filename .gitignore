@@ -11,3 +11,4 @@ tools/felinia/.zh-ms/
 /tmp/
 /_out/
 /.tmp_zh/
+image/**/.DS_Store
