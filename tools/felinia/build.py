@@ -313,13 +313,18 @@ def build_lore(eras):
                    'content': NL.join('· ' + x for x in c['c'])})
         ord_ += 1
 
-    # 前端。八条「写法」常驻，其余按键触发。
+    # 前端。分六组，每组八条：叙法／禁止／说话的样子／往来的话的例子／
+    # 心里话的例子／身份口吻。组名是沙盒定的，这里不改写，只照着分。
+    # 「叙法」与「禁止」那十六条常驻 —— 它们是每一句正文都要照的规矩，
+    # 等关键词把它们勾出来就来不及了。其余三十二条按键触发。
+    ALWAYS = ('叙法', '禁止')
     if not os.path.exists(STYLE):
         raise SystemExit('文风条目还没从封闭沙盒回来：' + STYLE)
-    for e in json.load(io.open(STYLE, encoding='utf-8')):
+    st = json.load(io.open(STYLE, encoding='utf-8'))
+    for e in st:
         lb.append({'title': e['title'], 'cat': '文字 · ' + e['cat'],
                    'keys': e['keys'], 'on': True,
-                   'constant': e['cat'].startswith('写法'), 'ord': 20,
+                   'constant': e['cat'] in ALWAYS, 'ord': 20,
                    'content': e['content']})
 
     # 后端。
