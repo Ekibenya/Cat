@@ -7,7 +7,7 @@
 三、每条 keys 三到八个
 四、标题不许重复
 五、不许出现散文腔的连接词（这一层是给机器扫的）
-六、两部母本的每一片都要有条目认领，一片不许空
+六、两部母本的每一片都要有条目认领，一片不许空（对照表见 wb/slices.json）
 
 按运营指针第六节，检查台要走三步：先在已通过的数据上确认零误报，
 再故意塞违例看它响不响，撤掉再确认回零。三步不做完的检查台不算数。
@@ -61,17 +61,21 @@ def check(entries, slices=None):
             claimed.add(e.get('src', '').split('/')[0])
         for s in slices:
             if s['id'] not in claimed:
-                errs.append('母本切片 %s（%s）没有任何条目认领' % (s['id'], s['name']))
+                errs.append('母本 %s 第 %s 页「%s」没有任何条目认领（段号 %s）'
+                            % (s.get('book', '?'), s.get('page', '?'), s['name'], s['id']))
     return errs, warns
 
 
 def main():
     import wb
     entries = wb.load()
-    sl = None
-    p = '/tmp/cattest/wb/slices.json'
-    if os.path.exists(p):
-        sl = json.load(io.open(p, encoding='utf-8'))
+    # 母本对照表。原来读的是 /tmp/cattest/wb/slices.json —— 临时目录，早没了，
+    # 于是 sl 一直是 None，第六条「母本每一片都要有条目认领」从建好起一次都没跑过。
+    # 表挪进仓库；找不着就报错，不再默默跳过。
+    p = os.path.join(HERE, 'slices.json')
+    if not os.path.exists(p):
+        raise SystemExit('母本对照表不在：' + p)
+    sl = json.load(io.open(p, encoding='utf-8'))
     errs, warns = check(entries, sl)
     ln = [len(e['content']) for e in entries] or [0]
     print('-- 条目 %d 条，正文合计 %d 字，平均 %d 字，最短 %d，最长 %d'
