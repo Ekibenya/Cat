@@ -16,6 +16,21 @@ while true; do
         alive=yes
     fi
     if [ "$alive" = "no" ]; then
+        # 驱动器一死，它手下那些沙盒就成了没人等的孤儿。
+        # 不清掉的话，新驱动器会为同一批再叫一份 —— 两拨人同时写同一个文件，
+        # 写到一半互相踩。实测：一份韩语真本原稿就是这么在 git 眼里「不见了」的，
+        # 还见过同一个 e03b0 的②同时跑着三份。
+        # **只收养沙盒，不许碰别人。**
+        # 光按进程名扫会把主会话自己也扫进去 —— 差一点就把自己杀了。
+        # 分辨的法子：沙盒的爹一定是那口跑 샌드박스.sh 的壳。
+        # 主会话的爹不是，别处叫起来的也不是。
+        for c in $(ps -eo pid=,comm= | awk '$2 == "claude" { print $1 }'); do
+            pp=$(ps -o ppid= -p "$c" 2>/dev/null | tr -d ' ')
+            [ -n "$pp" ] || continue
+            tr '\0' ' ' < "/proc/$pp/cmdline" 2>/dev/null \
+                | grep -q '샌드박스\.sh' || continue
+            kill "$c" 2>/dev/null && echo "== 孤儿 $c 내렸다 ==" >> /tmp/cattest/ko/drv.log
+        done
         echo "== $(date -u +%H:%M) 驱动器不在，重新叫起来 ==" >> /tmp/cattest/ko/drv.log
         setsid nohup sh tools/felinia/drive2.sh >> /tmp/cattest/ko/drv.log 2>&1 &
     fi
