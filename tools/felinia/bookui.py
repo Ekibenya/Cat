@@ -27,13 +27,13 @@ GUARD = 'BOOK_TOPS'
 
 CSS_OLD = ".cxCats{width:118px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}"
 CSS_NEW = (
-    ".cxTops{width:112px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}\n"
+    ".cxTops{width:130px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}\n"
     ".cxTop{font-size:11.5px;letter-spacing:.2em;color:var(--mut);padding:11px 10px;"
     "cursor:pointer;transition:all .15s}\n"
     ".cxTop.on{color:#e9e3d6;background:var(--gold)}\n"
     ".cxTop:not(.on):hover{color:var(--gold-hi)}\n"
     ".cxTop i{float:right;font-style:normal;font-size:9px;letter-spacing:0;opacity:.5}\n"
-    ".cxCats{width:150px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}"
+    ".cxCats{width:146px;flex:none;border-right:1px solid rgba(19,18,13,.14);overflow-y:auto}"
 )
 
 REPS = [
@@ -90,17 +90,21 @@ JS_NEW = """var BOOK={side:'luzhi',top:0,cat:0,ent:0};
    一百六十八个人、四十一代、三十四个横断门类、通史、研究册、通则、文字六组，
    两百五十多行并成一列，翻到底也找不到东西。现在先分大母项，再分类目。
    分法跟世界书自己的层（lay）一致；玩家自写的与请入的角色卡另立一项。 */
-var BOOK_TOPS=['母条目','通则','文字','纪年','横断','通史','研究册','人物','自写与角色卡','其他'];
+/* 名字一律用白话：母条目→目录、通则→基本规矩、文字→怎么写、
+   纪年→各个时代、横断→专题、通史→世界史、研究册→地区与书目。
+   条目自己的 cat 不动，改的只是这一栏显示的名。 */
+var BOOK_TOPS=['目录','基本规矩','怎么写','各个时代','专题','世界史',
+               '地区与书目','人物','自己写的','其他'];
 function bookTop(e){
   if(!e)return '其他';
-  if(e.custom||e.cat==='自写'||e.cat==='角色卡')return '自写与角色卡';
-  if(e.lay==='core')return (e.ord<10)?'母条目':'通则';
-  if(e.lay==='style')return '文字';
+  if(e.custom||e.cat==='自写'||e.cat==='角色卡')return '自己写的';
+  if(e.lay==='core')return (e.ord<10)?'目录':'基本规矩';
+  if(e.lay==='style')return '怎么写';
   if(e.lay==='figures')return '人物';
   if(e.lay==='world'){
-    if(e.cat==='通史')return '通史';
-    if(e.cat==='研究册')return '研究册';
-    return e.era?'纪年':'横断';
+    if(e.cat==='通史')return '世界史';
+    if(e.cat==='研究册')return '地区与书目';
+    return e.era?'各个时代':'专题';
   }
   return '其他';
 }
