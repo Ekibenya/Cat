@@ -1765,7 +1765,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* 底色原来是 .84 —— 那已经不是玻璃，是一块纸，底下那张图一点都透不出来。
    压到 .40，同时把模糊从 9px 提到 14px：底下是马赛克世界图，颗粒很碎，
    透过来不多糊一道，字会被底纹搅得读不动。薄一档和糊一档要一起做。 */
-.feGl{position:absolute;inset:0;background:rgba(252,252,252,.40);
+.feGl{position:absolute;inset:0;background:rgba(252,252,252,.28);
   border:1px solid rgba(154,116,42,.34);
   box-shadow:0 16px 38px rgba(74,66,55,.18),0 2px 0 rgba(255,255,255,.5) inset;
   -webkit-backdrop-filter:blur(14px) saturate(120%);backdrop-filter:blur(14px) saturate(120%)}
@@ -9278,6 +9278,9 @@ function applyGlass(){
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
     +'.gPanel,#pnTx{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
+    /* 装备与商店比地图实一档：那两扇是成列的字与数目，底下透太多就读不动；
+       地图那一扇底下本来就要看得见画面，仍走上面那一档。 */
+    +'#game #pnArm,#game #pnShop{background:rgba(237,231,217,'+(.10+.22*a).toFixed(2)+') !important}'
     /* 情报台那六扇又拆出来单给一档更薄的。
        先前并进上面那一条，是为了跟左边三扇长得一样 —— 是长一样了，
        可这六扇身后还压着台底（.gMfd）和暗角，三层奶油叠起来就成了实心板。
