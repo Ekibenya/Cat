@@ -7,7 +7,7 @@
    资料在 /core/res/data/felinia/ 下，四份 JSON 加一张择地图，
    第一次进纪年页才去取；取不到就整层不开，纪年页照旧退回选局环。 */
 
-var FE={ld:0,eras:null,gen:null,lore:null,ko:null,mm:null,mi:null,
+var FE={ld:0,eras:null,gen:null,lore:null,ko:null,mm:null,mi:null,vn:null,
         era:null,line:null,loc:null,hero:null,soc:[],cur:null,pool:[],
         step:'loc',salt:0};
 var FE_STEPS=[['loc','择地'],['per','立身'],['soc','识人'],['sit','此刻']];
@@ -28,9 +28,9 @@ function feLoad(cb){
   var img=new Promise(function(res,rej){
     var im=new Image();im.onload=function(){res(im);};im.onerror=rej;
     im.src='/core/res/img/annals/locus.png';});
-  Promise.all([j('eras.json'),j('gen.json'),j('lore.json'),j('ko.json'),j('locus.json'),img])
+  Promise.all([j('eras.json'),j('gen.json'),j('lore.json'),j('ko.json'),j('locus.json'),j('vn-images.json'),img])
     .then(function(a){
-      FE.eras=a[0];FE.gen=a[1];FE.lore=a[2];FE.ko=a[3];FE.mm=a[4];FE.mi=a[5];
+      FE.eras=a[0];FE.gen=a[1];FE.lore=a[2];FE.ko=a[3];FE.mm=a[4];FE.vn=a[5];FE.mi=a[6];
       feLoreInstall();
       done(true);
     }).catch(function(){done(false);});
@@ -186,10 +186,10 @@ function feFur(r,morph){
 }
 
 /* 一份档案。fig 给了就是册上那一位，没给就按这一代的身份表现生一位。 */
-function feMake(era,fig,salt){
+function feMake(era,fig,salt,forcedSp){
   var seed=feHash(era.i+'|'+((fig&&fig.n)||'x')+'|'+(salt==null?'':salt));
   var r=feRng(seed);
-  var sp=fig?fig.sp:'cat';
+  var sp=fig?fig.sp:(forcedSp||'cat');
   var ti=fig?fig.ti:fePick(r,era.roles);
   var told=fig?feCnNum(fig.d):0;          /* 事迹里明写的岁数，优先 */
   var morph=(sp==='cat')?feMorphFor(r,era,ti):null;
@@ -621,6 +621,7 @@ function feLocInfo(){
 
 /* ═══ 二 · 立身 ═══ */
 var FE_FIELDS=[
+  ['sp','种属 SPECIES','species'],
   ['n','姓名 NOMEN','text'],
   ['age','年龄 AETAS','num'],
   ['h','身高（厘米）','num'],
@@ -644,9 +645,8 @@ function fePerRender(){
   };
   mk('自拟一个人','按这一代的身份与服装现掷一个，各栏都能改',-1);
   FE.pool.forEach(function(p,k){
-    if(p.sp!=='cat')return;               /* 扮演的只列猫娘：这张卡的主角是猫娘 */
     if(!p.fig)return;                     /* 识人那一步现生的，不进这张预设表 */
-    mk(p.n,p.ti+'　·　'+p.d.slice(0,26)+(p.d.length>26?'…':''),k);
+    mk(p.n,(p.sp==='cat'?'猫娘':'人类')+'　·　'+p.ti+'　·　'+p.d.slice(0,22)+(p.d.length>22?'…':''),k);
   });
   fePerForm();
 }
@@ -658,6 +658,7 @@ function fePerPick(k){
 function fePerForm(){
   var g=$('#fePerForm'),h=FE.hero;g.innerHTML='';
   var opts={
+    sp:['cat','human'],
     fur:FE.gen.furs,
     morph:FE.gen.morphs.map(function(m){return m.n;}),
     dress:FE.era.dress,
@@ -668,10 +669,14 @@ function fePerForm(){
   };
   FE_FIELDS.forEach(function(f){
     var key=f[0],lbl=f[1],kind=f[2];
+    if(h.sp!=='cat'&&(key==='fur'||key==='morph'))return;
     var d=document.createElement('div');d.className='feF';
     var cur=(key==='morph')?h.morph.n:(key==='temper'?h.temper[0]:h[key]);
     var inner='<label>'+feEsc(lbl)+'</label>';
-    if(kind==='sel'){
+    if(kind==='species'){
+      inner+='<select data-k="sp"><option value="cat"'+(cur==='cat'?' selected':'')+'>猫娘</option>'
+        +'<option value="human"'+(cur==='human'?' selected':'')+'>人类</option></select>';
+    }else if(kind==='sel'){
       var list=opts[key].slice();
       if(list.indexOf(cur)<0)list.unshift(cur);
       inner+='<select data-k="'+key+'">'+list.map(function(o){
@@ -686,6 +691,7 @@ function fePerForm(){
   for(k=0;k<els.length;k++)els[k].addEventListener('change',fePerSync);
   for(k=0;k<els.length;k++)els[k].addEventListener('input',fePerSync);
   fePerDoss();
+  fePerPortrait();
   $('#fePerT').textContent=(h.pre<0?'自拟一个人':('扮演　'+h.n));
   $('#fePerNote').textContent='这一代的取名法：'+FE.era.nm
     +'。　身体尺度按此世的通例：身高中位一四〇厘米、体重中位四〇公斤；'
@@ -699,6 +705,15 @@ function fePerDoss(){
 }
 function fePerSync(){
   var els=$('#fePerForm').querySelectorAll('[data-k]'),k,h=FE.hero;
+  var oldSp=h.sp,nextSp=oldSp;
+  for(k=0;k<els.length;k++)if(els[k].getAttribute('data-k')==='sp')nextSp=els[k].value;
+  if(nextSp!==oldSp){
+    var keep={n:h.n,ti:h.ti,dress:h.dress,born:h.born,live:h.live,temper:h.temper.slice()};
+    h=FE.hero=feMake(FE.era,null,'hero-species-'+nextSp+'-'+(FE.salt||0),nextSp);
+    h.self=1;h.pre=-1;
+    for(var q in keep)h[q]=keep[q];
+    fePerForm();feFootSync();return;
+  }
   for(k=0;k<els.length;k++){
     var key=els[k].getAttribute('data-k'),v=els[k].value;
     if(key==='morph'){
@@ -707,7 +722,31 @@ function fePerSync(){
     else h[key]=v;
   }
   $('#fePerT').textContent=(h.pre<0?'自拟一个人':('扮演　'+h.n));
-  fePerDoss();feFootSync();
+  fePerDoss();fePerPortrait();feFootSync();
+}
+
+function fePerPortrait(){
+  var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=FE.hero;
+  if(!img||!cap||!h||!FE.vn){return;}
+  var era=null,i;
+  for(i=0;i<FE.vn.eras.length;i++)if(FE.vn.eras[i].eraIndex===FE.era.i){era=FE.vn.eras[i];break;}
+  if(!era){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
+  var pool=era.assets.single.filter(function(a){return a.species===h.sp;});
+  if(!pool.length){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
+  var idx;
+  if(h.pre>=0){
+    var same=[];
+    for(i=0;i<FE.pool.length;i++)if(FE.pool[i].sp===h.sp&&FE.pool[i].fig)same.push(i);
+    idx=Math.max(0,same.indexOf(h.pre))%pool.length;
+  }else idx=feHash(h.id+'|'+h.sp)%pool.length;
+  var src=pool[idx].src;
+  img.classList.remove('ready');
+  img.alt=h.n+'（'+(h.sp==='cat'?'猫娘':'人类')+'）';
+  img.onload=function(){img.classList.add('ready');};
+  img.onerror=function(){img.classList.remove('ready');};
+  if(img.getAttribute('src')===src&&img.complete)img.classList.add('ready');
+  else img.src=src;
+  cap.textContent=h.n+'　·　'+(h.sp==='cat'?'猫娘':'人类');
 }
 
 /* ═══ 三 · 识人 ═══ */
