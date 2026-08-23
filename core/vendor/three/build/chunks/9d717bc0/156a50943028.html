@@ -4992,6 +4992,11 @@ function esClose(){
 function esEngage(){
   if(!ES.on)return;
   var d=ES.rows[ES.i];
+  /* 卷首那一张（i=0《猫娘世界通史》）不是一代，铸局资料里没有它。
+     原来它照旧往下走：feOpen 找不着对应的纪年就退回选局环，
+     于是点封面会跳出那一屏马赛克世界图 —— 看着像上一版残留的界面。
+     封面本来就该点不动，这里直接停手。 */
+  if(!d||d.i==null||d.i<=0)return;
   try{ERA.sel=null;if(typeof d.ys==='number')ERA.year=d.ys;}catch(_){}
   /* 这一代有铸局资料就走 FELINIA 四步；没有（资料没加载上、或这一代没写）
      就照旧退回选局环——本层坏掉最多是回到从前，不会把纪年页堵死。 */
