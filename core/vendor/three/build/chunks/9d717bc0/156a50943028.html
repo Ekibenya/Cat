@@ -4870,6 +4870,12 @@ function esBuild(){
    现在：条子一律上缩图（t/ 下，四十二张合计四百九十一 KB，可以一直留着），
    只有选中那一张在全图于后台解开之后才换上去——先换会闪一下空白。 */
 function esThumb(s){return String(s).replace('/annals/','/annals/t/');}
+/* 选中的那一张过渡时用的整幅预览。与条子那张不是一回事：
+   条子那张是竖裁的一条缝（宽高比 0.24），拿去填一个宽高比 1.5 的框，
+   object-fit:cover 只能按宽度撑三倍半，框里只剩中间一小条被放得巨大 ——
+   实测那就是「切换时中间那张猛地放大一下」。整幅预览的比例与原图相同，
+   所以从预览换到全图只是变清楚，构图一格不动。 */
+function esPrev(s){return String(s).replace('/annals/','/annals/p/');}
 function esLoad(){
   var k,d,im,th;
   for(k=0;k<ES.rows.length;k++){
@@ -4889,7 +4895,9 @@ function esLoad(){
       continue;
     }
     im._want=d.src;
-    if(!im.getAttribute('src'))im.setAttribute('src',th);
+    /* 拉开的那五百六十毫秒里顶着的必须是整幅预览，不能是条子那张。 */
+    var cur=im.getAttribute('src'),pv=esPrev(d.src);
+    if(cur!==d.src&&cur!==pv)im.setAttribute('src',pv);
     if(im.getAttribute('src')===d.src)continue;
     /* 全图要等手停下来再上。一张 1024×1536 的图解一次约二十毫秒，
        连着拨图版时每拨一格就解一张，光解码就把这一屏拖成二十帧。

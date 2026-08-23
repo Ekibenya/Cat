@@ -14,13 +14,16 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC  = os.path.join(ROOT, 'core/res/img/annals')
-DST  = os.path.join(SRC, 't')
+DST  = os.path.join(SRC, 't')      # 条子用：竖裁的一条
+PRE  = os.path.join(SRC, 'p')      # 选中的那张过渡时用：整幅，比例照原图
 W    = 240
+PW   = 480
 
 
 def main():
     os.makedirs(DST, exist_ok=True)
-    n = tot = 0
+    os.makedirs(PRE, exist_ok=True)
+    n = tot = pre = 0
     for f in sorted(os.listdir(SRC)):
         if not f.endswith('.jpg'):
             continue
@@ -36,6 +39,20 @@ def main():
         im.save(os.path.join(DST, f), 'JPEG', quality=86, optimize=True)
         tot += os.path.getsize(os.path.join(DST, f))
         n += 1
+
+    # 选中的那一张在拉开的五百六十毫秒里也得有东西顶着，而条子那张顶不了：
+    # 它是宽高比 0.24 的一条缝，object-fit:cover 要盖满宽高比 1.5 的框，
+    # 只能按宽度撑三倍半，框里只剩中间一小条被放得巨大 —— 实测就是
+    # 「切换的时候中间那张猛地放大一下」的来源。
+    # 所以另烤一份整幅的小预览：比例和原图一模一样，构图一格不动，
+    # 全图到了只是变清楚，不会重新取景。
+    for f in sorted(os.listdir(SRC)):
+        if not f.endswith('.jpg'):
+            continue
+        im = Image.open(os.path.join(SRC, f)).convert('RGB')
+        im = im.resize((PW, max(1, round(im.height * PW / im.width))), Image.LANCZOS)
+        im.save(os.path.join(PRE, f), 'JPEG', quality=82, optimize=True)
+        pre += os.path.getsize(os.path.join(PRE, f))
     if n != 42:
         sys.exit('应该是四十二张，实际 %d 张，停手。' % n)
     # 马赛克两张源图各烤一份乘过暖纸的（RGB 各乘 t，alpha 原样）。
@@ -52,7 +69,8 @@ def main():
         out = os.path.join(SRC, f.replace('.png', '_t.png'))
         im.save(out, 'PNG', optimize=True)
         print('暖纸版 %s · %.0f KB' % (os.path.basename(out), os.path.getsize(out)/1024))
-    print('缩图 %d 张 · 合计 %.0f KB' % (n, tot / 1024))
+    print('条子缩图 %d 张 · %.0f KB　整幅预览 %d 张 · %.0f KB'
+          % (n, tot / 1024, n, pre / 1024))
 
 
 if __name__ == '__main__':
