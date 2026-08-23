@@ -2,3 +2,12 @@ __pycache__/
 *.pyc
 tools/felinia/.ko-tab/
 tools/felinia/.zh-ms/
+
+# 沙盒有时会把自查用的小脚本、半截译稿丢在仓库根上 —— 那是它站着的地方。
+# 运营指针第八节讲过这件事：只说文件名不说地方，就会落在这里。
+# 真正的成品都有固定去处，落在根上的一律不入库。
+/*.zh.ms.txt
+/check_*.py
+/tmp/
+/_out/
+/.tmp_zh/

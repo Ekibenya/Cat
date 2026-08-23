@@ -12,6 +12,7 @@
 正文不在这里写。开局那一幕由游戏里的闭合流程当场生成（见 felinia.js 的 feForge）；
 这里只写规矩、口径与世界书。
 """
+import glob
 import io, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -255,21 +256,30 @@ def main():
     io.open(os.path.join(DATA, 'meta.json'), 'w', encoding='utf-8').write(
         json.dumps(card, ensure_ascii=False, indent=1))
 
-    # 世界书：通则一份，纪年一份。core.json 由 cardbuild.py 排在最前。
+    # 世界书按层分成四份。cardbuild.py 按文件名序拼，core.json 排最前。
+    # 分开摆是为了看得见：哪一层出自封闭沙盒，哪一层不是。
+    #   core    通则。常驻，每回合都在
+    #   style   文字。前端 —— 叙法·禁止·说话的样子·对白与心声案例·身份口吻
+    #   world   世界。后端 —— 背景与时代，免走沙盒
+    #   figures 人物。每人六条，出自封闭沙盒；不计进世界书那八百到一千二百条
     lore = json.load(io.open(os.path.join(FEL, 'lore.json'), encoding='utf-8'))
-    core = [e for e in lore if e.get('constant')]
-    eras = [e for e in lore if not e.get('constant')]
+    part = [('core', [e for e in lore if e.get('constant')]),
+            ('style', [e for e in lore if not e.get('constant') and e['ord'] == 20]),
+            ('world', [e for e in lore if not e.get('constant') and e['ord'] == 50]),
+            ('figures', [e for e in lore if e['ord'] == 60])]
     d = os.path.join(DATA, 'lore')
     if not os.path.isdir(d):
         os.makedirs(d)
-    io.open(os.path.join(d, 'core.json'), 'w', encoding='utf-8').write(
-        json.dumps(core, ensure_ascii=False, indent=1))
-    io.open(os.path.join(d, 'eras.json'), 'w', encoding='utf-8').write(
-        json.dumps(eras, ensure_ascii=False, indent=1))
+    # 旧的分卷文件若留着，也会一并被装进卡里。先清干净。
+    for old in glob.glob(os.path.join(d, '*.json')):
+        os.remove(old)
+    for name, arr in part:
+        io.open(os.path.join(d, name + '.json'), 'w', encoding='utf-8').write(
+            json.dumps(arr, ensure_ascii=False, indent=1))
 
     n = sum(len(str(v)) for v in card.values())
-    print('卡的元字段已写出 · 合计 %d 字 · 世界书 通则 %d 条 · 纪年 %d 条'
-          % (n, len(core), len(eras)))
+    print('卡的元字段已写出 · 合计 %d 字' % n)
+    print('世界书 · ' + ' · '.join('%s %d 条' % (k, len(v)) for k, v in part))
 
 
 if __name__ == '__main__':

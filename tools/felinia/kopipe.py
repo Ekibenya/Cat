@@ -167,7 +167,10 @@ def run(stage, jobs):
     for era, bi in jobs:
         pf = fn(era, bi)
         args.append('%s%s=%s' % (tag(era, bi), sfx, pf))
-    cmd = ['sh', SANDBOX, '열기', LOG, ROOT] + args
+    # --뜸：先只放一个出去，等它把开头那一大段（规矩加八篇见本，约四十千字节）
+    # 刻进缓存，再放其余的。实测这一批记录里读出六千九百四十六万、刻入五百三十三万，
+    # 读出远大于刻入，说明确实在分着用同一份开头 —— 运营指针要求先量再开，量过了。
+    cmd = ['sh', SANDBOX, '열기', '--뜸', '30', LOG, ROOT] + args
     sys.stderr.write('→ %d 개 띄운다 (%s)\n' % (len(args), stage))
     return subprocess.call(cmd)
 
