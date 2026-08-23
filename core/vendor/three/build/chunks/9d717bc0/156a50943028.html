@@ -78,9 +78,6 @@ canvas{display:block}
 .card{position:absolute;left:50%;top:44%;width:var(--fs);height:var(--fs);pointer-events:auto;cursor:pointer;touch-action:none;
       will-change:transform,opacity;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .cframe{position:absolute;inset:0;border:1px solid rgba(19,18,13,.5)}
-.cframe::before,.cframe::after{content:'';position:absolute;width:7px;height:7px;border:1px solid var(--paper)}
-.cframe::before{left:-4px;top:-4px;border-right:0;border-bottom:0}
-.cframe::after{right:-4px;bottom:-4px;border-left:0;border-top:0}
 .cframe .ftag{position:absolute;top:-6px;left:50%;transform:translate(-50%,-100%);
               font-size:8px;letter-spacing:.34em;color:var(--mut);white-space:nowrap}
 .cframe .fnum{position:absolute;right:8px;top:6px;font-size:9px;letter-spacing:.2em;color:var(--mut)}
@@ -1769,11 +1766,6 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   border:1px solid rgba(154,116,42,.34);
   box-shadow:0 16px 38px rgba(74,66,55,.18),0 2px 0 rgba(255,255,255,.5) inset;
   -webkit-backdrop-filter:blur(14px) saturate(120%);backdrop-filter:blur(14px) saturate(120%)}
-/* 四角的括号：与选局环、情报台同一套记号 */
-.feGl::before,.feGl::after{content:"";position:absolute;width:13px;height:13px;
-  border:1px solid rgba(154,116,42,.55);pointer-events:none}
-.feGl::before{left:-1px;top:-1px;border-right:0;border-bottom:0}
-.feGl::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
 .feIn{position:relative;z-index:1;flex:1 1 auto;min-width:0;overflow-y:auto;
   padding:16px 18px;scrollbar-width:thin}
 .feIn::-webkit-scrollbar{width:6px}
