@@ -33,7 +33,7 @@ from lore_data import LORE                      # noqa: E402
 ERAS = ERAS_A + ERAS_B + ERAS_C + ERAS_D
 
 
-def attach_figs():
+def attach_figs(partial=False):
     """把人物挂到纪年上。**只在真要造卡时才叫**。
 
     人物是现搭的，不是写死在纪年资料里的：是谁出自真人名册 roster.py，
@@ -45,7 +45,7 @@ def attach_figs():
     """
     import figs as figsrc
     for e in ERAS:
-        e['figs'] = figsrc.build(e['i'])
+        e['figs'] = figsrc.build(e['i'], partial)
 
 # ═══════════ 通则：不分纪年，每一局都成立 ═══════════
 # 全部出自母本。这八条是常驻的——它们不是「这一年发生了什么」，
@@ -210,7 +210,16 @@ def load_annals():
     return {a['i']: a for a in ann}
 
 
-def check(eras, ann):
+def check(eras, ann, partial=False):
+    """partial 是「边写边入卡」用的。
+
+    放宽的只有三条，全是数目上的：一代满不满十位、猫娘够不够四位、
+    有没有留下人类。它们卡的是「写完了没有」，边写边入卡时天天不满足。
+    其余每一条照旧硬拦 —— 尤其是逐个人物那几条（口吻谱、两句签名台词、
+    直角引号、事迹长度），它们卡的是「回来的这一条像不像样」，跟写完没写完无关。
+    缺口不吞掉，最后一并报出来。
+    """
+    short = []
     seen = {}
     vkeys = set(v['k'] for v in pools.VOICES)
     for e in eras:
@@ -229,7 +238,10 @@ def check(eras, ann):
         assert len(e['dress']) >= 4, '纪年 %d 的服装太少' % i
         # 死规则：一代至少十位家喻户晓的真人，可以再加三到五位小众的。
         # 上限不卡。名册那边另有一道卡名人数目的关。
-        assert len(e['figs']) >= 10, '纪年 %d 的人物不足十位：%d' % (i, len(e['figs']))
+        if partial and len(e['figs']) < 10:
+            short.append((i, len(e['figs'])))
+        else:
+            assert len(e['figs']) >= 10, '纪年 %d 的人物不足十位：%d' % (i, len(e['figs']))
         nms = set()
         for f in e['figs']:
             assert f['n'] not in nms, '纪年 %d 有重名：%s' % (i, f['n'])
@@ -244,8 +256,9 @@ def check(eras, ann):
         # 这是一张猫娘卡。哪一代的名人再怎么清一色是男的，
         # 也得再找几位同代的真人女子补上来，不能一代只剩一两位猫娘。
         cats = sum(1 for f in e['figs'] if f['sp'] == 'cat')
-        assert cats >= 4, '纪年 %d 的猫娘太少：%d/%d' % (i, cats, len(e['figs']))
-        assert cats < len(e['figs']), '纪年 %d 一个人类都没有' % i
+        if not (partial and len(e['figs']) < 10):
+            assert cats >= 4, '纪年 %d 的猫娘太少：%d/%d' % (i, cats, len(e['figs']))
+            assert cats < len(e['figs']), '纪年 %d 一个人类都没有' % i
         assert i in LORE, '纪年 %d 没有世界书原料' % i
         assert HOME.get(i), '纪年 %d 没有写住处' % i
         assert COIN.get(i), '纪年 %d 没有写钱的尺子' % i
@@ -256,6 +269,12 @@ def check(eras, ann):
     # 世界书原料不能有多出来的纪年
     assert set(LORE) == want, '世界书原料对不上，多出 %s' % sorted(set(LORE) - want)
     pools.check()
+    if short:
+        from roster import ROSTER
+        n = sum(len(e['figs']) for e in eras)
+        print('还没写完的纪年 %d 代，人物共 %d 位（写满是 %d 位）：'
+              % (len(short), n, sum(len(ROSTER[e['i']]) for e in eras)))
+        print('    ' + '  '.join('%d 代 %d 位' % t for t in short))
     return True
 
 
@@ -358,14 +377,14 @@ def lore_tally(lb):
     return core, front, back, figs
 
 
-def main():
-    attach_figs()
+def main(partial=False):
+    attach_figs(partial)
     ann = load_annals()
     # eras 里没有 t/s，先从图版补上，check 之后再正式组装
     for e in ERAS:
         if e['i'] in ann:
             e.setdefault('t', ann[e['i']]['t'])
-    check(ERAS, ann)
+    check(ERAS, ann, partial)
 
     if not os.path.isdir(OUT):
         os.makedirs(OUT)
@@ -392,4 +411,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # --부분：边写边入卡。人物回来几位算几位，缺口照报，别的检查一条不放。
+    main('--부분' in sys.argv)

@@ -63,7 +63,9 @@ VOICE_RULE = [
 ]
 VOICE_FALLBACK = ['v01', 'v03', 'v04', 'v05', 'v14', 'v15', 'v17', 'v20', 'v21', 'v22']
 
-SAY_HEAD = '原文如是。'
+# 台词起头的记号。句点收两种：译出那一段偶尔把句号落成半角点，
+# 「原文如是.」和「原文如是。」是同一个记号。成品一个字都不改，认记号的这头放宽。
+SAY_HEAD = re.compile('原文如是[。.]')
 LINE = re.compile('(「[^」]+」)')
 
 
@@ -91,17 +93,26 @@ def _quotes(entries, who):
     if not say:
         raise SystemExit('%s 没有「说话的样子」那一条' % who)
     body = say[0]['content']
-    if SAY_HEAD not in body:
+    m = SAY_HEAD.search(body)
+    if not m:
         raise SystemExit('%s 的「说话的样子」没有台词标记' % who)
-    got = LINE.findall(body.split(SAY_HEAD, 1)[1])
+    got = LINE.findall(body[m.end():])
     if len(got) < 2:
         raise SystemExit('%s 的台词不足两句' % who)
     return got[:2]
 
 
-def build(era):
+def build(era, partial=False):
+    """partial 是「边写边入卡」用的：沙盒还没交回来的人先不放，回来了几位算几位。
+
+    放开的只有「少」这一件事。**没走过沙盒的人依旧一个都不许进来** ——
+    这里从头到尾只从 zh.lore.json 里取，取不着就跳过，绝不就地编一个顶上。
+    这两件事常被混为一谈，所以写在这里：这一版拦的是编造，不是不全。
+    """
     lore = _load(era)
     if not lore:
+        if partial:
+            return []
         raise SystemExit('纪年 %d 的封闭沙盒成品还没回来：%s/e%02db*.zh.lore.json'
                          % (era, ZHDIR, era))
     out, seen = [], set()
@@ -111,6 +122,8 @@ def build(era):
         seen.add(f['n'])
         ent = lore.get(f['n'])
         if not ent:
+            if partial:
+                continue
             raise SystemExit('纪年 %d 的 %s 还没有沙盒成品' % (era, f['n']))
         out.append({'n': f['n'], 'sp': f['sp'], 'ti': f['kind'],
                     'v': _voice(era, f), 'd': f['fact'],
