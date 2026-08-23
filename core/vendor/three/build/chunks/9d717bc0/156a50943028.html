@@ -1504,15 +1504,17 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    （原先玻璃在子元素 .cfr 上、透视在祖先上，采样被截断，糊不出来。）
    mvFit 抵掉近边被透视放大的那一点，免得上下顶出台子。 */
 .gMfd.mvDeck .mvWin{position:absolute;transform-origin:50% 50%;--mvTilt:-10deg;--mvFit:.93;
-      background:rgba(237,231,217,.10);border:1px solid rgba(19,18,13,.20);
+      background:rgba(237,231,217,.34);border:1px solid rgba(19,18,13,.20);
       box-shadow:0 14px 34px rgba(242,236,222,.5);
-      /* 这一扇背后只有那层细线框（灰度 4~16），blur(9px) 把 1px 的线摊开近二十像素，
-         峰值只剩百分之一二，再被面板底色压一道，等于什么都看不见。
-         实测：模糊半径几乎不影响，起决定作用的是亮度增益。
-         所以半径收到 6px、补一道 2.6 倍增益——线这才透得出来。
-         左边三扇不用这么补：它们背后是打了光的三维画面，本来就亮。 */
-      -webkit-backdrop-filter:blur(6px) brightness(.955) saturate(140%);
-              backdrop-filter:blur(6px) brightness(.955) saturate(140%);
+      /* 玻璃配方与左边那三扇（.gPanel 地图·装备·商店）一个数不差：blur(9px)，
+         底色、边框、投影也全部照抄。委托人要的就是两边看着是同一种窗。
+         原先这一扇另配了 saturate(140%)：情报台贴着画面右缘，而暗角
+         （#game::before）正是越靠边越浓的奶油色，增艳四成就把那片奶油
+         一并增艳，六扇窗于是发黄。左边三扇从来没有这一道，所以不黄。
+         同处撤掉的还有 brightness(.955)——旁边注释说要 2.6 倍增益，
+         写下的却是 .955（那是同一行 scale(.955) 的数，抄串了行），
+         实际在压暗而不是提亮。两道一起去掉，配方就与左边合一。 */
+      -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
       transform:perspective(620px) translateX(26px) scale(.955) rotateY(var(--mvTilt)) scaleY(var(--mvFit));
       opacity:0;pointer-events:none;
       transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease}
@@ -9454,10 +9456,9 @@ function applyGlass(){
     +'#game .gInput{background:linear-gradient(0deg,rgba(237,231,217,'+(.55+.4*a).toFixed(2)+') 0%,rgba(237,231,217,'+(.35+.35*a).toFixed(2)+') 42%,rgba(237,231,217,0) 76%) !important}'
     /* 情报台那几扇窗跟着同一根「面板透明度」拉杆走——它们就是同一种窗，
        底色不该有两套。 */
-    +'.gPanel,#pnTx{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
-    /* 情报台那六扇单独一档更透的：它们背后只有一层细线框，底色跟左边三扇一样厚的话
-       线全被压掉，看着就是六块不透的黑板。同一根拉杆，系数减半。 */
-    +'.gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.01+.05*a).toFixed(2)+') !important}'
+    /* 情报台那六扇并进这一条：委托人要两边是同一种窗，底色就不该分两档。 */
+    +'.gPanel,#pnTx,.gMfd.mvDeck .mvWin'
+    +'{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
@@ -9467,8 +9468,8 @@ function applyGlass(){
        同样带 #game 才压得住余下的规则，拉杆这才对手机也管用。
        系数比宽屏高一档但远低于原来的 .62——浮在正文上的窗要留一点底。 */
     +'@media (max-width:760px){'
-    +'#game .gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.06+.16*a).toFixed(2)+') !important}'
-    +'#game .gPanel{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
+    +'#game .gPanel,#game .gMfd.mvDeck .mvWin'
+    +'{background:rgba(237,231,217,'+(.08+.18*a).toFixed(2)+') !important}'
     +'}';
 }
 applyGlass();
