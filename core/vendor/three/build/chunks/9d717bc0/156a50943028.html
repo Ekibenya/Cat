@@ -10851,6 +10851,28 @@ function bookLabel(t,c){
   if(tail&&tail!==c&&t.indexOf(tail+' · ')===0)return t.slice(tail.length+3);
   return t;
 }
+/* 有些条目是写给引擎看的规矩，不是世界里的事，资料库这一页不该摆给玩家。
+   只是不显示——注入照旧，一条也没少发。
+     整条不显示：目录（母条目）· 怎么写那四十八条 · 通则里的常错清单 · 母本的取用规矩
+     逐行不显示：世界那几层里指点怎么写的行（禁止…、不要…、游戏内用法…）
+   人物那一层是整段散文，不逐行滤——滤了会把整条滤空。
+   玩家自己写的和请入的角色卡一律照显，不动人家的东西。 */
+var BOOK_HIDE={'〔通则〕这个世界不是那样的 · 八条常错':1,
+               '〔母本〕两部书的读法与本卡的取用规矩':1};
+var BOOK_META=/禁止|不许|不要|不得|玩家|正文|剧情|写成|怎么写|的用法：|钩子|场面里|场面上|游戏内|取用规矩|不是设定|这一条|本条|写这一段|写他们时|写政治时|写任何一代|触发时|一行一件事|条目|世界书|神谕|提示词/;
+function bookHide(e){
+  if(!e||e.custom)return false;
+  if(e.lay==='style')return true;
+  if(e.lay==='core'&&e.ord<10)return true;
+  return !!BOOK_HIDE[e.title];
+}
+function bookText(e){
+  var t=String((e&&e.content)||'');
+  if(!e||e.custom||!e.lay||e.lay==='figures')return t;
+  var a=t.split('\n'),o=[],i;
+  for(i=0;i<a.length;i++)if(a[i].trim()&&!BOOK_META.test(a[i]))o.push(a[i]);
+  return o.length?o.join('\n'):t;
+}
 /* 类目栏的名字：去掉「人 · 」「文字 · 」这两个前缀。
    左边那一栏已经写着是「人物」还是「怎么写」了，每一行再重复一遍是白占地方。
    去的只是显示，条目自己的 cat 不动——酒馆那一边和母条目的门类表还照旧用它。 */
@@ -10861,6 +10883,7 @@ function bookCatLabel(c){
 function bookCats(side){
   var lb=(CARDS[side]&&CARDS[side].lorebook)||[],tops=[],tmap={},i;
   for(i=0;i<lb.length;i++){
+    if(bookHide(lb[i]))continue;
     var t=bookTop(lb[i]),c=lb[i].cat||'其他';
     if(!tmap[t]){tmap[t]={order:[],map:{},n:0};tops.push(t);}
     var g=tmap[t];
@@ -10882,6 +10905,11 @@ function bookRender(){
   if(!lb.length){
     $('#cxTtl').textContent='陆之卷';
     $('#cxTxt').textContent='—— 本卷writing中，正在灌注。 ——';
+    return;
+  }
+  if(!bc.tops.length){
+    $('#cxTtl').textContent='陆之卷';
+    $('#cxTxt').textContent='—— 这一卷没有可看的条目。 ——';
     return;
   }
   if(BOOK.top>=bc.tops.length)BOOK.top=0;
@@ -10911,7 +10939,7 @@ function bookRender(){
   });
   var cur=lb[ids[BOOK.ent]];
   $('#cxTtl').textContent=cur.title;
-  $('#cxTxt').textContent=cur.content;
+  $('#cxTxt').textContent=bookText(cur);
   /* 手机上这两栏是横滑的胶囊行：选中项若落在可视范围外（换类目后条目重排、
      或读回上次的选择），玩家只看得见开头几颗，不知道自己停在哪一条。滚到眼前来。
      正文也要回到顶部，否则换条目后还停在上一条读到的位置。 */

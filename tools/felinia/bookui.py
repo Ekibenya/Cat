@@ -120,6 +120,28 @@ function bookLabel(t,c){
   if(tail&&tail!==c&&t.indexOf(tail+' · ')===0)return t.slice(tail.length+3);
   return t;
 }
+/* 有些条目是写给引擎看的规矩，不是世界里的事，资料库这一页不该摆给玩家。
+   只是不显示——注入照旧，一条也没少发。
+     整条不显示：目录（母条目）· 怎么写那四十八条 · 通则里的常错清单 · 母本的取用规矩
+     逐行不显示：世界那几层里指点怎么写的行（禁止…、不要…、游戏内用法…）
+   人物那一层是整段散文，不逐行滤——滤了会把整条滤空。
+   玩家自己写的和请入的角色卡一律照显，不动人家的东西。 */
+var BOOK_HIDE={'〔通则〕这个世界不是那样的 · 八条常错':1,
+               '〔母本〕两部书的读法与本卡的取用规矩':1};
+var BOOK_META=/禁止|不许|不要|不得|玩家|正文|剧情|写成|怎么写|的用法：|钩子|场面里|场面上|游戏内|取用规矩|不是设定|这一条|本条|写这一段|写他们时|写政治时|写任何一代|触发时|一行一件事|条目|世界书|神谕|提示词/;
+function bookHide(e){
+  if(!e||e.custom)return false;
+  if(e.lay==='style')return true;
+  if(e.lay==='core'&&e.ord<10)return true;
+  return !!BOOK_HIDE[e.title];
+}
+function bookText(e){
+  var t=String((e&&e.content)||'');
+  if(!e||e.custom||!e.lay||e.lay==='figures')return t;
+  var a=t.split('\\n'),o=[],i;
+  for(i=0;i<a.length;i++)if(a[i].trim()&&!BOOK_META.test(a[i]))o.push(a[i]);
+  return o.length?o.join('\\n'):t;
+}
 /* 类目栏的名字：去掉「人 · 」「文字 · 」这两个前缀。
    左边那一栏已经写着是「人物」还是「怎么写」了，每一行再重复一遍是白占地方。
    去的只是显示，条目自己的 cat 不动——酒馆那一边和母条目的门类表还照旧用它。 */
@@ -130,6 +152,7 @@ function bookCatLabel(c){
 function bookCats(side){
   var lb=(CARDS[side]&&CARDS[side].lorebook)||[],tops=[],tmap={},i;
   for(i=0;i<lb.length;i++){
+    if(bookHide(lb[i]))continue;
     var t=bookTop(lb[i]),c=lb[i].cat||'其他';
     if(!tmap[t]){tmap[t]={order:[],map:{},n:0};tops.push(t);}
     var g=tmap[t];
@@ -155,7 +178,12 @@ JS_OLD3 = """  if(BOOK.cat>=bc.order.length)BOOK.cat=0;
     catsEl.appendChild(d);
   });
   var ids=bc.map[bc.order[BOOK.cat]];"""
-JS_NEW3 = """  if(BOOK.top>=bc.tops.length)BOOK.top=0;
+JS_NEW3 = """  if(!bc.tops.length){
+    $('#cxTtl').textContent='陆之卷';
+    $('#cxTxt').textContent='—— 这一卷没有可看的条目。 ——';
+    return;
+  }
+  if(BOOK.top>=bc.tops.length)BOOK.top=0;
   bc.tops.forEach(function(t,ti){
     var g=bc.tmap[t],d=document.createElement('div');
     d.className='cxTop'+(ti===BOOK.top?' on':'');d.textContent=t;
@@ -176,6 +204,9 @@ JS_NEW3 = """  if(BOOK.top>=bc.tops.length)BOOK.top=0;
 JS_OLD3B = "    d.textContent=e.title;"
 JS_NEW3B = "    d.textContent=bookLabel(e.title,e.cat);"
 
+JS_OLD3C = "  $('#cxTxt').textContent=cur.content;"
+JS_NEW3C = "  $('#cxTxt').textContent=bookText(cur);"
+
 JS_OLD4 = "    ['#cxCats','#cxEnts'].forEach(function(sel){"
 JS_NEW4 = "    ['#cxTops','#cxCats','#cxEnts'].forEach(function(sel){"
 
@@ -191,7 +222,8 @@ def main():
         print('资料库已经是四栏了，跳过。')
         return
     for a, b in REPS + [(JS_OLD, JS_NEW), (JS_OLD2, JS_NEW2), (JS_OLD3, JS_NEW3),
-                        (JS_OLD3B, JS_NEW3B), (JS_OLD4, JS_NEW4), (JS_OLD5, JS_NEW5)]:
+                        (JS_OLD3B, JS_NEW3B), (JS_OLD3C, JS_NEW3C),
+                        (JS_OLD4, JS_NEW4), (JS_OLD5, JS_NEW5)]:
         n = s.count(a)
         if n != 1:
             raise SystemExit('这一段命中 %d 次，不是一次，停手：%s' % (n, a[:60]))
