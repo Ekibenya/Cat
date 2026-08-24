@@ -858,7 +858,10 @@ html.lux #esBrand b{color:#4a4237}
 .armDet .ops span.warn{color:#f36a4b;border-color:rgba(243,106,75,.55)}
 .pnTitle{position:absolute;left:20px;top:14px;font-size:9px;letter-spacing:.34em;color:var(--txt);z-index:3}
 .pnTitle i{font-style:normal;color:var(--gold)}
-#gmapCv{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
+/* 对局屏那一条与择地那一屏是同一幅图、同一套操作（见 mvMake 一节）。 */
+#gmMap{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;z-index:0}
+#gmMap:active{cursor:grabbing}
+#gmMapIn{position:absolute;left:0;top:0}
 .pFade{position:absolute;left:0;right:0;bottom:0;height:120px;pointer-events:none;z-index:2;
       -webkit-
       -webkit-mask-image:linear-gradient(to bottom,transparent,#f2ecde 72%);
@@ -1729,7 +1732,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    横着要能一直拖下去，所以底图按这个宽度为周期一幅接一幅铺开：
    瓦片与标记都溢出到盒子外面去，视野里够盖满就行，多的不画。 */
 #feMapIn{position:absolute;left:0;top:0}
-#feMapIn img{position:absolute;top:0;display:block;pointer-events:none;
+#feMapIn img,#gmMapIn img{position:absolute;top:0;display:block;pointer-events:none;
   -webkit-user-drag:none;user-select:none}
 /* 不在择地那一步时，图退成背景：压淡、不接点击，标记也收起来 */
 #feWrap:not([data-step="loc"]) #feBg{opacity:.42;pointer-events:none;
@@ -1861,8 +1864,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* ═══ 一 · 择地 LOCVS ═══ */
 .feLn{position:absolute;height:1px;background:rgba(154,116,42,.5);transform-origin:0 50%;
   pointer-events:none;z-index:2}
+/* 内边距只是把「按得着的范围」撑开，看得见的东西一点没变（底色都在两个孩子身上）。
+   点本身十三像素，比手指尖小得多——原来常常按在旁边一点点就什么也没选中。 */
 .feMk{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
-  display:flex;flex-direction:column;align-items:center;gap:3px}
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 8px}
 .feMk .dot{width:13px;height:13px;box-sizing:border-box;
   border:2px solid #9a742a;background:rgba(252,252,252,.85);
   transform:rotate(45deg);transition:all .22s ease}
@@ -1874,7 +1879,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 .feMk.on .nm{color:#1f1a13;background:rgba(255,255,255,.95);border-bottom:1px solid #9a742a}
 
 .feLoc{display:block;width:100%;box-sizing:border-box;text-align:left;
-  padding:5px 10px;border:0;border-left:2px solid transparent;background:none;
+  padding:8px 10px;border:0;border-left:2px solid transparent;background:none;
   cursor:pointer;font:inherit;color:#6f6757}
 .feLoc:hover{background:rgba(255,255,255,.5);color:#1f1a13}
 .feLoc.on{background:rgba(255,255,255,.72);color:#1f1a13;border-left-color:#9a742a}
@@ -2232,7 +2237,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <span class="t">绘卷</span></div>
   </div>
   <div class="gPanel" id="pnMap">
-    <canvas id="gmapCv"></canvas>
+    <div id="gmMap"><div id="gmMapIn"></div></div>
     <div class="pnTitle"><i>◆</i>&nbsp;TABVLA&nbsp;·&nbsp;地图&nbsp;&nbsp;—&nbsp;&nbsp;滚轮缩放</div>
     <div class="pFade"></div>
   </div>
@@ -5313,7 +5318,8 @@ function feOpen2(row,line){
   var era=null,i;
   for(i=0;i<FE.eras.length;i++)if(FE.eras[i].i===row.i){era=FE.eras[i];break;}
   if(!era)return false;
-  FE.era=era;FE.line=line||'luzhi';FE.loc=null;FE.soc=[];FE.cur=null;FE.salt=0;FE._fit=null;
+  FE.era=era;FE.line=line||'luzhi';FE.loc=null;FE.soc=[];FE.cur=null;FE.salt=0;
+  if(FEMV)FEMV.fit='';
   FE.hero=feMake(era,null,'hero0');FE.hero.self=1;FE.hero.pre=-1;
   FE.pool=era.figs.map(function(f,k){var p=feMake(era,f,'');p.pre=k;return p;});
   /* 台词还空着的那些人，交给玩家自己的接口现写：⓪译入 → ①集笔 → ②译出。
@@ -5442,57 +5448,12 @@ function fePrev(){
 }
 
 /* ═══ 一 · 择地 ═══ */
+var FEMV=null;
 function feLocRender(){
-  feMapFitOnce();feMapDragInit();
-  var host=$('#feMap'),box=$('#feMapIn'),k;
-  var bw=FE._bw||1,bh=FE._bh||1;
-  var W=host?host.clientWidth:0;
-  /* 位移折回 (-bw, 0] 之后（feMapClamp），不论拖到哪儿，视野落在的那一段
-     一定在盒坐标 0 到 bw+W 之间。照这个上限一次铺够，拖动就不必重排——
-     只按「此刻看得见」来铺的话，往一边拖过半幅，那一代的标记会滑出去不再回来。 */
-  var lo=-160,hi=bw+W+160,k0=-1,k1=1+Math.ceil(W/bw);
-  var need=k1-k0+1,tl=box.querySelectorAll('img');
-  for(k=tl.length;k<need;k++){
-    var nim=document.createElement('img');nim.alt='';box.insertBefore(nim,box.firstChild);
-  }
-  tl=box.querySelectorAll('img');
-  for(k=0;k<tl.length;k++){
-    if(k>=need){tl[k].style.display='none';continue;}
-    if(tl[k].src!==FE.mi.src)tl[k].src=FE.mi.src;
-    tl[k].style.display='block';
-    tl[k].style.left=((k0+k)*bw)+'px';
-    tl[k].style.width=bw+'px';tl[k].style.height=bh+'px';
-  }
-  var old=box.querySelectorAll('.feMk,.feLn');
-  for(k=0;k<old.length;k++)old[k].remove();
-  var pts=feLocLayout();
-  FE.era.locs.forEach(function(Lo,n){
-    var pt=pts[n];
-    /* 解卷之后 x0 可能落到这一幅之外，所以按上面那一段的上下限反算要铺几份。 */
-    var bx=pt.x0+pt.dx;
-    var t0=Math.floor((lo-bx)/bw),t1=Math.ceil((hi-bx)/bw);
-    for(var t=t0;t<=t1;t++){
-      var ox=t*bw,mx=bx+ox,my=pt.y0+pt.dy;
-      if(mx<lo||mx>hi)continue;
-      if(pt.dx||pt.dy){                     /* 挪过位的，拉一条细线回真正的那一点 */
-        var len=Math.sqrt(pt.dx*pt.dx+pt.dy*pt.dy);
-        var ln=document.createElement('div');
-        ln.className='feLn';
-        ln.style.left=(pt.x0+ox)+'px';ln.style.top=pt.y0+'px';
-        ln.style.width=len+'px';
-        ln.style.transform='rotate('+Math.atan2(pt.dy,pt.dx)+'rad)';
-        box.appendChild(ln);
-      }
-      var d=document.createElement('div');
-      d.className='feMk'+(FE.loc===Lo?' on':'');
-      d.dataset.n=n;
-      d.style.left=mx+'px';
-      d.style.top=my+'px';
-      d.innerHTML='<div class="dot"></div><div class="nm">'+feEsc(Lo.cn)+'</div>';
-      d.addEventListener('pointerup',function(){feLocPick(n);});
-      box.appendChild(d);
-    }
-  });
+  if(!FEMV)FEMV=tbMake($('#feMap'),$('#feMapIn'),{onPick:feLocPick});
+  FEMV.mm=FE.mm;FEMV.img=FE.mi.src;FEMV.locs=FE.era.locs;FEMV.sel=FE.loc;
+  FEMV.key='era'+FE.era.i;
+  tbRender(FEMV);
   feLocList();
   feLocInfo();
 }
@@ -5505,15 +5466,11 @@ function feLocList(){
     var b=document.createElement('button');
     b.className='feLoc'+(FE.loc===L?' on':'');
     b.type='button';
-    /* 单子里只写中文名。英文名原来另起一行，一条就多出十四像素，
-       二十条摞起来把这一栏撑得放不下。名字要看英文的，点开右边的详情里有。 */
-    b.innerHTML='<b>'+feEsc(L.cn)+'</b>';
+    b.innerHTML='<b>'+feEsc(L.cn)+'</b><span>'+feEsc(L.n)+'</span>';
     b.addEventListener('click',function(){feLocPick(n);});
     box.appendChild(b);
   });
 }
-function feProjX(lo){return (lo+180)/360;}
-function feProjY(la){return (FE.mm.laTop-la)/(FE.mm.laTop-FE.mm.laBot);}
 /* 经度差折回 ±180 之内。跨换日线的一代（比如白令海峡两岸）照直相减会得出三百多度，
    算重心也好、铺图也好，都会把同一代的地点劈到地球两头去。 */
 function loWrap(d){d=(d+180)%360;if(d<0)d+=360;return d-180;}
@@ -5531,9 +5488,9 @@ function loMid(a){
 /* 同一座城里的几处地方，投影上几乎是同一点。照实画就只剩一枚标记，
    其余的点不着。所以重叠的往外散开，再拉一条细线回真正的那一点——
    散是为了点得着，线是为了不骗人。
-   择地那一屏与对局屏左边那一条用的是同一套，只是一个按 CSS 像素算、
-   一个按设备像素算：间距 mind 传进来就是了，环的半径跟着它走。 */
-function feSpread(pts,mind){
+   两处地图（择地那一屏、对局屏左边那一条）用的是同一套：
+   间距 mind 传进来就是了，环的半径跟着它走。 */
+function tbSpread(pts,mind){
   var placed=[],i,k,a,rad,tries;
   var r0=mind*0.6,dr=mind*0.48;
   for(i=0;i<pts.length;i++){
@@ -5553,65 +5510,75 @@ function feSpread(pts,mind){
   return pts;
 }
 
-/* 这幅图的投影是均匀的：经纬每一度都是同样的像素（宽 2520/360 ＝ 高 980/140 ＝ 7），
+/* ═══ 一幅图，两处用 ═══
+   铸局那一屏的择地图，与对局屏左边那一条，原来是两套东西：一套 DOM、一套画布，
+   各有各的投影、各有各的点击判定。同一个世界在两处长得不一样，点法也不一样，
+   改了这边那边还是老样子。现在只剩这一套，两处各挂一份（tbMake）。
+   这幅图的投影是均匀的：经纬每一度都是同样的像素（宽 2520/360 ＝ 高 980/140 ＝ 7），
    所以缩放只要一个倍数，不必分方向算。
-   镜头对着这一代的地点群，视野至少两百四十度：这一层要先让人认出「这是世界的哪一边」，
-   再看清是哪一处。放得太近就只剩几块砖，认不出地方；同一座城里的几处地方靠散开解决，
-   不靠推近镜头。 */
-function feMapFit(){
-  var host=$('#feMap'),box=$('#feMapIn');
-  if(!host||!box||!FE.era)return;
-  var W=host.clientWidth,H=host.clientHeight;
-  if(W<60||H<60)return;
-  /* 比例一进来就是整张世界图。原来是按这一代地点的包围盒算取景，
-     于是打开就是放大的一块，玩家还没看清这一代在世界上的哪儿，先得自己缩小。
-     要放大是玩家自己的事——滚轮与双指都在（feMapZoom），
-     而缩到底就是这一张全图，不会比它更小。
-     变的只是横着摆在哪儿：图左右无限接续（见 feMapClamp），
-     所以镜头可以直接对准这一代地点群的重心经度。原来一律以本初子午线居中，
-     四十一代打开来全是欧洲——地点在东亚也好、在美洲也好，都得自己先拖过去。 */
-  var sc=Math.min(W/FE.mm.w,H/FE.mm.h);
-  var bw=FE.mm.w*sc,bh=FE.mm.h*sc;
-  var c=loMid(FE.era.locs.map(function(L){return L.lo;}));
-  box.style.width=bw+'px';box.style.height=bh+'px';
-  box.style.left=(W/2-feProjX(c)*bw)+'px';box.style.top=((H-bh)/2)+'px';
-  FE._bw=bw;FE._bh=bh;FE._minw=bw;FE._fit=FE.era.i+'|'+W+'x'+H;
-  feMapClamp();
+     host  外框，overflow:hidden，拖拽与滚轮挂在它身上
+     inn   「一幅世界」那一层，宽高就是这一档缩放下整幅图的尺寸；
+           瓦片与标记溢出到它外面去铺，横着一幅接一幅，可以一直拖下去
+     locs  [{n,cn,la,lo,d}]   sel  当前选中的那一条（对象，不是序号）
+     fill  打开时先铺满高度——对局屏那一条是竖长条，整幅世界图铺进去只占中间一线 */
+function tbMake(host,inn,opt){
+  return {host:host,inn:inn,mm:null,img:'',locs:[],sel:null,
+          bw:0,bh:0,minw:0,fit:'',key:'',
+          fill:!!(opt&&opt.fill),onPick:(opt&&opt.onPick)||function(){}};
 }
-/* 摆位只在「换了一代」或「窗口尺寸变了」时重来。
+function tbProjX(lo){return (lo+180)/360;}
+function tbProjY(mm,la){return (mm.laTop-la)/(mm.laTop-mm.laBot);}
+function tbFit(M){
+  var host=M.host,box=M.inn;
+  if(!host||!box||!M.mm||!M.locs.length)return;
+  var W=host.clientWidth,H=host.clientHeight;
+  if(W<40||H<40)return;
+  /* 比例：择地那一屏摆整张世界图——玩家先得认出「这是世界的哪一边」，
+     要放大是他自己的事（滚轮与双指都在，见 tbZoom）。
+     对局屏那一条是竖长条，同样的算法只能得到中间薄薄一线，所以那边先铺满高度。
+     两边缩到底都是「打开时看到的那一张」，不会比它更小——那一条要是能一直缩，
+     世界图会退成中间一线，二十枚标记散在上下的空白里，看着不知道是什么。
+     横着摆在哪儿：对准这一代地点群的重心经度。原来一律以本初子午线居中，
+     四十一代打开来全是欧洲——地点在东亚也好、在美洲也好，都得自己先拖过去。 */
+  var cont=Math.min(W/M.mm.w,H/M.mm.h);
+  var sc=M.fill?Math.max(cont,H/M.mm.h):cont;
+  var bw=M.mm.w*sc,bh=M.mm.h*sc;
+  var c=loMid(M.locs.map(function(L){return L.lo;}));
+  box.style.width=bw+'px';box.style.height=bh+'px';
+  box.style.left=(W/2-tbProjX(c)*bw)+'px';box.style.top=((H-bh)/2)+'px';
+  M.bw=bw;M.bh=bh;M.minw=bw;M.fit=M.key+'|'+W+'x'+H;
+  tbClamp(M);
+}
+/* 摆位只在「换了一代」或「框子尺寸变了」时重来。
    否则从立身退回择地，会把玩家刚拖到的位置弹回默认视野。 */
-function feMapFitOnce(){
-  var host=$('#feMap');if(!host||!FE.era)return;
-  var k=FE.era.i+'|'+host.clientWidth+'x'+host.clientHeight;
-  if(FE._fit===k)return;
-  feMapFit();
+function tbFitOnce(M){
+  var host=M.host;if(!host)return;
+  var k=M.key+'|'+host.clientWidth+'x'+host.clientHeight;
+  if(M.fit===k)return;
+  tbFit(M);
 }
 /* ── 图可以拖，也可以缩 ──
-   拖：按住图往哪儿拖就往哪儿走，边界卡住不让图离开视野。
-   缩：滚轮／双指，以指针为定点，缩放范围是「整幅刚好铺满宽度」到「放大八倍」。
+   拖：按住往哪儿拖就往哪儿走，横着没有边——图按世界宽度一幅接一幅铺开，
+       平移整整一幅看不出分别，于是往一边拖多远都行；位移折回一个周期，
+       纯粹是别让它一路加成天文数字。竖着没得接续（南极下面不是北极），卡在上下边之间。
+   缩：滚轮／双指，以指针为定点，从「整幅世界图」到「放大八倍」。
    拖过就不算点击——阈值六像素，免得手一抖把地点选错。 */
-function feMapClamp(){
-  var host=$('#feMap'),box=$('#feMapIn');
+function tbClamp(M){
+  var host=M.host,box=M.inn;
   if(!host||!box)return;
-  var H=host.clientHeight,bw=FE._bw||0,bh=FE._bh||0;
+  var H=host.clientHeight,bw=M.bw||0,bh=M.bh||0;
   if(bw<1||bh<1)return;
   var L=parseFloat(box.style.left)||0,T=parseFloat(box.style.top)||0;
-  /* 横向不卡边了：图是按世界宽度一幅接一幅铺开的，平移整整一幅看不出分别，
-     于是往一边拖多远都行，而要画的瓦片与标记数量始终不变。
-     位移折回 (-bw, 0] 这一段，纯粹是别让它一路加成天文数字。
-     竖着没得接续（南极下面不是北极），照旧卡在图的上下边之间。 */
   L=L%bw;if(L>0)L-=bw;
   T=(bh>H)?Math.min(0,Math.max(H-bh,T)):(H-bh)/2;
   box.style.left=L+'px';box.style.top=T+'px';
 }
-function feMapZoom(f,ox,oy){
-  var host=$('#feMap'),box=$('#feMapIn');
-  if(!host||!box||!FE.mm)return;
-  var W=host.clientWidth,bw=FE._bw||0,bh=FE._bh||0;
+function tbZoom(M,f,ox,oy){
+  var host=M.host,box=M.inn;
+  if(!host||!box||!M.mm)return;
+  var W=host.clientWidth,bw=M.bw||0,bh=M.bh||0;
   if(bw<1)return;
-  /* 缩到底＝回到打开时那张全图。写死 W 的话，图比面板窄的场合（很扁的面板）
-     缩不回全图，会卡在比全图还大的一档上。 */
-  var min=FE._minw||W,max=(FE._minw||W)*8;
+  var min=M.minw||W,max=(M.minw||W)*8;
   var nw=Math.max(min,Math.min(max,bw*f));
   if(Math.abs(nw-bw)<0.5)return;
   var k=nw/bw;
@@ -5619,20 +5586,20 @@ function feMapZoom(f,ox,oy){
   /* 指针底下那一点在缩放前后落在同一处 */
   box.style.left=(ox-(ox-L)*k)+'px';
   box.style.top=(oy-(oy-T)*k)+'px';
-  FE._bw=nw;FE._bh=bh*k;
-  box.style.width=FE._bw+'px';box.style.height=FE._bh+'px';
-  feMapClamp();feLocRender();
+  M.bw=nw;M.bh=bh*k;
+  box.style.width=M.bw+'px';box.style.height=M.bh+'px';
+  tbClamp(M);tbRender(M);
 }
-function feMapDragInit(){
-  var host=$('#feMap');if(!host||feMapDragInit._on)return;
-  feMapDragInit._on=1;
-  var P={},lx=0,ly=0,moved=0,pin0=0,mid0=null,drag=false,swallow=0,cap=0;
+function tbDragInit(M){
+  var host=M.host;if(!host||M._on)return;
+  M._on=1;
+  var P={},lx=0,ly=0,moved=0,pin0=0,drag=false,swallow=0,cap=0;
   function pts(){return Object.keys(P);}
   function dist(){var k=pts(),a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
   function mid(){var k=pts(),a=P[k[0]],b=P[k[1]];return{x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
   host.addEventListener('pointerdown',function(e){
     P[e.pointerId]={x:e.clientX,y:e.clientY};
-    if(pts().length===2){drag=false;pin0=dist();mid0=mid();return;}
+    if(pts().length===2){drag=false;pin0=dist();return;}
     /* 按下时先不捕获指针：一捕获，后续 pointerup 就全被这块图劫走，
        地点标记（它认的正是 pointerup）再也收不到，点了没反应。
        等真的拖过阈值再捕获——轻点保持原样，拖动照旧跟手。 */
@@ -5645,7 +5612,7 @@ function feMapDragInit(){
       var d=dist();
       if(pin0>0){
         var r=host.getBoundingClientRect(),m=mid();
-        feMapZoom(d/pin0,m.x-r.left,m.y-r.top);
+        tbZoom(M,d/pin0,m.x-r.left,m.y-r.top);
         pin0=d;
       }
       return;
@@ -5658,14 +5625,14 @@ function feMapDragInit(){
       if(moved<=6)return;              /* 还没算拖，先不动图 */
       cap=1;try{host.setPointerCapture(e.pointerId);}catch(_){}
     }
-    var box=$('#feMapIn');
+    var box=M.inn;
     box.style.left=((parseFloat(box.style.left)||0)+dx)+'px';
     box.style.top=((parseFloat(box.style.top)||0)+dy)+'px';
-    feMapClamp();
+    tbClamp(M);
   });
   function up(e){
     delete P[e.pointerId];
-    if(pts().length<2){pin0=0;mid0=null;}
+    if(pts().length<2)pin0=0;
     if(pts().length===0){
       /* 只标记「紧接着的那一下点击要吞掉」，用完即清。
          原来用 setTimeout 复位 moved，下一次点还落在旧值上，
@@ -5693,37 +5660,97 @@ function feMapDragInit(){
     e.preventDefault();
     var r=host.getBoundingClientRect();
     if(e.ctrlKey){                       /* 捏合 */
-      feMapZoom(Math.exp(-e.deltaY*0.012),e.clientX-r.left,e.clientY-r.top);
+      tbZoom(M,Math.exp(-e.deltaY*0.012),e.clientX-r.left,e.clientY-r.top);
       return;
     }
     var pad=(e.deltaMode===0)&&(Math.abs(e.deltaX)>0||Math.abs(e.deltaY)<50);
     if(pad){                             /* 触控板双指滑 = 平移 */
-      var box=$('#feMapIn');
+      var box=M.inn;
       box.style.left=((parseFloat(box.style.left)||0)-e.deltaX)+'px';
       box.style.top=((parseFloat(box.style.top)||0)-e.deltaY)+'px';
-      feMapClamp();
+      tbClamp(M);
       return;
     }
-    feMapZoom(Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top);
+    tbZoom(M,Math.exp(-e.deltaY*0.0016),e.clientX-r.left,e.clientY-r.top);
   },{passive:false});
 }
-/* 图上的标记：先解卷、再散开（散开那一套见 feSpread）。 */
-function feLocLayout(){
-  var bw=FE._bw||1,bh=FE._bh||1;
-  /* 重心与 feMapFit 里用的是同一个（同一份数据、同一个式子，算出来必然一样），
+/* 图上的标记：先解卷、再散开（散开那一套见 tbSpread）。 */
+function tbLayout(M){
+  var bw=M.bw||1,bh=M.bh||1;
+  /* 重心与 tbFit 里用的是同一个（同一份数据、同一个式子，算出来必然一样），
      每处地点的经度都先绕着它解一次卷：跨换日线的一代不这么解，
      同一代的地点会被劈到图的两头，中间隔着整整一个地球。 */
-  var c=loMid(FE.era.locs.map(function(L){return L.lo;}));
-  var pts=FE.era.locs.map(function(L){
-    return{x0:feProjX(c+loWrap(L.lo-c))*bw,y0:feProjY(L.la)*bh,dx:0,dy:0};});
-  return feSpread(pts,54);
+  var c=loMid(M.locs.map(function(L){return L.lo;}));
+  var pts=M.locs.map(function(L){
+    return{x0:tbProjX(c+loWrap(L.lo-c))*bw,y0:tbProjY(M.mm,L.la)*bh,dx:0,dy:0};});
+  return tbSpread(pts,54);
+}
+function tbRender(M){
+  if(!M||!M.host||!M.inn||!M.mm||!M.img||!M.locs.length)return;
+  tbFitOnce(M);tbDragInit(M);
+  var host=M.host,box=M.inn,k;
+  var bw=M.bw||1,bh=M.bh||1,W=host.clientWidth;
+  if(bw<1||W<1)return;
+  /* 位移折回 (-bw, 0] 之后（tbClamp），不论拖到哪儿，视野落在的那一段
+     一定在盒坐标 0 到 bw+W 之间。照这个上限一次铺够，拖动就不必重排——
+     只按「此刻看得见」来铺的话，往一边拖过半幅，那一代的标记会滑出去不再回来。 */
+  var lo=-160,hi=bw+W+160,k0=-1,k1=1+Math.ceil(W/bw);
+  var need=k1-k0+1,tl=box.querySelectorAll('img');
+  for(k=tl.length;k<need;k++){
+    var nim=document.createElement('img');nim.alt='';box.insertBefore(nim,box.firstChild);
+  }
+  tl=box.querySelectorAll('img');
+  for(k=0;k<tl.length;k++){
+    if(k>=need){tl[k].style.display='none';continue;}
+    if(tl[k].src!==M.img)tl[k].src=M.img;
+    tl[k].style.display='block';
+    tl[k].style.left=((k0+k)*bw)+'px';
+    tl[k].style.width=bw+'px';tl[k].style.height=bh+'px';
+  }
+  var old=box.querySelectorAll('.feMk,.feLn');
+  for(k=0;k<old.length;k++)old[k].remove();
+  var pts=tbLayout(M);
+  M.locs.forEach(function(Lo,n){
+    var pt=pts[n];
+    /* 解卷之后 x0 可能落到这一幅之外，所以按上面那一段的上下限反算要铺几份。 */
+    var bx=pt.x0+pt.dx;
+    var t0=Math.floor((lo-bx)/bw),t1=Math.ceil((hi-bx)/bw);
+    for(var t=t0;t<=t1;t++){
+      var ox=t*bw,mx=bx+ox,my=pt.y0+pt.dy;
+      if(mx<lo||mx>hi)continue;
+      if(pt.dx||pt.dy){                     /* 挪过位的，拉一条细线回真正的那一点 */
+        var len=Math.sqrt(pt.dx*pt.dx+pt.dy*pt.dy);
+        var ln=document.createElement('div');
+        ln.className='feLn';
+        ln.style.left=(pt.x0+ox)+'px';ln.style.top=pt.y0+'px';
+        ln.style.width=len+'px';
+        ln.style.transform='rotate('+Math.atan2(pt.dy,pt.dx)+'rad)';
+        box.appendChild(ln);
+      }
+      var d=document.createElement('div');
+      d.className='feMk'+(M.sel===Lo?' on':'');
+      d.dataset.n=n;
+      d.style.left=mx+'px';
+      d.style.top=my+'px';
+      /* 牌子上只写中文名。图上二十块牌子挤在一处，再挂一行英文就谁也读不成。 */
+      d.innerHTML='<div class="dot"></div><div class="nm">'+feEsc(Lo.cn)+'</div>';
+      d.addEventListener('pointerup',function(){M.onPick(n);});
+      box.appendChild(d);
+    }
+  });
+}
+/* 只换高亮，不重排：同一处地方在图上会有好几枚——左右接续的每一幅各一枚——
+   所以按序号认，不能按「第几个元素」认。 */
+function tbSel(M,sel){
+  if(!M||!M.inn)return;
+  M.sel=sel;
+  var n=M.locs.indexOf(sel);
+  var ms=M.inn.querySelectorAll('.feMk'),k;
+  for(k=0;k<ms.length;k++)ms[k].classList.toggle('on',n>=0&&+ms[k].dataset.n===n);
 }
 function feLocPick(n){
   FE.loc=FE.era.locs[n];
-  var ms=document.querySelectorAll('#feMapIn .feMk'),k;
-  /* 同一处地方在图上会有好几枚——左右接续的每一幅各一枚——所以按序号认，
-     不能按「第几个元素」认。 */
-  for(k=0;k<ms.length;k++)ms[k].classList.toggle('on',+ms[k].dataset.n===n);
+  tbSel(FEMV,FE.loc);
   feLocInfo();feFootSync();
 }
 function feLocSync(){
@@ -6242,7 +6269,7 @@ function feSyncEngine(){
     FE.hero.self=1;FE.hero.pre=-1;fePerRender();feFootSync();});
   $('#feSocMore').addEventListener('pointerup',function(){feSocMore();});
   $('#feSit').addEventListener('input',function(){feSitRender();});
-  addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){FE._fit=null;feMapFit();feLocRender();}});
+  addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){if(FEMV)FEMV.fit='';feLocRender();}});
   addEventListener('keydown',function(ev){
     if(!feIsOpen())return;
     var t=ev.target&&ev.target.tagName;
@@ -6316,22 +6343,8 @@ $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
 var BUILD=114;
-/* 地图初始朝向。原来是 15°E（罗马那边）——这是从罗马那一版继承下来的，
-   在秦这一版里一打开地图看到的是欧洲，中国被挤在球体右缘。
-   球心画在画布最左缘（cx=gmW*.04），所以可视带约是 lonC ~ lonC+90°，
-   面板正中落在 lonC+28° 上；要让咸阳（108.7°E）居中，中心经度取 80°E。 */
-var GAME={on:false,mapOpen:false,armOpen:false,place:null,dest:null,lon:80*Math.PI/180,vel:0,drag:false,
-          lx:0,moved:0,mx:-1e4,my:-1e4,hit:[]};
-var gEl=$('#game'),gmCv=$('#gmapCv'),gmc=gmCv.getContext('2d');
-var gmW=0,gmH=0;
-/* 面板斜了之后 getBoundingClientRect 给的是投影后的外接框，比真尺寸小一圈；
-   拿它定画布分辨率会让整张地图糊掉。clientWidth/Height 是布局值，不受变换影响。 */
-function gmapSize(){
-  var cw=gmCv.clientWidth,chh=gmCv.clientHeight;
-  if(cw<4)return;
-  var w=Math.round(cw*DPR),h=Math.round(chh*DPR);
-  if(gmCv.width===w&&gmCv.height===h)return;
-  gmW=gmCv.width=w;gmH=gmCv.height=h;}
+var GAME={on:false,mapOpen:false,armOpen:false,place:null,dest:null};
+var gEl=$('#game');
 function buildActs(y){
   var rad=Math.PI/180,out=[];
   if(y>=1800){                       /* 飞机时代：现代总表全量挂牌 */
@@ -6350,7 +6363,7 @@ function gameShow(){
   ERA.on=false;mOv.classList.remove('era');
   MENU.on=false;MENU.exiting=false;
   mOv.classList.add('show','gbg');          /* 画布留下：地球在毛玻璃后面转 */
-  GAME.panX=0;GAME.panY=0;GAME.zoom=1;   /* 换一局：地图回到默认视野 */
+  if(GMMV)GMMV.fit='';                   /* 换一局：地图回到默认视野 */
   /* 地图上挂哪些地方，由这一代自己的资料说了算。
      原来走的是 SITES —— 那是上一张卡的周秦城池表，四十一代里对得上的只有一代。 */
   /* 读档续局时 FE.era 是空的（铸局那一层根本没开过），
@@ -6373,7 +6386,7 @@ function gameShow(){
   /* 进局即落一份：只看了开场就关掉页面，回来也还在这一局 */
   setTimeout(function(){try{autoSave(1);}catch(_){}},1200);
   $('#stage').style.display='none';$('#rail').style.display='none';$('#mission').style.display='none';try{$('#luxTg').style.display='none';}catch(_){}
-  setTimeout(gmapSize,80);
+  setTimeout(gmapRefresh,80);
 }
 function gmActsSet(locs){
   var r=Math.PI/180;
@@ -6401,7 +6414,7 @@ function gmActsFresh(){
     var hit=false;
     for(k=0;k<ERA.act.length;k++)if(ERA.act[k].n===GAME.dest)hit=true;
     if(!hit)GAME.dest=null;
-    gmapDraw._sig='';
+    if(GMMV)GMMV.fit='';gmapRefresh();
     try{var c=document.querySelector('#arrMap .mmap');if(c)c._sig='';}catch(_){}
   });
 }
@@ -6597,9 +6610,9 @@ function gmFetch(){
   if(GMAP.busy)return;GMAP.busy=1;
   try{
     fetch(FE_BASE+'locus.json?v='+FE_VER).then(function(r){return r.json();})
-      .then(function(j){GMAP.mm=j;gmapDraw._sig='';}).catch(function(){GMAP.busy=0;});
+      .then(function(j){GMAP.mm=j;gmapRefresh();}).catch(function(){GMAP.busy=0;});
     var im=new Image();
-    im.onload=function(){GMAP.mi=im;gmMI._c=null;gmapDraw._sig='';};
+    im.onload=function(){GMAP.mi=im;gmMI._c=null;gmapRefresh();};
     im.onerror=function(){GMAP.busy=0;};
     im.src='/core/res/img/annals/locus.png';
   }catch(_){GMAP.busy=0;}
@@ -6624,267 +6637,34 @@ function gmMM(){
   gmFetch();
   return null;
 }
-/* 这两个数管着「点不点得着」。原来二十处地方照实投影，在这个尺度上
-   彼此隔不到两个像素，全叠在一处：看着像「这一代只有三四处」，
-   点下去落到哪一枚全凭运气。散开 GM_MIND 之后每一枚有自己的地盘，
-   点击往外找 GM_PICK，落在谁的地盘就是谁。 */
-var GM_MIND=44,GM_PICK=26;
-function gmBox(){
-  /* 镜头对着这一代的地点群，视野至少两百度——先认出是世界的哪一边，再看是哪一处。
-     与 feMapFit 同一条式子，只是落在画布的设备像素里，不落在 DOM 上。 */
-  var mm=gmMM();if(!mm)return null;
-  var A=ERA.act||[],i,lo0=1e9,lo1=-1e9,la0=1e9,la1=-1e9;
-  /* 经度先绕重心解一次卷，包围盒才算得对：跨换日线的一代照直取 min/max，
-     会得出「跨了三百多度」，于是镜头缩到看整个地球，地点还是分在两头。 */
-  var cLo=A.length?loMid(A.map(function(a){return a.lo0;})):12;
-  for(i=0;i<A.length;i++){
-    var dw=loWrap(A[i].lo0-cLo);
-    lo0=Math.min(lo0,dw);lo1=Math.max(lo1,dw);
-    la0=Math.min(la0,A[i].la); la1=Math.max(la1,A[i].la);
-  }
-  if(!A.length){lo0=lo1=0;la0=la1=30;}
-  var cLa=(la0+la1)/2;
-  var span=Math.max(lo1-lo0,(la1-la0)*gmW/gmH)*1.9+24;
-  span=Math.max(200,Math.min(360,span))/Math.max(.7,Math.min(4,GAME.zoom||1));
-  var sc=gmW/(span*(mm.w/360));
-  /* 面板是一根竖长条，整幅世界图按经度铺进去只占中间一条，上下空着两截。
-     在不把这一代的地点挤出画面的前提下，把高度尽量铺满：
-     scMax 是「这一代的地点群最少要露出来的经度跨度」定下的上限。 */
-  var need=Math.max(24,(lo1-lo0)*1.6+20);
-  sc=Math.max(sc,Math.min(gmW/(need*(mm.w/360)),gmH/mm.h));
-  var bw=mm.w*sc,bh=mm.h*sc;
-  var px=((cLo+180)/360)*bw,py=((mm.laTop-cLa)/(mm.laTop-mm.laBot))*bh;
-  /* 横向不卡边：图按世界宽度一幅接一幅铺开（见 gmapDraw 里的瓦片），
-     所以往一边拖多远都行，位移只折回一个周期，免得一路加成天文数字。
-     竖着没得接续，照旧卡在图的上下边之间；拖动量就地卡住再写回去，
-     不写回的话手拖出边界之后 panY 还在一路加，回头得原样拖回来才见得到动静。 */
-  var L=gmW/2-px,T=gmH/2-py,pX=GAME.panX||0,pY=GAME.panY||0;
-  pX=pX%bw;L=(L+pX)%bw;if(L>0)L-=bw;
-  if(bh>gmH){pY=Math.min(-T,Math.max(gmH-bh-T,pY));T+=pY;}else{pY=0;T=(gmH-bh)/2;}
-  GAME.panX=pX;GAME.panY=pY;
-  return {mm:mm,L:L,T:T,bw:bw,bh:bh,cLo:cLo};
+/* 对局屏这一条与铸局时的择地图是同一幅（mvMake）：同一套投影、同一套散开、
+   同一套拖拽与点击。原来这儿另有一张画布，自己算投影、自己按像素半径判点中——
+   面板还是斜的，于是要拿变换矩阵把指针位置反解回画布坐标，边上能差二三十像素。
+   换成 DOM 之后这些全没了：标记是真元素，斜不斜都由浏览器自己去算命中。 */
+var GMMV=null;
+function gmapView(){
+  if(!GMMV)GMMV=tbMake($('#gmMap'),$('#gmMapIn'),{fill:1,onPick:function(n){
+    var s=(ERA.act||[])[n];if(s)iterAsk(s);}});
+  return GMMV;
 }
-/* 经度也先绕重心解卷再投影，理由同 gmBox。L 已折回 (-bw, 0]，
-   所以算出来的 x 可能落在这一幅之外——画的时候按周期补几份就是了。 */
-function gmPX(B,lo){return B.L+((B.cLo+loWrap(lo-B.cLo)+180)/360)*B.bw;}
-function gmPY(B,la){return B.T+((B.mm.laTop-la)/(B.mm.laTop-B.mm.laBot))*B.bh;}
-function gmapDraw(){
-  if(gmW<4){gmapSize();if(gmW<4)return;}
-  /* 同 gTerrDraw：这张画布一变，整页的滤镜与毛玻璃就要重算一遍。
-     地图是死的，只有指针移动、缩放、换目的地时画面才真的不一样——
-     那就只在这几样变了的时候重画，其余帧直接退出。 */
-  var sig=[gmW,gmH,GAME.zoom||1,Math.round(GAME.panX||0),Math.round(GAME.panY||0),
-           Math.round(GAME.mx),Math.round(GAME.my),
-           GAME.dest||'',(ERA.act||[]).length,(ERA.act&&ERA.act[0]&&ERA.act[0].n)||''].join('|');
-  if(gmapDraw._sig===sig)return;
-  gmapDraw._sig=sig;
-  gmc.clearRect(0,0,gmW,gmH);
-  GAME.hit.length=0;
-  var B=gmBox();
-  if(!B){                                   /* 图还没到：先空着，下一帧再说 */
-    gmapDraw._sig='';                       /* 这一帧画的是占位，别把它记成已画好 */
-    gmc.fillStyle='rgba(19,18,13,.35)';
-    gmc.font=(11*DPR)+'px ui-monospace,Menlo,monospace';
-    gmc.fillText('TABVLA…',14*DPR,20*DPR);
-    return;
-  }
-  gmc.imageSmoothingEnabled=false;          /* 马赛克要的就是硬边 */
-  /* 底图按世界宽度一幅接一幅铺开。位移折回 (-bw, 0] 之后（gmBox），
-     视野落在的那一段一定在 0 到 bw+gmW 之间，照这个上限铺够就是了——
-     于是横着可以一直拖下去，拖过换日线也接得上。 */
-  var tk,tk0=Math.ceil(-B.L/B.bw)-1,tk1=Math.ceil((gmW-B.L)/B.bw)-1;
-  for(tk=tk0;tk<=tk1;tk++)gmc.drawImage(gmMI()||FE.mi,B.L+tk*B.bw,B.T,B.bw,B.bh);
-  gmc.textBaseline='middle';
-  var A=ERA.act||[],vis=[],i,hovI=-1,hb=GM_PICK;
-  /* 先散开再画：与择地那一屏同一套（feSpread），只是这边按设备像素算。
-     挪过位的拉一条细线回真正的那一点——散是为了点得着，线是为了不骗人。 */
-  var lay=[];
-  for(i=0;i<A.length;i++)lay.push({x0:gmPX(B,A[i].lo0),y0:gmPY(B,A[i].la),dx:0,dy:0});
-  feSpread(lay,GM_MIND*DPR);
-  var pad=40*DPR;
-  for(i=0;i<A.length;i++){
-    var bx0=lay[i].x0+lay[i].dx,by0=lay[i].y0+lay[i].dy;
-    if(by0<-pad||by0>gmH+pad)continue;
-    var t0=Math.floor((-pad-bx0)/B.bw),t1=Math.ceil((gmW+pad-bx0)/B.bw),t;
-    for(t=t0;t<=t1;t++){
-      var mx=bx0+t*B.bw;
-      if(mx<-pad||mx>gmW+pad)continue;
-      vis.push({s:A[i],i:i,x:mx,y:by0,rx:lay[i].x0+t*B.bw,ry:lay[i].y0,sd:lay[i].dx});
-    }
-  }
-  for(i=0;i<vis.length;i++){                  /* 引线先画，压在所有点位底下 */
-    var Vl=vis[i];
-    if(Vl.x===Vl.rx&&Vl.y===Vl.ry)continue;
-    gmc.strokeStyle='rgba(72,42,0,.32)';gmc.lineWidth=1*DPR;
-    gmc.beginPath();gmc.moveTo(Vl.rx,Vl.ry);gmc.lineTo(Vl.x,Vl.y);gmc.stroke();
-    gmc.fillStyle='rgba(72,42,0,.5)';
-    gmc.fillRect(Vl.rx-1*DPR,Vl.ry-1*DPR,2*DPR,2*DPR);
-  }
-  for(i=0;i<vis.length;i++){
-    var d0=Math.hypot(GAME.mx-vis[i].x/DPR,GAME.my-vis[i].y/DPR);
-    if(d0<hb){hb=d0;hovI=vis[i].i;}
-  }
-  var boxes=[];
-  function coll(b){for(var k=0;k<boxes.length;k++){var o=boxes[k];
-    if(b.x0<o.x1&&b.x1>o.x0&&b.y0<o.y1&&b.y1>o.y0)return true;}return false;}
-  var prev=GAME.lblPrev||{},shown={};
-  vis.sort(function(a,b){return (prev[b.s.n]?1:0)-(prev[a.s.n]?1:0);});
-  for(var vj=0;vj<vis.length;vj++){
-    var V=vis[vj],st=V.s,mx2=V.x,my2=V.y,hov=V.i===hovI;
-    /* 底图是浅色的马赛克，点位得压得住：先一枚深底方砖，再一点金心。
-       原来是七到九个像素——手指按下去盖住的地方比它大好几圈。 */
-    var ms=(hov?15:13)*DPR;
-    gmc.fillStyle='rgba(230,219,198,.82)';
-    gmc.fillRect(mx2-ms/2,my2-ms/2,ms,ms);
-    gmc.fillStyle=hov?'rgba(59,28,0,1)':'rgba(72,42,0,.95)';
-    gmc.fillRect(mx2-ms/4,my2-ms/4,ms/2,ms/2);
-    if(GAME.dest===st.n){
-      /* 原来这一圈按时间搏动。搏动就意味着这张画布每帧都在变，
-         上面那道「没变就不重画」的闸也就白设了。改成不动的双圈，一样认得出来。 */
-      gmc.strokeStyle='rgba(179,107,21,.95)';gmc.lineWidth=1.6*DPR;
-      gmc.beginPath();gmc.arc(mx2,my2,15*DPR,0,Math.PI*2);gmc.stroke();
-      gmc.strokeStyle='rgba(179,107,21,.45)';gmc.lineWidth=1;
-      gmc.beginPath();gmc.arc(mx2,my2,20*DPR,0,Math.PI*2);gmc.stroke();
-    }else if(hov){
-      gmc.strokeStyle='rgba(179,107,21,.8)';gmc.lineWidth=1;
-      gmc.beginPath();gmc.arc(mx2,my2,14*DPR,0,Math.PI*2);gmc.stroke();
-    }
-    gmc.font=(9*DPR)+'px ui-monospace,Menlo,monospace';
-    /* 牌子挂在点位散开的那一侧：往左挪的往左挂，往右挪的往右挂，
-       二十块牌子对撞的机会少一半。还撞就往下挪一格，最多两格；
-       再挪不开的那一处只留点不留牌——点本身已经散得够开，点得着。 */
-    var lw=gmc.measureText(st.n).width,lf=(V.sd<0),off=0,bx=null,tr;
-    for(tr=0;tr<3;tr++){
-      off=tr*20*DPR;
-      bx=lf?{x0:mx2-15*DPR-lw,y0:my2-9*DPR+off,x1:mx2-9*DPR,y1:my2+16*DPR+off}
-           :{x0:mx2+9*DPR, y0:my2-9*DPR+off,x1:mx2+15*DPR+lw,y1:my2+16*DPR+off};
-      if(hov||!coll(bx))break;
-      bx=null;
-    }
-    if(bx){
-      boxes.push(bx);
-      if(off>1){                               /* 挪开了就拉一条细线回真正的那一点 */
-        gmc.strokeStyle='rgba(230,219,198,.5)';gmc.lineWidth=1;
-        gmc.beginPath();gmc.moveTo(mx2,my2);gmc.lineTo(lf?bx.x1:bx.x0,my2+off);gmc.stroke();
-      }
-      /* 浅底上写字要垫一层，不然金字压在金砖上读不出来 */
-      var tx=lf?(mx2-13*DPR-lw):(mx2+13*DPR);
-      gmc.fillStyle='rgba(230,219,198,.78)';
-      gmc.fillRect(bx.x0,bx.y0,bx.x1-bx.x0,bx.y1-bx.y0);
-      gmc.fillStyle=hov?'rgba(34,17,0,1)':'rgba(25,19,4,.92)';
-      gmc.fillText(st.n,tx,my2-1*DPR+off);
-      gmc.fillStyle=hov?'rgba(84,40,0,.95)':'rgba(61,53,30,.8)';
-      gmc.font=(8*DPR)+'px ui-monospace,Menlo,monospace';
-      gmc.fillText(st.cn,tx,my2+10*DPR+off);
-      shown[st.n]=1;
-      GAME.hit.push({x:mx2/DPR,y:my2/DPR,i:V.i,n:st.n,
-        b:{x0:bx.x0/DPR-4,y0:bx.y0/DPR-2,x1:bx.x1/DPR+4,y1:bx.y1/DPR+2}});
-      continue;
-    }
-    GAME.hit.push({x:mx2/DPR,y:my2/DPR,i:V.i,n:st.n});
-  }
-  GAME.lblPrev=shown;
-  /* 可观测：测试用命中表，与这一帧的取景 */
-  try{window.__MAPHIT=GAME.hit;window.__MAPBOX={L:B.L,T:B.T,bw:B.bw,bh:B.bh,cLo:B.cLo};}catch(_){}
+function gmapRefresh(){
+  var M=gmapView(),mm=gmMM(),im=gmSrcMI();
+  if(!mm||!im)return;                       /* 图还没到；gmMM 已经派人去取了 */
+  var A=ERA.act||[],i;
+  M.mm=mm;M.img=im.src;
+  M.locs=A.map(function(a){return {n:a.n,cn:a.cn,la:a.la,lo:a.lo0,d:a.d};});
+  M.key=A.length+'|'+((A[0]&&A[0].n)||'');
+  M.sel=null;
+  for(i=0;i<M.locs.length;i++)if(M.locs[i].n===GAME.dest)M.sel=M.locs[i];
+  tbRender(M);
 }
-var GMP={},gmPin0=0,gmZoom0=1,gmMid0=null;   /* 多指登记：双指=捏合缩放+平移 */
-function gmPts(){return Object.keys(GMP);}
-function gmDist(){var k=gmPts();var a=GMP[k[0]],b=GMP[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
-function gmMid(){var k=gmPts();var a=GMP[k[0]],b=GMP[k[1]];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
-/* 面板一斜，「clientX − rect.left」这个线性映射就废了：外接框是投影后的，
-   而画布上的点还被透视除过一道，边上能差二三十像素——城池点半径才八到十一，
-   悬停会高亮错、点击会点空。这里按元素自己的变换矩阵反解回本地坐标。
-     局部点 (u,v,0,1) 经矩阵 M 得 (X,Y,Z,W)，屏幕点是 (X/W, Y/W)。
-     展开成两个未知数的线性方程组，2×2 直接解：
-       (m11 − sx·m14)·u + (m21 − sx·m24)·v = sx·m44 − m41
-       (m12 − sy·m14)·u + (m22 − sy·m24)·v = sy·m44 − m42
-   不写死角度与透视值，改哪个数都不用回来同步。 */
-function gmLocal(e){
-  var pn=document.getElementById('pnMap');
-  if(!pn){var r0=gmCv.getBoundingClientRect();return {x:e.clientX-r0.left,y:e.clientY-r0.top};}
-  var tf='';
-  try{tf=getComputedStyle(pn).transform||'';}catch(_){}
-  if(!tf||tf==='none'||tf.indexOf('matrix')<0){
-    var r1=gmCv.getBoundingClientRect();return {x:e.clientX-r1.left,y:e.clientY-r1.top};
-  }
-  var m;
-  try{m=new DOMMatrix(tf);}catch(_){m=null;}
-  if(!m){var r2=gmCv.getBoundingClientRect();return {x:e.clientX-r2.left,y:e.clientY-r2.top};}
-  var gr=gEl.getBoundingClientRect();
-  var W=pn.offsetWidth,H=pn.offsetHeight;
-  var ox=gr.left+pn.offsetLeft+W/2,oy=gr.top+pn.offsetTop+H/2;   /* 变换原点：面板未变换时的中心 */
-  var sx=e.clientX-ox,sy=e.clientY-oy;
-  var a11=m.m11-sx*m.m14,a12=m.m21-sx*m.m24,b1=sx*m.m44-m.m41;
-  var a21=m.m12-sy*m.m14,a22=m.m22-sy*m.m24,b2=sy*m.m44-m.m42;
-  var det=a11*a22-a12*a21;
-  if(!det||!isFinite(det)){var r3=gmCv.getBoundingClientRect();return {x:e.clientX-r3.left,y:e.clientY-r3.top};}
-  var u=(b1*a22-a12*b2)/det,v=(a11*b2-b1*a21)/det;
-  return {x:u+W/2-gmCv.offsetLeft,y:v+H/2-gmCv.offsetTop};
+/* 换了目的地只要换一枚高亮，不必把二十枚重排一遍 */
+function gmapDest(){
+  var M=GMMV;if(!M||!M.locs.length)return;
+  var s=null;
+  for(var i=0;i<M.locs.length;i++)if(M.locs[i].n===GAME.dest)s=M.locs[i];
+  tbSel(M,s);
 }
-gmCv.addEventListener('pointerdown',function(e){
-  GMP[e.pointerId]={x:e.clientX,y:e.clientY};
-  if(gmPts().length===2){
-    GAME.drag=false;GAME.vel=0;
-    gmPin0=gmDist();gmZoom0=GAME.zoom||1;gmMid0=gmMid();
-    return;
-  }
-  GAME.drag=true;GAME.moved=0;GAME.lx=e.clientX;GAME.ly=e.clientY;GAME.lt=performance.now();
-  if(gmCv.setPointerCapture)try{gmCv.setPointerCapture(e.pointerId);}catch(_){}
-});
-gmCv.addEventListener('pointerleave',function(){GAME.hov=false;GAME.mx=-1e4;GAME.my=-1e4;});
-gmCv.addEventListener('wheel',function(e){
-  e.preventDefault();e.stopPropagation();
-  /* 触控板双指滑＝平移，捏合（带 ctrl）＝缩放，鼠标滚轮＝缩放。 */
-  if(!e.ctrlKey&&e.deltaMode===0&&(Math.abs(e.deltaX)>0||Math.abs(e.deltaY)<50)){
-    GAME.panX=(GAME.panX||0)-e.deltaX*DPR;
-    GAME.panY=(GAME.panY||0)-e.deltaY*DPR;
-    return;
-  }
-  var k=e.ctrlKey?.012:.0012;
-  GAME.zoom=Math.max(.7,Math.min(4,(GAME.zoom||1)*Math.exp(-e.deltaY*k)));
-},{passive:false});
-gmCv.addEventListener('pointermove',function(e){
-  var lp=gmLocal(e);
-  GAME.mx=lp.x;GAME.my=lp.y;GAME.hov=true;
-  if(GMP[e.pointerId])GMP[e.pointerId]={x:e.clientX,y:e.clientY};
-  if(gmPts().length>=2){                        /* 双指：捏合缩放 + 中点平移 */
-    if(gmPin0>0)GAME.zoom=Math.max(.7,Math.min(4,gmZoom0*gmDist()/gmPin0));
-    var mid=gmMid();
-    if(gmMid0){
-      GAME.panX=(GAME.panX||0)+(mid.x-gmMid0.x)*DPR;
-      GAME.panY=(GAME.panY||0)+(mid.y-gmMid0.y)*DPR;
-    }
-    gmMid0=mid;
-    return;
-  }
-  if(!GAME.drag)return;
-  var dx=e.clientX-GAME.lx;GAME.lx=e.clientX;
-  var dy=e.clientY-(GAME.ly==null?e.clientY:GAME.ly);GAME.ly=e.clientY;
-  /* 平铺图不读 lon/tilt，拖动改成实打实的像素平移。 */
-  GAME.panX=(GAME.panX||0)+dx*DPR;
-  GAME.panY=(GAME.panY||0)+dy*DPR;
-  GAME.vel=0;
-  GAME.moved+=Math.abs(dx)+Math.abs(dy);
-});
-gmCv.addEventListener('pointercancel',function(e){delete GMP[e.pointerId];if(gmPts().length<2){gmPin0=0;gmMid0=null;}});
-gmCv.addEventListener('pointerup',function(e){
-  delete GMP[e.pointerId];
-  if(gmPts().length<2){gmPin0=0;gmMid0=null;}
-  if(!GAME.drag)return;GAME.drag=false;
-  if(GAME.moved<5){
-    GAME.vel=0;                                   /* 纯点击不留甩动惯性 */
-    /* 先按点位算最近的一枚；一枚都不在手底下，才看是不是按在哪块牌子上。
-       原来是牌子优先且一撞上就收工——牌子挂在点位旁边，于是常常
-       「明明按在这一枚上，开的是隔壁那一处」。 */
-    var lp2=gmLocal(e),px=lp2.x,py=lp2.y,best=-1,bd=GM_PICK,onLbl=-1;
-    for(var i=0;i<GAME.hit.length;i++){var h=GAME.hit[i];
-      var d=Math.hypot(px-h.x,py-h.y);
-      if(d<bd){bd=d;best=h.i;}
-      if(onLbl<0&&h.b&&px>=h.b.x0&&px<=h.b.x1&&py>=h.b.y0&&py<=h.b.y1)onLbl=h.i;}
-    if(best<0)best=onLbl;
-    if(best>=0)iterAsk(ERA.act[best]);
-  }
-});
 /* —— ITER：地点介绍 + 确认前往（前往即推进一轮） —— */
 var PENDSITE=null;
 function siteIntro(s){
@@ -6943,7 +6723,8 @@ function iterGo(){
   GAME.place={n:s.n,cn:s.cn};
   gLocSet((y<0?(-y)+'&nbsp;A.C.N.':'A.D.&nbsp;'+y)
     +'&nbsp;<i>·</i>&nbsp;'+s.n+'&nbsp;<i>·</i>&nbsp;'+s.cn);
-  GAME.dest=s.n;GAME.destT=performance.now();      /* 地图不收起：目的地亮环 */
+  GAME.dest=s.n;GAME.destT=performance.now();      /* 地图不收起：目的地亮起来 */
+  try{gmapDest();}catch(_){}
   GAME.dest3d=s.cn||s.n;                            /* 三维即刻随行：不必等神谕回话 */
   try{zj3dTick();}catch(_){}
   /* 前往直接视作推进一轮 */
@@ -6966,7 +6747,7 @@ $('#arrMap').addEventListener('click',function(){
   GAME.mapOpen=!GAME.mapOpen;
   if(GAME.mapOpen){GAME.armOpen=GAME.shopOpen=false;gEl.classList.remove('armOpen','shopOpen');}
   gEl.classList.toggle('mapOpen',GAME.mapOpen);
-  if(GAME.mapOpen)setTimeout(gmapSize,60);
+  if(GAME.mapOpen)setTimeout(gmapRefresh,60);
 });
 $('#arrArm').addEventListener('click',function(){
   GAME.armOpen=!GAME.armOpen;
@@ -7618,7 +7399,7 @@ invRender();
   function setPg(pg){
     for(var j=0;j<tabs.length;j++)tabs[j].classList.toggle('on',tabs[j].getAttribute('data-pg')===pg);
     gEl.setAttribute('data-pg',pg);
-    if(pg==='map'){setTimeout(gmapSize,60);try{invRender();}catch(_){}}
+    if(pg==='map'){setTimeout(gmapRefresh,60);try{invRender();}catch(_){}}
     if(pg==='shop'){try{shopRender();}catch(_){}}
     /* 情报台的 z-index 是 20，三维画面是 25——不收起来的话它整块压在状态栏上，
        这一页从头到 70vh 全被挡住，玩家看到的就是「切过去也读不了」。
@@ -7714,7 +7495,7 @@ function uiScaleApply(q){
   var lab=$('#cfgUiVal');if(lab)lab.textContent=q+'%';
   var sl=$('#cfgUi');if(sl&&+sl.value!==q&&document.activeElement!==sl)sl.value=q;
   try{cfgStore();}catch(_){}
-  try{if(GAME.on)setTimeout(gmapSize,60);}catch(_){}
+  try{if(GAME.on)setTimeout(gmapRefresh,60);}catch(_){}
 }
 var LUX=1;   /* 只有奶油一档：开机即白昼，没有黑夜可切 */
 function luxApply(){
@@ -14096,7 +13877,7 @@ $('#svFile').addEventListener('change',function(){
   };
   rd.readAsText(f);this.value='';
 });
-addEventListener('resize',function(){if(GAME.on)setTimeout(gmapSize,60);});
+addEventListener('resize',function(){if(GAME.on){if(GMMV)GMMV.fit='';setTimeout(gmapRefresh,60);}});
 iOv.addEventListener('pointerup',function(e){
   if(INTRO.exiting)return;
   if(performance.now()-INTRO.t0<2900)introSkip();else introExit();
@@ -14117,7 +13898,6 @@ function loop(t){
   if(GAME.on){
     if(GBG.inited){GBG.inited=false;GBG.p=null;GBG.orders=null;
       try{mg.clearRect(0,0,mW,mH);}catch(_){}}
-    if(GAME.mapOpen||gEl.getAttribute('data-pg')==='map')gmapDraw();
     var _rn2=performance.now();
     if(_rn2-_railT>700){_railT=_rn2;try{railSync();}catch(_){}}
     gTerrDraw(t);
@@ -14172,7 +13952,6 @@ function loop(t){
     GBG.inited=false;GBG.p=null;GBG.orders=null;
     try{mg.clearRect(0,0,mW,mH);}catch(_){}
   }
-  if(GAME.on&&(GAME.mapOpen||gEl.getAttribute('data-pg')==='map'))gmapDraw();
   /* 缩略图每 700ms 对一次：内容没变就只是一次字符串比较，不重排 */
   if(GAME.on){var _rn=performance.now();if(_rn-_railT>700){_railT=_rn;try{railSync();}catch(_){}}}
   if(((!INTRO.on&&!MENU.on)||MENU.exiting)&&!GAME.on){
@@ -15217,8 +14996,12 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
   try{ctx();}catch(e){}
 })();
 </script>
-<script src="/core/res/vn/felinia-vn.js"></script>
-<script src="/core/res/era/felinia-era.js"></script>
-<script src="/core/res/ko/felinia-ko.js"></script>
+<!-- 这三支挂在 /core/res/ 底下，而那一段在 vercel.json 里是 immutable、存一年——
+     那条规则本是给图片字体三维包写的，它们确实不变；这三支是会改的代码。
+     光改文件救不了已经存下的那一份（immutable 是存进去时就写死的），换掉地址才行。
+     所以改过其中任何一支，就把这里的版本号加一：这一页本身是 no-cache，改了就到。 -->
+<script src="/core/res/vn/felinia-vn.js?v=2"></script>
+<script src="/core/res/era/felinia-era.js?v=2"></script>
+<script src="/core/res/ko/felinia-ko.js?v=2"></script>
 </body>
 </html>

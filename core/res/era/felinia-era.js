@@ -82,8 +82,9 @@
     if(era){
       put('在场的制度',(era.inst||[]).join('、'));
       put('取名法',era.nm);
-      put('能落脚的地方',(era.locs||[]).map(function(L){
-        return L.cn+'（'+L.n+'）';}).join('　'));
+      /* 只写中文名。每个名字后面再跟一个括号里的英文，二十条摞起来这一栏就满了，
+         读的人要在括号之间找中文。英文在择地那一屏的单子里有。 */
+      put('能落脚的地方',(era.locs||[]).map(function(L){return L.cn;}).join('　'));
       put('身上穿的',(era.dress||[]).slice(0,6).join('、'));
       var f=(era.figs||[]).length;
       if(f)put('在册的人', f+' 位　（猫娘 '
