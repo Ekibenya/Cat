@@ -1884,17 +1884,22 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* 认点不认牌。牌子比点宽好几倍，一百多枚挂上去，甲的牌子常常压在乙的点上——
    谁在后面画谁接这一下，于是「按在巴塞罗那上，开的是麦罗埃」。
    所以整枚只有点接点击，牌子一概不接；点自己再用一圈看不见的外扩把范围撑到
-   三十五像素见方（点本身十三像素，比手指尖小得多）。
-   两枚点之间隔着五十四像素（tbSpread），这样的方框谁也咬不着谁。 */
+   二十九像素见方（点本身十三像素，比手指尖小得多）。
+   为什么是二十九：世界地名册里两枚点最近隔着三十（tbSpread 的 mindW），
+   方框再大一圈就要咬到隔壁去——实测正是这样，「按在阿克苏姆上，开的是拉利贝拉」。 */
 .feMk{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
   display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
 .feMk .dot{pointer-events:auto}
-.feMk .dot::after{content:"";position:absolute;inset:-11px;cursor:pointer}
+.feMk .dot::after{content:"";position:absolute;inset:-8px;cursor:pointer}
 .feMk .dot{position:relative;width:13px;height:13px;box-sizing:border-box;
   border:2px solid #9a742a;background:rgba(252,252,252,.85);
   transform:rotate(45deg);transition:all .22s ease}
 .feMk .nm{font-size:10px;letter-spacing:.1em;color:#4a4237;white-space:nowrap;
   background:rgba(252,252,252,.9);padding:1px 5px;transition:all .22s ease}
+/* 收起牌子：只是不显形，位子照占——用 display:none 的话，指到时盒子会长出来，
+   点位跟着往上跳，指针就滑出去了，一亮一灭没个完。 */
+.feMk.mute .nm{visibility:hidden}
+.feMk.mute:hover .nm,.feMk.mute.on .nm{visibility:visible}
 .feMk:hover .dot{background:#9a742a}
 .feMk:hover .nm{color:#1f1a13}
 .feMk.on .dot{background:#9a742a;box-shadow:0 0 0 4px rgba(154,116,42,.22);width:16px;height:16px}
@@ -5022,7 +5027,7 @@ var FE={ld:0,eras:null,gen:null,lore:null,ko:null,mm:null,mi:null,vn:null,
         step:'loc',salt:0};
 var FE_STEPS=[['loc','地点'],['per','人物'],['soc','同伴'],['sit','开场']];
 var FE_BASE='/core/res/data/felinia/';
-var FE_VER=3;          /* 世界地名册（orbis.json）与大航海一代的地点表换过的那一版 */
+var FE_VER=4;          /* 世界地名册铺满全球的那一版：二百八十八处、六百一十三段 */
 
 /* ── 取数：五样一次取齐，缺一样就算没取到 ── */
 /* 简介弹窗要用 eras.json 里那几栏。
@@ -5507,19 +5512,25 @@ function loMid(a){
   if(!n||(Math.abs(sx)<1e-9&&Math.abs(sy)<1e-9))return 0;
   return Math.atan2(sy,sx)/r;
 }
-/* 同一座城里的几处地方，投影上几乎是同一点。照实画就只剩一枚标记，
-   其余的点不着。所以重叠的往外散开，再拉一条细线回真正的那一点——
-   散是为了点得着，线是为了不骗人。
-   两处地图（择地那一屏、对局屏左边那一条）用的是同一套：
-   间距 mind 传进来就是了，环的半径跟着它走。 */
-function tbSpread(pts,mind){
+/* 挤在一处的标记有两种，办法不一样。
+   一种是本代自家那二十处：窝棚、粮仓、渡口本就在同一座城里，投影上几乎是同一点，
+   照实画只剩一枚，其余的点不着。这种往外散开，再拉一条细线回真正的那一点——
+   散是为了点得着，线是为了不骗人（p.mv 不为 false 的走这条）。
+   另一种是世界地名册里的：那是各自不同的地方，挪动它们就是画错地图。
+   实测挪起来能挪出二百六十像素——半扇窗那么远，图上标的已经不是那个地方了。
+   所以这种一步不挪，挤上了就先收起来（p.off），缩放拉开了自然露面。
+   择地那一屏的地点全是前一种，行为与从前一样。 */
+function tbSpread(pts,mind,mindW){
   /* 对局屏挂着一百多处地方，两两相比就是一万多次，每滚一格滚轮都要重来一遍。
      按 mind 的边长分方格：隔得比 mind 近的必然落在自己那一格或紧挨的八格里，
      所以只跟这九格里的比。结果与两两相比一模一样，次数少一个数量级。 */
+  /* 方格边长取大的那个间距：短于它的距离一律落在自己那一格或紧挨的八格里，
+     只跟这九格比就够。两百多枚标记两两相比是几万次，每缩放一格都要重来一遍。 */
   var G={},i,a,rad,tries;
-  var r0=mind*0.6,dr=mind*0.48,m2=mind*mind;
-  function bump(x,y){
-    var cx=Math.floor(x/mind),cy=Math.floor(y/mind),gx,gy,c,j;
+  mindW=mindW||mind;
+  var r0=mind*0.6,dr=mind*0.48,cell=Math.max(mind,mindW);
+  function bump(x,y,m){
+    var cx=Math.floor(x/cell),cy=Math.floor(y/cell),gx,gy,c,j,m2=m*m;
     for(gx=cx-1;gx<=cx+1;gx++)for(gy=cy-1;gy<=cy+1;gy++){
       c=G[gx+','+gy];if(!c)continue;
       for(j=0;j<c.length;j+=2){
@@ -5530,14 +5541,28 @@ function tbSpread(pts,mind){
     return false;
   }
   for(i=0;i<pts.length;i++){
-    var p=pts[i],ok=false;p.dx=0;p.dy=0;
-    for(tries=0;tries<80&&!ok;tries++){
-      if(tries){ rad=r0+Math.floor(tries/8)*dr;
-                 a=(-Math.PI/2)+(tries%8)*(Math.PI/4)+i*0.4;
-                 p.dx=Math.cos(a)*rad;p.dy=Math.sin(a)*rad; }
-      ok=!bump(p.x0+p.dx,p.y0+p.dy);
+    var p=pts[i],ok=false;p.dx=0;p.dy=0;p.off=0;
+    if(p.mv===false){
+      /* 不挪的那一种。挤上了先让一小步试试——只许一圈、半径不到二十像素：
+         挨得这么近的两处（开罗与孟斐斯废墟隔九像素、奈良与京都隔十六）本就是同一带地方，
+         让开一点再拉条线回去，比藏起来一处强。一圈之内还是没位子，才收起来，
+         等缩放拉开了自然露面。绝不许像上一种那样越挪越远——那就成了画错地图。 */
+      var rW=mindW*0.6;
+      for(tries=0;tries<9&&!ok;tries++){
+        if(tries){ a=(-Math.PI/2)+(tries-1)*(Math.PI/4)+i*0.4;
+                   p.dx=Math.cos(a)*rW;p.dy=Math.sin(a)*rW; }
+        ok=!bump(p.x0+p.dx,p.y0+p.dy,mindW);
+      }
+      if(!ok){p.dx=0;p.dy=0;p.off=1;continue;}
+    }else{
+      for(tries=0;tries<80&&!ok;tries++){
+        if(tries){ rad=r0+Math.floor(tries/8)*dr;
+                   a=(-Math.PI/2)+(tries%8)*(Math.PI/4)+i*0.4;
+                   p.dx=Math.cos(a)*rad;p.dy=Math.sin(a)*rad; }
+        ok=!bump(p.x0+p.dx,p.y0+p.dy,mind);
+      }
     }
-    var fx=p.x0+p.dx,fy=p.y0+p.dy,kk=Math.floor(fx/mind)+','+Math.floor(fy/mind);
+    var fx=p.x0+p.dx,fy=p.y0+p.dy,kk=Math.floor(fx/cell)+','+Math.floor(fy/cell);
     (G[kk]=G[kk]||[]).push(fx,fy);
   }
   return pts;
@@ -5715,8 +5740,10 @@ function tbLayout(M){
      同一代的地点会被劈到图的两头，中间隔着整整一个地球。 */
   var c=loMid(M.locs.map(function(L){return L.lo;}));
   var pts=M.locs.map(function(L){
-    return{x0:tbProjX(c+loWrap(L.lo-c))*bw,y0:tbProjY(M.mm,L.la)*bh,dx:0,dy:0};});
-  return tbSpread(pts,54);
+    return{x0:tbProjX(c+loWrap(L.lo-c))*bw,y0:tbProjY(M.mm,L.la)*bh,dx:0,dy:0,mv:!L.w};});
+  /* 散开留五十四像素，够挂一枚点加一块牌子；不挪的那种留三十——
+     点本身十三像素、按得着的方框三十五，再近两枚就咬在一起了。 */
+  return tbSpread(pts,54,30);
 }
 function tbRender(M){
   if(!M||!M.host||!M.inn||!M.mm||!M.img||!M.locs.length)return;
@@ -5743,8 +5770,33 @@ function tbRender(M){
   var old=box.querySelectorAll('.feMk,.feLn');
   for(k=0;k<old.length;k++)old[k].remove();
   var pts=tbLayout(M);
+  /* 牌子挂不下就先收起来。对局屏上挂着两百多处地方，牌子一字排开是一堵字墙，
+     底下那幅图整个看不见，名字彼此压着也读不成。点位一枚不少，照旧枚枚可点；
+     收起牌子的那些，指针指到就现出来（.feMk.mute:hover）。
+     先来后到：本代自家那二十处排在 locs 的最前面，所以是它们先占位子。
+     牌宽按字数估：一个汉字约十像素，两边各留一点。不必精确，差几像素不改结论。
+     方格分桶，只跟四邻比——两百多块牌子两两相比是几万次，每缩放一格都要重来。 */
+  var LB={},GX=90,GY=44;
+  function lbBox(x,y,cn){var w=cn.length*10+14;return [x-w/2,y+1,x+w/2,y+17];}
+  function lbEach(b,f){
+    var cx,cy;
+    for(cx=Math.floor(b[0]/GX);cx<=Math.floor(b[2]/GX);cx++)
+      for(cy=Math.floor(b[1]/GY);cy<=Math.floor(b[3]/GY);cy++)
+        if(f(cx+','+cy))return true;
+    return false;
+  }
+  function lbFree(b){
+    return !lbEach(b,function(k){
+      var c=LB[k],j;if(!c)return false;
+      for(j=0;j<c.length;j+=4)
+        if(b[0]<c[j+2]&&b[2]>c[j]&&b[1]<c[j+3]&&b[3]>c[j+1])return true;
+      return false;
+    });
+  }
+  function lbTake(b){lbEach(b,function(k){(LB[k]=LB[k]||[]).push(b[0],b[1],b[2],b[3]);return false;});}
   M.locs.forEach(function(Lo,n){
     var pt=pts[n];
+    if(pt.off)return;                       /* 这一档缩放下挤不开，先不画 */
     /* 解卷之后 x0 可能落到这一幅之外，所以按上面那一段的上下限反算要铺几份。 */
     var bx=pt.x0+pt.dx;
     var t0=Math.floor((lo-bx)/bw),t1=Math.ceil((hi-bx)/bw);
@@ -5761,7 +5813,9 @@ function tbRender(M){
         box.appendChild(ln);
       }
       var d=document.createElement('div');
-      d.className='feMk'+(M.sel===Lo?' on':'');
+      var b=lbBox(mx,my,Lo.cn),show=(M.sel===Lo)||lbFree(b);
+      if(show)lbTake(b);
+      d.className='feMk'+(M.sel===Lo?' on':'')+(show?'':' mute');
       d.dataset.n=n;
       d.style.left=mx+'px';
       d.style.top=my+'px';
@@ -6424,7 +6478,7 @@ function gameShow(){
 function gmActsSet(locs){
   var r=Math.PI/180;
   ERA.act=locs.map(function(L,i){
-    return {n:L.n,cn:L.cn,la:L.la,lo0:L.lo,d:L.d,
+    return {n:L.n,cn:L.cn,la:L.la,lo0:L.lo,d:L.d,w:L.w?1:0,
             cl:Math.cos(L.la*r),sy:Math.sin(L.la*r),lo:L.lo*r,delay:i*90};});
 }
 /* 地点表当初是随开局锚点一起存下来的（读档续局时铸局那一层不会再开，
@@ -6662,7 +6716,8 @@ function orbisAt(y){
     for(k=0;k<x.v.length;k++){
       var v=x.v[k];
       if(v.y0<=y&&y<=v.y1){
-        out.push({n:v.n,cn:v.cn,la:x.la,lo:x.lo,d:v.d});
+        /* w＝出自世界地名册。图上排位时这一种不许挪动（见 tbSpread）。 */
+        out.push({n:v.n,cn:v.cn,la:x.la,lo:x.lo,d:v.d,w:1});
         break;
       }
     }
@@ -6734,7 +6789,7 @@ function gmapRefresh(){
   if(!mm||!im)return;                       /* 图还没到；gmMM 已经派人去取了 */
   var A=ERA.act||[],i;
   M.mm=mm;M.img=im.src;
-  M.locs=A.map(function(a){return {n:a.n,cn:a.cn,la:a.la,lo:a.lo0,d:a.d};});
+  M.locs=A.map(function(a){return {n:a.n,cn:a.cn,la:a.la,lo:a.lo0,d:a.d,w:a.w};});
   M.key=A.length+'|'+((A[0]&&A[0].n)||'');
   M.sel=null;
   for(i=0;i<M.locs.length;i++)if(M.locs[i].n===GAME.dest)M.sel=M.locs[i];
