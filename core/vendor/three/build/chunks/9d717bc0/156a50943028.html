@@ -646,7 +646,11 @@ html.lux #esBrand b{color:#4a4237}
 .gArr{position:relative;width:64px;height:44px;cursor:pointer;color:var(--mut);
       transform:rotateY(17deg);transform-style:preserve-3d;
       transition:transform .34s cubic-bezier(.2,.85,.25,1),color .22s}
-.gArr:hover{transform:rotateY(9deg) translateX(4px) translateZ(14px);color:var(--txt)}
+/* 这一档原来挂在 :hover 上，可是它自己会把自己拆掉：转正＋往右挪＋往前推
+   之后，这一枚就从光标底下挪开了，hover 解除、弹回原位、又压在光标底下——
+   0.34 秒一个来回，光标在手掌与箭头之间一直闪。改成由 railHov 按版面座标判，
+   判中了挂 .hv。变形因此不再回头影响命中。 */
+.gArr.hv{transform:rotateY(9deg) translateX(4px) translateZ(14px);color:var(--txt)}
 /* 缩略窗本体：一道细边框住内容。没有标题栏、没有四角括号——
    那三颗视窗按钮是苹果的，角括号是本作别处的花活，搁在 44px 高的小窗上只剩噪点。 */
 .gArr .win{position:absolute;inset:0;overflow:hidden;
@@ -8985,6 +8989,62 @@ function hDrag(el){
     if(!d)return;el.scrollLeft+=d;e.preventDefault();
   },{passive:false});
 }
+/* 左边那一疊小窗的命中：按版面座标自己判，不交给 :hover。
+   为什么不能用 :hover，见上面 .gArr.hv 那一段的注释——那是一个自己拆自己的环。
+
+   判定必须**整个**离开变形后的几何，进出都是。
+   第一版只把「进」改成版面座标判，「出」还留着 .gRail 的 pointerleave，
+   结果最下面那一枚照旧在闪：标签 .gArr .t 是 bottom:-14px 挂在盒子外头的，
+   落在轨道的框以外，于是这一枚一变形、指标就算离开了轨道 → pointerleave 清掉 .hv
+   → 弹回原位又盖住指标 → 再算进来。环换了个地方长出来。
+   所以进与出都挂在 document 的 pointermove 上，一律按版面座标算：
+   在任何一枚的版面框里就亮那一枚，都不在就全灭。transform 碰不到 offsetLeft/offsetTop，
+   这个判定跟动画完全无关。
+
+   命中区往下多算 16 像素，就是给那条标签留的（四枚之间的间距是 20 像素，
+   那几条字正好落在间距里，是这条轨道上最常被扫到的地方）。
+
+   轨道的框只在「一枚都没亮着」的时候重量。理由不是省事，是这两条轨道会挪：
+   #game 没开的时候量到的全是零，开了局才有位置；--ui 一变、绘卷那一栏收放，
+   位置也跟着走。改用一个量出来的边界提前返回，就会被开局前那份零锁死——
+   进了局往左扫，边界还停在 40，永远早退，这一栏再也不亮。
+   所以边界写成固定的 200（两条轨道都在 left:3～6，宽 76 上下，够宽了），
+   在这条带子里且没有亮着的，就重量一次。 */
+var RAIL_EDGE=200;
+var RAILH={its:null,box:null};
+function railHovScan(){
+  var rails=document.querySelectorAll('.gRail,.g3dRail'),its=[],i,j,a;
+  for(i=0;i<rails.length;i++){a=rails[i].querySelectorAll('.gArr');
+    for(j=0;j<a.length;j++)its.push({r:rails[i],e:a[j]});}
+  RAILH.its=its;RAILH.box=null;
+}
+function railHovBox(){
+  var its=RAILH.its||[],i,b=[];
+  for(i=0;i<its.length;i++)b.push(its[i].r.getBoundingClientRect());
+  RAILH.box=b;
+}
+function railHovAt(x,y){
+  var its=RAILH.its||[],b=RAILH.box||[],i,e,rb,l,t;
+  for(i=0;i<its.length;i++){e=its[i].e;rb=b[i];
+    if(!rb||!rb.width||!e.offsetParent)continue;
+    l=rb.left+e.offsetLeft;t=rb.top+e.offsetTop;
+    if(x>=l-2&&x<=l+e.offsetWidth+2&&y>=t-2&&y<=t+e.offsetHeight+16)return e;}
+  return null;
+}
+function railHov(){
+  railHovScan();
+  if(!RAILH.its.length)return;
+  document.addEventListener('pointermove',function(ev){
+    if(ev.pointerType&&ev.pointerType!=='mouse')return;   /* 触控没有 hover 这回事 */
+    var its=RAILH.its,i,on=false;
+    for(i=0;i<its.length;i++)if(its[i].e.classList.contains('hv')){on=true;break;}
+    if(ev.clientX>RAIL_EDGE&&!on)return;   /* 离得远又没亮着的：一次测量都不做 */
+    if(!on||!RAILH.box)railHovBox();       /* 没亮着就重量：轨道会随开局与收放挪位子 */
+    var got=railHovAt(ev.clientX,ev.clientY);
+    for(i=0;i<its.length;i++)its[i].e.classList.toggle('hv',its[i].e===got);
+  },{passive:true});
+}
+try{railHov();}catch(_){}
 function touchy(){
   try{
     return matchMedia('(pointer:coarse)').matches
