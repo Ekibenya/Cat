@@ -17,28 +17,22 @@
   ],
   "icons": [
     {
-      "src": "/core/res/icon/icon-192.png",
+      "src": "/core/res/icon/icon-192.png?v2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/core/res/icon/icon-512.png",
+      "src": "/core/res/icon/icon-512.png?v2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/core/res/icon/icon-maskable-512.png",
+      "src": "/core/res/icon/icon-maskable-512.png?v2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/core/res/icon/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ]
 }
