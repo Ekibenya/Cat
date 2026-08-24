@@ -856,7 +856,8 @@ html.lux #esBrand b{color:#4a4237}
       padding:4px 10px;cursor:pointer;color:var(--mut);transition:color .18s,border-color .18s}
 .armDet .ops span:hover{color:var(--gold-hi);border-color:var(--gold)}
 .armDet .ops span.warn{color:#f36a4b;border-color:rgba(243,106,75,.55)}
-.pnTitle{position:absolute;left:20px;top:14px;font-size:9px;letter-spacing:.34em;color:var(--txt);z-index:3}
+/* 只是一行字，不该挡住底下的图：不写这一句，顶上那一带的点位按不着。 */
+.pnTitle{position:absolute;left:20px;top:14px;font-size:9px;letter-spacing:.34em;color:var(--txt);z-index:3;pointer-events:none}
 .pnTitle i{font-style:normal;color:var(--gold)}
 /* 对局屏那一条与择地那一屏是同一幅图、同一套操作（见 mvMake 一节）。 */
 #gmMap{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;z-index:0}
@@ -1864,11 +1865,16 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* ═══ 一 · 择地 LOCVS ═══ */
 .feLn{position:absolute;height:1px;background:rgba(154,116,42,.5);transform-origin:0 50%;
   pointer-events:none;z-index:2}
-/* 内边距只是把「按得着的范围」撑开，看得见的东西一点没变（底色都在两个孩子身上）。
-   点本身十三像素，比手指尖小得多——原来常常按在旁边一点点就什么也没选中。 */
+/* 认点不认牌。牌子比点宽好几倍，一百多枚挂上去，甲的牌子常常压在乙的点上——
+   谁在后面画谁接这一下，于是「按在巴塞罗那上，开的是麦罗埃」。
+   所以整枚只有点接点击，牌子一概不接；点自己再用一圈看不见的外扩把范围撑到
+   三十五像素见方（点本身十三像素，比手指尖小得多）。
+   两枚点之间隔着五十四像素（tbSpread），这样的方框谁也咬不着谁。 */
 .feMk{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
-  display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 8px}
-.feMk .dot{width:13px;height:13px;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+.feMk .dot{pointer-events:auto}
+.feMk .dot::after{content:"";position:absolute;inset:-11px;cursor:pointer}
+.feMk .dot{position:relative;width:13px;height:13px;box-sizing:border-box;
   border:2px solid #9a742a;background:rgba(252,252,252,.85);
   transform:rotate(45deg);transition:all .22s ease}
 .feMk .nm{font-size:10px;letter-spacing:.1em;color:#4a4237;white-space:nowrap;
@@ -5000,7 +5006,7 @@ var FE={ld:0,eras:null,gen:null,lore:null,ko:null,mm:null,mi:null,vn:null,
         step:'loc',salt:0};
 var FE_STEPS=[['loc','地点'],['per','人物'],['soc','同伴'],['sit','开场']];
 var FE_BASE='/core/res/data/felinia/';
-var FE_VER=2;          /* 지점 자료를 시대당 스무 곳으로 바꾼 판 */
+var FE_VER=3;          /* 世界地名册（orbis.json）与大航海一代的地点表换过的那一版 */
 
 /* ── 取数：五样一次取齐，缺一样就算没取到 ── */
 /* 简介弹窗要用 eras.json 里那几栏。
@@ -5491,21 +5497,32 @@ function loMid(a){
    两处地图（择地那一屏、对局屏左边那一条）用的是同一套：
    间距 mind 传进来就是了，环的半径跟着它走。 */
 function tbSpread(pts,mind){
-  var placed=[],i,k,a,rad,tries;
-  var r0=mind*0.6,dr=mind*0.48;
+  /* 对局屏挂着一百多处地方，两两相比就是一万多次，每滚一格滚轮都要重来一遍。
+     按 mind 的边长分方格：隔得比 mind 近的必然落在自己那一格或紧挨的八格里，
+     所以只跟这九格里的比。结果与两两相比一模一样，次数少一个数量级。 */
+  var G={},i,a,rad,tries;
+  var r0=mind*0.6,dr=mind*0.48,m2=mind*mind;
+  function bump(x,y){
+    var cx=Math.floor(x/mind),cy=Math.floor(y/mind),gx,gy,c,j;
+    for(gx=cx-1;gx<=cx+1;gx++)for(gy=cy-1;gy<=cy+1;gy++){
+      c=G[gx+','+gy];if(!c)continue;
+      for(j=0;j<c.length;j+=2){
+        var ddx=x-c[j],ddy=y-c[j+1];
+        if(ddx*ddx+ddy*ddy<m2)return true;
+      }
+    }
+    return false;
+  }
   for(i=0;i<pts.length;i++){
     var p=pts[i],ok=false;p.dx=0;p.dy=0;
     for(tries=0;tries<80&&!ok;tries++){
       if(tries){ rad=r0+Math.floor(tries/8)*dr;
                  a=(-Math.PI/2)+(tries%8)*(Math.PI/4)+i*0.4;
                  p.dx=Math.cos(a)*rad;p.dy=Math.sin(a)*rad; }
-      ok=true;
-      for(k=0;k<placed.length;k++){
-        var q=placed[k],ddx=(p.x0+p.dx)-(q.x0+q.dx),ddy=(p.y0+p.dy)-(q.y0+q.dy);
-        if(ddx*ddx+ddy*ddy<mind*mind){ok=false;break;}
-      }
+      ok=!bump(p.x0+p.dx,p.y0+p.dy);
     }
-    placed.push(p);
+    var fx=p.x0+p.dx,fy=p.y0+p.dy,kk=Math.floor(fx/mind)+','+Math.floor(fy/mind);
+    (G[kk]=G[kk]||[]).push(fx,fy);
   }
   return pts;
 }
@@ -6406,16 +6423,20 @@ function gmActsFresh(){
     var e=null,k;
     for(k=0;k<FE.eras.length;k++)if(FE.eras[k].i===ei){e=FE.eras[k];break;}
     if(!e||!e.locs||!e.locs.length)return;
-    gmActsSet(e.locs);
-    /* 存档里那份也换新，免得下一次落档又把老的写回去 */
+    /* 存档里那份也换新，免得下一次落档又把老的写回去。
+       存的只是本代自家那二十处：世界册每次进局现取，改了资料就跟着变。 */
     try{GAME.op.feLocs=e.locs.map(function(L){
       return {n:L.n,cn:L.cn,la:L.la,lo:L.lo,d:L.d};});}catch(_){}
-    /* 目的地是按名字记的，换过表就未必还对得上 */
-    var hit=false;
-    for(k=0;k<ERA.act.length;k++)if(ERA.act[k].n===GAME.dest)hit=true;
-    if(!hit)GAME.dest=null;
-    if(GMMV)GMMV.fit='';gmapRefresh();
-    try{var c=document.querySelector('#arrMap .mmap');if(c)c._sig='';}catch(_){}
+    var yr=(e.y==null?(ERA.year==null?-221:ERA.year):e.y);
+    orbisLoad(function(){
+      gmActsSet(orbisMerge(e.locs,yr));
+      /* 目的地是按名字记的，换过表就未必还对得上 */
+      var hit=false,j;
+      for(j=0;j<ERA.act.length;j++)if(ERA.act[j].n===GAME.dest)hit=true;
+      if(!hit)GAME.dest=null;
+      if(GMMV)GMMV.fit='';gmapRefresh();
+      try{var c=document.querySelector('#arrMap .mmap');if(c)c._sig='';}catch(_){}
+    });
   });
 }
 /* 自定义开局（CONDERE）：以所选年代·地点·身份现场铸一个全新开局。
@@ -6603,6 +6624,51 @@ function gameExit(){
    于是地图一片空白——实测刷新后续局，画面内容只剩 1%。
    这里自己取一份（与铸局那层用的是同两个档，走缓存，不多花一次下载）。 */
 var GMAP={mm:null,mi:null,busy:0};
+/* ── 世界地名册 ──
+   一处地方一条记录，名字按年代分段：同一片水面在不同的年代叫博斯普鲁斯、
+   拜占庭、君士坦丁堡、伊斯坦布尔。给定这一局的纪年，每处挑出罩得住这一年的
+   那一段；一段也罩不住，说明那时候这地方还不算个地方，就不挂。
+   这一份只喂对局屏的地图——铸局时的择地不吃它，那一步仍旧只在本代那一片里挑。 */
+var ORBIS=null,ORBISQ=0;
+function orbisLoad(cb){
+  if(ORBIS){cb(ORBIS);return;}
+  if(ORBISQ){setTimeout(function(){orbisLoad(cb);},200);return;}
+  ORBISQ=1;
+  fetch(FE_BASE+'orbis.json?v='+FE_VER).then(function(r){return r.json();})
+    .then(function(j){ORBIS=j;ORBISQ=0;cb(j);})
+    .catch(function(){ORBISQ=0;cb(null);});
+}
+function orbisAt(y){
+  var out=[],i,k;
+  if(!ORBIS)return out;
+  for(i=0;i<ORBIS.length;i++){
+    var x=ORBIS[i];
+    for(k=0;k<x.v.length;k++){
+      var v=x.v[k];
+      if(v.y0<=y&&y<=v.y1){
+        out.push({n:v.n,cn:v.cn,la:x.la,lo:x.lo,d:v.d});
+        break;
+      }
+    }
+  }
+  return out;
+}
+/* 本代自家那二十处写得细（同一座城里的窝棚、粮仓、渡口都分得开），
+   世界册是一城一条。两下撞上的时候留自家那一条：同名的删，挨得太近的也删——
+   不删就是同一个地方在图上戳两枚，点哪一枚都说不清。 */
+function orbisMerge(base,y){
+  var w=orbisAt(y),out=[],i,k,DED=1.2;
+  for(i=0;i<w.length;i++){
+    var a=w[i],dup=false;
+    for(k=0;k<base.length;k++){
+      var b=base[k];
+      if(a.cn===b.cn||a.n===b.n){dup=true;break;}
+      if(Math.abs(a.la-b.la)<DED&&Math.abs(a.lo-b.lo)<DED){dup=true;break;}
+    }
+    if(!dup)out.push(a);
+  }
+  return base.concat(out);
+}
 function gmSrcMM(){try{if(FE&&FE.mm)return FE.mm;}catch(_){}return GMAP.mm;}
 function gmSrcMI(){try{if(FE&&FE.mi&&FE.mi.width)return FE.mi;}catch(_){}
   return (GMAP.mi&&GMAP.mi.width)?GMAP.mi:null;}
