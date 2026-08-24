@@ -8,7 +8,16 @@
   ],
   "headers": [
     {
-      "source": "/core/res/(.*)",
+      "source": "/core/res/data/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/core/res/:path((?!data/).*)",
       "headers": [
         {
           "key": "Cache-Control",

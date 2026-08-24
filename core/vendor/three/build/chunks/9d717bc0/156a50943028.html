@@ -4992,6 +4992,7 @@ var FE={ld:0,eras:null,gen:null,lore:null,ko:null,mm:null,mi:null,vn:null,
         step:'loc',salt:0};
 var FE_STEPS=[['loc','地点'],['per','人物'],['soc','同伴'],['sit','开场']];
 var FE_BASE='/core/res/data/felinia/';
+var FE_VER=2;          /* 지점 자료를 시대당 스무 곳으로 바꾼 판 */
 
 /* ── 取数：五样一次取齐，缺一样就算没取到 ── */
 /* 简介弹窗要用 eras.json 里那几栏。
@@ -5008,7 +5009,13 @@ function feLoad(cb){
     var q=FE._q||[];FE._q=null;
     q.forEach(function(f){try{f(ok);}catch(_){}});
   }
-  function j(n){return fetch(FE_BASE+n).then(function(r){
+  /* 取数一律带上版本号。/core/res/ 在 vercel.json 里挂着
+     max-age=31536000, immutable ——那是给图片、字体、三维包用的，它们确实不变；
+     可这几份 json 是会改的数据，同一条规则一并套上去，浏览器就一年不再来取。
+     光改 header 救不了已经存下的那一份：immutable 是存进去时就写死的，
+     改规则不会让缓存里那份失效。换掉 URL 才会。
+     所以数据一改就把 FE_VER 加一——旧地址上那份从此没人再问。 */
+  function j(n){return fetch(FE_BASE+n+'?v='+FE_VER).then(function(r){
     if(!r.ok)throw new Error(n+' '+r.status);return r.json();});}
   var img=new Promise(function(res,rej){
     var im=new Image();im.onload=function(){res(im);};im.onerror=rej;
@@ -6507,7 +6514,7 @@ function gmSrcMI(){try{if(FE&&FE.mi&&FE.mi.width)return FE.mi;}catch(_){}
 function gmFetch(){
   if(GMAP.busy)return;GMAP.busy=1;
   try{
-    fetch('/core/res/data/felinia/locus.json').then(function(r){return r.json();})
+    fetch(FE_BASE+'locus.json?v='+FE_VER).then(function(r){return r.json();})
       .then(function(j){GMAP.mm=j;gmapDraw._sig='';}).catch(function(){GMAP.busy=0;});
     var im=new Image();
     im.onload=function(){GMAP.mi=im;gmMI._c=null;gmapDraw._sig='';};
