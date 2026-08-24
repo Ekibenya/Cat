@@ -6,27 +6,39 @@
 
 有人回報「開局定制的地點／人物／同伴／開場，兩邊的彈窗有點發黃」。
 
-查下來不是板子的顏色偏黃，是**底下透上來的東西是黃的**。那兩塊板
+**病根不在板子上，在整屏。** 這一版把奶油配色烘焙進了每一個顏色值，
+只有兩屏例外——紀年選擇與鑄局——因為那兩屏鋪的是真彩的馬賽克畫，
+不能烘焙，於是改成現場罩一層暖紙：
 
-    .feGl{ background:rgba(237,231,217,.34); backdrop-filter:blur(3px) }
+    html.lux #eraSel::after, html.lux #feWrap::after{
+      content:''; position:absolute; inset:0; z-index:2147483647;
+      pointer-events:none; background:#f0eadc; mix-blend-mode:multiply }
 
-底色由毛玻璃那根拉桿定（applyGlass 裡 .22+.32*a，預設 a=.8 → **.48**），
-也就是說有一半以上是透的；而它們身後鋪的是整幅馬賽克世界地圖，磚是土黃與褐色的。
-模糊只有 3 像素，磚糊不開，一塊一塊透上來——板子看上去就是一片黃斑。
+`#feWrap::after` 蓋的是**整個鑄局屏**，正片疊底，z-index 頂到 2147483647。
+板子在它底下，所以板子怎麼調都沒用——實測把 .feGl 調成**不透明的純白**，
+螢幕上量出來還是 (240,234,220)，正是 255 乘 #f0eadc 的結果。
+前面兩版一直在調 .feGl 的底色與透明度，暖度只從 26 挪到 24，就是這個原因。
 
-（順帶：同一支 applyGlass 裡另一段註解寫過「發黃那一次的病根是 saturate」，
-那是情報台那六扇的舊帳，跟這兩塊無關。這兩塊沒有 saturate。）
+（查的過程留一句：這一層 pointer-events:none，document.elementFromPoint 看不見它，
+  照著點去查層次會一路查空。是靠「蓋一塊不透明純白上去，量出來卻不是 255」問出來的。）
 
-試過四五種配方逐張截圖比對，結論很直接：只調底色的色相沒有用（暖度 26 只降到 24），
-**得讓透上來的地圖少一點、糊一點**。所以三件一起改：
+改法：**罩的範圍由整屏收成「除了板子以外」**。
 
-    底色    rgba(237,231,217) → rgba(245,243,238)   往中性挪，不再是那片暖奶油
-    不透明  .22+.32*a → .56+.30*a                   預設 a=.8 時 .48 → .80
-            地點那一步 .28+.48*a → .62+.30*a        預設 .66 → .86（那一步身後
-                                                    連地名標記一起動，本來就要更實）
-    模糊    blur(3px) → blur(9px) saturate(85%)     磚糊成一片，彩度再壓一檔
+    #feWrap::after  →  #feBg::after · #feMap::after · #feHead::after · #feFoot::after
 
-拉桿照舊管用：a=0 時 .56，a=1 時 .86，還是看得見身後的地圖，只是不再一塊塊透。
+畫（#feBg／#feMap）、頂欄、頁腳照舊罩暖紙，紙面調子不變；
+板子（#feStage 底下的 #fePanL／#fePanR）不再被乘一遍。實測：
+
+    板內    (234,227,210) 暖24  →  (248,247,243) 暖5
+    頂欄    (218,208,185)       →  (219,209,186)      幾乎不動
+    地圖磚  (176,161,138)       →  (182,171,156)      略淺一點
+
+順手把板子自己那一層也換掉：底色由那片暖奶油 rgba(237,231,217) 換成中性的
+rgba(248,247,243)，不透明由 .22+.32*a 提到 .62+.24*a（預設拉桿 80 時 .48 → .81），
+模糊由 3 像素加到 10 像素並壓一檔彩度——身後的馬賽克磚原本一塊塊透上來，
+糊開之後就不會在板子裡留下黃斑。毛玻璃那根拉桿照舊管用（a=0 → .62，a=1 → .86）。
+
+紀年選擇那一屏（#eraSel::after）不動：那裡沒有板子，罩整屏是對的。
 
 打過一次就拒絕重打（自檢見 GUARD）。
 """
@@ -45,23 +57,38 @@ A_OLD = """.feGl{position:absolute;inset:0;background:rgba(237,231,217,.34);
 A_NEW = """/* 这两块板发黄，病根不是板子的颜色，是底下透上来的地图是黄的：底色有一半以上
    是透的（真正生效的那一档在 applyGlass 里），而身后铺的是整幅马赛克世界地图，
    砖是土黄与褐色的；模糊只有 3 像素，砖糊不开，一块一块透上来就成了一片黄斑。
-   底色往中性挪、模糊加到 9 像素、彩度再压一档 —— 砖糊成一片，黄就散了。 */
-.feGl{position:absolute;inset:0;background:rgba(245,243,238,.62);
+   底色换成几乎中性的纸白、模糊加到 10 像素、彩度再压一档 —— 砖糊成一片，黄就散了。 */
+.feGl{position:absolute;inset:0;background:rgba(248,247,243,.74);
   border:1px solid rgba(19,18,13,.20);
   box-shadow:0 14px 34px rgba(242,236,222,.5);
-  -webkit-backdrop-filter:blur(9px) saturate(85%);
-  backdrop-filter:blur(9px) saturate(85%)}"""
+  -webkit-backdrop-filter:blur(10px) saturate(72%);
+  backdrop-filter:blur(10px) saturate(72%)}"""
 
 # ── 二、拉桿算出來的那一檔（真正生效的） ──
 B_OLD = "    +'.feGl{background:rgba(237,231,217,'+(.22+.32*a).toFixed(2)+') !important}'"
-B_NEW = ("    /* 由 .22+.32*a 提到 .56+.30*a：预设拉杆 80 时由 .48 提到 .80。\n"
+B_NEW = ("    /* 由 .22+.32*a 提到 .62+.24*a：预设拉杆 80 时由 .48 提到 .81。\n"
          "       透一半的时候，身后那幅马赛克一块块透上来，板子就发黄。 */\n"
-         "    +'.feGl{background:rgba(245,243,238,'+(.56+.30*a).toFixed(2)+') !important}'")
+         "    +'.feGl{background:rgba(248,247,243,'+(.62+.24*a).toFixed(2)+') !important}'")
 
 C_OLD = ("    +'#feWrap[data-step=\"loc\"] .feGl'\n"
          "    +'{background:rgba(237,231,217,'+(.28+.48*a).toFixed(2)+') !important}'")
 C_NEW = ("    +'#feWrap[data-step=\"loc\"] .feGl'\n"
-         "    +'{background:rgba(245,243,238,'+(.62+.30*a).toFixed(2)+') !important}'")
+         "    +'{background:rgba(248,247,243,'+(.70+.22*a).toFixed(2)+') !important}'")
+
+# ── 三、暖紙罩：由整屏收成「除了板子以外」──
+D_OLD = """html.lux #eraSel::after,html.lux #feWrap::after{
+  content:'';position:absolute;inset:0;z-index:2147483647;pointer-events:none;
+  background:#f0eadc;mix-blend-mode:multiply}"""
+D_NEW = """/* 这一罩原来盖的是整个铸局屏（#feWrap::after），正片叠底、z-index 顶到底，
+   板子在它底下，怎么调都发黄 —— 实测把板子调成不透明的纯白，量出来还是
+   (240,234,220)，正好是 255 乘 #f0eadc。所以罩的范围收一收：
+   画（#feBg／#feMap）、顶栏、页脚照旧罩，纸面调子不变；板子（#feStage 底下那两块）
+   不再被乘一遍。纪年选择那一屏没有板子，照旧罩整屏。 */
+html.lux #eraSel::after,
+html.lux #feBg::after,html.lux #feMap::after,
+html.lux #feHead::after,html.lux #feFoot::after{
+  content:'';position:absolute;inset:0;z-index:2147483647;pointer-events:none;
+  background:#f0eadc;mix-blend-mode:multiply}"""
 
 
 def main():
@@ -69,15 +96,16 @@ def main():
     if GUARD in s:
         print('铸局那两块板已经调过了，跳过。')
         return
-    for a, b in ((A_OLD, A_NEW), (B_OLD, B_NEW), (C_OLD, C_NEW)):
+    for a, b in ((A_OLD, A_NEW), (B_OLD, B_NEW), (C_OLD, C_NEW), (D_OLD, D_NEW)):
         n = s.count(a)
         if n != 1:
             raise SystemExit('這一段命中 %d 次，不是一次，停手：%s' % (n, a[:60]))
         s = s.replace(a, b)
     io.open(DOC, 'w', encoding='utf-8').write(s)
-    print('鑄局四步那兩塊板：底色 rgba(237,231,217) → rgba(245,243,238)，')
-    print('  不透明 .48 → .80（地點那一步 .66 → .86），模糊 3px → 9px 並壓一檔彩度。')
-    print('  毛玻璃那根拉桿照舊管用（a=0 → .56，a=1 → .86）。')
+    print('暖紙罩由整個鑄局屏收成「除了板子以外」：畫、頂欄、頁腳照舊罩，板子不罩。')
+    print('  板內實測 (234,227,210) 暖24 → (248,247,243) 暖5；頂欄幾乎不動。')
+    print('板子自己那一層：底色換成中性的 rgba(248,247,243)，不透明 .48 → .81，')
+    print('  模糊 3px → 10px 並壓一檔彩度。拉桿照舊管用（a=0 → .62，a=1 → .86）。')
 
 
 if __name__ == '__main__':
