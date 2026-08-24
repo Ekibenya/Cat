@@ -589,7 +589,12 @@ html.lux #esBrand b{color:#4a4237}
 #game .gAux.on{color:#e9e3d6;background:var(--gold);border-color:var(--gold)}
 .cfgTabs{display:flex;flex-wrap:wrap;gap:2px;margin-top:16px;border-bottom:1px solid rgba(19,18,13,.16);
       padding-bottom:0} /* 换行铺开：12 个页签任何窗宽都全部可见，不再裁掉备份/图库 */
-.cfgTabs span{flex:none;font-size:9px;letter-spacing:.16em;color:var(--mut);cursor:pointer;
+/* 这一排单独再深一档。别处的字底下是奶油（#EDE7D9 上下），--mut 改成 #5f5c53
+   就够了；这一排不是——弹窗自己只有两成四不透明（毛玻璃那根拉杆定的，
+   见 applyGlass），身后画面直接透上来。实测这一排底下量到的是 (170,163,149)，
+   在那上头 #5f5c53 只有 2.7:1，跟没改一样。#3a3830 在那上头 4.5:1，
+   落回奶油上是 9.2:1。选中的那一枚照旧是金底浅字，层次还在。 */
+.cfgTabs span{flex:none;font-size:9px;letter-spacing:.16em;color:#3a3830;cursor:pointer;
       padding:8px 10px 7px;border:1px solid transparent;border-bottom:0;white-space:nowrap;
       transition:color .15s}
 .cfgTabs span.on{color:#e9e3d6;background:var(--gold);font-weight:600}
@@ -1006,9 +1011,13 @@ input[type=range]:disabled{opacity:.4;cursor:default}
 .svFold .tab{position:absolute;left:-1px;top:-7px;width:38%;height:7px;background:rgba(237,231,217,.24);
   -webkit-backdrop-filter:blur(9px) saturate(140%);backdrop-filter:blur(9px) saturate(140%);
   border:1px solid rgba(19,18,13,.30);border-bottom:0}
-.svFold .num{font-size:14px;font-weight:400;letter-spacing:.04em;color:rgba(34,33,26,.55);
+/* 55% 在奶油底上是 3.2:1，提到 80%。卡片本身那层景深透明照旧乘在外面
+   （svFold 建的时候 opacity=(v?.55:.38)+z*.42），所以空卡片、远处的卡片
+   还是该淡的淡；改的只是「字自己」这一层，前排有存档的那几张读得清了。 */
+.svFold .num{font-size:14px;font-weight:400;letter-spacing:.04em;color:rgba(34,33,26,.80);
   border:1px solid rgba(19,18,13,.22);padding:1px 5px 0}
-.svFold .lb{font-size:6.5px;letter-spacing:.2em;line-height:1.6;color:rgba(53,52,45,.55)}
+/* 同上。六点五像素这个字级不动——那是景深的一部分，前排卡片会被透视放大。 */
+.svFold .lb{font-size:6.5px;letter-spacing:.2em;line-height:1.6;color:rgba(53,52,45,.80)}
 /* 手机：卡片缩小、标题移上方，避免挤压 */
 #svField.sm .svFold{padding:3px 6px 3px 3px;gap:4px}
 #svField.sm .svFold .num{font-size:10px;padding:0 3px}
@@ -1341,7 +1350,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 @keyframes mvScreen{from{opacity:0;transform:scale(var(--mv-scr))}to{opacity:1;transform:none}}
 
 /* —— 弹窗：遮罩淡入，内容托起 —— */
-.gDlg{animation:mvFade var(--t-view) var(--e-out) backwards}
+/* 弹窗里的 --mut 单独调深一档。
+   全局那个 #8d8a7d 摆在奶油底（#EDE7D9 上下）上量出来只有 2.7:1，正文门槛是 4.5——
+   设置那一排分页、每条设定的标题、底下几段说明、ESC // RETVRN、资料库三栏的清单，
+   全是这个色，一共八十一处不过关。有人回报「太淡看不清」，说的就是这些。
+   #5f5c53 不是新挑的：右边情报台（.gMfd）与周纪那一套（.zjP）本来就用它，
+   同一片底上 5.4:1。只在这一层改，弹窗以外一个像素不动。 */
+.gDlg{--mut:#5f5c53;animation:mvFade var(--t-view) var(--e-out) backwards}
 .gDlg .box{animation:mvRise var(--t-view) var(--e-out) backwards;animation-delay:60ms}
 /* 人物档案窗是 fdOpen 现建、fdClose 直接移除的，所以这一对动画每次打开都会重放。
    原来它不在这一族里，一点名牌就「啪」地蹦出来，和全站别的弹窗完全两个脾气。
