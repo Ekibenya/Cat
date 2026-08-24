@@ -1786,6 +1786,35 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #fePanR{right:3%;width:35%;
   transform:translateY(-50%) rotateY(calc(var(--feTilt) * -1))}
 
+/* ---------- 换步：两块板绕着环转过去 ----------
+   原来 feStep() 只是翻一下 data-step，两块玻璃板留在原地把里头的字换掉——
+   点「下一步」，画面上没有一样东西动过，内容忽然就变成了别的。
+   选开局那个转盘（#stage／#track）的手感是「转过来」，这里照那个来：
+   两块板一起朝左转出去，换完内容再一起从右边转回来——看着就是
+   「环上滑过来两扇新窗」。两块必须同角同向，才读得出是一个环在转；
+   各转各的就成了两扇门在扇。
+   曲线用 .fePan 本来就写着的那条 cubic-bezier(.2,.85,.25,1)；
+   转出去那半程换成更急的一条，出得干脆、进得从容。 */
+.fePan{transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .24s ease}
+#feStage.feTurn .fePan{
+  transition:transform .19s cubic-bezier(.55,0,.85,.3),opacity .16s ease}
+#feStage.feTurn #fePanL,#feStage.feTurn #fePanR{
+  transform:translateY(-50%) translateX(-58%) rotateY(-42deg) scale(.93);opacity:0}
+/* 「将要进来」那一帧：先摆到右边，这一下不许有过渡，摆好了再放手 */
+#feStage.feEnter .fePan{transition:none}
+#feStage.feEnter #fePanL,#feStage.feEnter #fePanR{
+  transform:translateY(-50%) translateX(58%) rotateY(42deg) scale(.93);opacity:0}
+/* 返回：来去掉个头，才像把环往回拨 */
+#feStage.feBack.feTurn #fePanL,#feStage.feBack.feTurn #fePanR{
+  transform:translateY(-50%) translateX(58%) rotateY(42deg) scale(.93)}
+#feStage.feBack.feEnter #fePanL,#feStage.feBack.feEnter #fePanR{
+  transform:translateY(-50%) translateX(-58%) rotateY(-42deg) scale(.93)}
+@media (prefers-reduced-motion:reduce){
+  .fePan,#feStage.feTurn .fePan{transition:none}
+  #feStage.feTurn #fePanL,#feStage.feTurn #fePanR,
+  #feStage.feEnter #fePanL,#feStage.feEnter #fePanR{opacity:1}
+}
+
 /* 立身时把左右板之间原本露出的空档交给当前人物。立绘保持真彩与实色，
    不挂半透明、模糊或渐变遮罩；长图贴底按完整身形显示。 */
 #fePerPortrait{display:none;position:absolute;z-index:3;left:30%;right:38%;top:3%;bottom:1%;
@@ -5287,7 +5316,8 @@ function feOpen2(row,line){
   esClose();
   $('#feWrap').classList.add('on');
   $('#feEraLbl').textContent=era.yl+'　·　'+era.t;
-  feStep('loc');
+  FE.step='';FE._pend=null;          /* 开窗那一次不转场：板还没在画面上 */
+  feStep('loc',0,1);
   return true;
 }
 function feClose(){$('#feWrap').classList.remove('on');}
@@ -5297,7 +5327,9 @@ try{$('#feArt').addEventListener('pointerup',function(e){
   e.stopPropagation();$('#feWrap').classList.toggle('artOn');});}catch(_){}
 function feIsOpen(){return $('#feWrap').classList.contains('on');}
 
-function feStep(s){
+/* 内容换好之后要做的那一摊，原样从 feStep 里拆出来——转场分两半，
+   这一摊得落在两半中间（板已经转出画外、还没转回来的那一刻）。 */
+function feStepApply(s){
   FE.step=s;
   var w=$('#feWrap');w.setAttribute('data-step',s);
   w.classList.remove('artOn');       /* 換一步就把立繪收回去 */
@@ -5315,6 +5347,42 @@ function feStep(s){
   if(s==='sit')feSitRender();
   feFootSync();
 }
+/* 换步＝把环拨过一格。back 为真是往回拨；instant 是刚开窗那一次，
+   那时候两块板还没在画面上，没有「转出去」这回事。
+   转场中途再点，直接把这一趟收掉换成新的一趟——不然连点两下会卡在画外。 */
+var FE_TURN=190;
+function feStep(s,back,instant){
+  var stage=$('#feStage');
+  if(!stage||instant||!FE.step){feStepApply(s);return;}
+  if(FE._tmr){clearTimeout(FE._tmr);FE._tmr=0;}
+  /* 上一趟留下的「摘方向标记」定时器必须先掐掉。不掐的话：去程点完 600ms 内点返回，
+     那个迟到的定时器会把返回刚挂上的 feBack 抹掉——返回于是照去程的方向转。
+     实测就是这么翻的：同一段脚本两次跑，一次有 feBack 一次没有。 */
+  if(FE._btmr){clearTimeout(FE._btmr);FE._btmr=0;}
+  FE._pend=s;                        /* 这一趟要落到哪一步：连点时下一次要从这儿往下数 */
+  stage.classList.toggle('feBack',!!back);
+  stage.classList.remove('feEnter');
+  stage.classList.add('feTurn');
+  FE._tmr=setTimeout(function(){
+    FE._tmr=0;FE._pend=null;
+    feStepApply(s);
+    /* 摆到「将要进来」那一侧。feEnter 里 transition:none，这一下要是瞬移。
+       原来这里读一次 offsetWidth 就撤类——实测那一帧浏览器根本没画出来，
+       板子于是从「转出去」的左边直接荡回原位：看着是摆了一下，不是环转了半圈。
+       两层 requestAnimationFrame 才稳：第一帧让它把右边那个位置画出来，
+       第二帧再放手，过渡这才是从右边转回来的。 */
+    stage.classList.remove('feTurn');
+    stage.classList.add('feEnter');
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        stage.classList.remove('feEnter');
+        /* 方向标记留到这一趟走完再摘，摘早了回程会按去程的方向转 */
+        FE._btmr=setTimeout(function(){
+          FE._btmr=0;stage.classList.remove('feBack');},400);
+      });
+    });
+  },FE_TURN);
+}
 function feFootSync(){
   var go=$('#feGo'),hint=$('#feHint');
   /* 中文在前、拉丁文缩成小字当记号 —— 与底栏那一版写法一致。
@@ -5328,15 +5396,19 @@ function feFootSync(){
   go.innerHTML=txt;
   go.classList.toggle('off',!ok);
 }
+/* 连点时按「在飞的那一步」往下数，不按「现在显示的那一步」。
+   FE.step 要到转场过半才更新——照它数的话，一百九十毫秒内点三下只前进一步，
+   人看着是「点了没反应」。 */
+function feCur(){return FE._pend||FE.step;}
 function feNext(){
   if($('#feGo').classList.contains('off'))return;
-  var i=0,k;for(k=0;k<FE_STEPS.length;k++)if(FE_STEPS[k][0]===FE.step)i=k;
+  var i=0,k;for(k=0;k<FE_STEPS.length;k++)if(FE_STEPS[k][0]===feCur())i=k;
   if(i<FE_STEPS.length-1)feStep(FE_STEPS[i+1][0]);
   else feForge();
 }
 function fePrev(){
-  var i=0,k;for(k=0;k<FE_STEPS.length;k++)if(FE_STEPS[k][0]===FE.step)i=k;
-  if(i>0){feStep(FE_STEPS[i-1][0]);return;}
+  var i=0,k;for(k=0;k<FE_STEPS.length;k++)if(FE_STEPS[k][0]===feCur())i=k;
+  if(i>0){feStep(FE_STEPS[i-1][0],1);return;}
   feClose();
   try{
     esOpen(FE.line);
