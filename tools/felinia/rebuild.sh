@@ -24,6 +24,7 @@ python3 tools/felinia/lean.py
 python3 tools/felinia/bookui.py
 python3 tools/felinia/menufit.py
 python3 tools/felinia/fefit.py
+python3 tools/felinia/refail.py
 python3 tools/felinia/konow.py
 python3 tools/felinia/build.py
 python3 tools/felinia/thumbs.py

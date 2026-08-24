@@ -5872,6 +5872,30 @@ function feDraftText(){
 }
 
 /* ═══════════ 铸局 ═══════════ */
+/* 铸局失败时给一颗真的能按的钮。
+   原来那句写着「可在顶栏 ↻ 重演重试」，两头都不对：顶栏那颗 #gRedo 早就
+   display:none（重演／回退挪到每段正文底下那排了）；而且重演重跑的是上一回合
+   的正文，铸局失败时已经回退成程序化开局，重演只会把那个程序化开局再演一遍，
+   不会再走一次 ⓪译入 → ①集笔 → ②译出。所以位置与作用都得改。
+   钮用现成的 .eBtn —— 跟纪年那一层「PERGERE 进入该时代」同一颗，
+   单独占一行、居中、带金边，一眼看得见；.op 那种正文里的小操作钮太不显眼。 */
+function feFailMsg(msg,again){
+  var p=narrAdd('sys','⚠&nbsp;铸局失败：'+esc2(msg)
+    +'&nbsp;——&nbsp;已回退为程序化开局。'
+    +'<span style="display:flex;justify-content:center">'
+    +'<span class="eBtn feAgain" style="margin-top:14px;font-size:12px;'
+    +'padding:12px 40px 10px;border-color:rgba(154,116,42,.6)">'
+    +'↻&nbsp;&nbsp;REFVNDERE&nbsp;&nbsp;·&nbsp;&nbsp;重新铸局</span></span>',null);
+  try{
+    var b=p.querySelector('.feAgain');
+    b.addEventListener('click',function(){
+      if(BUSY)return;                 /* 还在跑就别叠第二条链 */
+      try{p.remove();}catch(_){}
+      again();
+    });
+  }catch(_){}
+  return p;
+}
 function feForge(){
   var e=FE.era,h=FE.hero,L=FE.loc;
   var y=e.y, yl=e.yl, cn=L?L.cn:e.t, nm=L?L.n:'FELINIA';
@@ -5911,7 +5935,7 @@ function feForge(){
   function fail(msg){
     BUSY=false;genClose();
     if(!alive())return;
-    narrAdd('sys','⚠&nbsp;铸局失败：'+esc2(msg)+'&nbsp;——&nbsp;已回退为程序化开局，可在顶栏&nbsp;↻&nbsp;重演重试',null);
+    feFailMsg(msg,function(){feForge();});
   }
   function call(msgs,opt,ok){
     oracleCall(msgs,function(t){if(alive())ok(String(t||''));},
@@ -6318,7 +6342,7 @@ function gameEnter(lineOverride){
       BUSY=false;genClose();
       if(fLive){try{fLive.remove();}catch(_){}fLive=null;}
       if(fGen!==TYPE_GEN)return;
-      narrAdd('sys','⚠&nbsp;铸局失败：'+esc2(msg)+'&nbsp;——&nbsp;已回退为程序化开局，可在顶栏&nbsp;↻&nbsp;重演重试',null);
+      feFailMsg(msg,function(){gameEnter(lineOverride);});
     },
     {max_tokens:3200,onDelta:fDelta}       /* 开场长文需要更大篇幅 */
   );
