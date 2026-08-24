@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 IMAGE_ROOT = ROOT / "image"
 ERA_PATH = ROOT / "core/res/data/felinia/eras.json"
 OUT_PATH = ROOT / "core/res/data/felinia/vn-images.json"
+ASSIGNMENTS_PATH = Path(__file__).with_name("portrait-assignments.json")
 
 
 def image_kind(relative: Path) -> tuple[str, str]:
@@ -36,6 +37,7 @@ def clean_folder_title(name: str) -> str:
 
 def main() -> None:
     eras = json.loads(ERA_PATH.read_text(encoding="utf-8"))
+    assignments = json.loads(ASSIGNMENTS_PATH.read_text(encoding="utf-8"))
     result = []
     all_assets = []
     source_only = []
@@ -64,6 +66,14 @@ def main() -> None:
                 "species": species,
                 "label": path.stem,
             }
+            named = re.match(r"^角色_(?:猫娘|人类)_(.+)$", path.stem)
+            if named:
+                asset["character"] = named.group(1)
+            else:
+                for character, assigned_src in assignments.get(str(era["i"]), {}).items():
+                    if assigned_src == asset["src"]:
+                        asset["character"] = character
+                        break
             if kind == "chroma":
                 source_only.append(asset["src"])
             else:
@@ -83,12 +93,22 @@ def main() -> None:
         }
         if len(reachable_backgrounds) != background_count:
             raise RuntimeError(f"not every background has a scene trigger: {folder.name}")
+        roster = {figure["n"]: figure["sp"] for figure in era.get("figs", [])}
+        claimed = set()
+        for asset in by_kind["single"]:
+            character = asset.get("character")
+            if not character:
+                continue
+            if character not in roster:
+                raise RuntimeError(f"portrait names a character outside this era: {character} in {folder.name}")
+            if roster[character] != asset["species"]:
+                raise RuntimeError(f"portrait species mismatch: {character} in {folder.name}")
+            if character in claimed:
+                raise RuntimeError(f"character has repeated portraits: {character} in {folder.name}")
+            claimed.add(character)
         for species in ("cat", "human"):
             known = sum(1 for figure in era.get("figs", []) if figure["sp"] == species)
-            singles = sum(1 for asset in by_kind["single"] if asset["species"] == species)
             groups = sum(1 for asset in by_kind["group"] if asset["species"] == species)
-            if known < singles:
-                raise RuntimeError(f"not every {species} single has a character assignment: {folder.name}")
             if groups and known < 2:
                 raise RuntimeError(f"group image has no ensemble trigger: {folder.name}")
         result.append(

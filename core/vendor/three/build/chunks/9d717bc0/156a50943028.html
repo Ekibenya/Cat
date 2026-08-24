@@ -5785,7 +5785,14 @@ function fePerPortrait(person,empty){
   var era=null,i;
   for(i=0;i<FE.vn.eras.length;i++)if(FE.vn.eras[i].eraIndex===FE.era.i){era=FE.vn.eras[i];break;}
   if(!era){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
-  var pool=era.assets.single.filter(function(a){return a.species===h.sp;});
+  var exact=null;
+  for(i=0;i<era.assets.single.length;i++){
+    if(era.assets.single[i].species===h.sp&&era.assets.single[i].character===h.n){
+      exact=era.assets.single[i];break;
+    }
+  }
+  var pool=era.assets.single.filter(function(a){return a.species===h.sp&&!a.character;});
+  if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===h.sp;});
   if(!pool.length){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
   var idx;
   if(h.pre>=0){
@@ -5793,7 +5800,7 @@ function fePerPortrait(person,empty){
     for(i=0;i<FE.pool.length;i++)if(FE.pool[i].sp===h.sp&&FE.pool[i].fig)same.push(i);
     idx=Math.max(0,same.indexOf(h.pre))%pool.length;
   }else idx=feHash(h.id+'|'+h.sp)%pool.length;
-  var src=pool[idx].src;
+  var src=exact?exact.src:pool[idx].src;
   img.classList.remove('ready');
   img.alt=h.n+'（'+(h.sp==='cat'?'猫娘':'人类')+'）';
   img.onload=function(){img.classList.add('ready');};
