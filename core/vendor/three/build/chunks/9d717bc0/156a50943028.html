@@ -5495,27 +5495,15 @@ function feMapFit(){
   if(!host||!box||!FE.era)return;
   var W=host.clientWidth,H=host.clientHeight;
   if(W<60||H<60)return;
-  var lo0=1e9,lo1=-1e9,la0=1e9,la1=-1e9;
-  FE.era.locs.forEach(function(L){
-    lo0=Math.min(lo0,L.lo);lo1=Math.max(lo1,L.lo);
-    la0=Math.min(la0,L.la);la1=Math.max(la1,L.la);});
-  var cLo=(lo0+lo1)/2,cLa=(la0+la1)/2;
-  var span=Math.max(lo1-lo0,(la1-la0)*W/H)*1.9+24;
-  /* 원래 하한이 240°였다——지점이 한 도시 안에 넷뿐이던 시절엔 그래도 됐다.
-     한 시대에 스무 곳이 그 시대의 세계에 흩어지면, 전 세계를 펼쳐 놓은 채로는
-     핀 스무 개가 한 점에 겹친다. 그 시대가 실제로 퍼진 만큼으로 맞춘다.
-     하한 60°는 바탕 그림이 정한다: 2520px/360°짜리 모자이크라 한 칸이 경도 2°다.
-     60°보다 더 당기면 칸이 부풀어 색 덩어리가 된다. */
-  span=Math.max(60,Math.min(360,span));
-  var sc=W/(span*(FE.mm.w/360));
+  /* 一进来一律摆整张世界图。原来是按这一代地点的包围盒算取景，
+     于是打开就是放大的一块，玩家还没看清这一代在世界上的哪儿，先得自己缩小。
+     要放大是玩家自己的事——滚轮与双指都在（feMapZoom），
+     而缩到底就是这一张全图，不会比它更小。 */
+  var sc=Math.min(W/FE.mm.w,H/FE.mm.h);
   var bw=FE.mm.w*sc,bh=FE.mm.h*sc;
-  var cx=feProjX(cLo)*bw,cy=feProjY(cLa)*bh;
-  var L=W/2-cx,T=H/2-cy;
-  L=(bw>W)?Math.min(0,Math.max(W-bw,L)):(W-bw)/2;
-  T=(bh>H)?Math.min(0,Math.max(H-bh,T)):(H-bh)/2;
   box.style.width=bw+'px';box.style.height=bh+'px';
-  box.style.left=L+'px';box.style.top=T+'px';
-  FE._bw=bw;FE._bh=bh;FE._fit=FE.era.i+'|'+W+'x'+H;
+  box.style.left=((W-bw)/2)+'px';box.style.top=((H-bh)/2)+'px';
+  FE._bw=bw;FE._bh=bh;FE._minw=bw;FE._fit=FE.era.i+'|'+W+'x'+H;
 }
 /* 摆位只在「换了一代」或「窗口尺寸变了」时重来。
    否则从立身退回择地，会把玩家刚拖到的位置弹回默认视野。 */
@@ -5544,7 +5532,9 @@ function feMapZoom(f,ox,oy){
   if(!host||!box||!FE.mm)return;
   var W=host.clientWidth,bw=FE._bw||0,bh=FE._bh||0;
   if(bw<1)return;
-  var min=W,max=W*8;
+  /* 缩到底＝回到打开时那张全图。写死 W 的话，图比面板窄的场合（很扁的面板）
+     缩不回全图，会卡在比全图还大的一档上。 */
+  var min=FE._minw||W,max=(FE._minw||W)*8;
   var nw=Math.max(min,Math.min(max,bw*f));
   if(Math.abs(nw-bw)<0.5)return;
   var k=nw/bw;
