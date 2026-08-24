@@ -30,6 +30,7 @@ python3 tools/felinia/railhov.py
 python3 tools/felinia/dlgink.py
 python3 tools/felinia/icons.py
 python3 tools/felinia/headicon.py
+python3 tools/felinia/feglass.py
 python3 tools/felinia/konow.py
 python3 tools/felinia/build.py
 python3 tools/felinia/thumbs.py
