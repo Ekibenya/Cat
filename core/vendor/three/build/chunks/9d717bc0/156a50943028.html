@@ -389,14 +389,7 @@ html.lux{color-scheme:light}
    写成 multiply + #171104 的老写法，作用在反色之前的近黑底上，等于没写——
    对局屏与全部弹窗因此一直是纯白。 */
 /* 暖纸罩已按层落地：界面色烘焙时乘进了 (1-s)，真彩三层各自盖一层 multiply。 */
-/* 这一罩原来盖的是整个铸局屏（#feWrap::after），正片叠底、z-index 顶到底，
-   板子在它底下，怎么调都发黄 —— 实测把板子调成不透明的纯白，量出来还是
-   (240,234,220)，正好是 255 乘 #f0eadc。所以罩的范围收一收：
-   画（#feBg／#feMap）、顶栏、页脚照旧罩，纸面调子不变；板子（#feStage 底下那两块）
-   不再被乘一遍。纪年选择那一屏没有板子，照旧罩整屏。 */
-html.lux #eraSel::after,
-html.lux #feBg::after,html.lux #feMap::after,
-html.lux #feHead::after,html.lux #feFoot::after{
+html.lux #eraSel::after,html.lux #feWrap::after{
   content:'';position:absolute;inset:0;z-index:2147483647;pointer-events:none;
   background:#f0eadc;mix-blend-mode:multiply}
 /* 菜单那一屏不参与全局反色：马赛克是按真彩烤好的，再反一遍就成负片。
@@ -1815,15 +1808,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* 配方与情报台那六扇（.gMfd.mvDeck .mvWin）一个数不差：底色、边框、投影、模糊全抄。
    底色这一行只是兜底，真正生效的是 applyGlass 里跟拉杆算出来的那一档 —— 这两扇
    已经并进情报台那一条选择器，所以「面板透明度」一拉，两处一起动。 */
-/* 这两块板发黄，病根不是板子的颜色，是底下透上来的地图是黄的：底色有一半以上
-   是透的（真正生效的那一档在 applyGlass 里），而身后铺的是整幅马赛克世界地图，
-   砖是土黄与褐色的；模糊只有 3 像素，砖糊不开，一块一块透上来就成了一片黄斑。
-   底色换成几乎中性的纸白、模糊加到 10 像素、彩度再压一档 —— 砖糊成一片，黄就散了。 */
-.feGl{position:absolute;inset:0;background:rgba(244,240,231,.66);
+.feGl{position:absolute;inset:0;background:rgba(237,231,217,.34);
   border:1px solid rgba(19,18,13,.20);
   box-shadow:0 14px 34px rgba(242,236,222,.5);
-  -webkit-backdrop-filter:blur(10px) saturate(72%);
-  backdrop-filter:blur(10px) saturate(72%)}
+  /* 模糊由 3 像素加到 8：身后铺的是马赛克世界地图，砖是土黄与褐色的，
+     3 像素糊不开，一块一块透上来，板子里就浮着一层黄斑。 */
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .feIn{position:relative;z-index:1;flex:1 1 auto;min-width:0;overflow-y:auto;
   padding:16px 18px;scrollbar-width:thin}
 .feIn::-webkit-scrollbar{width:6px}
@@ -9552,13 +9542,14 @@ function applyGlass(){
     /* 铸局四步那两扇：玻璃配方照抄情报台（边框·投影·blur(3px) 都一样），
        只有底色单开一档更实的 —— 情报台那六扇身后是三维画面，透到 .09 也读得动；
        这两扇身后是整幅马赛克世界图，颗粒碎、明暗跳，透到那一档字就浮起来了。 */
-    /* 由 .22+.32*a 提到 .58+.24*a：预设拉杆 80 时由 .48 提到 .77。
-       透一半的时候，身后那幅马赛克一块块透上来，板子就发黄。 */
-    +'.feGl{background:rgba(244,240,231,'+(.58+.24*a).toFixed(2)+') !important}'
+    /* 由 .22+.32*a 提到 .42+.30*a：预设拉杆 80 时由 .48 提到 .66。
+       透一半的时候身后那幅马赛克透上来，板子就发黄；实一档，黄味就淡了。
+       底色不动，还是那片暖奶油 —— 要的是别那么黄，不是换成白的。 */
+    +'.feGl{background:rgba(250,249,246,'+(.52+.26*a).toFixed(2)+') !important}'
     /* 地点那一步单独一档，浓度是其余三步的两倍：那一步两块板子是浮在
        整幅世界图上的，身后连地名标记一起动，同一档下字压不住底纹。 */
     +'#feWrap[data-step="loc"] .feGl'
-    +'{background:rgba(244,240,231,'+(.64+.22*a).toFixed(2)+') !important}'
+    +'{background:rgba(250,249,246,'+(.58+.26*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
