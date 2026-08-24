@@ -1871,7 +1871,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 .feMk.on .nm{color:#1f1a13;background:rgba(255,255,255,.95);border-bottom:1px solid #9a742a}
 
 .feLoc{display:block;width:100%;box-sizing:border-box;text-align:left;
-  padding:8px 10px;border:0;border-left:2px solid transparent;background:none;
+  padding:5px 10px;border:0;border-left:2px solid transparent;background:none;
   cursor:pointer;font:inherit;color:#6f6757}
 .feLoc:hover{background:rgba(255,255,255,.5);color:#1f1a13}
 .feLoc.on{background:rgba(255,255,255,.72);color:#1f1a13;border-left-color:#9a742a}
@@ -5477,7 +5477,9 @@ function feLocList(){
     var b=document.createElement('button');
     b.className='feLoc'+(FE.loc===L?' on':'');
     b.type='button';
-    b.innerHTML='<b>'+feEsc(L.cn)+'</b><span>'+feEsc(L.n)+'</span>';
+    /* 单子里只写中文名。英文名原来另起一行，一条就多出十四像素，
+       二十条摞起来把这一栏撑得放不下。名字要看英文的，点开右边的详情里有。 */
+    b.innerHTML='<b>'+feEsc(L.cn)+'</b>';
     b.addEventListener('click',function(){feLocPick(n);});
     box.appendChild(b);
   });
