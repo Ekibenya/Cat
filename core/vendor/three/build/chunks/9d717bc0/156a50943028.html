@@ -5494,7 +5494,12 @@ function feMapFit(){
     la0=Math.min(la0,L.la);la1=Math.max(la1,L.la);});
   var cLo=(lo0+lo1)/2,cLa=(la0+la1)/2;
   var span=Math.max(lo1-lo0,(la1-la0)*W/H)*1.9+24;
-  span=Math.max(240,Math.min(360,span));
+  /* 원래 하한이 240°였다——지점이 한 도시 안에 넷뿐이던 시절엔 그래도 됐다.
+     한 시대에 스무 곳이 그 시대의 세계에 흩어지면, 전 세계를 펼쳐 놓은 채로는
+     핀 스무 개가 한 점에 겹친다. 그 시대가 실제로 퍼진 만큼으로 맞춘다.
+     하한 60°는 바탕 그림이 정한다: 2520px/360°짜리 모자이크라 한 칸이 경도 2°다.
+     60°보다 더 당기면 칸이 부풀어 색 덩어리가 된다. */
+  span=Math.max(60,Math.min(360,span));
   var sc=W/(span*(FE.mm.w/360));
   var bw=FE.mm.w*sc,bh=FE.mm.h*sc;
   var cx=feProjX(cLo)*bw,cy=feProjY(cLa)*bh;
@@ -5633,12 +5638,13 @@ function feMapDragInit(){
    散是为了点得着，线是为了不骗人。 */
 function feLocLayout(){
   var bw=FE._bw||1,bh=FE._bh||1,MIND=54;
+  /* 넷일 땐 고리 다섯이면 넉넉했다. 스무 개면 바깥 고리까지 써야 자리가 난다. */
   var pts=FE.era.locs.map(function(L){
     return{x0:feProjX(L.lo)*bw,y0:feProjY(L.la)*bh,dx:0,dy:0};});
   var placed=[],i,k,a,rad,tries;
   for(i=0;i<pts.length;i++){
     var p=pts[i],ok=false;
-    for(tries=0;tries<40&&!ok;tries++){
+    for(tries=0;tries<80&&!ok;tries++){
       if(tries){ rad=32+Math.floor(tries/8)*26;
                  a=(-Math.PI/2)+(tries%8)*(Math.PI/4)+i*0.4;
                  p.dx=Math.cos(a)*rad;p.dy=Math.sin(a)*rad; }
