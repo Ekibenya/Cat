@@ -5912,6 +5912,9 @@ function feForge(){
   var draft=condereOp(line,y,nm,cn);
   /* 地点表随开局锚点一起存：读档续局时这一层不会再开，
      对局屏的地图与「此地」全靠它。只带画地图要用的那几栏。 */
+  /* 纪年号随开局锚点一起存：世界书的分代闸门靠它认「这一局是哪一代」。
+     地点表当初也是为了同一件事写在这里的（读档续局时铸局那一层不会再开）。 */
+  draft.ei=e.i;
   try{draft.feLocs=e.locs.map(function(L){
     return {n:L.n,cn:L.cn,la:L.la,lo:L.lo,d:L.d};});}catch(_){}
   var _mv=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
@@ -5981,7 +5984,7 @@ function feForge(){
            var txt=String(out||'').trim();
            if(!txt)return fail('译文没有回来');
            if(!/<mvu_panel>/.test(txt))txt=txt+'\n\n'+panel;
-           loadOpening(line,{id:'custom',year:y,era:yl,scene:cn,text:txt},loc);
+           loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:txt},loc);
            GAME.hero=_hero;                 /* loadOpening 又清了一次，写回来 */
          });
   }
@@ -6336,7 +6339,7 @@ function gameEnter(lineOverride){
         var mv=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
         txt=txt+'\n\n'+mv;
       }
-      loadOpening(line,{id:'custom',year:y,era:yl,scene:cn,text:txt},loc);
+      loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:txt},loc);
     },
     function(msg){
       BUSY=false;genClose();
@@ -7660,6 +7663,29 @@ function loreBind(e){
   var t='『'+(e&&e.title||'')+'』'+(e&&e.content||'');
   return /铁则/.test(e&&e.title||'') ? heroRebind(t) : t;
 }
+function feEraI(){try{return (FE&&FE.era&&FE.era.i)|0;}catch(_){return 0;}}
+/* 本局是哪一代。取不到就返回 0，分代闸门整个不闸——宁可照旧，也不要闸错。 */
+function _eraNow(){
+  var i=0,open=false;
+  try{var w=$('#feWrap');open=!!(w&&w.classList.contains('on'));}catch(_){}
+  /* 铸局那一层开着的时候（condereSys 也要检索世界书），以刚选的那一代为准：
+     那会儿 GAME.op 还是上一局的，照它走会按上一代发条目。 */
+  if(open)i=feEraI();
+  if(!i)try{if(GAME.op&&GAME.op.ei)i=GAME.op.ei|0;}catch(_){}
+  /* 老存档里没有 ei，只有年份。annals 的 ys 是每一代的起始年，
+     取「小于等于这一年的最后一代」——自定义开局填的年份落在两代之间也有着落。 */
+  if(!i)try{
+    var y=(GAME.op&&GAME.op.year),by=null;
+    if(y!=null&&y!==''){
+      var an=(CARDS[ACTIVE]&&CARDS[ACTIVE].annals)||[];
+      for(var k=0;k<an.length;k++){var a=an[k];
+        if(!a||!a.i||a.ys==null)continue;
+        if(a.ys<=y&&(by===null||a.ys>by)){by=a.ys;i=a.i|0;}}
+    }
+  }catch(_){}
+  if(!i)i=feEraI();
+  return i|0;
+}
 function loreFor(text){
   var lb=(CARDS[ACTIVE].lorebook||[]).slice();
   /* 玩家自写的条目最先装桶，其次才是角色卡带来的条目。
@@ -7688,9 +7714,25 @@ function loreFor(text){
      埃及卡实测：新加的八条人际铁则里有六条每回合都没进过提示词。
      上限本身要留着（防止一本以常驻为主的世界书撑爆上下文），只是把桶做大。 */
   var cbud=Math.max(4000,Math.round(budget*2.4));
+  /* 人物条目单独一个桶。跟常驻条目分桶是同一个道理：本代那十四条每条七百字上下，
+     关键词又是「钱」「衣裳」「差事」这种每回合都命中的字，ord 30 先装桶就把五千字
+     吃光了，ord 60 的人物一条都排不上。实测两位同伴在场时命中人物条目 12 条、
+     3126 字，单桶下只挤进去一条（玛塔·哈里的第一项）—— 在场的人，卡里反而没有他们的话。
+     人物只在名字出现在近文里才命中，所以这个桶平时是空的，不白占上下文。 */
+  var fbud=Math.max(3000,Math.round(budget*0.8));
   /* since：这一条讲的事哪一年才有。没到年份的整条不发——
      否则【铁则】四丈是硬规矩 会在前221年的掖庭里每回合注入一次，
      纪年闸门那一句压不住每回合都在的一整条铁则。 */
+  /* 分代闸门。条目上带 era 的（人物三千五百四十条、本代五百七十四条）
+     只在那一代发；不带 era 的（通则、文风、横断、背景）照旧每一代都在。
+     铸局那一层选定纪年时的 feLoreBind 做的是同一件事（把别代的 on 关掉），
+     可是它只在那一层开着时跑一次，读档续局时那一层根本不开 —— 页面一重载，
+     四十一代的 on 全是 true。一九一六年的存档实测：读档后走一回合，注进去的是
+     前10000年五条、前6000年两条、人物莉莉丝，本代一条都没有。
+     排序是同 ord 按文件顺序，文件顺序就是纪年顺序，所以越玩到后面越注得早。
+     闸门写在这里就不靠那一层跑没跑过。 */
+  var _ei=(function(){try{return _eraNow();}catch(_){return 0;}})();
+  function _otherEra(e){return !!(_ei&&e&&e.era!=null&&e.era!==_ei);}
   var _yr=0;try{_yr=nowYear();}catch(_){}
   function _tooEarly(e){
     if(!e||e.since==null||!_yr)return false;
@@ -7698,13 +7740,13 @@ function loreFor(text){
   }
   for(var ci=0;ci<lb.length;ci++){var ce=lb[ci];
     if(!ce||ce.on===false||!ce.constant)continue;
-    if(_tooEarly(ce))continue;
+    if(_tooEarly(ce)||_otherEra(ce))continue;
     var cs=loreBind(ce);
     if(cbud-cs.length<0){dropped++;continue;}
     out.push(cs);cbud-=cs.length;}
   /* 第二遍：关键词命中的条目，按预算装桶 */
   for(var i=0;i<lb.length;i++){var e=lb[i];if(!e||e.on===false||e.constant)continue;
-    if(_tooEarly(e))continue;
+    if(_tooEarly(e)||_otherEra(e))continue;
     var hit=false,_ks=_loreKeys(e.keys);
     for(var k=0;k<_ks.length;k++){
       var _kk=String(_ks[k]==null?'':_ks[k]).trim().toLowerCase();
@@ -7721,7 +7763,13 @@ function loreFor(text){
     }
     if(hit&&e.prob!=null&&e.prob<100&&Math.random()*100>e.prob)hit=false;
     if(hit){var s=loreBind(e);
-      if(budget-s.length<0){dropped++;continue;}out.push(s);budget-=s.length;}
+      if(e.lay==='figures'){
+        if(fbud-s.length<0){dropped++;continue;}
+        out.push(s);fbud-=s.length;
+      }else{
+        if(budget-s.length<0){dropped++;continue;}
+        out.push(s);budget-=s.length;
+      }}
   }
   /* 被预算挤掉的条目要有个交代，别让玩家对着「启用中」三个字瞎猜 */
   if(dropped)try{console.warn('[lore] 注入预算不足，本回丢弃 '+dropped+' 条');}catch(_){}
