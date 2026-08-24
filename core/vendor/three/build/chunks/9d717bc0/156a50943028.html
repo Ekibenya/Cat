@@ -5351,36 +5351,50 @@ function feStepApply(s){
    那时候两块板还没在画面上，没有「转出去」这回事。
    转场中途再点，直接把这一趟收掉换成新的一趟——不然连点两下会卡在画外。 */
 var FE_TURN=190;
+/* 「转进来」那半程。换步走完是它，开窗第一眼也是它——开窗那次没有「转出去」，
+   板子还没在画面上，可它也不该硬生生地摆在那儿。
+   摆到进场那一侧，再放手转回原位。 */
+function feEnterRun(stage){
+  /* feEnter 里 transition:none，摆过去那一下要是瞬移。
+     原来这里读一次 offsetWidth 就撤类——实测那一帧浏览器根本没画出来，
+     板子于是从「转出去」的左边直接荡回原位：看着是摆了一下，不是环转了半圈。
+     两层 requestAnimationFrame 才稳：第一帧让它把那一侧画出来，
+     第二帧再放手，过渡这才是从那一侧转回来的。 */
+  stage.classList.remove('feTurn');
+  stage.classList.add('feEnter');
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      stage.classList.remove('feEnter');
+      /* 方向标记留到这一趟走完再摘，摘早了回程会按去程的方向转 */
+      FE._btmr=setTimeout(function(){
+        FE._btmr=0;stage.classList.remove('feBack');},400);
+    });
+  });
+}
 function feStep(s,back,instant){
   var stage=$('#feStage');
-  if(!stage||instant||!FE.step){feStepApply(s);return;}
+  if(!stage){feStepApply(s);return;}
   if(FE._tmr){clearTimeout(FE._tmr);FE._tmr=0;}
   /* 上一趟留下的「摘方向标记」定时器必须先掐掉。不掐的话：去程点完 600ms 内点返回，
      那个迟到的定时器会把返回刚挂上的 feBack 抹掉——返回于是照去程的方向转。
      实测就是这么翻的：同一段脚本两次跑，一次有 feBack 一次没有。 */
   if(FE._btmr){clearTimeout(FE._btmr);FE._btmr=0;}
-  FE._pend=s;                        /* 这一趟要落到哪一步：连点时下一次要从这儿往下数 */
   stage.classList.toggle('feBack',!!back);
+  /* 开窗那一次（instant，或者根本还没有「现在这一步」）：先把内容摆好，
+     然后只走进场那半程——没有东西可转出去。 */
+  if(instant||!FE.step){
+    FE._pend=null;
+    feStepApply(s);
+    feEnterRun(stage);
+    return;
+  }
+  FE._pend=s;                        /* 这一趟要落到哪一步：连点时下一次要从这儿往下数 */
   stage.classList.remove('feEnter');
   stage.classList.add('feTurn');
   FE._tmr=setTimeout(function(){
     FE._tmr=0;FE._pend=null;
     feStepApply(s);
-    /* 摆到「将要进来」那一侧。feEnter 里 transition:none，这一下要是瞬移。
-       原来这里读一次 offsetWidth 就撤类——实测那一帧浏览器根本没画出来，
-       板子于是从「转出去」的左边直接荡回原位：看着是摆了一下，不是环转了半圈。
-       两层 requestAnimationFrame 才稳：第一帧让它把右边那个位置画出来，
-       第二帧再放手，过渡这才是从右边转回来的。 */
-    stage.classList.remove('feTurn');
-    stage.classList.add('feEnter');
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){
-        stage.classList.remove('feEnter');
-        /* 方向标记留到这一趟走完再摘，摘早了回程会按去程的方向转 */
-        FE._btmr=setTimeout(function(){
-          FE._btmr=0;stage.classList.remove('feBack');},400);
-      });
-    });
+    feEnterRun(stage);
   },FE_TURN);
 }
 function feFootSync(){
