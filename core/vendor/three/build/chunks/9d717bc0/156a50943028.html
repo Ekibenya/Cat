@@ -5831,7 +5831,11 @@ function feSocRender(){
   feSocDoss();
 }
 function feSocTap(k){
-  if(FE.cur!==k){FE.cur=k;feSocRender();return;}   /* 第一下看档案，第二下才选中 */
+  /* 原来第一下只换档案、第二下才选中——同一处点击承担两件事，
+     于是每带一位都得点两下，而第一下画面上只有右边换了字，
+     手感就是「点了没选上」。改成一下到位：这一下既摆出档案，也把她带进这一局。
+     再点同一位就取消，取消时档案照旧留着，不必再点一次去看。 */
+  FE.cur=k;
   var i=FE.soc.indexOf(k);
   if(i>=0)FE.soc.splice(i,1);
   else if(FE.soc.length<5)FE.soc.push(k);
@@ -5840,12 +5844,17 @@ function feSocTap(k){
 function feSocDoss(){
   var el=$('#feDoss');
   if(FE.cur==null){fePerPortrait(null,true);
-    el.textContent='点左边任意一位，这里出档案。再点一下，才把她带进这一局。';return;}
+    el.textContent='点左边任意一位，这里出档案，同时把她带进这一局。';return;}
   var p=FE.pool[FE.cur];
   fePerPortrait(p);
+  /* 没选中有两种情形，说反了比不说还糟：
+     一是刚点掉的，二是名额已满点不进来。满员那一条必须写明白，
+     否则点下去档案换了、人没进来，看着就是这一位点不动。 */
+  var on=FE.soc.indexOf(FE.cur)>=0;
   el.innerHTML=feDossHtml(p)
-    +'\n\n'+(FE.soc.indexOf(FE.cur)>=0?'—— 已带进这一局。再点一下取消。'
-                                      :'—— 再点一下，把她带进这一局。');
+    +'\n\n'+(on?'—— 已带进这一局。再点一下取消。'
+              :(FE.soc.length>=5?'—— 已满五位。要换人，先点掉一位。'
+                               :'—— 已从这一局去掉。再点一下带回来。'));
 }
 function feSocMore(){
   FE.salt++;
