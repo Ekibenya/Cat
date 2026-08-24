@@ -856,10 +856,26 @@ html.lux #esBrand b{color:#4a4237}
       padding:4px 10px;cursor:pointer;color:var(--mut);transition:color .18s,border-color .18s}
 .armDet .ops span:hover{color:var(--gold-hi);border-color:var(--gold)}
 .armDet .ops span.warn{color:#f36a4b;border-color:rgba(243,106,75,.55)}
-/* 只是一行字，不该挡住底下的图：不写这一句，顶上那一带的点位按不着。 */
-.pnTitle{position:absolute;left:20px;top:14px;font-size:9px;letter-spacing:.34em;color:var(--txt);z-index:3;pointer-events:none}
+/* 整行字一概不接指针：底下是地图，压住的点位得点得着。
+   调窗子倾角（tiltBind）改由行尾那一枚小把手接——窗里那几块内容
+   （地图、图谱、输入框）都从调倾角里让开了，把手总得有个落脚处，
+   一枚二十来像素的钮是最不占地方的一处。 */
+.pnTitle{position:absolute;left:20px;top:14px;font-size:9px;letter-spacing:.34em;color:var(--txt);z-index:3;
+  pointer-events:none;-webkit-user-select:none;user-select:none}
+.pnTitle .tg{display:inline-block;margin-left:9px;padding:4px 9px;font-weight:400;letter-spacing:0;font-size:10px;line-height:1;
+  color:var(--gold);border:1px solid rgba(154,116,42,.45);background:rgba(237,231,217,.9);
+  cursor:ew-resize;pointer-events:auto;touch-action:none}
+.pnTitle .tg:hover{color:var(--gold-hi);border-color:var(--gold)}
 .pnTitle i{font-style:normal;color:var(--gold)}
-/* 对局屏那一条与择地那一屏是同一幅图、同一套操作（见 mvMake 一节）。 */
+/* 地图那一扇的标题压在图上，字与马赛克同一个色系，密的地方读不出来，
+   而它现在是个要用手去抓的东西，得先看得见。垫一层纸底，位置照旧不动
+   （左上各退一个内边距，字仍落在原处）。另两扇窗的标题底下本来就是空的，不必垫。 */
+#pnMap .pnTitle{left:11px;top:10px;padding:4px 9px;background:rgba(237,231,217,.86)}
+/* 对局屏那一条与择地那一屏是同一幅图、同一套操作（见 tbMake 一节）。
+   data-nodrag 是给调倾角那一套看的（tiltBind）：这块图铺满整扇窗，两边都认「横着拖」，
+   不让开就是抢——tiltBind 拖过十像素就把指针捕获到窗上，图这边的 pointermove 当场断掉，
+   手拖了二百多像素而图只挪了十几，同时窗子还在跟着转。
+   让开之后，调倾角改由标题行尾那一枚小把手接（.pnTitle .tg），两件事各在各的地盘。 */
 #gmMap{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;z-index:0}
 #gmMap:active{cursor:grabbing}
 #gmMapIn{position:absolute;left:0;top:0}
@@ -2243,17 +2259,17 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <span class="t">绘卷</span></div>
   </div>
   <div class="gPanel" id="pnMap">
-    <div id="gmMap"><div id="gmMapIn"></div></div>
-    <div class="pnTitle"><i>◆</i>&nbsp;TABVLA&nbsp;·&nbsp;地图&nbsp;&nbsp;—&nbsp;&nbsp;滚轮缩放</div>
+    <div id="gmMap" data-nodrag><div id="gmMapIn"></div></div>
+    <div class="pnTitle"><i>◆</i>&nbsp;TABVLA&nbsp;·&nbsp;地图&nbsp;&nbsp;—&nbsp;&nbsp;滚轮缩放<b class="tg" title="拖我，这扇窗跟着转">↔</b></div>
     <div class="pFade"></div>
   </div>
   <div class="gPanel" id="pnArm">
-    <div class="pnTitle"><i>◆</i>&nbsp;ARMA&nbsp;·&nbsp;装备</div>
+    <div class="pnTitle"><i>◆</i>&nbsp;ARMA&nbsp;·&nbsp;装备<b class="tg" title="拖我，这扇窗跟着转">↔</b></div>
     <div class="armWrap" id="armWrap"></div>
     <div class="pFade"></div>
   </div>
   <div class="gPanel" id="pnShop">
-    <div class="pnTitle"><i>◆</i>&nbsp;MERCATVS&nbsp;·&nbsp;商店</div>
+    <div class="pnTitle"><i>◆</i>&nbsp;MERCATVS&nbsp;·&nbsp;商店<b class="tg" title="拖我，这扇窗跟着转">↔</b></div>
     <div class="shWrap" id="shopWrap"></div>
     <div class="pFade"></div>
   </div>
