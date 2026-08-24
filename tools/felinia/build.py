@@ -380,13 +380,18 @@ def build_lore(eras):
         lb.append(d)
 
     # 人物。
+    import figs as figsrc        # 跟 attach_figs 一样就地取，不放文件头
     for e in sorted(eras, key=lambda x: x['i']):
         for p in (sorted(glob.glob(os.path.join(FIGDIR,
                                                 'e%02db*.ko-raw.lore.json' % e['i'])))
                   + sorted(glob.glob(os.path.join(FIGDIR,
                                                   'e%02db*.zh.lore.json' % e['i'])))):
             for x in json.load(io.open(p, encoding='utf-8')):
-                lb.append({'title': x['title'], 'cat': '人 · ' + x['cat'],
+                # 名字按 figs._key 归一：沙盒有几批把西文原名写进了名字里
+                # （「宁提（Ninti）」），大母项按名字分组，不归一就会跟名册上
+                # 那一位分成两个人。归一的只有分组用的这个 cat，标题与正文不动。
+                lb.append({'title': x['title'],
+                           'cat': '人 · ' + figsrc._key(x['cat']),
                            'keys': x['keys'], 'era': e['i'], 'lay': 'figures',
                            'on': True, 'constant': False, 'ord': 60,
                            'content': x['content']})

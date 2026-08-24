@@ -86,6 +86,28 @@ def _voice(era, f):
     return VOICE_FALLBACK[int(h[:8], 16) % len(VOICE_FALLBACK)]
 
 
+# 沙盒回稿的名字与名册对不上的那几个。**只是写法不同，不是另一个人**，
+# 所以在这里把写法归一，不去改成品，也不去改名册。
+#
+# 归一分两层：
+#   一、括号里的原文注解。沙盒有几批把西文原名写进了名字里
+#       （「宁提（Ninti）」「霍斯劳（Khosrow I）」），名册上只有中文名。
+#       统一切掉尾巴上那一段括号。
+#   二、译名本身的两处出入，切括号救不回来，只能一一点名：
+#       阿尔忒弥西娅／阿尔忒弥西亚 —— 同一个音的两种写法
+#       洛库斯塔的弟子／洛库斯塔的学徒 —— 同一个人的两种叫法
+#
+# 这十一位的条目一直都在，只是名字对不上，取不着，于是台词一直空着，
+# 局内看上去就像「这个人没写完」。归一之后十一位全部接上。
+BRACKET = re.compile(r'[（(][^（）()]*[）)]\s*$')
+ALIAS = {'阿尔忒弥西娅': '阿尔忒弥西亚', '洛库斯塔的弟子': '洛库斯塔的学徒'}
+
+
+def _key(cat):
+    cat = BRACKET.sub('', cat).strip()
+    return ALIAS.get(cat, cat)
+
+
 def _load(era):
     """把这一代所有批次的中文成品条目并成 名字 -> 条目表。"""
     out = {}
@@ -94,7 +116,7 @@ def _load(era):
     for p in (sorted(glob.glob(os.path.join(ZHDIR, 'e%02db*.ko-raw.lore.json' % era)))
               + sorted(glob.glob(os.path.join(ZHDIR, 'e%02db*.zh.lore.json' % era)))):
         for e in json.load(io.open(p, encoding='utf-8')):
-            out.setdefault(e['cat'], []).append(e)
+            out.setdefault(_key(e['cat']), []).append(e)
     return out
 
 
