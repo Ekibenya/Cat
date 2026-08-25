@@ -4,6 +4,9 @@
 /
   Cache-Control: no-cache, must-revalidate
 
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
 /sw.js
   Cache-Control: public, max-age=0, must-revalidate
   Service-Worker-Allowed: /
