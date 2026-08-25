@@ -849,33 +849,52 @@ function feSceneZh(){
         +'正面挨打极弱；血只能给同类；不能束腰，不能裹脚，不戴压耳的头巾；'
         +'情绪写在耳朵和尾巴上；寿命约人类一半，三十五岁以后已算老年。');
   o.push('');
+  /* 名册上的人以世界书那六条为准。原来这里报的是 feMake 按种子现算的岁数、
+     身高体重、毛色、出身地、窝群——跟世界书里逐字写定的那份对不上（同一个人
+     一边说四十三岁一五六厘米，一边说三十岁一六八厘米），两份都标着「以此为准」
+     一起进提示词，AI 只能各取一半。现算那套只留给世界书里没有的人：
+     自拟的主角、另生的路人。 */
+  var _hl=feDossLore(h);
   o.push('［叙述者］');
   o.push('姓名：'+h.n+'（这是卡里定下的名字，必须用这个名字）');
   o.push('种族：'+(h.sp==='cat'?'猫娘':'人类'));
-  o.push('年龄：'+h.age+'岁');
   o.push('身份：'+h.ti);
-  o.push('性格：'+h.temper.join('；'));
-  o.push('说话的样子：'+h.v.p);
-  o.push('心里的样子：'+h.v.i);
-  o.push('');
-  o.push('［身体］');
-  o.push('身高：'+h.h+'厘米　体重：'+h.w+'公斤');
-  if(h.sp==='cat'){
-    o.push('形态：'+h.morph.n+'（'+h.morph.m+'）');
-    o.push('毛色：'+h.fur+'，'+h.mark);
-    o.push('耳与尾：'+(h.tail||'情绪一动，耳朵和尾巴就跟着动'));
-    o.push('脚：猫科脚掌与肉垫，不穿人类鞋楦');
+  if(_hl){
+    o.push('以下六条出自世界书，是这个人的定稿。凡有出入，一律以这六条为准。');
+    for(var _i=0;_i<_hl.length;_i++)o.push(_hl[_i][0]+'：'+_hl[_i][1]);
+    o.push('');
+  }else{
+    o.push('年龄：'+h.age+'岁');
+    o.push('性格：'+h.temper.join('；'));
+    o.push('说话的样子：'+h.v.p);
+    o.push('心里的样子：'+h.v.i);
+    o.push('');
+    o.push('［身体］');
+    o.push('身高：'+h.h+'厘米　体重：'+h.w+'公斤');
+    if(h.sp==='cat'){
+      o.push('形态：'+h.morph.n+'（'+h.morph.m+'）');
+      o.push('毛色：'+h.fur+'，'+h.mark);
+      o.push('耳与尾：'+(h.tail||'情绪一动，耳朵和尾巴就跟着动'));
+      o.push('脚：猫科脚掌与肉垫，不穿人类鞋楦');
+    }
+    o.push('身上：'+h.dress);
+    o.push('出生地：'+h.born+'　居住地：'+h.live);
+    o.push('窝群：'+h.rel);
+    o.push('');
   }
-  o.push('身上：'+h.dress);
-  o.push('出生地：'+h.born+'　居住地：'+h.live);
-  o.push('窝群：'+h.rel);
-  o.push('');
   o.push('［在场的人］');
   if(FE.soc.length){
     FE.soc.forEach(function(k){
       var p=FE.pool[k];
-      o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')+'，'+p.age+'岁。'
-        +(p.d?p.d+'。':'')+'说话：'+p.v.p);
+      /* 名册上的同伴只报名字身份：他们那六条会在名字出现时由 loreFor 从
+         世界书注入（人物条目有独立预算桶），这里再抄一遍是重复占上下文，
+         而且抄的是现算值，正好又对不上。 */
+      if(feDossLore(p))
+        o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')
+          +'。（此人的详细条目在世界书里，按名字检索，以那份为准）');
+      else
+        o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')+'，'+p.age+'岁。'
+          +(p.d?p.d+'。':'')+'说话：'+p.v.p);
     });
   }else o.push('（没有指定。这一幕里可以只有叙述者一个人。不要另起新的人名。）');
   o.push('');
@@ -934,19 +953,32 @@ function feDraftText(){
       +'本地人多半住在'+e.home+'。');
     o.push('');
   }
+  /* 名册上的人用世界书那两条（概要与外貌）。这一段会原样落进正文当第一幕，
+     往后每一回都跟着上下文走——写着现算的岁数与出身，等于开局第一句就跟
+     世界书里那份定稿打对台。摆概要与外貌两条，是因为对不上的事实都在这两条里。 */
+  var _dl=feDossLore(h);
   o.push('——你——');
-  o.push('你是「'+h.n+'」，'+h.ti+'，'+h.age+'岁。'
-    +(h.sp==='cat'?(h.morph.n+'，毛色'+h.fur+'，'+h.mark+'。身高'+h.h+'厘米，体重'+h.w+'公斤。'):''));
-  o.push('身上是'+h.dress+'。生于'+h.born+'，如今住在'+h.live+'。');
-  o.push(h.temper.join('；')+'。'+(h.tail?h.tail+'。':''));
-  o.push(h.rel+'。');
+  if(_dl){
+    o.push('你是「'+h.n+'」，'+h.ti+'。');
+    for(var _i=0;_i<_dl.length;_i++)
+      if(_dl[_i][0]==='概要'||_dl[_i][0]==='外貌')o.push(_dl[_i][1]);
+  }else{
+    o.push('你是「'+h.n+'」，'+h.ti+'，'+h.age+'岁。'
+      +(h.sp==='cat'?(h.morph.n+'，毛色'+h.fur+'，'+h.mark+'。身高'+h.h+'厘米，体重'+h.w+'公斤。'):''));
+    o.push('身上是'+h.dress+'。生于'+h.born+'，如今住在'+h.live+'。');
+    o.push(h.temper.join('；')+'。'+(h.tail?h.tail+'。':''));
+    o.push(h.rel+'。');
+  }
   o.push('');
   if(FE.soc.length){
     o.push('——在场的人——');
     FE.soc.forEach(function(k){
       var p=FE.pool[k];
-      o.push(p.n+'　'+p.ti+(p.sp==='cat'?'　猫娘':(/人类/.test(p.ti)?'':'　人类'))+'　'+p.age+'岁。'
-        +(p.d?p.d+'。':'')+(p.q[0]?('她的口头：'+p.q[0]):''));
+      if(feDossLore(p))
+        o.push(p.n+'　'+p.ti+(p.sp==='cat'?'　猫娘':(/人类/.test(p.ti)?'':'　人类'))+'。');
+      else
+        o.push(p.n+'　'+p.ti+(p.sp==='cat'?'　猫娘':(/人类/.test(p.ti)?'':'　人类'))+'　'+p.age+'岁。'
+          +(p.d?p.d+'。':'')+(p.q[0]?('她的口头：'+p.q[0]):''));
     });
     o.push('');
   }
@@ -981,7 +1013,11 @@ function feForge(){
   /* loadOpening 里会把 GAME.hero 清成 null（正史开局一律是卡里的本尊），
      所以这一句必须排在它后面；铸局成稿再落一次 loadOpening 时也要再写一次，
      否则第二次之后「本局主角是谁」那一段就整段不发了。 */
-  var _hero={n:h.n,g:h.born,a:String(h.age),o:h.ti,f:1};
+  /* heroSheet 每回合都会把这几项写进【本局主角·以此为准】。名册上的人不能报
+     现算的出身与岁数，否则每回合都在跟世界书对着干；性别同理，交给世界书说。 */
+  var _hero=feDossLore(h)
+    ?{n:h.n,g:'',a:'',o:h.ti,f:0}
+    :{n:h.n,g:h.born,a:String(h.age),o:h.ti,f:1};
   loadOpening(line,draft,loc);
   GAME.hero=_hero;
   gameShow();
