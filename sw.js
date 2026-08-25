@@ -5,7 +5,7 @@
    否则回头客拿到的还是上一张卡的壳。 */
 /* 版本号一动，activate 里就会把名字对不上的旧缓存整个删掉。
    壳层与素材换过之后必须跟着动一次，否则老访客手上那一份旧缓存不会自己退场。 */
-var V = 'felinia-v40';  /* 对话框回到原样，只留那一下出场的托举 */
+var V = 'felinia-v41';  /* 迁到 Cloudflare Pages */
 var SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -44,7 +44,9 @@ self.addEventListener('fetch', function (e) {
   try { u = new URL(r.url); } catch (_) { return; }
   /* 跨域一律不碰：AI 接口、生图接口、NovelAI 中转都必须原样直达 */
   if (u.origin !== location.origin) return;
+  /* 平台自己的探针路径一律不碰：Vercel 的 /_vercel/，Cloudflare 的 /cdn-cgi/ */
   if (u.pathname.indexOf('/_vercel/') === 0) return;
+  if (u.pathname.indexOf('/cdn-cgi/') === 0) return;
 
   /* 文档：网络优先，断网时回落到上一次缓存的壳 */
   if (r.mode === 'navigate') {

@@ -1,0 +1,2 @@
+# 原 vercel.json 的 rewrites。状态码 200 表示重写（地址栏不变），301/302 才是跳转。
+/    /core/vendor/three/build/chunks/9d717bc0/156a50943028.html    200

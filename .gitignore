@@ -12,3 +12,6 @@ tools/felinia/.zh-ms/
 /_out/
 /.tmp_zh/
 image/**/.DS_Store
+
+# Cloudflare Pages 的构建输出，不入库
+_site/

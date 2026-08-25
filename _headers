@@ -1,0 +1,21 @@
+# Cloudflare Pages 头规则（对应原 vercel.json 的 headers 段）
+# 顺序敏感：先写具体路径，再写宽泛路径。
+
+/
+  Cache-Control: no-cache, must-revalidate
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
+  Content-Type: application/manifest+json; charset=utf-8
+
+# 数据每次都要回源核对（世界书改了要立刻生效）
+/core/res/data/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 其余静态资材带版本号，可以长缓存
+/core/res/*
+  Cache-Control: public, max-age=31536000, immutable
