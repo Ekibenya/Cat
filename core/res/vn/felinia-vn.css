@@ -4,12 +4,17 @@
   -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 #pnTx::after{display:none!important}
 #vnIsle{position:absolute;inset:0;overflow:hidden;background:#15120d;isolation:isolate}
-#vnBgA,#vnBgB{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+/* 关掉背景图的原生拖拽：不关的话，按住窗身往边上拖，浏览器以为你要把这张图拖走，
+   发一个 pointercancel 把挪窗那一趟掐断。 */
+#vnBgA,#vnBgB{-webkit-user-drag:none;user-select:none;-webkit-user-select:none;
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
   transition:opacity 1.05s ease;filter:saturate(.9) contrast(1.03)}
 #vnWash{position:absolute;inset:0;z-index:2;pointer-events:none;
   background:none;box-shadow:none}
 #vnCast,#vnEnsemble{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 #vnEnsemble{z-index:2}
+/* 立绘从 <img> 换成了 <canvas>：出场要一格一格显形（felPix），得有画布可画。
+   object-fit 在 canvas 上一样管用（canvas 也是替换元素），所以下面这些一句没改。 */
 #vnCast .vnActor{position:absolute;top:3%;bottom:auto;left:50%;height:240%;max-width:84%;object-fit:contain;
   object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.66));
   opacity:1;transition:left .8s cubic-bezier(.3,.1,.25,1),filter .55s ease,transform .55s ease}
@@ -31,6 +36,18 @@
 #vnSpeaker{position:absolute;left:13px;bottom:10px;z-index:5;padding:4px 8px;border:1px solid rgba(201,155,63,.45);
   background:rgba(18,13,7,.72);color:#f1e7d2;font:10px/1.2 var(--mono);letter-spacing:.12em;opacity:0;transition:opacity .35s ease}
 #vnSpeaker.on{opacity:1}
+/* 窗上的两枚小钮。档位钮按的是左边那一列同一个循环（__txCycle）——
+   眼睛在窗里，手不必再伸到窗外去。归位钮平时不占地方，窗子挪过位才浮出来。 */
+#vnZoom,#vnHome{position:absolute;right:10px;z-index:7;width:24px;height:24px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(235,219,184,.3);background:rgba(18,13,7,.66);
+  color:rgba(241,231,210,.86);font:12px/1 var(--mono);cursor:pointer}
+#vnZoom{top:8px}
+#vnHome{top:38px;display:none}
+#vnHome.on{display:flex}
+#vnZoom:hover,#vnHome:hover{border-color:rgba(201,155,63,.7);color:#fff}
+/* 竖排的地名原来贴着右上角，两枚钮就压在它头上——让它往下挪一档，宽度也收一点。 */
+#vnLoc{top:68px;max-height:calc(65% - 58px)}
 #vnCoverage{position:absolute;right:10px;bottom:9px;z-index:6;padding:4px 7px;border:1px solid rgba(235,219,184,.3);
   background:rgba(18,13,7,.66);color:rgba(241,231,210,.82);font:9px/1.2 var(--mono);letter-spacing:.1em;cursor:pointer}
 #vnCoverage:hover{border-color:rgba(201,155,63,.7);color:#fff}
@@ -55,5 +72,9 @@
   #vnLoc{right:7px;top:7px;font-size:9px}
   #vnSpeaker{left:8px;bottom:7px;font-size:8px}
   #vnCoverage{right:7px;bottom:6px;font-size:8px}
+  #vnZoom,#vnHome{right:6px;width:22px;height:22px;font-size:11px}
+  #vnZoom{top:6px}
+  #vnHome{top:32px}
+  #vnLoc{top:58px;max-height:calc(65% - 50px)}
 }
 @media(prefers-reduced-motion:reduce){#vnBgA,#vnBgB,#vnCast .vnActor{transition:none}}

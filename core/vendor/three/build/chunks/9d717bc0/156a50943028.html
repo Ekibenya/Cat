@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=2">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=3">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1308,6 +1308,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       background:rgba(237,231,217,.45);
       -webkit-backdrop-filter:none;backdrop-filter:none}
 #game.txOpen #pnTx{visibility:visible;transform:translateZ(0)}
+/* 拖出来的位移写成自定义属性，由「已展开」这条规则合进 transform。
+   直接写内联 transform 是不行的：这扇窗收起时靠 translateY(-113%) 滑出去，
+   内联的优先级压过一切，窗子就再也收不回去了。
+   全屏那一档不吃偏移——它本来就贴着四边，挪一下只会露出底下的正文。 */
+#game.txOpen #pnTx{transform:translate(var(--txX,0px),var(--txY,0px)) translateZ(0)}
+#game.txBig #pnTx{--txX:0px;--txY:0px}
 /* 箭头恒朝下：此钮语义=向下逐级展开游戏画面 */
 #txHint{position:absolute;left:12px;bottom:44px;z-index:3;font-size:11.5px;color:#804a0f;text-shadow:0 1px 3px #f2ecde}
 @keyframes zj3dMarq{to{transform:translateX(-50%)}}
@@ -2255,7 +2261,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <span class="t">装备</span></div>
   </div>
 
-  <div id="pnTx"><div id="vnIsle"><img id="vnBgA" alt=""><img id="vnBgB" alt=""><div id="vnEnsemble"></div><div id="vnWash"></div><div id="vnCast"></div><div id="vnEra"></div><div id="vnLoc"></div><div id="vnSpeaker"></div><button id="vnCoverage" type="button">图库载入中</button><div id="vnAudit"></div></div>
+  <div id="pnTx"><div id="vnIsle"><img id="vnBgA" alt=""><img id="vnBgB" alt=""><div id="vnEnsemble"></div><div id="vnWash"></div><div id="vnCast"></div><div id="vnEra"></div><div id="vnLoc"></div><div id="vnSpeaker"></div><button id="vnZoom" type="button" title="点一下换一档：默认 → 放大 → 全屏 → 收起">⤢</button><button id="vnHome" type="button" title="窗子挪过位了，点一下归位">⤾</button><button id="vnCoverage" type="button">图库载入中</button><div id="vnAudit"></div></div>
   </div>
   <div class="g3dRail">
     <div class="gArr" id="arr3d" title="视觉小说绘卷　点一下换一档：默认 → 放大 → 全屏 → 收起">
@@ -2709,7 +2715,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
        scaleY 抵掉近边被放大的那一点）。 -->
   <div id="feStage">
     <div id="fePerPortrait" aria-live="polite">
-      <img id="fePerPortraitImg" alt="">
+      <canvas id="fePerPortraitImg" role="img"></canvas>
       <div id="fePerPortraitCap"></div>
     </div>
 
@@ -5960,13 +5966,57 @@ function fePerSync(){
   fePerDoss();fePerPortrait();feFootSync();
 }
 
+/* ── 像素显形 ──
+   立绘不再「淡入」，改成一格一格随机蹦出来，像是从马赛克里显影。
+   参数照 ghost 那张卡里那一份：横向 64 格（窄屏 32）、半秒、t² 缓入
+   （先零星几粒、后半程成片）、延迟 0.2 秒起手、纯随机序、格子整块出现。
+   画在 canvas 上：先按图的原始尺寸开画布（缩放交给 CSS 的 object-fit），
+   再按打乱后的次序把源图对应的那一小方块 drawImage 过去。
+   一格一格贴，不做半透明过渡——马赛克要的就是硬边，淡入反而糊。 */
+function felPix(cv,img,opt){
+  opt=opt||{};
+  var mob=false;try{mob=Math.min(screen.width||9e9,innerWidth||9e9)<=760;}catch(_){}
+  var cols=opt.cols||(mob?32:64),dur=opt.dur||500,delay=opt.delay==null?200:opt.delay;
+  var iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+  if(!iw||!ih)return;
+  cv.width=iw;cv.height=ih;
+  var ctx=cv.getContext('2d');if(!ctx)return;
+  var tw=Math.ceil(iw/cols),rows=Math.ceil(ih/tw),total=cols*rows;
+  var red=false;try{red=matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(_){}
+  if(red){ctx.drawImage(img,0,0);return;}   /* 不要动效的，一次画完 */
+  var order=[],i;for(i=0;i<total;i++)order.push(i);
+  for(i=total-1;i>0;i--){var k=(Math.random()*(i+1))|0;var t=order[i];order[i]=order[k];order[k]=t;}
+  /* 这一趟的编号：中途换了人，旧的那一趟下一帧就自己停下，不会往新画布上继续贴。 */
+  var run=(cv._pix=(cv._pix||0)+1);
+  var t0=0,shown=0;
+  function fr(ts){
+    if(cv._pix!==run)return;
+    if(!t0)t0=ts;
+    var e=ts-t0-delay;
+    if(e<0){requestAnimationFrame(fr);return;}
+    var u=Math.min(1,e/dur);u=u*u;
+    var n=u>=1?total:Math.floor(total*u);
+    for(;shown<n;shown++){var id=order[shown],x=(id%cols)*tw,y=((id/cols)|0)*tw;
+      ctx.drawImage(img,x,y,tw,tw,x,y,tw,tw);}
+    if(shown<total)requestAnimationFrame(fr);
+  }
+  requestAnimationFrame(fr);
+}
+/* 绘卷那一层在另一个文件里（felinia-vn.js），它也要用这一份 */
+try{window.felPix=felPix;}catch(_){}
+function felPixClear(cv){
+  if(!cv)return;
+  cv._pix=(cv._pix||0)+1;cv._src='';
+  try{var g=cv.getContext('2d');if(g)g.clearRect(0,0,cv.width,cv.height);}catch(_){}
+}
 function fePerPortrait(person,empty){
   var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=empty?null:(person||FE.hero);
   if(!img||!cap||!FE.vn){return;}
-  if(!h){img.removeAttribute('src');img.classList.remove('ready');img.alt='';cap.textContent='';return;}
+  function blank(){felPixClear(img);img.classList.remove('ready');img.removeAttribute('aria-label');}
+  if(!h){blank();cap.textContent='';return;}
   var era=null,i;
   for(i=0;i<FE.vn.eras.length;i++)if(FE.vn.eras[i].eraIndex===FE.era.i){era=FE.vn.eras[i];break;}
-  if(!era){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
+  if(!era){blank();cap.textContent='';return;}
   var exact=null;
   for(i=0;i<era.assets.single.length;i++){
     if(era.assets.single[i].species===h.sp&&era.assets.single[i].character===h.n){
@@ -5975,7 +6025,7 @@ function fePerPortrait(person,empty){
   }
   var pool=era.assets.single.filter(function(a){return a.species===h.sp&&!a.character;});
   if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===h.sp;});
-  if(!pool.length){img.removeAttribute('src');img.classList.remove('ready');cap.textContent='';return;}
+  if(!pool.length){blank();cap.textContent='';return;}
   var idx;
   if(h.pre>=0){
     var same=[];
@@ -5983,13 +6033,20 @@ function fePerPortrait(person,empty){
     idx=Math.max(0,same.indexOf(h.pre))%pool.length;
   }else idx=feHash(h.id+'|'+h.sp)%pool.length;
   var src=exact?exact.src:pool[idx].src;
-  img.classList.remove('ready');
-  img.alt=h.n+'（'+(h.sp==='cat'?'猫娘':'人类')+'）';
-  img.onload=function(){img.classList.add('ready');};
-  img.onerror=function(){img.classList.remove('ready');};
-  if(img.getAttribute('src')===src&&img.complete)img.classList.add('ready');
-  else img.src=src;
+  var who=h.n+'（'+(h.sp==='cat'?'猫娘':'人类')+'）';
   cap.textContent=h.n+'　·　'+(h.sp==='cat'?'猫娘':'人类');
+  img.setAttribute('aria-label',who);
+  /* 同一张就别再显形一遍：识人那一步点谁都会重跑这个函数，
+     不拦住的话，同一个人的立绘会在原地反复碎掉重砌。 */
+  if(img._src===src&&img.width>1){img.classList.add('ready');return;}
+  felPixClear(img);img._src=src;
+  var im=new Image();
+  im.onload=function(){
+    if(img._src!==src)return;               /* 中途换了人，这一张作废 */
+    img.classList.add('ready');felPix(img,im);
+  };
+  im.onerror=function(){if(img._src===src)img.classList.remove('ready');};
+  im.src=src;
 }
 
 /* ═══ 三 · 识人 ═══ */
@@ -13386,6 +13443,10 @@ function medEdictSync(){ /* 环海侧 sec_deed 敕令：同 edictSync，落到 M
     ar.addEventListener('click',cycle);
     paint();
     window.__arrPaint=paint;   /* 别处改了档位（如营造清单自抬层级）后可让钮态跟上 */
+    /* 档位钮原来只在左边那一列上。人的眼睛在窗子里，手却要伸到窗外去按——
+       所以窗子自己也挂一枚（见 #vnZoom），按的是同一个循环，不另起一套状态。 */
+    window.__txCycle=cycle;
+    window.__txTier=tierNow;
     /* 整块收起／还原。手机上切到情报台那一页时要用：三维画面 z-index 25、
        情报台只有 20，画面直接盖在状态栏上，那一页根本没法读。
        只在「是我们自己收起来的」时候才还原，玩家自己关掉的不去动它。 */
@@ -13737,6 +13798,95 @@ function svLoad(v){
     gmActsFresh();
   }
 }
+/* ═══ 绘卷这扇窗：自己的档位钮，以及可以拖到任意位置 ═══
+   拖动的做法照 ghost 那张卡里那一套：按住窗身（避开钮与输入框）拖，
+   位移记进 sessionStorage（刷新前一直记着），clamp 保证窗缘不出视口，
+   挪过位就在窗上浮出一枚归位钮。
+   位移不写内联 transform，写 --txX/--txY 两个自定义属性——见那两条 CSS 的注释。 */
+(function(){
+  var OFF={x:0,y:0};
+  try{var sv=JSON.parse(sessionStorage.getItem('fel_tx_off')||'0');
+      if(sv&&typeof sv.x==='number'&&typeof sv.y==='number')OFF=sv;}catch(_){}
+  var D={on:0,px:0,py:0,x0:0,y0:0,moved:0,base:null,id:null};
+  function pn(){return document.getElementById('pnTx');}
+  function big(){try{return document.getElementById('game').classList.contains('txBig');}catch(_){return false;}}
+  function save(){try{sessionStorage.setItem('fel_tx_off',JSON.stringify(OFF));}catch(_){}}
+  function apply(){
+    var el=pn();if(!el)return;
+    /* 全屏那一档不吃偏移。写在样式表里是没用的：这两个属性是内联写上去的，
+       内联压过任何选择器——所以要在这儿把它按成零，记着的那份偏移不动，
+       退出全屏时原样回到玩家拖过的位置。 */
+    var z=big();
+    el.style.setProperty('--txX',(z?0:OFF.x)+'px');
+    el.style.setProperty('--txY',(z?0:OFF.y)+'px');
+    var h=document.getElementById('vnHome');
+    if(h)h.classList.toggle('on',!!(OFF.x||OFF.y)&&!z);
+  }
+  function home(){
+    var el=pn();if(!el)return;
+    OFF={x:0,y:0};save();
+    el.style.transition='transform .34s cubic-bezier(.2,.85,.25,1)';
+    apply();
+    setTimeout(function(){var e2=pn();if(e2)e2.style.transition='';},380);
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target;if(!t||!t.closest)return;
+    if(t.closest('#vnZoom')){e.stopPropagation();try{window.__txCycle();}catch(_){}
+      setTimeout(apply,60);return;}
+    if(t.closest('#vnHome')){e.stopPropagation();home();return;}
+  },true);
+  function down(x,y,t){
+    var el=pn();if(!el||!t||!t.closest)return false;
+    if(!t.closest('#pnTx'))return false;
+    if(big())return false;                       /* 全屏那一档不拖 */
+    /* 窗里自己有钮、有画布、有可滚的名录：这些一律不算「抓窗身」。 */
+    if(t.closest('button,a,input,textarea,select,canvas,[data-nodrag],#vnAudit'))return false;
+    var r=el.getBoundingClientRect();
+    D.on=1;D.moved=0;D.px=x;D.py=y;D.x0=OFF.x;D.y0=OFF.y;
+    D.base={l:r.left-OFF.x,t:r.top-OFF.y,w:r.width,h:r.height};
+    return true;   /* 调用处会 preventDefault：窗底铺着一张背景图，
+                      不拦住，一按住往边上拖浏览器就当你要把图拖走，
+                      发一个 pointercancel 把这一趟掐断——实测拖两百像素只走十五。 */
+  }
+  function move(x,y){
+    if(!D.on)return false;
+    var dx=x-D.px,dy=y-D.py;
+    if(!D.moved&&Math.abs(dx)<6&&Math.abs(dy)<6)return true;   /* 手一抖不算拖 */
+    D.moved=1;
+    var el=pn();if(!el){D.on=0;return false;}
+    var vw=innerWidth,vh=innerHeight,b=D.base;
+    var nx=D.x0+dx,ny=D.y0+dy;
+    /* 横着至少留 90 像素在视口里，竖着顶缘不出屏、底下至少留 56——
+       拖到只剩一条缝就再也抓不回来了。 */
+    nx=Math.max(90-b.w-b.l,Math.min(nx,vw-90-b.l));
+    ny=Math.max(-b.t,Math.min(ny,vh-56-b.t));
+    OFF.x=Math.round(nx);OFF.y=Math.round(ny);
+    apply();
+    return true;
+  }
+  function up(){if(!D.on)return;D.on=0;if(D.moved){save();apply();}}
+  addEventListener('pointerdown',function(e){
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(down(e.clientX,e.clientY,e.target)){D.id=e.pointerId;e.preventDefault();}
+  },true);
+  addEventListener('dragstart',function(e){
+    if(D.on&&e.target&&e.target.closest&&e.target.closest('#pnTx'))e.preventDefault();
+  },true);
+  addEventListener('pointermove',function(e){
+    if(!D.on||e.pointerId!==D.id)return;
+    if(move(e.clientX,e.clientY))e.preventDefault();
+  },true);
+  addEventListener('pointerup',up,true);
+  addEventListener('pointercancel',up,true);
+  /* 窗子重开、换档、改视口之后都对一次：档位一变，能落脚的范围也变了。 */
+  addEventListener('resize',function(){
+    var el=pn();if(!el)return;
+    var r=el.getBoundingClientRect();
+    if(r.left>innerWidth-60||r.top>innerHeight-40||r.right<60){OFF={x:0,y:0};save();}
+    apply();
+  });
+  apply();
+})();
 /* ── ARCHIVVM 目录场：档案夹卡浮于透视线场，随滑鼠／陀螺仪视差移动（CRYPTAR1S DIRECTORY 式）── */
 var SVN=32,SVSEL=0;
 var SV_ROMAN=(function(){var R=[],U=['','I','II','III','IV','V','VI','VII','VIII','IX'],T=['','X','XX','XXX'];

@@ -1,6 +1,21 @@
 (function(){
   'use strict';
-  var V={manifest:null,ready:false,bgFlip:false,bgKey:'',castKey:'',eraKey:'',lastEra:null,used:{},override:null};
+  var V={manifest:null,ready:false,bgFlip:false,bgKey:'',castKey:'',speakKey:null,eraKey:'',lastEra:null,used:{},override:null};
+  /* 立绘出场用像素显形（引擎里那一份 felPix，从 ghost 那张卡搬来的）。
+     引擎没挂上就退回「直接画完」，不至于因为少一个效果整层立绘不出来。 */
+  function pix(cv,im){
+    try{if(window.felPix){window.felPix(cv,im);return;}}catch(_){}
+    cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;
+    var g=cv.getContext('2d');if(g)g.drawImage(im,0,0);
+  }
+  function plate(cls,src,onload){
+    var cv=document.createElement('canvas');
+    if(cls)cv.className=cls;
+    var im=new Image();
+    im.onload=function(){pix(cv,im);if(onload)onload();};
+    im.src=src;
+    return cv;
+  }
   var CAT_RX=/猫娘|猫耳|耳尾|尾巴|肉垫|窝群|同类/;
   var NIGHT_RX=/夜|晚|黄昏|日暮|薄暮|三更|四更|五更|子时|亥时|戌时|丑时|寅时|月|烛|灯下/;
   var RED_RX=/青楼|花街|宫廷|沙龙|百货|舞台|展会/;
@@ -86,14 +101,25 @@
     var host=$('vnCast');if(!host)return;host.innerHTML='';
     var shown=cast.slice(0,4),pos=actorPositions(shown.length);
     shown.forEach(function(person,i){
+      /* 选图照旧：本代名录里点得着名字的用那一张专属，点不着的从通用池里按名字取。 */
       var known=person.hero?null:rosterEntry(era,person.name);
       var exact=known&&era.assets.single.find(function(a){return a.species===person.species&&a.character===known.name;});
       var pool=era.assets.single.filter(function(a){return a.species===person.species&&!a.character;});
       if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===person.species;});
       var asset=exact||(pool.length?pool[hash(person.name)%pool.length]:null);if(!asset)return;
-      var im=document.createElement('img');
-      im.className='vnActor'+(person.name===speaker?' speaking':'');im.alt='';im.dataset.name=person.name;im.style.left=pos[i]+'%';im.src=asset.src;
-      im.onload=function(){mark(asset.src);paintAudit(era);};host.appendChild(im);
+      var cv=plate('vnActor',asset.src,function(){mark(asset.src);paintAudit(era);});
+      cv.dataset.name=person.name;cv.style.left=pos[i]+'%';
+      if(person.name===speaker)cv.classList.add('speaking');
+      host.appendChild(cv);
+    });
+  }
+  /* 谁在说话只换一个记号，不重建这一层。
+     从前谁说话也算进 castKey，一句话说到一半、说话人一变，整层立绘就重建一次——
+     配上像素显形，就是每说一句人都碎掉重砌一遍。 */
+  function markSpeaker(speaker){
+    var host=$('vnCast');if(!host)return;
+    [].forEach.call(host.children,function(el){
+      el.classList.toggle('speaking',!!speaker&&el.dataset.name===speaker);
     });
   }
   function renderEnsemble(era,cast,state){
@@ -103,7 +129,8 @@
     ['cat','human'].forEach(function(sp,si){
       if(!cast.some(function(p){return p.species===sp;}))return;
       var pool=era.assets.group.filter(function(a){return a.species===sp;});if(!pool.length)return;
-      var asset=pool[0],node=document.createElement('img');node.src=asset.src;node.style.left=si?'68%':'32%';node.onload=function(){mark(asset.src);paintAudit(era);};
+      var asset=pool[0],node=plate('',asset.src,function(){mark(asset.src);paintAudit(era);});
+      node.style.left=si?'68%':'32%';
       host.appendChild(node);
     });
     return !!host.children.length;
@@ -120,8 +147,18 @@
     var panel=state.panel||{},loc=textOf(panel,'时地')||(state.op&&state.op.scene)||era.locations[0]||era.title;
     var weather=textOf(panel,'天气'),isle=$('vnIsle');if(isle){isle.classList.toggle('night',NIGHT_RX.test(loc));isle.classList.toggle('red',RED_RX.test(loc));}
     setBackground(era,loc,weather);
-    var cast=castOf(era,state),speaker=speakerOf(cast,state.text),key=era.eraIndex+'|'+cast.map(function(p){return p.name+':'+p.species;}).join('+')+'|'+speaker+'|'+hash(String(state.text||'').slice(-160));
-    if(key!==V.castKey){V.castKey=key;var ensemble=renderEnsemble(era,cast,state);if(ensemble)$('vnCast').innerHTML='';else renderSingles(era,cast,speaker);}
+    var cast=castOf(era,state),speaker=speakerOf(cast,state.text);
+    /* 「站着谁」与「谁在说」分成两把钥匙：前者变了才重建这一层（立绘重新显形），
+       后者变了只换记号。合成一把的时候还捎上了正文尾巴的哈希——
+       正文每流一个字它就变一次，于是这一层每秒重建好几遍。 */
+    var crowd=cast.length>4||/众人|人群|队伍|窝群|全队|工场|军阵|家人/.test(String(state.text||''));
+    var key=era.eraIndex+'|'+(crowd?'g':'s')+'|'+cast.map(function(p){return p.name+':'+p.species;}).join('+');
+    if(key!==V.castKey){
+      V.castKey=key;V.speakKey=null;
+      var ensemble=renderEnsemble(era,cast,state);
+      if(ensemble)$('vnCast').innerHTML='';else renderSingles(era,cast,speaker);
+    }
+    if(speaker!==V.speakKey){V.speakKey=speaker;markSpeaker(speaker);}
     var eraEl=$('vnEra');if(eraEl)eraEl.innerHTML='<b>'+esc(era.yearLabel+' · '+era.title)+'</b><span>'+esc(era.subtitle)+'</span>';
     var locEl=$('vnLoc');if(locEl)locEl.textContent=loc.replace(/\s+/g,' ').slice(0,32);
     var sp=$('vnSpeaker');if(sp){sp.textContent=speaker||'';sp.classList.toggle('on',!!speaker);}
@@ -135,6 +172,6 @@
       setInterval(tick,600);
     }).catch(function(err){if(coverage)coverage.textContent='图库索引未载入';try{console.warn('[visual-novel]',err);}catch(_){}});
   }
-  window.FELVN={tick:tick,inspect:function(){return {ready:V.ready,total:V.manifest&&V.manifest.total,counts:V.manifest&&V.manifest.counts,era:V.lastEra&&V.lastEra.eraIndex,rendered:Object.keys(V.used).length};},preview:function(state){V.override=state||null;V.bgKey='';V.castKey='';tick();},clearPreview:function(){V.override=null;V.bgKey='';V.castKey='';tick();}};
+  window.FELVN={tick:tick,inspect:function(){return {ready:V.ready,total:V.manifest&&V.manifest.total,counts:V.manifest&&V.manifest.counts,era:V.lastEra&&V.lastEra.eraIndex,rendered:Object.keys(V.used).length};},preview:function(state){V.override=state||null;V.bgKey='';V.castKey='';V.speakKey=null;tick();},clearPreview:function(){V.override=null;V.bgKey='';V.castKey='';V.speakKey=null;tick();}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
