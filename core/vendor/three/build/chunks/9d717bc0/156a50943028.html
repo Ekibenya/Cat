@@ -10373,20 +10373,30 @@ function bgmPlay(i){
   BGM.i=i;var a=bgmEl();
   BGM.on=true;$('#gtSnd').classList.add('on');
   $('#gtSnd').title='MVSICA · '+BGM_LIST[i].t+'（点击开启播放器）';
+  bgmArm();                              /* 取曲尚未完成也先接住菜单上的第一次交互，别等到下一页 */
   bgmSrc(i,function(u){
     if(BGM.i!==i)return;
     if(!u){if(++BGM.skip<BGM_LIST.length)bgmPlay((i+1)%BGM_LIST.length);return;}
     a.src=u;bgmStart(a,i);
   });
 }
+function bgmArm(){
+  if(BGM._armed)return;BGM._armed=1;
+  var f=function(){
+    ['pointerdown','touchstart','keydown'].forEach(function(ev){document.removeEventListener(ev,f,true);});
+    BGM._armed=0;BGM._touched=1;
+    if(BGM.on&&BGM.a){
+      /* 首曲还在取：先留下 autoplay；src 落定后即可接着播。已经取到则在本次手势里直接播放。 */
+      BGM.a.autoplay=true;
+      if(BGM.a.src){var q=BGM.a.play();if(q&&q.catch)q.catch(function(){bgmArm();});}
+    }
+  };
+  ['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,f,true);});
+}
 function bgmStart(a,i){
+  if(BGM._touched)a.autoplay=true;
   var p=a.play();
-  if(p&&p.catch)p.catch(function(){
-    if(BGM._armed)return;BGM._armed=1;      /* 自动播放被拦：首次点按/触碰/按键的瞬间补放 */
-    var f=function(){['pointerdown','touchstart','keydown'].forEach(function(ev){document.removeEventListener(ev,f,true);});BGM._armed=0;
-      if(BGM.on&&BGM.a){var q=BGM.a.play();if(q&&q.catch)q.catch(function(){});}};
-    ['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,f,true);});
-  });
+  if(p&&p.catch)p.catch(function(){bgmArm();}); /* 自动播放被拦：菜单上的首次交互补放 */
 }
 function bgmToggle(){
   if(BGM.on){BGM.on=false;$('#gtSnd').classList.remove('on');if(BGM.a)BGM.a.pause();return;}
