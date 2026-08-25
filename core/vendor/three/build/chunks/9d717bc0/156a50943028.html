@@ -5747,7 +5747,32 @@ function feName(r,era,seed){
 }
 /* 档案文本。一栏一件事——外貌栏不掺来历，开头栏不掺关系。
    最后那一栏是「怎么说话」：先散文，再四字标记，再台词，再一句底色。 */
+/* 档案直出世界书人物条目：那六条（概要·外貌·来历·性情·关系·说话的样子）是逐字
+   写定的成品，比现算的六栏详实得多，一个字不改地摆上来。现算的那一套只留给世界书里
+   没有的人——自拟的主角、feSocMore 现生的路人；他们本来就不在名册上，没有条目可取。 */
+var FE_DOSS_ORD={'\u4e00':1,'\u4e8c':2,'\u4e09':3,'\u56db':4,'\u4e94':5,'\u516d':6};
+function feDossLore(p){
+  try{
+    if(!p||!p.fig||!p.n)return null;
+    var lb=(CARDS&&CARDS.luzhi&&CARDS.luzhi.lorebook)||[];
+    var ei=(FE&&FE.era&&FE.era.i),cat='\u4eba \u00b7 '+p.n,out=[],i,e,t,m,o;
+    for(i=0;i<lb.length;i++){e=lb[i];
+      if(!e||e.lay!=='figures'||e.cat!==cat)continue;
+      if(ei!=null&&e.era!=null&&e.era!==ei)continue;
+      /* 标题是「名字 · 第N项 · 栏名」，可名字本身也可能带 ·（「…的海报 · 穆夏」），
+         所以从尾巴数：倒数第二段是第N项，最后一段是栏名。 */
+      t=String(e.title||'');m=t.split(' \u00b7 ');
+      o=(m.length>2&&FE_DOSS_ORD[m[m.length-2].charAt(1)])||99;
+      out.push([o,(m.length>2?m[m.length-1]:t),String(e.content||'')]);
+    }
+    if(!out.length)return null;
+    out.sort(function(a,b){return a[0]-b[0];});
+    return out.map(function(x){return [x[1],x[2]];});
+  }catch(_){return null;}
+}
 function feDoss(p){
+  var LB=feDossLore(p);
+  if(LB)return LB;                       /* 名册上的人一律走世界书 */
   var L=[];
   L.push(['概要', p.n+'，'+p.ti+'。'+(p.sp==='cat'?'猫娘':'人类')+'，'+p.age+'岁。'
           +(p.d?p.d+'。':'')]);
