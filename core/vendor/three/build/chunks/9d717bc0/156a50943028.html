@@ -416,14 +416,10 @@ html.lux #esMission .num{background:#2f2a22;color:#f6f1e4}
 html.lux #esMission .ttl span{background:#2f2a22;color:#f6f1e4}
 html.lux #esMission .era{color:#8a8170}
 /* 纪年轴与页脚：浅底上的暖灰与暗金 */
-html.lux #esBands{border-top-color:#cec3ab}
-html.lux #esBands div{color:#9a9184;border-right-color:#cec3ab}
-html.lux #esBands div:first-child{border-left-color:#cec3ab}
+html.lux #esBands div{color:#9a9184}
 html.lux #esBands div.live{color:#9a742a}
-html.lux #esPips::before{background:#cec3ab}
-html.lux #eraSel .pip i{background:#c0b59c}
-html.lux #eraSel .pip:hover i{background:#9a9184}
-html.lux #eraSel .pip.on i{background:#9a742a;box-shadow:0 0 9px rgba(154,116,42,.55)}
+/* 砖是同一批，不必再指定颜色；只把这一屏的奶油底与砖缝对齐一点点 */
+html.lux #eraSel .pip.on i{box-shadow:0 0 9px rgba(154,116,42,.5)}
 html.lux #eraSel .pip b{color:#c0b59c}
 html.lux #eraSel .pip.mark b{color:#9a9184}
 html.lux #eraSel .pip.on b{color:#9a742a}
@@ -2209,24 +2205,51 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 /* 纪年轴：上排纪元分段，下排四十二枚菱标，年号只在挤得下的地方露出来 */
 #esChron{position:fixed;left:0;right:0;bottom:40px;z-index:48;padding:0 12px 10px}
-#esBands{display:flex;width:min(1560px,96vw);margin:0 auto;border-top:1px solid #232320}
-#esBands div{box-sizing:border-box;text-align:center;padding:6px 0 4px;font-size:9.5px;letter-spacing:.3em;
-  text-indent:.3em;color:var(--mut);border-right:1px solid #232320;font-family:var(--mono);
+/* ── 年号带：直线与菱标换成封面那圈罗马马赛克 ──
+   原来是一像素的印刷直线加一颗转过四十五度的菱形，跟这一屏别处的手工感对不上。
+   砖不另造：直接用封面那圈边框的砖（border_t.png，十二列八行、每格四十像素，
+   本来就是从插图上烤下来、再罩过一层暖纸的）。
+   要让一格砖显示成 S 像素，整张图就得缩到 12S × 8S —— 元素只有 S 那么高，
+   于是只露出第一行，横着重复十二格才轮回一次，看着不是印上去的线，
+   是一块块码出来的边。砖缝本来就是那层暖奶油，压在这一屏的奶油底上正好接得住。 */
+#eraSel{--mosT:url(/core/res/img/annals/border_t.png)}
+#esBands{position:relative;display:flex;width:min(1560px,96vw);margin:0 auto}
+/* 砖本身是深石头色，铺成一整面（封面那样）读作马赛克，收成五像素一条线
+   就偏重，像一排黑格子。压到 .78 让它退回底纹里，砖形还在，分量轻一档。
+   点不压——它要站得出来。 */
+#esBands::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;opacity:.78;
+  background:var(--mosT) 0 0/60px 40px repeat-x}
+#esBands div{position:relative;box-sizing:border-box;text-align:center;padding:9px 0 4px;
+  font-size:9.5px;letter-spacing:.3em;
+  text-indent:.3em;color:var(--mut);font-family:var(--mono);
   transition:color 360ms}
-#esBands div:first-child{border-left:1px solid #232320}
+/* 竖着那几道分隔：同一张砖，改成竖着重复——露出的是最左那一列，八格一轮回 */
+#esBands div::after,#esBands div:first-child::before{content:"";position:absolute;top:0;bottom:0;width:5px;
+  opacity:.78;background:var(--mosT) 0 0/60px 40px repeat-y}
+#esBands div::after{right:-2px}
+#esBands div:first-child::before{left:0}
 #esBands div.live{color:var(--gold-hi)}
 #esPips{position:relative;display:flex;width:min(1560px,96vw);margin:0 auto;height:40px;align-items:center}
-#esPips::before{content:"";position:absolute;left:0;right:0;top:15px;height:1px;background:#232320}
-/* min-width:0 是关键——不写的话 flex 项不会缩到最小内容宽以下，
-     年号一长就把整排顶宽，四十二枚累计能溢出三四百像素，跟纪元条对不上。 */
+/* 轨条错开一行取砖（背景纵向挪 5 像素＝一格），免得和上面那条一模一样 */
+#esPips::before{content:"";position:absolute;left:0;right:0;top:14px;height:5px;opacity:.78;
+  background:var(--mosT) 0 -5px/60px 40px repeat-x}
 #eraSel .pip{position:relative;flex:1 1 0;min-width:0;height:100%;border:0;background:none;padding:0;
   cursor:pointer;display:flex;flex-direction:column;align-items:center}
-#eraSel .pip i{width:4px;height:4px;margin-top:13px;background:#3a3a36;transform:rotate(45deg);
-  transition:background 300ms,transform 300ms}
-#eraSel .pip:hover i{background:var(--mut);transform:rotate(45deg) scale(1.4)}
+/* 点：不再是转四十五度的菱形，就是从同一张砖上裁下来的一格。
+   八像素跨在五像素的轨条上，上下各露一点，一眼数得清一共几格
+   （原来那颗菱形靠尖角戳出线外才认得出，砖是方的，得靠厚度）。
+   选中的那一枚放大成一小片 2×2（背景缩到 2 格宽，元素放到 2 格大）——
+   四块砖带一道缝，比单块更像「铺过的一处」；再罩一道暖金的滤镜，
+   砖本身是插图烤出来的深色石头，不上色就看不出这是选中的那一枚。 */
+#eraSel .pip i{width:8px;height:8px;margin-top:11px;transform:none;
+  background:var(--mosT) -16px -16px/96px 64px;
+  transition:transform 300ms,width 300ms,height 300ms,margin-top 300ms,filter 300ms}
+#eraSel .pip:hover i{transform:scale(1.4)}
 #eraSel .pip:focus-visible{outline:1px solid var(--gold);outline-offset:-2px}
-#eraSel .pip.on i{background:var(--gold-hi);transform:rotate(45deg) scale(2);
-  box-shadow:0 0 9px rgba(236,200,120,.75)}
+#eraSel .pip.on i{width:14px;height:14px;margin-top:8px;transform:none;
+  background:var(--mosT) 0 0/84px 56px;
+  filter:sepia(.85) saturate(2.6) brightness(1.12) hue-rotate(-6deg);
+  box-shadow:0 0 9px rgba(154,116,42,.5)}
 #eraSel .pip b{position:absolute;top:26px;left:50%;transform:translateX(-50%);
   font-family:var(--mono);font-size:9px;font-weight:400;
   letter-spacing:.04em;color:#3a3a36;opacity:0;white-space:nowrap;transition:opacity 300ms,color 300ms}
