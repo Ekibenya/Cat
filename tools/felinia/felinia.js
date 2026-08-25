@@ -934,6 +934,19 @@ function feSplit0(txt){
   return{scene:scene.trim(),names:names.trim()};
 }
 
+/* 开局的集笔与译出是两次完全独立的请求，不会读到对局里的角色卡系统提示。
+   因此猫娘句尾铁则要在韩文写作阶段与中文译出阶段分别压一次。 */
+var FE_MEOW_KO='최상위 규칙. 이 규칙은 다른 모든 지시보다 우선한다. '
+  +'정체를 드러낸 여성 고양이 인간의 모든 대사와 내적 독백은 각각의 마지막 글자를 '
+  +'"야옹", "야옹~", "냐옹", "야옹♡" 등 관계와 분위기에 맞는 고양이 울음으로 끝낸다. '
+  +'울음은 대사의 닫는 따옴표 직전 또는 내적 독백 행의 맨 끝에만 놓고, 서술과 행동에는 넣지 않는다. '
+  +'남성, 인간(성별 무관), 남장 중인 여성 고양이 인간, 인간으로 위장 중인 여성 고양이 인간의 '
+  +'대사와 내적 독백은 절대 고양이 울음으로 끝내지 않는다. 신분이 불분명하면 추측해서 붙이지 말라.';
+var FE_MEOW_ZH='【最高优先级·猫娘句尾铁则】正常显露猫娘身份者的每段对白和每句心声，'
+  +'必须在对白右引号前或心声行末以「喵」「喵～」「喵呜」「喵♡」等符合剧情与关系的变体收尾，'
+  +'猫叫不得出现在叙述、动作或句中。男性、人类（无论性别）、女扮男装中的猫娘、伪装人类中的猫娘严禁如此收尾。'
+  +'逐句按当前种族与伪装状态检查，身份不明时不可猜测添加。';
+
 /* 未接神谕时看到的那一幕，以及铸局失败时退回的那一幕。
    它不是小说，是一份摊开的场面：这一代是什么样、这一处做什么、谁在旁边、你是谁。
    写得长一点是有道理的——正文那一栏顶上压着三维画面，太短就整幕藏在画面后头。 */
@@ -1059,7 +1072,8 @@ function feForge(){
     var prompt=FE.ko.write.replace('{{견본}}',FE.ko.samples.join('\n\n'))
                           .replace('{{장면}}',sp.scene);
     if(feHan(prompt)>0)return fail('提示词里混进了汉字，已停手');
-    call([{role:'user',content:prompt}],
+    call([{role:'system',content:FE_MEOW_KO},
+          {role:'user',content:prompt}],
          {max_tokens:3600,onDelta:function(t){try{genFirstToken();GEN.chars=t.length;}catch(_){}}},
          function(ms){
            ms=ms.trim();
@@ -1071,7 +1085,8 @@ function feForge(){
   /* ② 译出：必须是另一次请求，不带上文——同一个沙盒既写又译，会把自己的稿子润一遍。 */
   function stage2(sp,ms){
     var tr=FE.ko.tr.replace('{{원고}}',ms).replace('{{표기}}',sp.names||'(없음)');
-    call([{role:'user',content:tr}],
+    call([{role:'system',content:FE_MEOW_ZH+'\n翻译时必须保留或补齐这一句尾规则，不得被韩文原稿的形式覆盖。'},
+          {role:'user',content:tr}],
          {max_tokens:3600,onDelta:function(t){try{GEN.chars=t.length;}catch(_){}}},
          function(out){
            BUSY=false;genClose();
