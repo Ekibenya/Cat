@@ -13549,6 +13549,22 @@ function medEdictSync(){ /* 环海侧 sec_deed 敕令：同 edictSync，落到 M
        所以窗子自己也挂一枚（见 #vnZoom），按的是同一个循环，不另起一套状态。 */
     window.__txCycle=cycle;
     window.__txTier=tierNow;
+    /* 全屏里情报台那扇窗是点出来的，那就也该点得回去：点窗子以外的任意地方
+       （立绘、正文、对话框、左边那一列……）立刻收回缩略列。
+       两种地方放过：窗子自己身上——那是在里面翻内容、按按钮；
+       以及缩略小窗——它自己那条 click 已经把开关这件事管了，
+       在这儿再插一手，两处就会一开一关地互相抵消。
+       用捕获阶段，免得被沿途 stopPropagation 的处理器吃掉。 */
+    if(!window.__txMvBound){
+      window.__txMvBound=1;
+      document.addEventListener('click',function(e){
+        var g=document.getElementById('game');
+        if(!g||!g.classList.contains('txBig')||g.classList.contains('txMvShut'))return;
+        var t=e.target;
+        if(t&&t.closest&&(t.closest('.gMfd .mvWin')||t.closest('.gMfd .mvCard')))return;
+        g.classList.add('txMvShut');
+      },true);
+    }
     /* 整块收起／还原。手机上切到情报台那一页时要用：三维画面 z-index 25、
        情报台只有 20，画面直接盖在状态栏上，那一页根本没法读。
        只在「是我们自己收起来的」时候才还原，玩家自己关掉的不去动它。 */
@@ -14577,8 +14593,9 @@ function mvBind(){
       /* 手机上情报台是一层浮层：点当前这一枚就收回去，再点又弹出来。
          桌面窗常驻在让出来的那一条里，不需要这个开关。 */
       if(mvPhone()){try{gEl.classList.toggle('mvOpen');}catch(_){}}
-      /* 全屏里窗是收着的，点正前这一枚就是「把它叫出来」——这一下不该落到窗内的按钮上。 */
-      try{if(gEl&&gEl.classList.contains('txMvShut')){gEl.classList.remove('txMvShut');MV.w=0;return;}}catch(_){}
+      /* 全屏里这一枚就是开关：窗收着，点它叫出来；窗开着，点它收回去。
+         两种情形这一下都不该再落到窗内的按钮上，所以到此为止。 */
+      try{if(gEl&&gEl.classList.contains('txBig')){gEl.classList.toggle('txMvShut');MV.w=0;return;}}catch(_){}
       MV.w=0;return;                                  /* 桌面：点的是正前这张，交给里面的按钮 */
     }
     /* 捕获阶段就截住：collapsed 的那几条抬头里也有 data-act 之类的按钮，
