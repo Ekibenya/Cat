@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=11">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=12">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -10535,15 +10535,6 @@ function applyGlass(){
     +'}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
-    /* 全屏底下那只对话框：与地图·装备·商店那三扇是同一种窗，
-       所以挂同一根拉杆 —— 玩家把面板调透，它跟着一起透。
-       只有颜色不同：那三扇是浮在奶油纸上的暖奶油，这一只浮在整幅立绘上，
-       用的是自己的墨色。梯度形状留着：上沿淡得能看见画，往下渐实压住字。
-       起点比那三扇高一档 —— 它背后是大块高对比的立绘，不是三维画面。 */
-    +'#game.txBig #vnTalk{background:linear-gradient(180deg,'
-    +'rgba(14,10,6,'+(.12+.24*a).toFixed(2)+') 0%,'
-    +'rgba(14,10,6,'+(.32+.30*a).toFixed(2)+') 26%,'
-    +'rgba(14,10,6,'+(.38+.30*a).toFixed(2)+') 100%) !important}'
     /* 视觉小说进了全屏，情报台那六扇与缩略那一列就浮在整幅立绘上了。
        平时它们身后是三维画面加台底，透到 .09 也读得动；换成大块高对比的
        立绘与背景画，同一档下字就没法读。全屏单给一档实得多的，退出即还原。
