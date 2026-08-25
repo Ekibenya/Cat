@@ -2126,7 +2126,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   /* 脚下那个名字照对局里视觉小说的写法：不挂框、不垫底色，
      一样的暖金、一样疏的字距，靠一层黑影从画上浮出来。
      字距加在每个字后面（末一个也加），居中会整体偏左半格，补一样大的首行缩进抵平。 */
-  #feWrap.artOn #fePerPortraitCap{bottom:52px;padding:0;border:0;background:none;
+  #feWrap.artOn #fePerPortraitCap{bottom:64px;padding:0;border:0;background:none;
       color:rgba(230,204,150,.86);font:12px/1.5 var(--mono);
       letter-spacing:.25em;text-indent:.25em;
       text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72),0 0 2px rgba(0,0,0,.95)}
@@ -6281,12 +6281,12 @@ function feArtOpen(){
   var box=$('#fePerPortrait');if(box)box.classList.remove('pTurn','pEnter');
   FE._artIn=1;w.classList.add('artOn');
 }
-/* 立绘浮着的时候翻人：按两边那对箭头。
-   原先还接「整屏左右滑」，撤掉了——立绘铺满整屏，手指落在哪儿都算数，
-   看一眼档案顺手一划就翻了人，误触太容易。翻人只认那两枚箭头，
-   收起只认 ✕、点立绘外、ESC；横着拖一概不做事。
+/* 立绘浮着的时候翻人：在立绘身上左右滑，或者按两边那对箭头。
+   滑的判定只挂在那张图上，不挂幕布——从前挂在整屏，手指落在哪儿都算数，
+   摸一下底下那块板顺手带一点横的就翻了人。现在图以外的地方（两侧的空档、
+   板子那一带）横着拖一概不做事，点一下才是「收起来」。
    立身那一步「看谁」就是「演谁」；识人那一步只换看的那一位，
-   带不带进这一局仍旧只由点击决定。 */
+   带不带进这一局仍旧只由点击决定——滑一下就把人带进去太容易误伤。 */
 (function(){
   function list(){
     var out=[];
@@ -6330,11 +6330,34 @@ function feArtOpen(){
       e.stopPropagation();feArtClose();
       setTimeout(feArtJump,FE_PTURN+40);
     });
-    /* 两边那对箭头：翻人只此一路。 */
+    /* 两边那对箭头 */
     var pv=$('#feArtP');
     if(pv)pv.addEventListener('click',function(e){e.stopPropagation();go(-1);});
     var nx=$('#feArtN');
     if(nx)nx.addEventListener('click',function(e){e.stopPropagation();go(1);});
+    /* 在立绘身上左右滑：横的走够 44 像素、而且比竖的多，才算一次翻人。
+       图上是 touch-action:none，浏览器不会把这一划拿去卷页面。
+       图以外一概不接——那是从前误触的来处。 */
+    var im=$('#fePerPortraitImg');
+    if(im){
+      var sD=false,sx=0,sy=0,sdx=0,sdy=0;
+      im.addEventListener('pointerdown',function(e){
+        if(!feArtOn())return;
+        sD=true;sx=e.clientX;sy=e.clientY;sdx=0;sdy=0;
+        try{e.preventDefault();}catch(_){}      /* 别让浏览器把图当成可拖的东西 */
+      });
+      im.addEventListener('pointermove',function(e){
+        if(!sD)return;sdx=e.clientX-sx;sdy=e.clientY-sy;});
+      im.addEventListener('pointercancel',function(){sD=false;});
+      im.addEventListener('pointerup',function(e){
+        if(!sD)return;sD=false;
+        if(!feArtOn())return;
+        if(Math.abs(sdx)<44||Math.abs(sdx)<=Math.abs(sdy))return;
+        e.preventDefault();e.stopPropagation();
+        go(sdx<0?1:-1);
+      });
+      im.addEventListener('dragstart',function(e){e.preventDefault();});
+    }
   }catch(_){}
 })();
 
