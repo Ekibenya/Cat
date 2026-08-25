@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=3">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -2261,7 +2261,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <span class="t">装备</span></div>
   </div>
 
-  <div id="pnTx"><div id="vnIsle"><img id="vnBgA" alt=""><img id="vnBgB" alt=""><div id="vnEnsemble"></div><div id="vnWash"></div><div id="vnCast"></div><div id="vnEra"></div><div id="vnLoc"></div><div id="vnSpeaker"></div><button id="vnZoom" type="button" title="点一下换一档：默认 → 放大 → 全屏 → 收起">⤢</button><button id="vnHome" type="button" title="窗子挪过位了，点一下归位">⤾</button><button id="vnCoverage" type="button">图库载入中</button><div id="vnAudit"></div></div>
+  <div id="pnTx"><div id="vnIsle"><img id="vnBgA" alt=""><img id="vnBgB" alt=""><div id="vnEnsemble"></div><div id="vnWash"></div><div id="vnCast"></div><div id="vnEra"></div><div id="vnLoc"></div><div id="vnSpeaker"></div><button id="vnZoom" type="button" title="点一下换一档：默认 → 放大 → 全屏 → 收起">⤢</button><button id="vnHome" type="button" title="窗子挪过位了，点一下归位">⤾</button><div id="vnTalk"><b id="vnTalkWho"></b><div id="vnTalkBody"></div><i id="vnTalkNum"></i><i id="vnTalkTip">▼</i><button id="vnTalkX" type="button" title="收起对话框">✕</button></div><button id="vnReplay" type="button" title="把这一回从头念一遍">▸&nbsp;念这一回</button></div>
   </div>
   <div class="g3dRail">
     <div class="gArr" id="arr3d" title="视觉小说绘卷　点一下换一档：默认 → 放大 → 全屏 → 收起">
@@ -7733,6 +7733,13 @@ function fmtBody(par){
     .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」');
 }
 var TYPE_GEN=0;   /* 代际令牌：换开局/读档/重演时旧打字链立刻失效 */
+/* 绘卷全屏时底下那只对话框在另一个文件里（felinia-vn.js），
+   它要按玩家自己调的字速打字，也要知道这一回是不是还在流——
+   还在流就别抢着播，等这一回落定再从头念。 */
+try{
+  window.felVelo=function(){try{return REDUCED?0:VELOMAP[CFGS.velo];}catch(_){return 13;}};
+  window.felBusy=function(){try{return !!BUSY;}catch(_){return false;}};
+}catch(_){}
 function typeParas(paras,tIdx,done,instant){
   var gen=TYPE_GEN,speed=instant?0:VELOMAP[CFGS.velo];
   if(!paras.length){done&&done();return;}
@@ -13840,7 +13847,7 @@ function svLoad(v){
     if(!t.closest('#pnTx'))return false;
     if(big())return false;                       /* 全屏那一档不拖 */
     /* 窗里自己有钮、有画布、有可滚的名录：这些一律不算「抓窗身」。 */
-    if(t.closest('button,a,input,textarea,select,canvas,[data-nodrag],#vnAudit'))return false;
+    if(t.closest('button,a,input,textarea,select,canvas,[data-nodrag],#vnTalk'))return false;
     var r=el.getBoundingClientRect();
     D.on=1;D.moved=0;D.px=x;D.py=y;D.x0=OFF.x;D.y0=OFF.y;
     D.base={l:r.left-OFF.x,t:r.top-OFF.y,w:r.width,h:r.height};
@@ -15287,7 +15294,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
      那条规则本是给图片字体三维包写的，它们确实不变；这三支是会改的代码。
      光改文件救不了已经存下的那一份（immutable 是存进去时就写死的），换掉地址才行。
      所以改过其中任何一支，就把这里的版本号加一：这一页本身是 no-cache，改了就到。 -->
-<script src="/core/res/vn/felinia-vn.js?v=3"></script>
+<script src="/core/res/vn/felinia-vn.js?v=4"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <script src="/core/res/ko/felinia-ko.js?v=2"></script>
 </body>

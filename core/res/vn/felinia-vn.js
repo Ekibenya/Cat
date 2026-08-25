@@ -74,7 +74,7 @@
     var asset=list[sceneIndex(era,loc,weather)%list.length];
     var key=era.eraIndex+'|'+asset.src;if(key===V.bgKey)return;V.bgKey=key;
     var a=$('vnBgA'),b=$('vnBgB'),show=V.bgFlip?a:b,hide=V.bgFlip?b:a;V.bgFlip=!V.bgFlip;
-    var im=new Image();im.onload=function(){show.src=asset.src;show.style.opacity='1';hide.style.opacity='0';mark(asset.src);paintAudit(era);};im.src=asset.src;
+    var im=new Image();im.onload=function(){show.src=asset.src;show.style.opacity='1';hide.style.opacity='0';mark(asset.src);};im.src=asset.src;
   }
   function rosterEntry(era,name){
     var key=String(name||'').replace(/[\s　]+/g,'').replace(/[（(].*?[）)]$/,'');
@@ -107,10 +107,18 @@
       var pool=era.assets.single.filter(function(a){return a.species===person.species&&!a.character;});
       if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===person.species;});
       var asset=exact||(pool.length?pool[hash(person.name)%pool.length]:null);if(!asset)return;
-      var cv=plate('vnActor',asset.src,function(){mark(asset.src);paintAudit(era);});
+      var cv=plate('vnActor',asset.src,function(){mark(asset.src);});
       cv.dataset.name=person.name;cv.style.left=pos[i]+'%';
       if(person.name===speaker)cv.classList.add('speaking');
       host.appendChild(cv);
+      /* 名牌单独挂一枚，不做成立绘的孩子：立绘是画布，画布装不下别的元素，
+         而且它的盒子比人高出好几倍（靠 object-fit 裁出上半身），
+         名字挂在它身上会飘到画外去。名牌自己贴着框底站。 */
+      var nm=document.createElement('b');
+      nm.className='vnName'+(person.name===speaker?' speaking':'');
+      nm.dataset.name=person.name;nm.style.left=pos[i]+'%';
+      nm.textContent=person.name;
+      host.appendChild(nm);
     });
   }
   /* 谁在说话只换一个记号，不重建这一层。
@@ -129,18 +137,196 @@
     ['cat','human'].forEach(function(sp,si){
       if(!cast.some(function(p){return p.species===sp;}))return;
       var pool=era.assets.group.filter(function(a){return a.species===sp;});if(!pool.length)return;
-      var asset=pool[0],node=plate('',asset.src,function(){mark(asset.src);paintAudit(era);});
+      var asset=pool[0],node=plate('',asset.src,function(){mark(asset.src);});
       node.style.left=si?'68%':'32%';
       host.appendChild(node);
     });
     return !!host.children.length;
   }
-  function paintAudit(era){
-    if(!V.manifest)return;var el=$('vnCoverage');if(el)el.textContent='已映射 '+V.manifest.total+'/'+V.manifest.total;
-    var audit=$('vnAudit');if(!audit||!era)return;
-    audit.innerHTML='<b>全图库覆盖</b><br><span class="ok">✓ '+V.manifest.total+' / '+V.manifest.total+' 张均已编入场景规则</span><br>'+
-      '背景 '+V.manifest.counts.background+' · 单人立绘 '+V.manifest.counts.single+'<br>组合立绘 '+V.manifest.counts.group+' · 绿幕原图不计入游戏<br><br>'+
-      '<b>当前纪年</b><br>'+esc(era.yearLabel+' · '+era.title)+'<br>本纪年 '+era.assetCount+' 张 · 本次浏览已呈现 '+Object.keys(V.used).length+' 张';
+  /* ══════ 全屏那一档：底下那只对话框 ══════
+     galgame 的老规矩：画面归画面，字归底下那一条框，一段一段念完。
+     这一回 AI 写出来的一大段，在这儿被切成一句一句，点一下走一句。
+     只在全屏时出现——小窗与放大两档的框太矮，压上一条对话框就什么也看不见了。 */
+  var T={on:false,segs:[],i:-1,typing:0,timer:0,gen:0,key:''};
+  function tEl(id){return $(id);}
+  function velo(){try{return window.felVelo?window.felVelo():13;}catch(_){return 13;}}
+  function busy(){try{return window.felBusy?window.felBusy():false;}catch(_){return false;}}
+  function isBig(){try{return document.getElementById('game').classList.contains('txBig');}catch(_){return false;}}
+  /* 面板、开局提示、标签一概不念：那些是给玩家看的登记表，不是这一幕的话。 */
+  function talkText(raw){
+    return String(raw||'')
+      .replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/g,'')
+      .replace(/<mvu_panel>[\s\S]*$/,'')
+      .replace(/<[^>]*>/g,'')
+      .replace(/&nbsp;/g,' ');
+  }
+  /* 一段长的切成几句。三条断法，从紧到松：
+       · 句号问号叹号收尾——收尾的引号括号跟着上一句走，
+         不然「今晚不该有人过河。」的下引号会落到下一句开头；
+         反过来，一个下引号本身也算这一句到头了（对白说完了）。
+       · 攒够一句之后又开引号——让这一句话自己占一屏，是 galgame 的老排法。
+       · 实在太长，逗号也认；再不成才硬断。 */
+  function chop(par,lo,hi){
+    var out=[],buf='',i,ch,isEnd;
+    var END='。！？!?…',SOFT='，、；：,;:—',TAIL='」』）)】》”’"',OPEN='「『“（(';
+    for(i=0;i<par.length;i++){
+      ch=par[i];
+      if(OPEN.indexOf(ch)>=0&&buf.length>=lo){out.push(buf);buf='';}
+      buf+=ch;
+      isEnd=END.indexOf(ch)>=0;
+      while(i+1<par.length&&TAIL.indexOf(par[i+1])>=0){buf+=par[++i];isEnd=true;}
+      if(buf.length>=lo&&isEnd){out.push(buf);buf='';continue;}
+      if(buf.length>=hi&&SOFT.indexOf(ch)>=0){out.push(buf);buf='';continue;}
+      if(buf.length>=hi+34){out.push(buf);buf='';}
+    }
+    if(buf.trim())out.push(buf);
+    return out;
+  }
+  function talkSegs(raw){
+    var out=[];
+    talkText(raw).split(/\n+/).forEach(function(par){
+      par=par.trim();
+      if(!par)return;
+      if(/^[◆◇◈▚]/.test(par))return;          /* 面板行 */
+      if(/^【/.test(par))return;                /* 开局那几行提示 */
+      if(/^[-—─═]{3,}$/.test(par))return;
+      chop(par,26,58).forEach(function(x){x=x.trim();if(x)out.push(x);});
+    });
+    return out;
+  }
+  /* 这一句是谁说的：先看引号之前提到过谁，没提就看整句里最后提到的那一位。
+     没有引号的算旁白，不挂名字。 */
+  function segWho(seg,cast){
+    if(seg.indexOf('「')<0&&seg.indexOf('“')<0)return '';
+    var q=seg.search(/[「“]/),head=seg.slice(0,q),best='',bp=-1,k;
+    for(k=0;k<cast.length;k++){
+      if(cast[k].hero)continue;
+      var p1=head.lastIndexOf(cast[k].name);
+      if(p1>bp){bp=p1;best=cast[k].name;}
+    }
+    if(best)return best;
+    for(k=0;k<cast.length;k++){
+      if(cast[k].hero)continue;
+      var p2=seg.lastIndexOf(cast[k].name);
+      if(p2>bp){bp=p2;best=cast[k].name;}
+    }
+    return best;
+  }
+  function talkStop(){T.gen++;if(T.timer){clearTimeout(T.timer);T.timer=0;}T.typing=0;}
+  function talkClose(){
+    talkStop();T.on=false;T.i=-1;
+    var b=tEl('vnTalk');if(b)b.classList.remove('on');
+    talkReplayBtn();
+  }
+  /* 念完或按了 ✕ 之后，全屏里留一枚小钮：这一回还能从头再念。
+     不留的话，收起来就再也叫不回来，除非等下一回。 */
+  function talkReplayBtn(){
+    var el=tEl('vnReplay');if(!el)return;
+    el.classList.toggle('on',isBig()&&!T.on&&T.segs.length>0);
+  }
+  /* 全屏时输入条（#gInput）盖在绘卷上头（它 z-index 27、绘卷 25），
+     对话框贴着底就被它压住半截。这里量一次它的高，把框抬到它上面去。
+     写死一个数是不行的：手机、字号、安全区都会让它变高。 */
+  function talkGap(){
+    var isle=tEl('vnIsle');if(!isle)return;
+    var g=document.querySelector('#game .gInput'),h=0;
+    try{if(g){var r=g.getBoundingClientRect();if(r.height>4)h=Math.round(r.height)+6;}}catch(_){}
+    isle.style.setProperty('--vnGap',h+'px');
+  }
+  function talkPaint(){
+    talkGap();
+    var box=tEl('vnTalk');if(!box)return;
+    box.classList.toggle('on',T.on);
+    /* 框上自己带了说话人那一枚小牌，左下角原来那一枚就多余了——收起来。 */
+    var isle=tEl('vnIsle');if(isle)isle.classList.toggle('talkOn',T.on);
+    var num=tEl('vnTalkNum');if(num)num.textContent=T.on?((T.i+1)+' / '+T.segs.length):'';
+  }
+  function talkShow(k){
+    var box=tEl('vnTalk'),body=tEl('vnTalkBody'),who=tEl('vnTalkWho'),tip=tEl('vnTalkTip');
+    if(!box||!body)return;
+    if(k>=T.segs.length){talkClose();return;}
+    talkStop();
+    T.i=k;
+    var seg=T.segs[k],name=(T.who||[])[k]||'';
+    if(who){who.textContent=name;who.classList.toggle('on',!!name);}
+    markSpeaker(name);
+    talkPaint();
+    var sp=velo();
+    if(tip)tip.classList.remove('on');
+    if(!sp){body.textContent=seg;if(tip)tip.classList.add('on');return;}
+    var gen=T.gen,i=0;
+    T.typing=1;body.textContent='';
+    (function step(){
+      if(gen!==T.gen)return;
+      if(i>=seg.length){T.typing=0;if(tip)tip.classList.add('on');return;}
+      i+=1+(sp<8?2:0);
+      body.textContent=seg.slice(0,i);
+      T.timer=setTimeout(step,sp);
+    })();
+  }
+  function talkAdvance(){
+    if(!T.on)return;
+    if(T.typing){                       /* 还在打字：这一下是「打完」，不是「下一句」 */
+      talkStop();
+      var body=tEl('vnTalkBody'),tip=tEl('vnTalkTip');
+      if(body)body.textContent=T.segs[T.i]||'';
+      if(tip)tip.classList.add('on');
+      return;
+    }
+    talkShow(T.i+1);
+  }
+  function talkOpen(raw,cast){
+    var segs=talkSegs(raw);
+    if(!segs.length){talkClose();return;}
+    cast=cast||[];
+    /* 一口气把每一句归给谁算好。接着说下去的那几句里常常只有「她说」——
+       句子里根本没有名字，可说话的还是上一句那一位。所以名字往下顺延：
+       这一句有引号却认不出人，就沿用上一句那一位；中间夹了一段旁白（没有引号）
+       就断掉，不再往下顺——那多半已经换了场面。 */
+    var who=[],last='';
+    segs.forEach(function(seg,i){
+      var q=(seg.indexOf('「')>=0||seg.indexOf('“')>=0);
+      if(!q){who[i]='';last='';return;}
+      var n=segWho(seg,cast);
+      if(!n)n=last;
+      who[i]=n;last=n;
+    });
+    T.segs=segs;T.who=who;T.cast=cast;T.on=true;
+    talkShow(0);talkReplayBtn();
+  }
+  /* 什么时候开：进了全屏就开；全屏里换了一回、且这一回已经落定（不再流字），
+     就从头念新的这一回。退出全屏一律收起。 */
+  function talkSync(state,cast){
+    T.last=state;T.lastCast=cast;
+    talkGap();
+    if(!isBig()){if(T.on)talkClose();T.key='';T.segs=[];talkReplayBtn();return;}
+    if(busy())return;                    /* 还在流：等它写完再念 */
+    var raw=String(state.text||'');
+    var k=hash(raw);
+    if(k===T.key)return;
+    T.key=k;
+    talkOpen(raw,cast);
+  }
+  function talkInit(){
+    var box=tEl('vnTalk');if(!box||box._on)return;box._on=1;
+    box.addEventListener('click',function(e){
+      if(e.target&&e.target.closest&&e.target.closest('#vnTalkX')){e.stopPropagation();talkClose();return;}
+      e.stopPropagation();talkAdvance();
+    });
+    var rp=tEl('vnReplay');
+    if(rp)rp.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(T.segs.length){T.on=true;talkShow(0);talkReplayBtn();}
+    });
+    /* 空格与回车也走下一句——galgame 的老手不爱把手从键盘上拿开。
+       正在输入框里打字的时候不抢。 */
+    document.addEventListener('keydown',function(e){
+      if(!T.on||!isBig())return;
+      var t=e.target,tag=t&&t.tagName;
+      if(tag==='INPUT'||tag==='TEXTAREA'||(t&&t.isContentEditable))return;
+      if(e.key===' '||e.key==='Enter'){e.preventDefault();talkAdvance();}
+      else if(e.key==='Escape')talkClose();
+    });
   }
   function tick(forced){
     if(!V.ready)return;var state=forced||currentState(),era=resolveEra(state);if(!era)return;V.lastEra=era;
@@ -159,18 +345,17 @@
       if(ensemble)$('vnCast').innerHTML='';else renderSingles(era,cast,speaker);
     }
     if(speaker!==V.speakKey){V.speakKey=speaker;markSpeaker(speaker);}
+    talkInit();talkSync(state,cast);
     var eraEl=$('vnEra');if(eraEl)eraEl.innerHTML='<b>'+esc(era.yearLabel+' · '+era.title)+'</b><span>'+esc(era.subtitle)+'</span>';
     var locEl=$('vnLoc');if(locEl)locEl.textContent=loc.replace(/\s+/g,' ').slice(0,32);
     var sp=$('vnSpeaker');if(sp){sp.textContent=speaker||'';sp.classList.toggle('on',!!speaker);}
-    paintAudit(era);
+    
   }
   function init(){
-    var coverage=$('vnCoverage'),audit=$('vnAudit');
-    if(coverage)coverage.addEventListener('click',function(e){e.stopPropagation();if(audit)audit.classList.toggle('on');});
     fetch('/core/res/data/felinia/vn-images.json?v=2').then(function(r){if(!r.ok)throw new Error('image index '+r.status);return r.json();}).then(function(data){
       V.manifest=data;V.ready=true;tick();
       setInterval(tick,600);
-    }).catch(function(err){if(coverage)coverage.textContent='图库索引未载入';try{console.warn('[visual-novel]',err);}catch(_){}});
+    }).catch(function(err){try{console.warn('[visual-novel]',err);}catch(_){}});
   }
   window.FELVN={tick:tick,inspect:function(){return {ready:V.ready,total:V.manifest&&V.manifest.total,counts:V.manifest&&V.manifest.counts,era:V.lastEra&&V.lastEra.eraIndex,rendered:Object.keys(V.used).length};},preview:function(state){V.override=state||null;V.bgKey='';V.castKey='';V.speakKey=null;tick();},clearPreview:function(){V.override=null;V.bgKey='';V.castKey='';V.speakKey=null;tick();}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();

@@ -33,9 +33,13 @@
 #vnEra span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(243,234,216,.76)}
 #vnLoc{position:absolute;right:12px;top:10px;z-index:5;writing-mode:vertical-rl;max-height:65%;overflow:hidden;
   color:rgba(230,204,150,.86);font:11px/1.5 var(--mono);letter-spacing:.25em;text-shadow:0 1px 6px #000}
-#vnSpeaker{position:absolute;left:13px;bottom:10px;z-index:5;padding:4px 8px;border:1px solid rgba(201,155,63,.45);
-  background:rgba(18,13,7,.72);color:#f1e7d2;font:10px/1.2 var(--mono);letter-spacing:.12em;opacity:0;transition:opacity .35s ease}
+#vnSpeaker{position:absolute;left:13px;bottom:calc(var(--vnGap,0px) + 10px);z-index:5;padding:4px 8px;
+  border:1px solid rgba(201,155,63,.45);
+  background:rgba(18,13,7,.72);color:#f1e7d2;font:10px/1.2 var(--mono);letter-spacing:.12em;opacity:0;
+  transition:opacity .35s ease,bottom .3s ease}
 #vnSpeaker.on{opacity:1}
+/* 对话框开着的时候，框上那一枚说话人牌已经在说这件事了，这一枚不必再说一遍。 */
+#vnIsle.talkOn #vnSpeaker{opacity:0}
 /* 窗上的两枚小钮。档位钮按的是左边那一列同一个循环（__txCycle）——
    眼睛在窗里，手不必再伸到窗外去。归位钮平时不占地方，窗子挪过位才浮出来。 */
 #vnZoom,#vnHome{position:absolute;right:10px;z-index:7;width:24px;height:24px;padding:0;
@@ -48,15 +52,49 @@
 #vnZoom:hover,#vnHome:hover{border-color:rgba(201,155,63,.7);color:#fff}
 /* 竖排的地名原来贴着右上角，两枚钮就压在它头上——让它往下挪一档，宽度也收一点。 */
 #vnLoc{top:68px;max-height:calc(65% - 58px)}
-#vnCoverage{position:absolute;right:10px;bottom:9px;z-index:6;padding:4px 7px;border:1px solid rgba(235,219,184,.3);
-  background:rgba(18,13,7,.66);color:rgba(241,231,210,.82);font:9px/1.2 var(--mono);letter-spacing:.1em;cursor:pointer}
-#vnCoverage:hover{border-color:rgba(201,155,63,.7);color:#fff}
-#vnAudit{position:absolute;right:8px;bottom:34px;z-index:8;width:min(310px,72%);padding:10px 12px;
-  border:1px solid rgba(201,155,63,.58);background:rgba(17,13,8,.92);color:#e9dfca;font:10px/1.65 var(--mono);
-  box-shadow:0 10px 30px rgba(0,0,0,.45);display:none}
-#vnAudit.on{display:block}
-#vnAudit b{color:#d6b267;font-weight:500}
-#vnAudit .ok{color:#b7c68b}
+/* ── 立绘脚下的名牌 ──
+   贴着框底站，横向跟着各自那一位的位置走。名牌不做成立绘的孩子：
+   立绘是画布（装不下别的元素），而且它的盒子比人高出好几倍——
+   靠 object-fit 裁出上半身，名字挂在它身上会飘到画外去。
+   说话的那一位亮一档，和立绘那边同一个记号。 */
+#vnCast .vnName{position:absolute;bottom:calc(var(--vnTalkH,0px) + var(--vnGap,0px) + 8px);z-index:4;
+  transform:translateX(-50%);padding:3px 9px;white-space:nowrap;pointer-events:none;
+  border:1px solid rgba(201,155,63,.42);background:rgba(18,13,7,.74);
+  color:rgba(241,231,210,.86);font:10px/1.25 var(--mono);font-weight:400;letter-spacing:.14em;
+  text-shadow:0 1px 4px #000;transition:bottom .3s ease,color .35s ease,border-color .35s ease}
+#vnCast .vnName.speaking{color:#fff;border-color:rgba(201,155,63,.85);background:rgba(30,20,8,.86)}
+/* ── 全屏那一档：底下那只对话框 ──
+   只在全屏出现。小窗与放大两档的框本来就矮，压上一条对话框就什么也看不见了。 */
+#vnTalk{display:none;position:absolute;left:0;right:0;bottom:var(--vnGap,0px);z-index:9;
+  box-sizing:border-box;min-height:var(--vnTalkH,150px);padding:20px 26px 24px;
+  border-top:1px solid rgba(201,155,63,.5);
+  background:linear-gradient(180deg,rgba(14,10,6,.62) 0%,rgba(14,10,6,.9) 26%,rgba(14,10,6,.94) 100%);
+  color:#f2e9d6;font:15px/1.85 var(--mono);letter-spacing:.05em;cursor:pointer;
+  -webkit-user-select:none;user-select:none}
+#game.txBig #vnTalk.on{display:block}
+#game.txBig #vnIsle{--vnTalkH:clamp(120px,22vh,190px)}
+#vnTalkWho{position:absolute;left:22px;top:-13px;padding:4px 12px;opacity:0;
+  border:1px solid rgba(201,155,63,.72);background:rgba(28,19,8,.96);
+  color:#e7c684;font:11px/1.2 var(--mono);font-weight:500;letter-spacing:.2em;
+  text-shadow:0 1px 4px #000;transition:opacity .25s ease}
+#vnTalkWho.on{opacity:1}
+#vnTalkBody{min-height:calc(1.85em * 2);max-height:calc(1.85em * 4);overflow:hidden}
+#vnTalkNum{position:absolute;right:52px;bottom:8px;font:9px/1 var(--mono);font-style:normal;
+  letter-spacing:.18em;color:rgba(230,214,182,.5)}
+#vnTalkTip{position:absolute;right:26px;bottom:6px;font:11px/1 var(--mono);font-style:normal;
+  color:rgba(215,181,109,.9);opacity:0;transition:opacity .2s ease}
+#vnTalkTip.on{opacity:1;animation:vnTip 1.1s ease-in-out infinite}
+@keyframes vnTip{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+#vnReplay{display:none;position:absolute;right:10px;bottom:calc(var(--vnGap,0px) + 9px);z-index:8;padding:5px 10px;
+  border:1px solid rgba(201,155,63,.5);background:rgba(18,13,7,.72);
+  color:rgba(235,214,170,.9);font:10px/1.2 var(--mono);letter-spacing:.12em;cursor:pointer}
+#game.txBig #vnReplay.on{display:block}
+#vnReplay:hover{border-color:rgba(201,155,63,.9);color:#fff}
+#vnTalkX{position:absolute;right:14px;top:10px;width:22px;height:22px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(235,219,184,.26);background:rgba(18,13,7,.6);
+  color:rgba(241,231,210,.7);font:11px/1 var(--mono);cursor:pointer}
+#vnTalkX:hover{border-color:rgba(201,155,63,.7);color:#fff}
 #arr3d .t{font-size:0}
 #arr3d .t::before{content:'绘卷';font-size:8px}
 #game.txOpen.tx2 #arr3d .t::after{content:'·放大';font-size:8px}
@@ -71,10 +109,16 @@
   #vnEra{left:8px;top:7px;max-width:68%;font-size:8px}
   #vnLoc{right:7px;top:7px;font-size:9px}
   #vnSpeaker{left:8px;bottom:7px;font-size:8px}
-  #vnCoverage{right:7px;bottom:6px;font-size:8px}
   #vnZoom,#vnHome{right:6px;width:22px;height:22px;font-size:11px}
+  #vnCast .vnName{padding:2px 7px;font-size:9px;letter-spacing:.1em}
+  #game.txBig #vnIsle{--vnTalkH:clamp(104px,26vh,170px)}
+  #vnTalk{padding:16px 16px 20px;font-size:13.5px;line-height:1.75}
+  #vnTalkWho{left:14px;font-size:10px;padding:3px 9px}
+  #vnTalkNum{right:44px}
+  #vnTalkTip{right:20px}
   #vnZoom{top:6px}
   #vnHome{top:32px}
   #vnLoc{top:58px;max-height:calc(65% - 50px)}
 }
-@media(prefers-reduced-motion:reduce){#vnBgA,#vnBgB,#vnCast .vnActor{transition:none}}
+@media(prefers-reduced-motion:reduce){#vnBgA,#vnBgB,#vnCast .vnActor,#vnCast .vnName{transition:none}
+  #vnTalkTip.on{animation:none}}
