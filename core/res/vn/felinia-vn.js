@@ -153,11 +153,21 @@
   function velo(){try{return window.felVelo?window.felVelo():13;}catch(_){return 13;}}
   function busy(){try{return window.felBusy?window.felBusy():false;}catch(_){return false;}}
   function isBig(){try{return document.getElementById('game').classList.contains('txBig');}catch(_){return false;}}
-  /* 面板、开局提示、标签一概不念：那些是给玩家看的登记表，不是这一幕的话。 */
+  /* 面板、开局提示、标签一概不念：那些是给玩家看的登记表，不是这一幕的话。
+     洗正文这件事引擎自己已经有一套（stripMvuLive，挂在 window.felProse 上）：
+     思维链、六种 sec_* 段、markdown 围栏、流到一半的半截标签，它全认得。
+     下面这几条是它不在时的退路——只剥 <mvu_panel> 与裸标签，粗得多：
+     一回合若正文是空的、只带着几段状态回执，剥完标签剩下的回执文字
+     照样会被切成句子念出来，看着就是「没有正文，全屏一进去框还是弹出来」。 */
   function talkText(raw){
-    return String(raw||'')
+    var s=String(raw||'');
+    try{if(window.felProse)return String(window.felProse(s)||'');}catch(_){}
+    return s
       .replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/g,'')
       .replace(/<mvu_panel>[\s\S]*$/,'')
+      .replace(/<think>[\s\S]*?<\/think>/gi,'')
+      .replace(/<\s*sec_[a-z]*\s*>[\s\S]*?<\s*\/\s*sec_[a-z]*\s*>/gi,'')
+      .replace(/<\s*sec_[a-z]*\s*>[\s\S]*$/i,'')
       .replace(/<[^>]*>/g,'')
       .replace(/&nbsp;/g,' ');
   }
@@ -283,7 +293,9 @@
   }
   function talkOpen(raw,cast){
     var segs=talkSegs(raw);
-    if(!segs.length){talkClose();return;}
+    /* 这一回没有可念的正文：框收起来，上一回攒下的句子也一并丢掉——
+       留着的话「再念一遍」那枚钮会挂在全屏里，按下去念的是上一回的话。 */
+    if(!segs.length){T.segs=[];T.who=[];T.i=-1;talkClose();return;}
     cast=cast||[];
     /* 一口气把每一句归给谁算好。接着说下去的那几句里常常只有「她说」——
        句子里根本没有名字，可说话的还是上一句那一位。所以名字往下顺延：

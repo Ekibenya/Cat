@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=5">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=6">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1558,9 +1558,26 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
       transform:perspective(620px) translateX(26px) scale(.955) rotateY(var(--mvTilt)) scaleY(var(--mvFit));
       opacity:0;pointer-events:none;
-      transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease}
+      transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .26s ease,
+                 background .28s ease,backdrop-filter .28s ease}
 .gMfd.mvDeck .mvWin.on{transform:perspective(620px) rotateY(var(--mvTilt)) scaleY(var(--mvFit));
       opacity:1;pointer-events:auto;z-index:2}
+/* ── 视觉小说全屏那一档 ──
+   平时这六扇窗背后是纸底与暗角，0.34 的底色配 3px 模糊读得清。
+   全屏一开，背后换成整幅立绘与背景画——大块高对比的图直接透上来，
+   小字压在人脸上就没法读了。所以进全屏把透明度降下去，退出全屏原样还回来；
+   两头都走 .28s 的过渡，不硬切。
+   底色不写在这儿：那六扇的底色归「面板透明度」那根拉杆管（applyGlass 里
+   带 !important 的一条），写在这儿会被它盖掉。这儿只管边框、投影与模糊。 */
+#game.txBig .gMfd.mvDeck .mvWin{
+      border-color:rgba(19,18,13,.34);box-shadow:0 16px 40px rgba(8,6,3,.5);
+      -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+/* 刚进全屏那一下窗先收回缩略列里去（.txMvShut，点一下缩略小窗就撤）。
+   transform 抄的是上面「关着」那一档的写法，所以它是滑回那一列里，不是原地消失。
+   窗的开合看的是 .mvWin.on（由排版那一处按当前是第几段给），
+   .txMvShut 不去动那个记号——它记的是「正在看哪一段」，收起来不该把它忘掉。 */
+#game.txBig.txMvShut .gMfd.mvDeck .mvWin.on{opacity:0;pointer-events:none;
+      transform:perspective(620px) translateX(26px) scale(.955) rotateY(var(--mvTilt)) scaleY(var(--mvFit))}
 .gMfd.mvDeck .mvWin .cfr{position:absolute;inset:0;background:transparent;border:0;box-shadow:none}
 /* 六扇窗里的字一律加粗：面板全是短标签＋数字，常规字重压在毛玻璃上发虚。
    只作用于窗内容（.mvBody），缩略窗里那份微缩不动。 */
@@ -9830,6 +9847,15 @@ function applyGlass(){
     +'{background:rgba(250,249,246,'+(.58+.26*a).toFixed(2)+') !important}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
+    /* 视觉小说进了全屏，情报台那六扇与缩略那一列就浮在整幅立绘上了。
+       平时它们身后是三维画面加台底，透到 .09 也读得动；换成大块高对比的
+       立绘与背景画，同一档下字就没法读。全屏单给一档实得多的，退出即还原。
+       仍旧挂在这根拉杆上——玩家把面板调透，这一档跟着一起透，只是起点高。
+       760 以下不进这一条：手机那边下面另有一条 .97 的，比这更实，别抢它。 */
+    +'@media (min-width:761px){'
+    +'#game.txBig .gMfd.mvDeck .mvWin{background:rgba(237,231,217,'+(.62+.30*a).toFixed(2)+') !important}'
+    +'#game.txBig .gMfd.mvDeck .mvCard .cfr{background:rgba(237,231,217,'+(.66+.28*a).toFixed(2)+') !important}'
+    +'}'
     /* 弹窗类：身后隔着一层遮罩，比贴着画面的那几扇给厚一档 */
     +'.gDlg .box,#eraBox .box,#persona .box,#psRes .box,.fd-win,.svFold,.svFold .tab,#game .gmMenu'
     +'{background:rgba(237,231,217,'+(.09+.19*a).toFixed(2)+') !important}'
@@ -11492,6 +11518,14 @@ function stripMvuLive(text){
   t=t.replace(/<\s*think[^>]*>[\s\S]*$/i,'');     /* 再吃掉打到一半、还没闭合的那一个 */
   return stripMvu(t);
 }
+/* 视觉小说那只对话框念的是同一段正文，洗法就该是同一套。
+   它原先自带一份粗的（只剥 <mvu_panel> 与裸标签），思维链、六种 sec_* 段、
+   markdown 围栏一概认不出：一回合正文是空的、只带着几段状态回执，
+   剥完标签剩下的回执文字照样被切成句子念出来——玩家那边看着就是
+   「明明没有正文，全屏一进去对话框还是弹出来」。 */
+/* 出了岔子就让它抛出去：调用方（talkText）接住之后会退回自己那几条粗规矩，
+   在这儿把原文原样交回去反而是最糟的——那正是要洗掉的东西。 */
+try{window.felProse=function(t){return stripMvuLive(t);};}catch(_){}
 /* 状态栏字段名的繁体/异体归一表。模型（尤其被要求繁中输出、或前文出现繁体时）
    某一回把字段写成 ◆戎裝/◆血興/◆心聲/◆史筆/◇天氣/◇紀年/◇安穩，mvuMerge 按字符串
    精确比对就认成全新的键：角色段从 8 行变 14 行，而且并集永不淘汰，此后每一回合都在，
@@ -13482,9 +13516,15 @@ function medEdictSync(){ /* 环海侧 sec_deed 敕令：同 edictSync，落到 M
     }
     function paint(){
       var g=document.getElementById('game'),tr=tierNow();
+      var wasBig=g.classList.contains('txBig'),nowBig=GAME.txOpen&&tr===2;
       g.classList.toggle('txOpen',GAME.txOpen);
       g.classList.toggle('tx2',GAME.txOpen&&tr===1);
-      g.classList.toggle('txBig',GAME.txOpen&&tr===2);
+      g.classList.toggle('txBig',nowBig);
+      /* 进全屏那一下把情报台的窗收回缩略列（撤闸在缩略小窗的 click 上）。
+         只在「刚进来」这一下落闸：已经在全屏里叫出来的窗，后面再 paint 一次
+         （别处改档位、心跳同步）不该把它又收回去。 */
+      if(nowBig&&!wasBig)g.classList.add('txMvShut');
+      else if(!nowBig)g.classList.remove('txMvShut');
       /* 单臂：每个入口(渲染/缩放/点击/心跳)从前都会各自起一条 480ms 独立链，
          回合越多链越多，同一份工作被跑 N 遍——旧链还把死文档钉着。 */
       if(GAME.txOpen&&LIVE){if(_TICK_T)clearTimeout(_TICK_T);_TICK_T=tmo(zj3dTick,480);}
@@ -14537,6 +14577,8 @@ function mvBind(){
       /* 手机上情报台是一层浮层：点当前这一枚就收回去，再点又弹出来。
          桌面窗常驻在让出来的那一条里，不需要这个开关。 */
       if(mvPhone()){try{gEl.classList.toggle('mvOpen');}catch(_){}}
+      /* 全屏里窗是收着的，点正前这一枚就是「把它叫出来」——这一下不该落到窗内的按钮上。 */
+      try{if(gEl&&gEl.classList.contains('txMvShut')){gEl.classList.remove('txMvShut');MV.w=0;return;}}catch(_){}
       MV.w=0;return;                                  /* 桌面：点的是正前这张，交给里面的按钮 */
     }
     /* 捕获阶段就截住：collapsed 的那几条抬头里也有 data-act 之类的按钮，
@@ -14544,6 +14586,7 @@ function mvBind(){
     e.preventDefault();e.stopPropagation();
     MV.tgt=mvNear(parseInt(c.getAttribute('data-i'),10)||0);
     if(mvPhone()){try{gEl.classList.add('mvOpen');}catch(_){}}
+    try{if(gEl)gEl.classList.remove('txMvShut');}catch(_){}
   },true);
   MV.foot.addEventListener('click',function(e){
     var g=e.target.closest?e.target.closest('[data-mv]'):null;if(!g)return;
@@ -14849,7 +14892,11 @@ function mvDeck(){
     /* 翘出来的那一枚说的是「正在看这一扇」。桌面上窗常驻，这话永远成立；
        手机上点第二下把窗收了，它就不该还翘在外面——没窗就没有正在看的那一扇。
        段号还是在它身上（on 不动），只是不再摆出来。 */
-    var pop=on&&(!mvPhone()||(gEl&&gEl.classList.contains('mvOpen')));
+    /* 视觉小说进了全屏，情报台的窗先收回缩略列里（gEl.txMvShut）：
+       全屏那一档是给画面看的，六扇窗一进来就摊在立绘上。
+       点一下缩略小窗这道闸就撤掉，窗照旧出来；退出全屏也自动撤掉。 */
+    var pop=on&&(!mvPhone()||(gEl&&gEl.classList.contains('mvOpen')))
+              &&!(gEl&&gEl.classList.contains('txMvShut'));
     /* 开着的那一枚转正并往镜头挪；其余保持 -17°（左边那一列是 +17°，两侧互为镜像）。 */
     var key=(on?'1':'0')+(pop?'1':'0')+'|'+thumbX.toFixed(1)+'|'+y.toFixed(1);
     if(C.k!==key){
@@ -15158,7 +15205,7 @@ function railMapThumb(){
 /* 三维那一枚的微缩。三维是 WebGL，宿主没开 preserveDrawingBuffer，
    合成一过缓冲就被清了——在主循环里 drawImage 过去多半是一片黑。
    所以拷完抽查几个点：真有像素就用，全黑就退回自己画一张地平线示意，
-   总好过挂一块死黑的方块。收起状态下画面本来就没有，直接画示意。 */
+   总好过挂一块死黑的方块。 */
 function rail3dThumb(){
   /* 三维那一层在这张卡上整个停用（见 __ZJ3D_OFF__ 那一行的理由），
      可这一枚缩略窗现在照的不是三维，是视觉小说那一层——所以不能在这儿就掉头走。
@@ -15171,8 +15218,12 @@ function rail3dThumb(){
      那张退而求其次的地平线示意——点开是人和城，缩略窗里是三根竖条。
      这儿照着 #vnIsle 的比例把它缩画一遍：背景按 cover 铺满，立绘按各自
      在框里的位置与 object-fit:contain 的实际落位贴上去。
-     这张画布一变，整页的滤镜与毛玻璃就要重算一遍，所以内容没变就不重画。 */
-  if(GAME.txOpen){
+     这张画布一变，整页的滤镜与毛玻璃就要重算一遍，所以内容没变就不重画。
+
+     窗收起来了也照画：台前调度那一列本来就是给收起的窗看的，
+     收起只是把窗挪出画面（visibility:hidden），盒子还在、画布里的像素也还在，
+     照旧量得到拷得到——收起就抹白才是不对的。 */
+  {
     var isle=document.getElementById('vnIsle');
     if(isle){
       var ir=isle.getBoundingClientRect();
@@ -15403,7 +15454,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
      那条规则本是给图片字体三维包写的，它们确实不变；这三支是会改的代码。
      光改文件救不了已经存下的那一份（immutable 是存进去时就写死的），换掉地址才行。
      所以改过其中任何一支，就把这里的版本号加一：这一页本身是 no-cache，改了就到。 -->
-<script src="/core/res/vn/felinia-vn.js?v=5"></script>
+<script src="/core/res/vn/felinia-vn.js?v=6"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <script src="/core/res/ko/felinia-ko.js?v=2"></script>
 </body>

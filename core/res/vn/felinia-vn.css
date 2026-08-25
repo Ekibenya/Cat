@@ -56,13 +56,21 @@
    贴着框底站，横向跟着各自那一位的位置走。名牌不做成立绘的孩子：
    立绘是画布（装不下别的元素），而且它的盒子比人高出好几倍——
    靠 object-fit 裁出上半身，名字挂在它身上会飘到画外去。
-   说话的那一位亮一档，和立绘那边同一个记号。 */
-#vnCast .vnName{position:absolute;bottom:calc(var(--vnTalkH,0px) + var(--vnGap,0px) + 5px);z-index:4;
-  transform:translateX(-50%);padding:3px 9px;white-space:nowrap;pointer-events:none;
-  border:1px solid rgba(201,155,63,.42);background:rgba(18,13,7,.74);
-  color:rgba(241,231,210,.86);font:10px/1.25 var(--mono);font-weight:400;letter-spacing:.14em;
-  text-shadow:0 1px 4px #000;transition:bottom .3s ease,color .35s ease,border-color .35s ease}
-#vnCast .vnName.speaking{color:#fff;border-color:rgba(201,155,63,.85);background:rgba(30,20,8,.86)}
+
+   不挂框、不垫底色，照右上角那枚地名的写法：一样的等宽字、一样的暖金、
+   一样疏的字距，靠一层黑影从画面里浮出来。字直接落在图上，人就不被挡。
+   说话的那一位亮成白的，影子再厚一档——和立绘那边同一个记号。
+
+   字距是加在每个字后面的（末一个也加），盒子于是比看得见的字宽出一格，
+   translateX(-50%) 居中就会整体偏左半格；补一个同样大的首行缩进正好抵平。 */
+#vnCast .vnName{position:absolute;bottom:calc(var(--vnTalkH,0px) + var(--vnGap,0px) + 6px);z-index:4;
+  transform:translateX(-50%);white-space:nowrap;pointer-events:none;
+  color:rgba(230,204,150,.86);font:11px/1.5 var(--mono);font-weight:400;
+  letter-spacing:.25em;text-indent:.25em;
+  text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72);
+  transition:bottom .3s ease,color .35s ease,text-shadow .35s ease}
+#vnCast .vnName.speaking{color:#fff;
+  text-shadow:0 1px 6px #000,0 0 12px rgba(0,0,0,.85),0 0 20px rgba(201,155,63,.45)}
 /* ── 全屏那一档：底下那只对话框 ──
    只在全屏出现。小窗与放大两档的框本来就矮，压上一条对话框就什么也看不见了。 */
 #vnTalk{display:none;position:absolute;left:0;right:0;bottom:var(--vnGap,0px);z-index:9;
@@ -111,7 +119,7 @@
   #vnLoc{right:7px;top:7px;font-size:9px}
   #vnSpeaker{left:8px;bottom:7px;font-size:8px}
   #vnZoom,#vnHome{right:6px;width:22px;height:22px;font-size:11px}
-  #vnCast .vnName{padding:2px 7px;font-size:9px;letter-spacing:.1em}
+  #vnCast .vnName{font-size:9px;letter-spacing:.18em;text-indent:.18em}
   #game.txBig #vnIsle{--vnTalkH:clamp(104px,26vh,170px)}
   #vnTalk{padding:16px 16px 20px;font-size:13.5px;line-height:1.75}
   #vnTalkWho{left:14px;font-size:10px;padding:3px 9px}
