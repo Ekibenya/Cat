@@ -30,6 +30,13 @@
   --gold:#845800;         /* guilloché gold */
   --gold-hi:#523000;      /* gold highlight */
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Cascadia Mono',monospace;
+  /* 有笔锋的一支：中文走宋／明朝，西文走 Georgia 一路。
+     整套 UI 本来只有等宽一支，可等宽在中文上没有对应的字面，
+     九点五像素落下去是系统兜底的黑体，笔画细得像铅笔线；
+     年号带压在一排马赛克砖上，细笔画立刻显得飘。
+     宋体横细竖粗、收笔带顿角，缩到十来像素仍认得出骨架，
+     跟砖那种一块块码上去的手感也对得上。只给纪年轴用。 */
+  --serif:'Songti SC','Songti TC',STSong,'SimSun','Noto Serif CJK SC','Source Han Serif SC','Noto Serif SC','Hiragino Mincho ProN','Yu Mincho',Georgia,'Times New Roman',serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 /* 滚动条：浏览器默认那根又粗又白，和这套黑金 UI 完全不搭。全局收成一根细金线，
@@ -2228,9 +2235,19 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    点不压——它要站得出来。 */
 #esBands::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;opacity:.78;
   background:var(--mosT) 0 0/60px 40px repeat-x}
-#esBands div{position:relative;box-sizing:border-box;text-align:center;padding:9px 0 4px;
-  font-size:9.5px;letter-spacing:.3em;
-  text-indent:.3em;color:var(--mut);font-family:var(--mono);
+/* 字距 .3em 摊得太开，两个字看着是两块各站各的，不成一个词；收到 .18em。
+   text-indent 必须跟字距同数：字距会在最后一个字后头也补一格，
+   居中时那一格把字整体推左半格，指等量的首行缩进正好抵回来。
+   nowrap 是为了那两段窄的：「卷首」「先史」在窄屏上折成两行、
+   旁边几段都是一行，一排字高低不齐，看着就是歪的。
+   不折行它们会把自己撑宽一点，占掉一点别人的地方——
+   底下那一排画片是照段宽算的，跟着一起宽，对齐不受影响。 */
+/* 左右各让开五像素：竖砖是叠在段自己那个框上画的（左边那道盖住五像素、
+   右边那道盖住三像素），字若顶到框边就被砖压掉半个。窄屏上「卷首」「先史」
+   两段本来就只够站两个字，压掉半个就认不出了。 */
+#esBands div{position:relative;box-sizing:border-box;text-align:center;padding:8px 5px 5px;
+  font-size:11px;font-weight:600;letter-spacing:.18em;white-space:nowrap;
+  text-indent:.18em;color:var(--mut);font-family:var(--serif);
   transition:color 360ms}
 /* 竖着那几道分隔：同一张砖，改成竖着重复——露出的是最左那一列，八格一轮回 */
 #esBands div::after,#esBands div:first-child::before{content:"";position:absolute;top:0;bottom:0;width:5px;
@@ -2249,20 +2266,30 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    啃出来的口子深浅不一，比一条等宽的缝更像一排撕下来的画片。
    高度跟着屏高走（clamp）：这一条是钉在底上的，屏一矮就要往卷轴身上压，
    写死二十六像素在六百高的窗口上正好压过去，让它自己缩到十八。 */
-#esPips{--pipH:clamp(18px,3.2vh,26px);
+#esPips{--pipH:clamp(15px,2.8vh,26px);
   position:relative;display:flex;width:min(1560px,96vw);margin:0 auto;
-  height:calc(var(--pipH) + 22px);align-items:flex-start}
-/* 轨条错开一行取砖（背景纵向挪 5 像素＝一格），免得和上面那条一模一样。
-   挪到这一条的最顶上：画片是实心的，轨条从它们背后穿过只会被切成一段一段，
-   排在画片上沿反倒是一条整线，看着是「挂在轴上的一排画」。 */
-#esPips::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;opacity:.78;
-  background:var(--mosT) 0 -5px/60px 40px repeat-x}
+  height:calc(var(--pipH) + 28px);align-items:flex-start}
+/* 这一条没有自己的轨。原先菱标底下那一条是为了让四十二颗点串成一条线，
+   现在四十二格画片本身就是那条线，不必再画一条。
+   而且它只能排在这一条的最顶上——紧贴年号带底下，
+   于是每一段上有顶线、左右有竖砖、下有这一条，六个纪元成了六只关死的盒子。
+   年号带的底该是敞着的。 */
 #eraSel .pip{position:relative;flex:1 1 0;min-width:0;height:100%;border:0;background:none;padding:0;
   cursor:pointer;display:flex;flex-direction:column;align-items:stretch;
   -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
 #eraSel .pip.on{z-index:3}
+/* 歪：每一格自带四个小数（转多少度、左右挪、上下挪、大一点还是小一点），
+   由 esBuild 写在行内。砖那一圈本来就是一块块歪着码上去的，
+   这一排若整整齐齐排成一条，就成了印上去的胶片，跟一屏手工感对不上。
+   幅度是照余量算的：转 3.6 度、纵向挪 1.1、缩放 ±5%，
+   宽屏上一格三十二×二十六，选中那一枚连放大带歪斜四角最低落到三十九，
+   年号在四十——差一个像素，谁也不碰谁。
+   缩放写成两个 scale 连乘：自身那点大小差是一直在的，
+   选中时再乘上 1.22，两件事各写各的，改一个不必去动另一个。
+   放大、歪斜必须写在同一个 transform 里，缺一个就会把另一个整条顶掉。 */
 #eraSel .pip i{position:relative;display:block;width:100%;height:var(--pipH);margin-top:7px;
   background-position:50% 50%;background-size:cover;background-repeat:no-repeat;
+  transform:translate(var(--jx,0px),var(--jy,0px)) rotate(var(--jr,0deg)) scale(var(--js,1));
   filter:brightness(.34) saturate(.45) contrast(1.06);
   transition:filter 320ms cubic-bezier(.16,1,.3,1),transform 320ms cubic-bezier(.16,1,.3,1);
   -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
@@ -2273,7 +2300,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #eraSel .pip i::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;
   opacity:.2;background-size:170px 170px;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170'><filter id='t'><feTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3'/></filter><rect width='170' height='170' filter='url(%23t)'/></svg>")}
-#eraSel .pip:hover i{filter:brightness(.62) saturate(.7) contrast(1.06);transform:scale(1.1)}
+#eraSel .pip:hover i{filter:brightness(.62) saturate(.7) contrast(1.06);
+  transform:translate(var(--jx,0px),var(--jy,0px)) rotate(var(--jr,0deg)) scale(var(--js,1)) scale(1.1)}
 #eraSel .pip:focus-visible{outline:1px solid var(--gold);outline-offset:-2px}
 /* 选中的那一格：解开压暗、再放大一点。
    放大的余量是算出来的，不是估的——这一格上边七像素处是轨条、
@@ -2286,10 +2314,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    何况认出「哪一枚是选中的」主要靠的不是大小是颜色——别的都淡出到六成二，
    只有它是全彩，一眼就分得出；放大只是补一句。
    不用 box-shadow 括边：遮罩会把元素画出来的一切都剪掉，影子根本落不下。 */
-#eraSel .pip.on i{filter:none;transform:scale(1.22)}
-#eraSel .pip b{position:absolute;top:calc(var(--pipH) + 10px);left:50%;transform:translateX(-50%);
-  font-family:var(--mono);font-size:9px;font-weight:400;
-  letter-spacing:.04em;color:#3a3a36;opacity:0;white-space:nowrap;transition:opacity 300ms,color 300ms}
+#eraSel .pip.on i{filter:none;
+  transform:translate(var(--jx,0px),var(--jy,0px)) rotate(var(--jr,0deg)) scale(var(--js,1)) scale(1.22)}
+#eraSel .pip b{position:absolute;top:calc(var(--pipH) + 14px);left:50%;transform:translateX(-50%);
+  font-family:var(--serif);font-size:10px;font-weight:500;
+  letter-spacing:.02em;color:#3a3a36;opacity:0;white-space:nowrap;transition:opacity 300ms,color 300ms}
 #eraSel .pip.mark b{opacity:.85;color:var(--mut)}
 #eraSel .pip.mark.hush b{opacity:0}
 #eraSel .pip.on b{opacity:1;color:var(--gold-hi)}
@@ -2338,22 +2367,28 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     overflow-x:auto;overflow-y:hidden;touch-action:pan-x;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   #esBar::-webkit-scrollbar{display:none}
-  /* 底下留 124 像素：脚栏 40 ＋ 年号带 71 ＋ 十三像素的余口。
+  /* 底下留 115 像素：脚栏 40 ＋ 年号带 62 ＋ 十三像素的余口。
      原来留 27vh，带底与年号带之间空着一百二十多像素谁也不用——那一截还给图。
      这个数必须写死成像素，不能用 vh：年号带那一块高度是固定的（窄屏一律 71），
      而 15vh 在矮屏上只有一百出头，算出来的带底反而压到年号带上去
      （实测 780 高压 10 像素、690 高压 23 像素）。
-     从 140 收到 124：菱标那一排原来固定四十像素高，换成画片之后
-     窄屏上只要二十二（年号在窄屏本来就不显，那一截高度一并收回），
-     年号带整块由 87 降到 71，空出来的十六像素还给整幅图。
-     窄屏上这一块高度与屏宽无关，三百六十到七百六十量下来都是 71。 */
-  #esReel{top:120px;height:auto;bottom:124px}
+     从 140 一路收到 115：菱标那一排原来固定四十像素高，换成画片之后
+     窄屏上只要二十四（年号在窄屏本来就不显，那一截高度一并收回）；
+     纪元名不折行之后又省下一行，年号带由 39 降到 28。
+     两笔合起来整块由 87 降到 62，空出来的二十五像素全还给整幅图。
+     窄屏上这一块高度与屏宽无关，三百六十到七百六十量下来都是 62。 */
+  #esReel{top:120px;height:auto;bottom:115px}
   /* 一条缝那一档在窄屏上不存在了：宽度一律由 esLayout 按各自的比例算。
      两侧那两片压暗的渐变也撤掉——邻张本来就整张在画外，没有要压的东西。 */
   #esReel::before,#esReel::after{display:none}
   /* 窄屏：四十二格分不到九像素宽，画片也跟着矮一半，
      不然一格是一条竖条；年号本来就挤不下，不显，那一截高度一并收回。 */
-  #esPips{--pipH:13px;height:calc(var(--pipH) + 9px)}
+  /* 窄屏上纪元名收一档：不折行之后「卷首」「先史」这种一格宽的段
+     会按整行字宽把自己撑开，字距和留白每多一点，那两格画片就跟着胖一点，
+     四百来像素的屏上一眼看得出。字面收到十像素、字距近乎不留、
+     左右各让三像素（够躲开竖砖），撑开的那一截就压回到二十七上下。 */
+  #esBands div{font-size:10px;letter-spacing:.04em;text-indent:.04em;padding:7px 3px 4px}
+  #esPips{--pipH:13px;height:calc(var(--pipH) + 11px)}
   #eraSel .pip b{display:none}
   #esFoot .lbl{display:none}
 /* 「返回」原来和「进入」挤在右下角，而且只有拉丁文，一眼看不出哪个是退。
@@ -5077,7 +5112,10 @@ function esBuild(){
       var p=document.createElement('button');
       p.className='pip'+((n===0||ES.rows[n-1].era!==d.era)?' mark':'');
       p.type='button';p.setAttribute('aria-label',(d.y||'卷首')+' '+d.t);
-      p.innerHTML='<i style="background-image:url('+esMini(d.src)+')"></i><b>'+(d.y||'卷首')+'</b>';
+      var jt=esJit(n);
+      p.innerHTML='<i style="background-image:url('+esMini(d.src)+');'
+        +'--jr:'+jt[0]+'deg;--jx:'+jt[1]+'px;--jy:'+jt[2]+'px;--js:'+jt[3]
+        +'"></i><b>'+(d.y||'卷首')+'</b>';
       p.addEventListener('pointerup',function(){esGo(n);});
       pp.appendChild(p);ES.pips.push(p);
     })(k);
@@ -5176,6 +5214,15 @@ function esPrev(s){return String(s).replace('/annals/','/annals/p/');}
    拿整幅预览（p/，七点四兆）去填一格三十来像素宽的窗是白烧流量；
    拿条子（t/）则是竖裁的一条缝，塞进横格里只剩画面正中一竖条。 */
 function esMini(s){return String(s).replace('/annals/','/annals/m/');}
+/* 年号轴上那一格该歪多少。三个数：转的度数、左右挪、上下挪。
+   由序号算出来，不用 Math.random——随机会让同一格每次开页都换一个歪法，
+   那是抖，不是砌；砖砌歪了就一直那么歪着。
+   sin 那一串是取小数位当噪声的老办法，同一个 n 永远出同一组数。 */
+function esJit(n){
+  var f=function(k){var x=Math.sin((n+1)*12.9898+k*78.233)*43758.5453;return x-Math.floor(x)-0.5;};
+  return [(f(1)*3.6).toFixed(2),(f(2)*2.0).toFixed(2),(f(3)*1.1).toFixed(2),
+          (1+f(4)*0.10).toFixed(3)];
+}
 function esLoad(){
   var k,d,im,th;
   for(k=0;k<ES.rows.length;k++){
