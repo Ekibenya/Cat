@@ -108,7 +108,8 @@
       var pool=era.assets.single.filter(function(a){return a.species===person.species&&!a.character;});
       if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===person.species;});
       var asset=exact||(pool.length?pool[hash(person.name)%pool.length]:null);if(!asset)return;
-      var cv=plate('vnActor',asset.src,function(){mark(asset.src);});
+      /* 画布的原始尺寸要等图落地才有，落地当场再收一次高，别等下一拍 */
+      var cv=plate('vnActor',asset.src,function(){mark(asset.src);castFit();});
       cv.dataset.name=person.name;cv.style.left=pos[i]+'%';
       if(person.name===speaker)cv.classList.add('speaking');
       host.appendChild(cv);
@@ -125,6 +126,52 @@
   /* 谁在说话只换一个记号，不重建这一层。
      从前谁说话也算进 castKey，一句话说到一半、说话人一变，整层立绘就重建一次——
      配上像素显形，就是每说一句人都碎掉重砌一遍。 */
+  /* ── 立绘一律等高 ──
+     样式表里每一档只写一个 height（240%／160%／94%…），宽度随各自的长宽比去长。
+     这样 contain 不再有可缩的余地，画出来的高就等于那个 height —— 谁都一样。
+     可横构图的人算出来会很宽（0.92 屏高 × 1.5 ≈ 三个屏宽），所以这儿统一收一道：
+     按最宽的那一位算一个系数，所有人乘同一个系数。收的是整体，不是某一个，
+     等高这件事不会被收坏。
+     两道上限：一道管单个人（不许比画框宽出三成），一道管一排人加起来
+     （总宽不许超过画框的两倍，也就是最多叠掉一半）。人少就站得大，
+     人多就一起矮一档 —— 矮的是所有人同一个系数，不是谁被单独按下去。
+     宽屏上两道都够不着，所以那边一个数不动。 */
+  var CAST_W=1.3, CAST_ROW=2.0;
+  function castFit(){
+    var isle=$('vnIsle');if(!isle)return;
+    var acts=[].slice.call(document.querySelectorAll('#vnCast .vnActor'));
+    if(!acts.length){isle._fit='';return;}
+    var fr=isle.getBoundingClientRect();
+    if(fr.width<8||fr.height<8)return;
+    /* 先按「画框多大、几个人、每张图多大」认一次；没变就不动，
+       否则下面清 inline 高度那一下每拍都要逼一次重排。 */
+    var sig=Math.round(fr.width)+'x'+Math.round(fr.height)+'|'+acts.map(function(a){
+      return (a.getAttribute('data-name')||'')+':'+a.width+'x'+a.height;}).join(',');
+    if(isle._fit===sig)return;
+    isle._fit=sig;
+    var i;
+    /* 量之前先把上一轮写下的高清掉，不然量到的是自己写的那个数 */
+    for(i=0;i<acts.length;i++)acts[i].style.height='';
+    var H0=acts[0].getBoundingClientRect().height;
+    if(!(H0>0))return;
+    var cap=fr.width*CAST_W,row=fr.width*CAST_ROW,k=1,sum=0;
+    for(i=0;i<acts.length;i++){
+      var a=acts[i];if(!a.width||!a.height)continue;
+      var need=H0*(a.width/a.height);
+      sum+=need;
+      if(need>cap)k=Math.min(k,cap/need);
+    }
+    if(sum>row)k=Math.min(k,row/sum);
+    var H=Math.round(H0*k);
+    for(i=0;i<acts.length;i++)acts[i].style.height=H+'px';
+  }
+  /* 换档（小窗→放大→全屏）不发 resize，可画框实实在在变了高，
+     光靠 600ms 那一拍会先歪半秒。盯着画框自己量，变了当场重算。 */
+  function castWatch(){
+    var isle=$('vnIsle');if(!isle||isle._ro)return;
+    try{isle._ro=new ResizeObserver(function(){castFit();});isle._ro.observe(isle);}
+    catch(_){isle._ro=1;}
+  }
   function markSpeaker(speaker){
     var host=$('vnCast');if(!host)return;
     [].forEach.call(host.children,function(el){
@@ -367,6 +414,7 @@
     var eraEl=$('vnEra');if(eraEl)eraEl.innerHTML='<b>'+esc(era.yearLabel+' · '+era.title)+'</b><span>'+esc(era.subtitle)+'</span>';
     var locEl=$('vnLoc');if(locEl)locEl.textContent=loc.replace(/\s+/g,' ').slice(0,32);
     var sp=$('vnSpeaker');if(sp){sp.textContent=speaker||'';sp.classList.toggle('on',!!speaker);}
+    castWatch();castFit();
     
   }
   function init(){

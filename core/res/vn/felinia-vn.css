@@ -14,17 +14,24 @@
 #vnCast,#vnEnsemble{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 #vnEnsemble{z-index:2}
 /* 立绘从 <img> 换成了 <canvas>：出场要一格一格显形（felPix），得有画布可画。
-   object-fit 在 canvas 上一样管用（canvas 也是替换元素），所以下面这些一句没改。 */
-#vnCast .vnActor{position:absolute;top:3%;bottom:auto;left:50%;height:240%;max-width:84%;object-fit:contain;
+   object-fit 在 canvas 上一样管用（canvas 也是替换元素），所以下面这些一句没改。
+
+   高只写 height，不再写 max-width —— 原先两条一起写，宽度会先卡住：
+   卡住之后 contain 在那只变窄的盒子里再缩一道，画出来的高就成了「宽 ÷ 各自的长宽比」。
+   一张 1536×1024 的横构图和一张 1200×1200 的方构图并排站，前者矮后者三成；
+   屏幕越窄卡得越狠（手机全屏实测：三个人只剩画框高的 16%～25%，还彼此差 33%）。
+   现在宽度一律随高走，等高就是真的等高；宽出去多少由 castFit() 统一收，
+   收的是所有人同一个系数，所以谁也不会比谁矮。 */
+#vnCast .vnActor{position:absolute;top:3%;bottom:auto;left:50%;height:240%;object-fit:contain;
   object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.66));
   opacity:1;transition:left .8s cubic-bezier(.3,.1,.25,1),filter .55s ease,transform .55s ease}
 #vnCast .vnActor.speaking{filter:drop-shadow(0 8px 20px rgba(0,0,0,.72)) brightness(1.08);
   transform:translateX(-50%) translateY(-1.5%) scale(1.025)}
 #vnEnsemble img,#vnEnsemble canvas{position:absolute;left:50%;top:3%;bottom:auto;width:120%;height:240%;object-fit:contain;
   object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.64));opacity:1}
-#game.tx2 #vnCast .vnActor{top:2%;bottom:auto;height:160%;max-width:62%}
+#game.tx2 #vnCast .vnActor{top:2%;bottom:auto;height:160%}
 #game.tx2 #vnEnsemble img,#game.tx2 #vnEnsemble canvas{top:2%;bottom:auto;width:108%;height:160%}
-#game.txBig #vnCast .vnActor{top:auto;bottom:0;height:94%;max-width:46%}
+#game.txBig #vnCast .vnActor{top:auto;bottom:0;height:94%}
 #game.txBig #vnEnsemble img,#game.txBig #vnEnsemble canvas{top:auto;bottom:0;width:96%;height:94%}
 /* 纪年与时地：原先是一块带底色和金色左边框的牌子，压在左上角那一位的头脸上。
    撤掉底与框，照立绘脚下名牌（.vnName）与右上角地名（#vnLoc）同一种写法——
@@ -117,11 +124,11 @@
 #game.txOpen.tx2 #arr3d .t::after{content:'·放大';font-size:8px}
 #game.txOpen.txBig #arr3d .t::after{content:'·全屏';font-size:8px}
 @media(max-width:760px){
-  #vnCast .vnActor{top:2%;height:240%;max-width:90%}
+  #vnCast .vnActor{top:2%;height:240%}
   #vnEnsemble img,#vnEnsemble canvas{top:2%;height:240%;width:130%}
-  #game.tx2 #vnCast .vnActor{height:150%;max-width:68%}
+  #game.tx2 #vnCast .vnActor{height:150%}
   #game.tx2 #vnEnsemble img,#game.tx2 #vnEnsemble canvas{height:150%;width:114%}
-  #game.txBig #vnCast .vnActor{top:auto;height:92%;max-width:52%}
+  #game.txBig #vnCast .vnActor{top:auto;height:92%}
   #game.txBig #vnEnsemble img,#game.txBig #vnEnsemble canvas{top:auto;height:92%;width:102%}
   #vnEra{left:8px;top:7px;max-width:68%;font-size:9px;letter-spacing:.18em}
   #vnLoc{right:7px;top:7px;font-size:9px}
