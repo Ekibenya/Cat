@@ -432,7 +432,7 @@ html.lux #eraSel .pip.on i{filter:none;opacity:1}
 html.lux #eraSel .pip b{color:#c0b59c}
 html.lux #eraSel .pip.mark b{color:#9a9184}
 html.lux #eraSel .pip.on b{color:#9a742a}
-html.lux #esFoot{border-top-color:#cec3ab;color:#9a9184;background:rgba(252,252,252,.92)}
+html.lux #esFoot{color:#9a9184;background:rgba(252,252,252,.92)}
 html.lux #esFoot .go{color:#4a4237;border-color:rgba(154,116,42,.5);background:rgba(255,255,255,.45)}
 html.lux #esFoot .go:hover{color:#1f1a13;border-color:#9a742a}
 html.lux #esBrand{color:#9a9184}
@@ -2232,25 +2232,38 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    这一屏上「纪年／27／凡尔赛附近」那三块就是同一支等宽压到七百字重、
    字面再放大，站在整幅图前一点不虚；年号带原来是四百字重的九点五像素，
    同一支字轻了一整档，压在一排砖上自然显得飘。照那三块的写法办：
-   七百字重、十一像素、字距 .14em（那三块里最长的一块用的就是这个数）。
-   text-indent 必须跟字距同数：字距会在最后一个字后头也补一格，
-   居中时那一格把字整体推左半格，等量的首行缩进正好抵回来。
-   nowrap 是为了那两段窄的：「卷首」「先史」在窄屏上折成两行、
-   旁边几段都是一行，一排字高低不齐，看着就是歪的。
-   不折行它们会把自己撑宽一点，占掉一点别人的地方——
-   底下那一排画片是照段宽算的，跟着一起宽，对齐不受影响。 */
-/* 左右各让开五像素：竖砖是叠在段自己那个框上画的（左边那道盖住五像素、
-   右边那道盖住三像素），字若顶到框边就被砖压掉半个。窄屏上「卷首」「先史」
-   两段本来就只够站两个字，压掉半个就认不出了。 */
-#esBands div{position:relative;box-sizing:border-box;text-align:center;padding:8px 5px 5px;
-  font-size:11px;font-weight:700;letter-spacing:.14em;white-space:nowrap;
-  text-indent:.14em;color:var(--mut);font-family:var(--mono);
+   七百字重、十一像素。
+   六个纪元名都是两个字，一律竖排——一个字一行，上下摞着。
+   横排要各段自己够宽才站得住：「卷首」「先史」各只占一格、两格，
+   窄屏上分到的宽度还不够写两个字，段就得把自己撑开去够那一行，
+   撑开的部分从别段身上扣，整条年号带的比例跟着失真
+   （实测四百三十宽的屏上「卷首」占到二十八，等分应为九点八，将近三倍）。
+   竖排只要一个字的宽，撑开那一截立刻小掉一半，比例回得来；
+   一排字也整整齐齐都是两行高，没有一段一行、一段两行的高低不齐。 */
+/* 左右各让开四像素：竖砖是叠在段自己那个框上画的（左边那道盖住五像素、
+   右边那道盖住三像素），字若顶到框边就被砖压掉半个。 */
+#esBands div{position:relative;box-sizing:border-box;padding:6px 4px 5px;text-align:center;
+  font-size:11px;font-weight:700;color:var(--mut);font-family:var(--mono);
   transition:color 360ms}
+/* 摞成一列：把这一格收成一个字宽，中文本来就允许在任意两字之间断行，
+   于是一个字占满一行、下一个字自动落到下一行。
+   没有用 writing-mode：那会让这一小块的行内轴变成竖的，与外头的横排
+   成了正交流，宽度得先由外头定、外头的高度又要由它定，浏览器解不开这个环，
+   实测整块塌成 11.5×1.1 —— 字还在，高度没了。收宽度不动书写方向就没这回事。
+   字距归零：横排时它是字与字之间的呼吸，摞成一列之后每个字后头那一格
+   只会把这一格顶宽，逼出第二列。
+   行高压到 1.05：一个字一行，行高多出来的全是纯空白，
+   而这一条整块钉在底上，每多一像素都是从上头那幅图身上要来的。 */
+#esBands div b{display:block;width:1em;margin:0 auto;font-weight:inherit;
+  letter-spacing:0;line-height:1.05;word-break:break-all}
 /* 竖着那几道分隔：同一张砖，改成竖着重复——露出的是最左那一列，八格一轮回 */
 #esBands div::after,#esBands div:first-child::before{content:"";position:absolute;top:0;bottom:0;width:5px;
   opacity:.78;background:var(--mosT) 0 0/60px 40px repeat-y}
 #esBands div::after{right:-2px}
-#esBands div:first-child::before{left:0}
+/* 最左那道也往外挪两像素，与右边那些对称：写 left:0 它整整五像素都压在
+   第一段自己那个框上，而第一段（卷首）在窄屏上一共才十六像素宽，
+   字摞在正中就被这道砖啃掉两像素。挪出去之后两边各只占三像素，字站得开。 */
+#esBands div:first-child::before{left:-2px}
 #esBands div.live{color:var(--gold-hi)}
 /* ── 轴上那一排微缩窗 ──
    原来是四十二颗从砖上裁下来的小方块：一样大、一样色，只数得出「一共四十二格」，
@@ -2319,8 +2332,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #eraSel .pip.mark b{opacity:.85;color:var(--mut)}
 #eraSel .pip.mark.hush b{opacity:0}
 #eraSel .pip.on b{opacity:1;color:var(--gold-hi)}
+/* 底栏不划线：那道一像素的横线正压在画片那一排下头，
+   看着像给年号带又封了一道底——年号带的上下都该是敞着的。
+   底栏本来就有自己那块底色与那两个方框，不靠一条线也分得开。 */
 #esFoot{position:fixed;left:0;right:0;bottom:0;min-height:40px;z-index:48;
-  border-top:1px solid #232320;display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;
   padding:0 18px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--mut);
   background:rgba(6,6,6,.9)}
 #esFoot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;
@@ -2364,17 +2380,17 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     overflow-x:auto;overflow-y:hidden;touch-action:pan-x;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   #esBar::-webkit-scrollbar{display:none}
-  /* 底下留 112 像素：脚栏 40 ＋ 年号带 59 ＋ 十三像素的余口。
+  /* 底下留 117 像素：脚栏 40 ＋ 年号带 64 ＋ 十三像素的余口。
      原来留 27vh，带底与年号带之间空着一百二十多像素谁也不用——那一截还给图。
      这个数必须写死成像素，不能用 vh：年号带那一块高度是固定的（窄屏一律 71），
      而 15vh 在矮屏上只有一百出头，算出来的带底反而压到年号带上去
      （实测 780 高压 10 像素、690 高压 23 像素）。
-     从 140 一路收到 112：菱标那一排原来固定四十像素高，换成画片之后
-     窄屏上只要二十四（年号在窄屏本来就不显，那一截高度一并收回）；
-     纪元名不折行之后又省下一行，年号带由 39 降到 25。
-     两笔合起来整块由 87 降到 59，空出来的二十八像素全还给整幅图。
-     窄屏上这一块高度与屏宽无关，三百六十到七百六十量下来都是 59。 */
-  #esReel{top:120px;height:auto;bottom:112px}
+     从 140 一路收到 117：菱标那一排原来固定四十像素高，换成画片之后
+     窄屏上只要二十四（年号在窄屏本来就不显，那一截高度一并收回）。
+     纪元名摞成一列要两行高，比原来那一行多占五像素，合起来
+     整块由 87 降到 64，空出来的二十三像素还给整幅图。
+     窄屏上这一块高度与屏宽无关，三百六十到七百六十量下来都是 64。 */
+  #esReel{top:120px;height:auto;bottom:117px}
   /* 一条缝那一档在窄屏上不存在了：宽度一律由 esLayout 按各自的比例算。
      两侧那两片压暗的渐变也撤掉——邻张本来就整张在画外，没有要压的东西。 */
   #esReel::before,#esReel::after{display:none}
@@ -2384,7 +2400,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      会按整行字宽把自己撑开，字距和留白每多一点，那两格画片就跟着胖一点，
      四百来像素的屏上一眼看得出。字面收到十像素、字距近乎不留、
      左右各让三像素（够躲开竖砖），撑开的那一截就压回到二十七上下。 */
-  #esBands div{font-size:10px;letter-spacing:.08em;text-indent:.08em;padding:7px 3px 4px}
+  #esBands div{font-size:10px;padding:5px 3px 4px}
   #esPips{--pipH:13px;height:calc(var(--pipH) + 11px)}
   #eraSel .pip b{display:none}
   #esFoot .lbl{display:none}
@@ -5124,7 +5140,8 @@ function esBuild(){
   }
   for(k=0;k<g.length;k++){
     var e=document.createElement('div');
-    e.style.flex=g[k].n+' 1 0';e.textContent=g[k].era;
+    e.style.flex=g[k].n+' 1 0';
+    var eb=document.createElement('b');eb.textContent=g[k].era;e.appendChild(eb);
     bd.appendChild(e);g[k].el=e;
   }
   ES.bands=g;
