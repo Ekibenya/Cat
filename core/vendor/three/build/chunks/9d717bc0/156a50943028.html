@@ -2067,14 +2067,18 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   #feWrap.artOn[data-step="per"] #feArtX,
   #feWrap.artOn[data-step="soc"] #feArtX{display:flex}
   /* 两边最外沿那对箭头：整屏一划够不着的手，按一下也能翻人。
-     贴着屏幕左右缘、竖向居中，压在幕布之上（z 7）。 */
+     贴着屏幕左右缘、竖向居中，压在幕布之上（z 7）。
+     不挂框、不垫底色——就是两个箭头，和这一屏其余的字一样靠黑影浮出来。
+     盒子照旧留 44×88：看得见的只有那一笔，可手指要按的是这么一块。
+     appearance 与 tap-highlight 都得关掉，不然浏览器自己会给按钮描一层。 */
   #feArtP,#feArtN{display:none;position:absolute;top:50%;transform:translateY(-50%);
-      z-index:7;width:38px;height:76px;padding:0;align-items:center;justify-content:center;
-      pointer-events:auto;
-      border:1px solid rgba(235,219,184,.28);background:rgba(18,13,7,.62);
-      color:rgba(241,231,210,.9);font:20px/1 var(--mono);cursor:pointer}
-  #feArtP{left:0;border-left:0}
-  #feArtN{right:0;border-right:0}
+      z-index:7;width:44px;height:88px;padding:0;align-items:center;justify-content:center;
+      pointer-events:auto;-webkit-appearance:none;appearance:none;
+      border:0;background:none;-webkit-tap-highlight-color:transparent;
+      color:rgba(241,231,210,.92);font:26px/1 var(--mono);cursor:pointer;
+      text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72),0 0 2px rgba(0,0,0,.95)}
+  #feArtP{left:0}
+  #feArtN{right:0}
   #feWrap.artOn[data-step="per"] #feArtP,
   #feWrap.artOn[data-step="soc"] #feArtP,
   #feWrap.artOn[data-step="per"] #feArtN,
