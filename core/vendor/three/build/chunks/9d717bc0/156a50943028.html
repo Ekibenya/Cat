@@ -2033,8 +2033,16 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   #feSteps i{display:none}
   #feSteps i.on{display:inline}
   #feStage{perspective:none}
+  /* 手机上这两块板只许竖着滚。横向一概不接：板里的内容本来就排得下，
+     留着横向手势只会误触——手指想往下翻档案，稍稍带一点横的就被拿去做别的事。
+     min-width:0 是给里头的 grid／flex 用的：不写这一条，子项按内容的最小宽度
+     撑开，板子被顶宽，字就被切在边上。 */
   #fePanL,#fePanR{left:3%;right:3%;width:auto;max-height:none;
-    transform:none;transition:none}
+    transform:none;transition:none;touch-action:pan-y;min-width:0;overflow-x:hidden}
+  #fePanL .feIn,#fePanR .feIn{touch-action:pan-y;overflow-x:hidden;min-width:0}
+  #fePanL .feIn *,#fePanR .feIn *{min-width:0;max-width:100%}
+  /* 长词、长地名不许把行顶宽，宁可折行 */
+  #fePanL .feIn,#fePanR .feIn{overflow-wrap:anywhere;word-break:break-word}
   #fePanL{top:6px;bottom:auto}
   #fePanR{top:auto;bottom:6px}
   /* 择地那一步中间要留出地图给手点，两块都收短 */
@@ -2054,9 +2062,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   /* 台子整块是 pointer-events:none（板子自己再各开各的），
      这三件挂在台子里就跟着继承了「不接点击」——幕布点不着、✕ 按不下、
      箭头也翻不动。每一件都得自己把它开回来。 */
+  /* 压暗只是把背后那两块板压下去一档，不是把它们藏起来——
+     板子得看得见还在。原先 .74 压得太狠，收到 .42，糊也从 2px 收到 1px。 */
   #feArtVeil{display:none;position:absolute;left:0;right:0;top:-52px;bottom:-44px;z-index:5;
-      background:rgba(8,6,4,.74);pointer-events:auto;touch-action:none;
-      -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+      background:rgba(8,6,4,.42);pointer-events:auto;touch-action:none;
+      -webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px)}
   #feArtX{display:none;position:absolute;right:10px;top:-42px;z-index:7;
       width:34px;height:34px;padding:0;align-items:center;justify-content:center;
       pointer-events:auto;
@@ -6271,12 +6281,13 @@ function feArtOpen(){
   var box=$('#fePerPortrait');if(box)box.classList.remove('pTurn','pEnter');
   FE._artIn=1;w.classList.add('artOn');
 }
-/* 立绘浮着的时候翻人：左右滑，或者按两边那对箭头。两条路同一套环形滑动，
-   背后两块板跟着换成同一位。立身那一步「看谁」就是「演谁」；
-   识人那一步只换看的那一位——带不带进这一局仍旧只由点击决定，
-   滑一下就把人带进去太容易误伤。 */
+/* 立绘浮着的时候翻人：按两边那对箭头。
+   原先还接「整屏左右滑」，撤掉了——立绘铺满整屏，手指落在哪儿都算数，
+   看一眼档案顺手一划就翻了人，误触太容易。翻人只认那两枚箭头，
+   收起只认 ✕、点立绘外、ESC；横着拖一概不做事。
+   立身那一步「看谁」就是「演谁」；识人那一步只换看的那一位，
+   带不带进这一局仍旧只由点击决定。 */
 (function(){
-  var S={id:null,x:0,y:0,dx:0,dy:0,moved:0};
   function list(){
     var out=[];
     if(FE.step==='per'){out.push(-1);FE.pool.forEach(function(p,k){if(p.fig)out.push(k);});}
@@ -6292,36 +6303,24 @@ function feArtOpen(){
     if(FE.step==='per')fePerPick(k);
     else{FE.cur=k;feSocRender();feFootSync();}
   }
-  function reset(){S.id=null;S.moved=0;}
   try{
-    var w=$('#feWrap');if(!w)return;
-    w.addEventListener('pointerdown',function(e){
-      if(!feArtOn()){reset();return;}
-      if(e.target&&e.target.closest&&e.target.closest('#feArtX,#feArtP,#feArtN,#feArtOk'))return;
-      S.id=e.pointerId;S.x=e.clientX;S.y=e.clientY;S.dx=0;S.dy=0;S.moved=0;
-    },true);
-    w.addEventListener('pointermove',function(e){
-      if(S.id===null||e.pointerId!==S.id)return;
-      S.dx=e.clientX-S.x;S.dy=e.clientY-S.y;
-      if(Math.abs(S.dx)>10&&Math.abs(S.dx)>Math.abs(S.dy))S.moved=1;
-    },true);
-    w.addEventListener('pointercancel',reset,true);
-    w.addEventListener('pointerup',function(e){
-      if(S.id===null||e.pointerId!==S.id)return;
-      var dx=S.dx,dy=S.dy,moved=S.moved;reset();
-      if(!feArtOn())return;
-      if(!moved||Math.abs(dx)<44||Math.abs(dx)<=Math.abs(dy))return;
-      /* 滑完紧跟着还会补一发 click，那一发落在幕布上就成了「点了立绘外」。
-         挂个短命的记号，让收窗那条认得出来这不是点。 */
-      FE._swipe=1;setTimeout(function(){FE._swipe=0;},280);
-      go(dx<0?1:-1);
-      e.preventDefault();e.stopPropagation();
-    },true);
+    /* 幕布只认「点」，不认「拖」：手指按下去挪过十像素就当是拖，
+       松手那一下的 click 一概不算数。不然横着划一道，立绘照样被收掉——
+       翻人是没翻了，误触还在，只是换了个方式。拖到最后什么也不做才对。 */
     var veil=$('#feArtVeil');
-    if(veil)veil.addEventListener('click',function(e){
-      if(FE._swipe)return;
-      e.stopPropagation();feArtClose();
-    });
+    if(veil){
+      var vDown=false,vx=0,vy=0,vMoved=false;
+      veil.addEventListener('pointerdown',function(e){
+        vDown=true;vx=e.clientX;vy=e.clientY;vMoved=false;});
+      veil.addEventListener('pointermove',function(e){
+        if(!vDown)return;
+        if(Math.abs(e.clientX-vx)>10||Math.abs(e.clientY-vy)>10)vMoved=true;});
+      veil.addEventListener('pointerup',function(){vDown=false;});
+      veil.addEventListener('pointercancel',function(){vDown=false;vMoved=false;});
+      veil.addEventListener('click',function(e){
+        if(vMoved){vMoved=false;return;}
+        e.stopPropagation();feArtClose();});
+    }
     var x=$('#feArtX');
     if(x)x.addEventListener('click',function(e){e.stopPropagation();feArtClose();});
     /* 「确认」：转出去，转完把单子挪到刚才看的那一位那一条。
@@ -6331,8 +6330,7 @@ function feArtOpen(){
       e.stopPropagation();feArtClose();
       setTimeout(feArtJump,FE_PTURN+40);
     });
-    /* 两边那对箭头：整屏一划够不着的手，按一下也能翻。
-       它们浮在幕布之上，点了不能连带把立绘收掉。 */
+    /* 两边那对箭头：翻人只此一路。 */
     var pv=$('#feArtP');
     if(pv)pv.addEventListener('click',function(e){e.stopPropagation();go(-1);});
     var nx=$('#feArtN');
