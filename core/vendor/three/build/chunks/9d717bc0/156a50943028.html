@@ -2339,9 +2339,23 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   display:flex;align-items:center;justify-content:space-between;
   padding:0 18px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--mut);
   background:rgba(6,6,6,.9)}
+/* 底栏只剩「返回」一个钮了，它是退路不是主路，收小一档：
+   内衬由 9×14 收到 5×9，字面由继承的十像素收到九像素，
+   四十像素高的底栏里它占三十来像素、现在占二十出头，不再是这一条的主角。 */
 #esFoot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;
-  padding:9px 14px;margin-left:8px;border:1px solid rgba(201,155,63,.45);background:rgba(201,155,63,.06)}
+  font-size:9px;padding:5px 9px;margin-left:8px;
+  border:1px solid rgba(201,155,63,.45);background:rgba(201,155,63,.06)}
 #esFoot .go:hover{color:var(--gold-hi)}
+/* 「返回」挪到左边（那是退的方向），中文在前，拉丁文缩成小字当记号——
+   和主菜单「INITIVM · 开始」那一套是同一个写法。
+   这三条原先只写在窄屏那一段里，宽屏上不生效也看不出来：
+   「返回」与操作提示之间隔着「● ANNALES SELECT ｜」那一串带 &nbsp; 的字，
+   是它在替 gap 撑着。那一串撤掉之后宽屏上钮和提示就贴到一起、ESC 还是斜的，
+   所以提到外头来，宽窄一个样。 */
+#esFoot .l{display:flex;align-items:center;gap:14px;min-width:0}
+#esFoot .go.back{margin-left:0}
+#esFoot .go i{font-style:normal;font-size:9px;letter-spacing:.2em;
+  opacity:.6;margin-left:9px}
 #esBrand{position:fixed;top:18px;left:18px;z-index:48;font-family:var(--mono);font-size:10px;
   letter-spacing:.2em;color:var(--mut);pointer-events:none}
 #esBrand b{color:var(--txt);font-weight:400}
@@ -2407,9 +2421,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* 「返回」原来和「进入」挤在右下角，而且只有拉丁文，一眼看不出哪个是退。
    退回挪到左边（那是退的方向），中文在前，拉丁文缩成小字当记号 ——
    和主菜单「INITIVM · 开始」那一套本来就是同一个写法，只有这两条底栏没跟上。 */
-#esFoot .l,#feFoot .l{display:flex;align-items:center;gap:14px;min-width:0}
-#esFoot .go.back,#feFoot .go.back{margin-left:0}
-#esFoot .go i,#feFoot .go i{font-style:normal;font-size:9px;letter-spacing:.2em;
+#feFoot .l{display:flex;align-items:center;gap:14px;min-width:0}
+#feFoot .go.back{margin-left:0}
+#feFoot .go i{font-style:normal;font-size:9px;letter-spacing:.2em;
   opacity:.6;margin-left:9px}
 }
 </style>
@@ -2431,8 +2445,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <div id="esPips"></div>
   </div>
   <div id="esFoot">
-    <span class="l"><span class="go back" id="esBack">返回<i>ESC</i></span>● ANNALES SELECT&nbsp;&nbsp;|&nbsp;&nbsp;<span class="lbl">CLICK / DRAG / ← → TO MOVE</span></span>
-    <span class="r"><span class="go" id="esGo">看这一代<i>ENGAGE ⏎</i></span></span>
+    <span class="l"><span class="go back" id="esBack">返回<i>ESC</i></span><span class="lbl">CLICK / DRAG / ← → TO MOVE</span></span>
   </div>
 </div>
 <canvas id="grain"></canvas>
@@ -7138,7 +7151,9 @@ function feSyncEngine(){
     else if(k==='Escape'){esBackToLines();e.preventDefault();}
   });
   addEventListener('resize',function(){if(ES.on){esLayout();esChronFit();esThin();}});
-  $('#esGo').addEventListener('pointerup',function(){esEngage();});
+  /* 「看这一代」那个钮撤了。进这一代还有两条路，都在原处：
+     回车（keydown 里的 Enter），以及再点一下已经选中的那幅图
+     （esBuild 里图版的 pointerup：不是选中的先选中，已经选中的就是进）。 */
   $('#esBack').addEventListener('pointerup',function(){esBackToLines();});
 })();
 
