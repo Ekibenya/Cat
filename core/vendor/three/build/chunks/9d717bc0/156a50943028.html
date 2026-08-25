@@ -1855,8 +1855,26 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    權重壓得過單一個 #feArt，只寫 id 會被蓋回去照樣顯示。 */
 #feFoot #feArt{display:none}
 #fePerPortraitImg{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;
-  opacity:1;visibility:hidden;filter:drop-shadow(0 12px 14px rgba(31,26,19,.22))}
+  opacity:1;visibility:hidden;filter:drop-shadow(0 12px 14px rgba(31,26,19,.22));
+  -webkit-user-drag:none;user-select:none}
 #fePerPortraitImg.ready{visibility:visible}
+/* 换人：与两块玻璃板换步同一套环形滑动（见 feStep 那一节）——
+   这一位朝左转出去，下一位从右边转回来。名牌跟着一起转：它和立绘是同一张卡。
+   透视用的是舞台那一层（#feStage 的 perspective:1700），这儿只写纯 rotateY；
+   两处都写透视会叠乘，人会歪到画外去。
+   位移写 58%，与两块板同一个数：板宽是舞台的 27%／35%，这一格是 32%，
+   同一个百分比挪出来的距离才看得出是同一个环在转。 */
+#fePerPortrait{transform-origin:50% 50%;
+  transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .24s ease}
+#fePerPortrait.pTurn{transition:transform .19s cubic-bezier(.55,0,.85,.3),opacity .16s ease;
+  transform:translateX(-58%) rotateY(-42deg) scale(.93);opacity:0}
+/* 「将要进来」那一帧：先摆到右边，这一下不许有过渡，摆好了再放手 */
+#fePerPortrait.pEnter{transition:none;
+  transform:translateX(58%) rotateY(42deg) scale(.93);opacity:0}
+@media (prefers-reduced-motion:reduce){
+  #fePerPortrait,#fePerPortrait.pTurn{transition:none}
+  #fePerPortrait.pTurn,#fePerPortrait.pEnter{opacity:1;transform:none}
+}
 #fePerPortraitCap{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
   max-width:90%;box-sizing:border-box;padding:5px 10px;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;border:1px solid rgba(154,116,42,.42);background:#f0eadc;
@@ -2715,7 +2733,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
        scaleY 抵掉近边被放大的那一点）。 -->
   <div id="feStage">
     <div id="fePerPortrait" aria-live="polite">
-      <canvas id="fePerPortraitImg" role="img"></canvas>
+      <img id="fePerPortraitImg" alt="">
       <div id="fePerPortraitCap"></div>
     </div>
 
@@ -6002,17 +6020,60 @@ function felPix(cv,img,opt){
   }
   requestAnimationFrame(fr);
 }
-/* 绘卷那一层在另一个文件里（felinia-vn.js），它也要用这一份 */
+/* 这一份只给对局屏的绘卷用（在另一个文件里：felinia-vn.js）。
+   铸局这一屏原来也用它，换人时人碎了又砌，看着闹——改走环形滑动（fePortTurn）。
+   两处的差别在于做的是哪件事：绘卷是「这一位显影出场」，一层层浮出来才对；
+   铸局这一屏是「翻到下一位」，翻页就该像翻页。 */
 try{window.felPix=felPix;}catch(_){}
-function felPixClear(cv){
-  if(!cv)return;
-  cv._pix=(cv._pix||0)+1;cv._src='';
-  try{var g=cv.getContext('2d');if(g)g.clearRect(0,0,cv.width,cv.height);}catch(_){}
+/* 换人那一趟。与 feStep 换步同一套：先朝左转出去，图取到了再换上，
+   然后摆到右边、不带过渡地放手，让它自己转回来。
+   下一张必须先取到手才换——不然转进来的那一帧是空的，闪一下才出人。 */
+var FE_PTURN=190;
+function fePortTurn(src,alt,capText){
+  var box=$('#fePerPortrait'),img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap');
+  if(!box||!img)return;
+  var run=(box._run=(box._run||0)+1);
+  if(box._t){clearTimeout(box._t);box._t=0;}
+  if(box._g){clearTimeout(box._g);box._g=0;}
+  var loaded=false,turned=false;
+  function done(){
+    if(box._run!==run||!loaded||!turned)return;
+    if(box._g){clearTimeout(box._g);box._g=0;}
+    img.src=src;img.alt=alt;img.classList.add('ready');
+    if(cap)cap.textContent=capText;
+    box.classList.remove('pTurn');
+    box.classList.add('pEnter');
+    /* 一层 rAF 不够：那一帧还没画出来，类就被摘掉了，人从左边弹回来。 */
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      if(box._run!==run)return;
+      box.classList.remove('pEnter');
+    });});
+  }
+  var im=new Image();
+  im.onload=function(){loaded=true;done();};
+  im.onerror=function(){
+    if(box._run!==run)return;
+    img.removeAttribute('src');img.classList.remove('ready');
+    if(cap)cap.textContent=capText;
+    box.classList.remove('pTurn','pEnter');
+  };
+  box.classList.add('pTurn');
+  box._t=setTimeout(function(){box._t=0;turned=true;done();},FE_PTURN);
+  /* 图迟迟不来（断网、档没上传）也不能让人一直吊在画外 */
+  box._g=setTimeout(function(){
+    box._g=0;if(box._run!==run||loaded)return;
+    box.classList.remove('pTurn','pEnter');
+  },2600);
+  im.src=src;
 }
 function fePerPortrait(person,empty){
   var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=empty?null:(person||FE.hero);
   if(!img||!cap||!FE.vn){return;}
-  function blank(){felPixClear(img);img.classList.remove('ready');img.removeAttribute('aria-label');}
+  function blank(){
+    var box=$('#fePerPortrait');
+    if(box){box._run=(box._run||0)+1;box.classList.remove('pTurn','pEnter');}
+    img.removeAttribute('src');img.classList.remove('ready');img.alt='';
+  }
   if(!h){blank();cap.textContent='';return;}
   var era=null,i;
   for(i=0;i<FE.vn.eras.length;i++)if(FE.vn.eras[i].eraIndex===FE.era.i){era=FE.vn.eras[i];break;}
@@ -6034,19 +6095,11 @@ function fePerPortrait(person,empty){
   }else idx=feHash(h.id+'|'+h.sp)%pool.length;
   var src=exact?exact.src:pool[idx].src;
   var who=h.n+'（'+(h.sp==='cat'?'猫娘':'人类')+'）';
-  cap.textContent=h.n+'　·　'+(h.sp==='cat'?'猫娘':'人类');
-  img.setAttribute('aria-label',who);
-  /* 同一张就别再显形一遍：识人那一步点谁都会重跑这个函数，
-     不拦住的话，同一个人的立绘会在原地反复碎掉重砌。 */
-  if(img._src===src&&img.width>1){img.classList.add('ready');return;}
-  felPixClear(img);img._src=src;
-  var im=new Image();
-  im.onload=function(){
-    if(img._src!==src)return;               /* 中途换了人，这一张作废 */
-    img.classList.add('ready');felPix(img,im);
-  };
-  im.onerror=function(){if(img._src===src)img.classList.remove('ready');};
-  im.src=src;
+  var capText=h.n+'　·　'+(h.sp==='cat'?'猫娘':'人类');
+  /* 同一张就别再转一遍：识人那一步点谁都会重跑这个函数，
+     不拦住的话，同一个人的立绘会在原地反复转出去又转回来。 */
+  if(img.getAttribute('src')===src){cap.textContent=capText;img.classList.add('ready');return;}
+  fePortTurn(src,who,capText);
 }
 
 /* ═══ 三 · 识人 ═══ */
