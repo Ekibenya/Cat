@@ -2095,8 +2095,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      图上接点（不收）、框上不接（漏给幕布，收）。 */
   #feWrap.artOn #fePerPortraitImg{width:auto;height:auto;max-width:100%;max-height:100%;
       pointer-events:auto;touch-action:none}
-  #feWrap.artOn #fePanL,#feWrap.artOn #fePanR{opacity:.06;pointer-events:none;
-      transition:opacity .26s}
+  /* 两块板留在背后，不淡掉——立绘浮出来是「盖上一层」，不是「把底下换掉」，
+     底下那两块得看得见还在，人才知道自己没离开这一步。
+     压暗交给幕布：幕布是定位元素（z 5），板子没有 z-index，
+     所以幕布本来就压在它们上头，那 .74 的一层就是它们该有的暗度。
+     只把点击收掉：眼下是幕布在接点，板上的钮这会儿不该还能按。 */
+  #feWrap.artOn #fePanL,#feWrap.artOn #fePanR{pointer-events:none}
   /* 脚下那个名字照对局里视觉小说的写法：不挂框、不垫底色，
      一样的暖金、一样疏的字距，靠一层黑影从画上浮出来。
      字距加在每个字后面（末一个也加），居中会整体偏左半格，补一样大的首行缩进抵平。 */
