@@ -2279,7 +2279,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     overflow-x:auto;overflow-y:hidden;touch-action:pan-x;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   #esBar::-webkit-scrollbar{display:none}
-  #esReel{top:120px;height:auto;bottom:27vh}
+  /* 底下留 140 像素：脚栏 40 ＋ 年号带 87 ＋ 十三像素的余口。
+     原来留 27vh，带底与年号带之间空着一百二十多像素谁也不用——那一截还给图。
+     这个数必须写死成像素，不能用 vh：年号带那一块高度是固定的八十七像素，
+     而 15vh 在矮屏上只有一百出头，算出来的带底反而压到年号带上去
+     （实测 780 高压 10 像素、690 高压 23 像素）。 */
+  #esReel{top:120px;height:auto;bottom:140px}
   /* 一条缝那一档在窄屏上不存在了：宽度一律由 esLayout 按各自的比例算。
      两侧那两片压暗的渐变也撤掉——邻张本来就整张在画外，没有要压的东西。 */
   #esReel::before,#esReel::after{display:none}
@@ -5160,7 +5165,9 @@ function esLayout(){
      每过一格差三十几像素，到第九张就把整幅图推出画外一大截。 */
   var _tr=$('#esTrack');
   if(_tr&&_tr._gap!==gap){_tr._gap=gap;_tr.style.gap=gap+'px';}
-  var maxW=(nar?innerWidth*0.94:innerWidth*0.62),before=0,k,w,wi,hi=h;
+  /* 窄屏顶到屏幕两边：这一屏就是来看图的，横构图受制于屏宽，
+     留白一分都是白留。间隙照旧一成屏宽，邻张仍旧整张在画外。 */
+  var maxW=(nar?innerWidth:innerWidth*0.62),before=0,k,w,wi,hi=h;
   /* 选中那张按原图比例给框：宽超出上限时改压高度，不是裁画面。
      所以框的长宽比永远等于原图，object-fit 裁不掉任何东西。 */
   var r=ES.rows[ES.i].r||1.5;
