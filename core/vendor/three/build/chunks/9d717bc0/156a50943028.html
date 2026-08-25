@@ -2021,9 +2021,18 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   border-top:1px solid rgba(154,116,42,.22);padding-top:14px}
 #feSum b{color:#9a742a;font-weight:600;letter-spacing:.14em;margin-right:8px}
 
-/* ── 窄屏：不再倾斜，改成上下两块（倾斜在窄屏上只会把字挤糊）──
+/* ── 窄屏：改成上下两块 ──
    覆写必须用 #fePanL/#fePanR：上面那两条是 id 选择器，权重压得过 .fePan，
-   只写 .fePan 会被原样盖回去（面板会叠在一起）。 */
+   只写 .fePan 会被原样盖回去（面板会叠在一起）。
+
+   倾斜从前在这儿整个关掉了，理由是「窄屏上只会把字挤糊」——那说的是
+   宽屏那种绕 Y 轴的转法：板子本来就窄，再横着转一道，每一行字都被压短。
+   可上下两块该转的是 X 轴：行的长度一个像素不动，只在纵向收一点，
+   字读起来不受影响。所以转法照搬、轴换一根——
+   宽屏是两块的「内侧边」往里退（左板右缘、右板左缘），
+   窄屏就是上板的下缘、下板的上缘往里退，冲着中间那道缝，同一个意思。
+   玻璃那一层（底色·边框·投影·blur(8px)）本来就没在窄屏另写过一条，
+   和宽屏本就是同一份，不必再抄。 */
 @media (max-width:860px){
   #feHead{padding:0 12px;font-size:10px}
   /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
@@ -2034,25 +2043,41 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   #feHint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #feSteps i{display:none}
   #feSteps i.on{display:inline}
-  #feStage{perspective:none}
+  /* 透视比宽屏那档近一些：这儿的台子只有三四百像素宽，
+     1700 放在这么小的盒子上几乎看不出来，收到 1200 才有和宽屏相当的进深。 */
+  #feStage{perspective:1200px;perspective-origin:50% 50%}
   /* 手机上这两块板只许竖着滚。横向一概不接：板里的内容本来就排得下，
      留着横向手势只会误触——手指想往下翻档案，稍稍带一点横的就被拿去做别的事。
      min-width:0 是给里头的 grid／flex 用的：不写这一条，子项按内容的最小宽度
      撑开，板子被顶宽，字就被切在边上。 */
   #fePanL,#fePanR{left:3%;right:3%;width:auto;max-height:none;
-    transform:none;transition:none;touch-action:pan-y;min-width:0;overflow-x:hidden}
+    transition:none;touch-action:pan-y;min-width:0;overflow-x:hidden}
+  /* 上板：下缘（内侧）往里退；下板：上缘（内侧）往里退。
+     CSS 里 Y 轴朝下，rotateX 为正是「下缘朝人、上缘往里」，所以上板取负、下板取正。 */
+  #fePanL{transform:rotateX(calc(var(--feTilt) * -1))}
+  #fePanR{transform:rotateX(var(--feTilt))}
+  /* 换步那一下（feTurn／feEnter）写的是宽屏那套绕 Y 的位移，
+     照搬到上下两块会把板子甩到画外去。窄屏只让它淡出淡入，倾斜保持不变。 */
+  #feStage.feTurn #fePanL,#feStage.feEnter #fePanL{transform:rotateX(calc(var(--feTilt) * -1))}
+  #feStage.feTurn #fePanR,#feStage.feEnter #fePanR{transform:rotateX(var(--feTilt))}
   #fePanL .feIn,#fePanR .feIn{touch-action:pan-y;overflow-x:hidden;min-width:0}
   #fePanL .feIn *,#fePanR .feIn *{min-width:0;max-width:100%}
   /* 长词、长地名不许把行顶宽，宁可折行 */
   #fePanL .feIn,#fePanR .feIn{overflow-wrap:anywhere;word-break:break-word}
-  #fePanL{top:6px;bottom:auto}
-  #fePanR{top:auto;bottom:6px}
+  /* 上下各让 12 像素（原来 6）：转过之后近的那一边被透视放大，
+     贴着 6 像素放的话，上板的上缘、下板的下缘会各自探出台子几像素，
+     一头钻到眉底下、一头压进脚里。让开这一档，边就完整地留在台子里。 */
+  #fePanL{top:12px;bottom:auto}
+  #fePanR{top:auto;bottom:12px}
   /* 择地那一步中间要留出地图给手点，两块都收短 */
   #feWrap[data-step="loc"] #fePanL{height:30%}
   #feWrap[data-step="loc"] #fePanR{height:26%}
-  /* 其余三步地图只是背景，板子可以占满 */
-  #feWrap:not([data-step="loc"]) #fePanL{height:34%}
-  #feWrap:not([data-step="loc"]) #fePanR{height:calc(66% - 18px)}
+  /* 其余三步地图只是背景，板子可以占满。
+     比原先各让掉一个百分点：转过之后近的那一边被透视放大，不让就要顶出台子。
+     和宽屏那条 max-height:…*.985 是同一个办法——从尺寸上减掉，
+     而不是再挂一道 scaleY，免得边框被拉伸后在物理像素上裂开一道。 */
+  #feWrap:not([data-step="loc"]) #fePanL{height:33%}
+  #feWrap:not([data-step="loc"]) #fePanR{height:calc(64% - 18px)}
   /* ── 拣人时立绘整屏浮出来 ──
      窄屏上两块板把整屏占满，中间没有空档摆立绘，底下那颗「立绘」钮得自己去按——
      等于没人看得到。改成拣哪一位就浮哪一位：背景压暗，立绘留真彩，
