@@ -87,7 +87,8 @@
   }
   function heroNameSafe(state){if(state&&state.hero)return state.hero;try{return heroName()||'你';}catch(_){return '你';}}
   function castOf(era,state){
-    var p=state.panel||{},out=[{name:heroNameSafe(state),role:'玩家',species:'cat',hero:true}],seen={};seen[out[0].name]=1;
+    var p=state.panel||{},hero=heroNameSafe(state),knownHero=rosterEntry(era,hero);
+    var out=[{name:hero,role:'玩家',species:knownHero?knownHero.species:'cat',hero:true}],seen={};seen[out[0].name]=1;
     (p.npcs||[]).forEach(function(n){var name=String(n.name||'').trim();if(!name||seen[name])return;seen[name]=1;out.push({name:name,role:n.role||'',species:speciesOf(era,n),source:n});});
     return out;
   }
@@ -102,7 +103,7 @@
     var shown=cast.slice(0,4),pos=actorPositions(shown.length);
     shown.forEach(function(person,i){
       /* 选图照旧：本代名录里点得着名字的用那一张专属，点不着的从通用池里按名字取。 */
-      var known=person.hero?null:rosterEntry(era,person.name);
+      var known=rosterEntry(era,person.name);
       var exact=known&&era.assets.single.find(function(a){return a.species===person.species&&a.character===known.name;});
       var pool=era.assets.single.filter(function(a){return a.species===person.species&&!a.character;});
       if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===person.species;});
