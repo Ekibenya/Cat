@@ -6019,10 +6019,15 @@ function fePerRender(){
   fePerForm();
 }
 function fePerPick(k){
+  FE._turned=0;
   if(k<0){FE.hero=feMake(FE.era,null,'hero'+(FE.salt||0));FE.hero.self=1;FE.hero.pre=-1;}
   else{var s=FE.pool[k];FE.hero=feMake(FE.era,s.fig,s.salt);FE.hero.pre=k;FE.hero.self=0;}
   feArtOpen();                           /* 窄屏：拣了谁就把谁的立绘浮出来 */
   fePerRender();feFootSync();
+  /* 转了的话 fePortTurn 已经响过 slide；没转（点的还是同一位）就还它一记 click。
+     两条路互斥，一次动作只出一声——这几处在 SONVS 那边进了静音区，
+     不会再有一记兜底的点击音叠上来。 */
+  try{if(window.SX&&!FE._turned)SX('click');}catch(_){}
 }
 function fePerForm(){
   var g=$('#fePerForm'),h=FE.hero;g.innerHTML='';
@@ -6168,6 +6173,12 @@ function fePortTurn(src,alt,capText){
     box.classList.remove('pTurn','pEnter');
   };
   box.classList.add('pTurn');
+  /* 转起来就响一记——和情报台那一叠换卡同一条音（SONVS 的 slide）。
+     喊在这儿而不是喊在「点了谁」那儿：点的还是同一位时这个函数根本不进来，
+     声音就不会在画面没动的时候先响。
+     记一笔 FE._turned，拣人那两处据此判断这一下该不该另外还它一记 click。 */
+  FE._turned=1;
+  try{if(window.SX)SX('slide');}catch(_){}
   box._t=setTimeout(function(){box._t=0;turned=true;done();},FE_PTURN);
   /* 图迟迟不来（断网、档没上传）也不能让人一直吊在画外 */
   box._g=setTimeout(function(){
@@ -6247,6 +6258,7 @@ function feArtClose(){
     if(box._g){clearTimeout(box._g);box._g=0;}
     box.classList.remove('pEnter');
     box.classList.add('pTurn');
+    try{if(window.SX)SX('slide');}catch(_){}   /* 收起来也是这一条滑走，同一记声 */
     if(w._artT)clearTimeout(w._artT);
     w._artT=setTimeout(function(){
       w._artT=0;w.classList.remove('artOn');box.classList.remove('pTurn');
@@ -6378,12 +6390,15 @@ function feSocTap(k){
      于是每带一位都得点两下，而第一下画面上只有右边换了字，
      手感就是「点了没选上」。改成一下到位：这一下既摆出档案，也把她带进这一局。
      再点同一位就取消，取消时档案照旧留着，不必再点一次去看。 */
+  FE._turned=0;
   FE.cur=k;
   var i=FE.soc.indexOf(k);
   if(i>=0)FE.soc.splice(i,1);
   else if(FE.soc.length<5)FE.soc.push(k);
   feArtOpen();                           /* 窄屏：点了谁就把谁的立绘浮出来 */
   feSocRender();feFootSync();
+  /* 同上：点的还是同一位时立绘不转，可这一下把人带进／带出了，得有回声 */
+  try{if(window.SX&&!FE._turned)SX('click');}catch(_){}
 }
 function feSocDoss(){
   var el=$('#feDoss');
@@ -15671,7 +15686,11 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
            ['#armWrap [data-act]','gear'],
            ['[data-mv]','slide']];
   /* 静音区：这几处该响哪一声要看结果，交给各自的代码喊 */
-  var MUTE='#gmapCv,#menuCv,#zjGraphSvg,#stage,#rail,#lsTrack,#gSend,#shopWrap [data-buy]';
+  var MUTE='#gmapCv,#menuCv,#zjGraphSvg,#stage,#rail,#lsTrack,#gSend,#shopWrap [data-buy]'
+    /* 铸局拣人那几处：立绘转没转要看点的是不是同一位，交给 fePortTurn／fePerPick 自己喊。
+       立绘上那几枚钮（✕、确认、左右箭头）也一并划进来——它们各自引出的是一次
+       立绘滑动，那一记 slide 已经够了，再叠一记兜底点击音就成了两声。 */
+    +',#fePreList .fePre,#feSocList .feCard,#feArtX,#feArtOk,#feArtP,#feArtN';
   function clickable(t){
     for(var i=0;i<6&&t&&t.nodeType===1;i++,t=t.parentNode){
       if(t.getAttribute&&t.getAttribute('data-nosfx')!=null)return false;
