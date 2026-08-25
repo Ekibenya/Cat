@@ -17,10 +17,6 @@ cp    manifest.webmanifest _site/
 cp    _headers      _site/
 cp    _redirects    _site/
 
-# 根网址直接由真实的 index.html 提供。这里只复制构建产物，不移动或改写原入口，
-# 深层旧网址仍然可用，页面里的 /core/ 资源路径也保持原样。
-cp core/vendor/three/build/chunks/9d717bc0/156a50943028.html _site/index.html
-
 # 不进站点的：image/（未被引用）、tools/ st/ npc/ 손으로/（工作台与素材）、rwserve.py（本地起服务用）
 echo "_site 组装完成："
 du -sh _site

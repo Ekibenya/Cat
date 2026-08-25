@@ -1,1 +1,3 @@
-# 根网址由构建生成的 /index.html 直接提供，不再重写到深层入口。
+# Cloudflare 会把 .html 入口规范化成无扩展名网址；重写目标直接使用规范网址，
+# 避免先重写到 .html、再由 Pages 用 308 把地址栏跳回深层路径。
+/    /core/vendor/three/build/chunks/9d717bc0/156a50943028    200
