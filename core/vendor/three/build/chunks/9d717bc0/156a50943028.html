@@ -2036,7 +2036,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      留着横向手势只会误触——手指想往下翻档案，稍稍带一点横的就被拿去做别的事。
      min-width:0 是给里头的 grid／flex 用的：不写这一条，子项按内容的最小宽度
      撑开，板子被顶宽，字就被切在边上。 */
-  #fePanL,#fePanR{left:4%;right:4%;width:auto;max-height:none;
+  /* 一个间距管到底：左、右、上、下、以及两块板之间，全用同一个 --feG。
+     写成像素而不是百分比——百分比在横竖两个方向上折算出来的数不一样，
+     看着就不是同一道边。板高由「台高减掉三道间距」按比例分，
+     所以中间那道缝算出来正好也是 --feG，四边一圈完全等距。 */
+  #feWrap{--feG:14px}
+  #fePanL,#fePanR{left:var(--feG);right:var(--feG);width:auto;max-height:none;
     touch-action:pan-y;min-width:0;overflow-x:hidden}
   #fePanL,#fePanR{transform:none}
   /* 换步那一下也照搬宽屏：两块一起朝左转出去，换完内容再一起从右边转回来。
@@ -2055,16 +2060,19 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   #fePanL .feIn *,#fePanR .feIn *{min-width:0;max-width:100%}
   /* 长词、长地名不许把行顶宽，宁可折行 */
   #fePanL .feIn,#fePanR .feIn{overflow-wrap:anywhere;word-break:break-word}
-  #fePanL{top:10px;bottom:auto}
-  #fePanR{top:auto;bottom:10px}
+  #fePanL{top:var(--feG);bottom:auto}
+  #fePanR{top:auto;bottom:var(--feG)}
   /* 两块都比从前收一档。原来非择地那两步是 34% + 66%，加起来正好一整屏，
      上下贴死、中间不留缝——一眼看过去就是两块板把屏幕填满了，密不透风。
      现在各让一截，中间留出一条空：择地那一步那条缝是给地图的（图会自己铺满它），
      其余几步那条缝是留白，让两块板各自看得出边界。 */
   #feWrap[data-step="loc"] #fePanL{height:26%}
   #feWrap[data-step="loc"] #fePanR{height:22%}
-  #feWrap:not([data-step="loc"]) #fePanL{height:32%}
-  #feWrap:not([data-step="loc"]) #fePanR{height:calc(61% - 18px)}
+  /* 台高减掉三道间距（上、中、下）之后，剩下的按 34 : 66 分给两块板 ——
+     上面那块是名录／清单，下面那块是表格与档案，本来就该长一些。
+     这么分，中间那道缝落下来正好等于 --feG。 */
+  #feWrap:not([data-step="loc"]) #fePanL{height:calc((100% - var(--feG) * 3) * .34)}
+  #feWrap:not([data-step="loc"]) #fePanR{height:calc((100% - var(--feG) * 3) * .66)}
   /* ── 拣人时立绘整屏浮出来 ──
      窄屏上两块板把整屏占满，中间没有空档摆立绘，底下那颗「立绘」钮得自己去按——
      等于没人看得到。改成拣哪一位就浮哪一位：背景压暗，立绘留真彩，
