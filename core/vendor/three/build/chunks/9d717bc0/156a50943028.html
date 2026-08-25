@@ -30,13 +30,6 @@
   --gold:#845800;         /* guilloché gold */
   --gold-hi:#523000;      /* gold highlight */
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Cascadia Mono',monospace;
-  /* 有笔锋的一支：中文走宋／明朝，西文走 Georgia 一路。
-     整套 UI 本来只有等宽一支，可等宽在中文上没有对应的字面，
-     九点五像素落下去是系统兜底的黑体，笔画细得像铅笔线；
-     年号带压在一排马赛克砖上，细笔画立刻显得飘。
-     宋体横细竖粗、收笔带顿角，缩到十来像素仍认得出骨架，
-     跟砖那种一块块码上去的手感也对得上。只给纪年轴用。 */
-  --serif:'Songti SC','Songti TC',STSong,'SimSun','Noto Serif CJK SC','Source Han Serif SC','Noto Serif SC','Hiragino Mincho ProN','Yu Mincho',Georgia,'Times New Roman',serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 /* 滚动条：浏览器默认那根又粗又白，和这套黑金 UI 完全不搭。全局收成一根细金线，
@@ -2235,9 +2228,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    点不压——它要站得出来。 */
 #esBands::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;opacity:.78;
   background:var(--mosT) 0 0/60px 40px repeat-x}
-/* 字距 .3em 摊得太开，两个字看着是两块各站各的，不成一个词；收到 .18em。
+/* 字族不动，还是这一套唯一的那支等宽——单薄的病因是字重，不是字族。
+   这一屏上「纪年／27／凡尔赛附近」那三块就是同一支等宽压到七百字重、
+   字面再放大，站在整幅图前一点不虚；年号带原来是四百字重的九点五像素，
+   同一支字轻了一整档，压在一排砖上自然显得飘。照那三块的写法办：
+   七百字重、十一像素、字距 .14em（那三块里最长的一块用的就是这个数）。
    text-indent 必须跟字距同数：字距会在最后一个字后头也补一格，
-   居中时那一格把字整体推左半格，指等量的首行缩进正好抵回来。
+   居中时那一格把字整体推左半格，等量的首行缩进正好抵回来。
    nowrap 是为了那两段窄的：「卷首」「先史」在窄屏上折成两行、
    旁边几段都是一行，一排字高低不齐，看着就是歪的。
    不折行它们会把自己撑宽一点，占掉一点别人的地方——
@@ -2246,8 +2243,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    右边那道盖住三像素），字若顶到框边就被砖压掉半个。窄屏上「卷首」「先史」
    两段本来就只够站两个字，压掉半个就认不出了。 */
 #esBands div{position:relative;box-sizing:border-box;text-align:center;padding:8px 5px 5px;
-  font-size:11px;font-weight:600;letter-spacing:.18em;white-space:nowrap;
-  text-indent:.18em;color:var(--mut);font-family:var(--serif);
+  font-size:11px;font-weight:700;letter-spacing:.14em;white-space:nowrap;
+  text-indent:.14em;color:var(--mut);font-family:var(--mono);
   transition:color 360ms}
 /* 竖着那几道分隔：同一张砖，改成竖着重复——露出的是最左那一列，八格一轮回 */
 #esBands div::after,#esBands div:first-child::before{content:"";position:absolute;top:0;bottom:0;width:5px;
@@ -2317,8 +2314,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #eraSel .pip.on i{filter:none;
   transform:translate(var(--jx,0px),var(--jy,0px)) rotate(var(--jr,0deg)) scale(var(--js,1)) scale(1.22)}
 #eraSel .pip b{position:absolute;top:calc(var(--pipH) + 14px);left:50%;transform:translateX(-50%);
-  font-family:var(--serif);font-size:10px;font-weight:500;
-  letter-spacing:.02em;color:#3a3a36;opacity:0;white-space:nowrap;transition:opacity 300ms,color 300ms}
+  font-family:var(--mono);font-size:9.5px;font-weight:600;
+  letter-spacing:.06em;color:#3a3a36;opacity:0;white-space:nowrap;transition:opacity 300ms,color 300ms}
 #eraSel .pip.mark b{opacity:.85;color:var(--mut)}
 #eraSel .pip.mark.hush b{opacity:0}
 #eraSel .pip.on b{opacity:1;color:var(--gold-hi)}
@@ -2367,17 +2364,17 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     overflow-x:auto;overflow-y:hidden;touch-action:pan-x;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   #esBar::-webkit-scrollbar{display:none}
-  /* 底下留 115 像素：脚栏 40 ＋ 年号带 62 ＋ 十三像素的余口。
+  /* 底下留 112 像素：脚栏 40 ＋ 年号带 59 ＋ 十三像素的余口。
      原来留 27vh，带底与年号带之间空着一百二十多像素谁也不用——那一截还给图。
      这个数必须写死成像素，不能用 vh：年号带那一块高度是固定的（窄屏一律 71），
      而 15vh 在矮屏上只有一百出头，算出来的带底反而压到年号带上去
      （实测 780 高压 10 像素、690 高压 23 像素）。
-     从 140 一路收到 115：菱标那一排原来固定四十像素高，换成画片之后
+     从 140 一路收到 112：菱标那一排原来固定四十像素高，换成画片之后
      窄屏上只要二十四（年号在窄屏本来就不显，那一截高度一并收回）；
-     纪元名不折行之后又省下一行，年号带由 39 降到 28。
-     两笔合起来整块由 87 降到 62，空出来的二十五像素全还给整幅图。
-     窄屏上这一块高度与屏宽无关，三百六十到七百六十量下来都是 62。 */
-  #esReel{top:120px;height:auto;bottom:115px}
+     纪元名不折行之后又省下一行，年号带由 39 降到 25。
+     两笔合起来整块由 87 降到 59，空出来的二十八像素全还给整幅图。
+     窄屏上这一块高度与屏宽无关，三百六十到七百六十量下来都是 59。 */
+  #esReel{top:120px;height:auto;bottom:112px}
   /* 一条缝那一档在窄屏上不存在了：宽度一律由 esLayout 按各自的比例算。
      两侧那两片压暗的渐变也撤掉——邻张本来就整张在画外，没有要压的东西。 */
   #esReel::before,#esReel::after{display:none}
@@ -2387,7 +2384,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      会按整行字宽把自己撑开，字距和留白每多一点，那两格画片就跟着胖一点，
      四百来像素的屏上一眼看得出。字面收到十像素、字距近乎不留、
      左右各让三像素（够躲开竖砖），撑开的那一截就压回到二十七上下。 */
-  #esBands div{font-size:10px;letter-spacing:.04em;text-indent:.04em;padding:7px 3px 4px}
+  #esBands div{font-size:10px;letter-spacing:.08em;text-indent:.08em;padding:7px 3px 4px}
   #esPips{--pipH:13px;height:calc(var(--pipH) + 11px)}
   #eraSel .pip b{display:none}
   #esFoot .lbl{display:none}
