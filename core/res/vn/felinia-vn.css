@@ -88,13 +88,46 @@
   text-shadow:0 1px 6px #000,0 0 12px rgba(0,0,0,.85),0 0 20px rgba(201,155,63,.45)}
 /* ── 全屏那一档：底下那只对话框 ──
    只在全屏出现。小窗与放大两档的框本来就矮，压上一条对话框就什么也看不见了。 */
+/* 玻璃四项（底色／边／投影／模糊）与地图·装备·商店那三扇（.gPanel）同构，
+   只把颜色换成这只框自己的墨色 —— 那三扇是浮在奶油纸上的暖奶油，
+   这一只是浮在整幅立绘上的深墨，配方一样，色不换。
+     · 模糊 blur(9px)：与那三扇一个数不差。原先一点没有，
+       所以它不是「一层玻璃」，是钉在画上的一块板。
+     · 投影 0 14px 34px：几何照抄，方向翻过来（它贴在底边，光该往上散），
+       颜色由那边的奶油辉光换成这边的墨影。
+     · 底色：交给「面板透明度」那根拉杆（见 applyGlass），
+       与那三扇同一根拉杆、同一种窗。这里写的是拉杆够不着时的兜底。
+       梯度形状留着：上沿淡、往下渐实，字压在最实的那一段上才读得住。
+     · 边：那三扇是四面一圈 rgba(19,18,13,.20)。这一只左右下三面都贴着画框边，
+       描一圈只会在边上多三条线，所以仍旧只留上沿那一道金线 —— 那是它的颜色。
+   出场也照那三扇的写法：同一条缓动、同一个时长，从底下托上来。 */
 #vnTalk{display:none;position:absolute;left:0;right:0;bottom:var(--vnGap,0px);z-index:9;
   box-sizing:border-box;min-height:var(--vnTalkH,150px);padding:20px 26px 24px;
   border-top:1px solid rgba(201,155,63,.5);
-  background:linear-gradient(180deg,rgba(14,10,6,.62) 0%,rgba(14,10,6,.9) 26%,rgba(14,10,6,.94) 100%);
+  background:linear-gradient(180deg,rgba(14,10,6,.30) 0%,rgba(14,10,6,.54) 26%,rgba(14,10,6,.60) 100%);
+  box-shadow:0 -14px 34px rgba(6,4,2,.5);
+  -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
   color:#f2e9d6;font:15px/1.85 var(--mono);letter-spacing:.05em;cursor:pointer;
   -webkit-user-select:none;user-select:none}
-#game.txBig #vnTalk.on{display:block}
+/* 出场：用 animation 不用 transition。这只框是 display:none 翻成 block 的，
+   过渡在那一帧不生效（同一帧里既显形又改形，浏览器直接画在终点上），
+   动画则会照常从头跑。而 talkPaint 每念一句都调一次 classList.toggle('on',true)，
+   同一个类反复写不算重加，所以这一下只在开口那一次跑，不会每句都托一遍。 */
+#game.txBig #vnTalk.on{display:block;
+  animation:vnTalkUp .34s cubic-bezier(.2,.85,.25,1) both}
+@keyframes vnTalkUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* 质感层：照抄 #pnTx::after 那只「玻璃罩」—— 自己的底色罩一层在画面上，
+   再收一圈内投影当暗角，看着才是「隔着这块毛玻璃看过去」，
+   而不是把一块板子钉在画上。那边是奶油，这边是墨，形状与数一样。 */
+#vnTalk::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(14,10,6,.20) 0%,rgba(14,10,6,0) 40%,rgba(10,7,4,.22) 100%);
+  box-shadow:inset 0 0 48px rgba(6,4,2,.30)}
+/* 罩子铺在整只框上，正文与那几枚小钮得排在它前头。
+   正文那一块是普通流内元素，光写 z-index 不作数（只对定位元素生效），
+   得先给它 position:relative —— 不给的话罩子那层暗角会盖在字上。
+   其余几枚本来就是 absolute，写上就管用。 */
+#vnTalkBody{position:relative;z-index:1}
+#vnTalkWho,#vnTalkNum,#vnTalkTip,#vnTalkX{z-index:1}
 #game.txBig #vnIsle{--vnTalkH:clamp(120px,22vh,190px)}
 #vnTalkWho{position:absolute;left:22px;top:-13px;padding:4px 12px;opacity:0;
   border:1px solid rgba(201,155,63,.72);background:rgba(28,19,8,.96);
@@ -145,4 +178,5 @@
   #vnLoc{top:58px;max-height:calc(65% - 50px)}
 }
 @media(prefers-reduced-motion:reduce){#vnBgA,#vnBgB,#vnCast .vnActor,#vnCast .vnName{transition:none}
-  #vnTalkTip.on{animation:none}}
+  #vnTalkTip.on{animation:none}
+  #game.txBig #vnTalk.on{animation:none}}
