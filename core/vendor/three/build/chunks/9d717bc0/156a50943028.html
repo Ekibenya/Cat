@@ -2237,9 +2237,44 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   letter-spacing:.2em;color:var(--mut);pointer-events:none}
 #esBrand b{color:var(--txt);font-weight:400}
 
+/* ── 顶上那一条微缩窗（只在窄屏） ──
+   宽屏那一排图版是「一条缝挨一条缝」，在手机上每条只有四十像素宽，
+   中间选中的那张也就被挤成一小块，看不清画的是什么。
+   窄屏改成两层：顶上一条微缩窗管挑，中间整幅只管看。
+   微缩窗照旧带撕边遮罩与颗粒——它就是同一幅图，只是小。
+   横向滚动交给浏览器原生（pan-x，带惯性），不跟它抢；
+   #eraSel 整块是 touch-action:none，这一条得自己把横向还回来。 */
+#esBar{display:none}
+#esBar .esCell{position:relative;flex:0 0 auto;width:62px;height:62px;padding:0;border:0;
+  background:transparent;cursor:pointer;overflow:hidden;-webkit-appearance:none;appearance:none;
+  -webkit-tap-highlight-color:transparent;
+  filter:brightness(.34) saturate(.45) contrast(1.06);
+  transition:filter 320ms cubic-bezier(.16,1,.3,1),transform 320ms cubic-bezier(.16,1,.3,1);
+  -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+          mask-image:url(/core/res/img/annals/edge-h.png);mask-size:100% 100%;mask-repeat:no-repeat}
+#esBar .esCell.tall{-webkit-mask-image:url(/core/res/img/annals/edge-v.png);
+                            mask-image:url(/core/res/img/annals/edge-v.png)}
+#esBar .esCell img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;
+  -webkit-user-drag:none;user-select:none;-webkit-user-select:none}
+#esBar .esCell::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;
+  opacity:.2;background-size:170px 170px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170'><filter id='t'><feTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3'/></filter><rect width='170' height='170' filter='url(%23t)'/></svg>")}
+#esBar .esCell.on{filter:none;transform:scale(1.06)}
+/* 还没轮到上图的格子：给一层极浅的底，看着是「一格待补」，不是一块空洞 */
+#esBar .esCell img:not([src]){background:rgba(236,236,232,.08)}
+
 @media (max-width:760px){
-  #eraSel .pl{width:40px;height:46vh}
-  #esReel{height:46vh;top:7vh}
+  /* 卷轴让出顶上那一条；两头各让开一点，中间整幅才摆得开 */
+  #esBar{display:flex;position:fixed;left:0;right:0;top:44px;z-index:48;
+    gap:5px;padding:6px 10px;align-items:center;
+    overflow-x:auto;overflow-y:hidden;touch-action:pan-x;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #esBar::-webkit-scrollbar{display:none}
+  #esReel{top:120px;height:auto;bottom:27vh}
+  /* 一条缝那一档在窄屏上不存在了：宽度一律由 esLayout 按各自的比例算。
+     两侧那两片压暗的渐变也撤掉——邻张本来就整张在画外，没有要压的东西。 */
+  #esReel::before,#esReel::after{display:none}
   #eraSel .pip b{display:none}
   #esFoot .lbl{display:none}
 /* 「返回」原来和「进入」挤在右下角，而且只有拉丁文，一眼看不出哪个是退。
@@ -2254,6 +2289,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 <div id="eraSel">
   <div id="esBrand"><b>ANNALES</b>&nbsp;·&nbsp;纪年选择</div>
+  <!-- 窄屏专用：顶上一条微缩窗（照 Touch Bar 的样子），左右拨、点一格换一格。
+       宽屏上整条不出现——那边卷轴本身就是一排图版，不必再来一遍。 -->
+  <div id="esBar"></div>
   <div id="esReel"><div id="esTrack"></div></div>
   <div id="esMission">
     <div class="m-tag"><span class="tag">纪年</span></div>
@@ -4976,6 +5014,69 @@ function esBuild(){
     bd.appendChild(e);g[k].el=e;
   }
   ES.bands=g;
+  esBarBuild();
+}
+function esNarrow(){try{return innerWidth<=760;}catch(_){return false;}}
+/* 顶上那一条微缩窗。四十二张全挂上，可 src 交给 loading="lazy" ——
+   一条上同时看得见八九格，滚到哪儿浏览器取到哪儿，不会一上来就把七兆预览拖下来。
+   用整幅预览（p/）而不是条子那张（t/）：条子是竖裁的一条缝（宽高比 0.24），
+   摆进一个方格里只看得见画面正中一竖条，认不出是哪一幕。 */
+function esBarBuild(){
+  var bar=$('#esBar');if(!bar)return;
+  bar.innerHTML='';ES.bar=[];
+  for(var k=0;k<ES.rows.length;k++)(function(n){
+    var d=ES.rows[n];
+    var b=document.createElement('button');
+    b.className='esCell'+(((d.r||1.5)<1)?' tall':'');
+    b.type='button';
+    b.setAttribute('aria-label',(d.y||'卷首')+' '+d.t);
+    b.innerHTML='<img alt="" decoding="async">';
+    /* 这一条自己滚，别让 #eraSel 那条「按住拖＝拨图版」把它当成拨图。
+       拨过之后浏览器仍会补一发 click，所以拨完不算点：认 ES.moved。 */
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(ES.moved>ES.dead)return;
+      if(n!==ES.i)esGo(n);
+    });
+    bar.appendChild(b);ES.bar.push(b);
+  })(k);
+  /* 条子一滚就补图。原来靠 loading="lazy"，可浏览器对横向滚动器预取得很宽——
+     实测一打开就取了四十二张里的二十九张、八点五兆，手机上那是白烧流量。
+     改成自己开窗：看得见的那一段前后各留三成，出了窗就把 src 摘掉。
+     与卷轴那边（esLoad 的正负六张）是同一个办法，取到的又是同一批文件，
+     浏览器缓存里本来就有，两处合起来并不会翻倍。 */
+  var _t=0;
+  bar.addEventListener('scroll',function(){
+    if(_t)return;
+    _t=requestAnimationFrame(function(){_t=0;esBarLoad();});
+  },{passive:true});
+}
+function esBarLoad(){
+  var bar=$('#esBar');if(!bar||!ES.bar||!ES.bar.length)return;
+  var w=bar.clientWidth||innerWidth,sl=bar.scrollLeft;
+  var lo=sl-w*0.3,hi=sl+w*1.3;
+  for(var k=0;k<ES.bar.length;k++){
+    var c=ES.bar[k],im=c.firstChild;if(!im)continue;
+    var x=c.offsetLeft,x2=x+c.offsetWidth;
+    if(x2>=lo&&x<=hi){
+      var want=esPrev(ES.rows[k].src);
+      if(im.getAttribute('src')!==want)im.setAttribute('src',want);
+    }else if(im.getAttribute('src'))im.removeAttribute('src');
+  }
+}
+/* 选中的那一格自己挪到条子正中——手指拨大图换代时，顶上那一条得跟着走，
+   否则选中的那一格早滚出画外，看不出现在在哪儿。 */
+function esBarSync(){
+  var bar=$('#esBar');if(!bar||!ES.bar||!ES.bar.length)return;
+  for(var k=0;k<ES.bar.length;k++)ES.bar[k].classList.toggle('on',k===ES.i);
+  if(!esNarrow())return;
+  var c=ES.bar[ES.i];if(!c)return;
+  var br=bar.getBoundingClientRect(),cr=c.getBoundingClientRect();
+  if(br.width<8)return;
+  var to=bar.scrollLeft+(cr.left-br.left)-(br.width-cr.width)/2;
+  to=Math.max(0,Math.min(to,bar.scrollWidth-bar.clientWidth));
+  try{bar.scrollTo({left:to,behavior:'smooth'});}catch(_){bar.scrollLeft=to;}
+  esBarLoad();
 }
 
 /* 图版四十二张，一张全图解开是 1024×1536×4 ≈ 6 MB。
@@ -5040,8 +5141,18 @@ function esLoad(){
 }
 
 function esLayout(){
-  var reel=$('#esReel'),h=reel.clientHeight||420,narrow=innerWidth<=760?40:92,gap=6;
-  var maxW=innerWidth*0.62,before=0,k,w,wi,hi=h;
+  var reel=$('#esReel'),h=reel.clientHeight||420;
+  var nar=esNarrow(),narrow=92,gap=6;
+  /* 窄屏：不再有「一条缝」那一档——每一张都按自己那幅图的比例摆到最大。
+     间隙给到一成屏宽，邻张于是整张都落在画外，中间只剩选中的这一幅。
+     卷轴那 560ms 的平移、图版的明暗过渡、说明块的位移，一样不动。 */
+  if(nar)gap=Math.round(innerWidth*0.10);
+  /* 间隙这个数得同时写进样式里。只改这儿的算术、不改轨道上的 gap，
+     两边就对不上：算的时候按一成屏宽累加，实际排版仍按 6 像素排，
+     每过一格差三十几像素，到第九张就把整幅图推出画外一大截。 */
+  var _tr=$('#esTrack');
+  if(_tr&&_tr._gap!==gap){_tr._gap=gap;_tr.style.gap=gap+'px';}
+  var maxW=(nar?innerWidth*0.94:innerWidth*0.62),before=0,k,w,wi,hi=h;
   /* 选中那张按原图比例给框：宽超出上限时改压高度，不是裁画面。
      所以框的长宽比永远等于原图，object-fit 裁不掉任何东西。 */
   var r=ES.rows[ES.i].r||1.5;
@@ -5053,8 +5164,13 @@ function esLayout(){
      所以值没变就不写。 */
   for(k=0;k<ES.pls.length;k++){
     var el=ES.pls[k];
-    w=(k===ES.i)?wi:narrow;
-    var hh=(k===ES.i)?hi:h;
+    var hh;
+    if(k===ES.i){w=wi;hh=hi;}
+    else if(nar){
+      var rk=ES.rows[k].r||1.5,wk=h*rk,hk=h;
+      if(wk>maxW){wk=maxW;hk=maxW/rk;}
+      w=wk;hh=hk;
+    }else{w=narrow;hh=h;}
     if(el._w!==w){el._w=w;el.style.width=w+'px';}
     if(el._h!==hh){el._h=hh;el.style.height=hh+'px';}
     if(k<ES.i)before+=w+gap;
@@ -5064,11 +5180,13 @@ function esLayout(){
      那一刻卷轴还在过渡里，读回来的是中途值。 */
   var m=$('#esMission'),rr=reel.getBoundingClientRect();
   var pb=rr.top+rr.height/2+hi/2;              /* 选中那张的下沿（卷轴纵向居中） */
-  if(innerWidth>760){
+  if(!nar){
     m.style.left=Math.round(rr.left+rr.width/2-wi/2+26)+'px';
     m.style.bottom=Math.round(innerHeight-pb+24)+'px';
   }else{
-    m.style.left='12px';m.style.bottom=Math.round(innerHeight-pb+14)+'px';
+    /* 窄屏：说明块压在整幅图的左下角里侧 */
+    m.style.left=Math.round(Math.max(10,rr.left+rr.width/2-wi/2+10))+'px';
+    m.style.bottom=Math.round(innerHeight-pb+12)+'px';
   }
 }
 
@@ -5107,7 +5225,7 @@ function esRender(){
   var a=document.createElement('span');a.textContent=d.t;t.appendChild(a);
   if(d.y){var b=document.createElement('span');b.textContent=d.y;t.appendChild(b);}
   $('#esEra').textContent=d.s||'';
-  esLoad();esLayout();esThin();
+  esLoad();esLayout();esThin();esBarSync();
 }
 function esGo(n){
   if(n<0)n=0;if(n>ES.rows.length-1)n=ES.rows.length-1;
@@ -6817,11 +6935,17 @@ function feSyncEngine(){
   /* 换图只认三样：点一下、方向键、按住拖。
      滚轮一概不接——触控板两指轻轻一动就发 wheel，手还没停就翻过去好几张。
      按下之后还有一道死区，没走满 ES.dead 像素就当没动，挡住点击时的手抖。 */
-  var el=$('#eraSel'),STEP=150;
+  var el=$('#eraSel');
+  /* 一格走多远。宽屏上一排是九十二像素的条子，一百五十像素换一格正好跟手；
+     窄屏上中间摆的是整幅图，同样一百五十像素一滑就翻过去好几代 ——
+     按屏宽折算，一次顺手的横划正好换一代。 */
+  function esStep(){return esNarrow()?Math.max(150,Math.round(innerWidth*0.5)):150;}
   ES.dead=14;ES.drag=null;ES.moved=0;
   el.addEventListener('pointerdown',function(e){
     if(e.button!==undefined&&e.button!==0)return;          /* 只认左键 */
-    if(e.target.closest&&(e.target.closest('#esFoot')||e.target.closest('#esChron')))return;
+    /* 顶上那一条微缩窗自己横滚（原生 pan-x），别把那一拨当成拨图版 */
+    if(e.target.closest&&(e.target.closest('#esFoot')||e.target.closest('#esChron')
+                        ||e.target.closest('#esBar')))return;
     ES.drag={x:e.clientX,i:ES.i,live:false};ES.moved=0;
   });
   /* 移动与抬起挂在窗口上：拖到画外再松手也收得回来 */
@@ -6832,7 +6956,7 @@ function feSyncEngine(){
       if(ES.moved<ES.dead)return;
       d.live=true;d.x=e.clientX;return;                     /* 从越过死区那一点重新起算 */
     }
-    var step=Math.round((d.x-e.clientX)/STEP);
+    var step=Math.round((d.x-e.clientX)/esStep());
     if(d.i+step!==ES.i)esGo(d.i+step);
   });
   function up(){ES.drag=null;setTimeout(function(){ES.moved=0;},0);}
