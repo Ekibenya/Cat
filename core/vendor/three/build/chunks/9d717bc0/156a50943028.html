@@ -1873,10 +1873,6 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    这儿得先一律关掉：不关的话，宽屏上它们没有任何规则可依，
    就按 div／button 的本相排进台子里——三颗光秃秃的钮杵在立绘上方。 */
 #feArtVeil,#feArtX,#feArtP,#feArtN,#feArtOk{display:none}
-/* 這顆只在窄螢幕的立身與識人兩步出現，桌面用不著（那裡立繪一直在）。
-   得寫成 #feFoot #feArt —— 上頭 #feFoot .go 那條是 display:inline-block，
-   權重壓得過單一個 #feArt，只寫 id 會被蓋回去照樣顯示。 */
-#feFoot #feArt{display:none}
 #fePerPortraitImg{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;
   opacity:1;visibility:hidden;filter:drop-shadow(0 12px 14px rgba(31,26,19,.22));
   -webkit-user-drag:none;user-select:none}
@@ -2030,6 +2026,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    只写 .fePan 会被原样盖回去（面板会叠在一起）。 */
 @media (max-width:860px){
   #feHead{padding:0 12px;font-size:10px}
+  /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
+     .l 收得动，可提示本身没有收口，字就漫出自己的盒子。给它一个收口，
+     挤不下时收成省略号，压在钮上总归是读不成的。 */
+  #feFoot{padding:0 12px}
+  #feFoot .l{flex:1 1 auto;min-width:0}
+  #feHint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #feSteps i{display:none}
   #feSteps i.on{display:inline}
   #feStage{perspective:none}
@@ -2130,9 +2132,6 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       color:rgba(230,204,150,.86);font:12px/1.5 var(--mono);
       letter-spacing:.25em;text-indent:.25em;
       text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72),0 0 2px rgba(0,0,0,.95)}
-  #feWrap[data-step="per"] #feFoot #feArt,
-  #feWrap[data-step="soc"] #feFoot #feArt{display:inline-block}
-  #feWrap.artOn #feArt{color:var(--gold-hi)}
   .feIn{padding:12px 13px}
   .feMk .nm{font-size:9px}
   .feGrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
@@ -2905,7 +2904,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   </div>
 
   <div id="feFoot">
-    <span class="l"><span class="go back" id="feBack">返回<i>ESC</i></span><span class="go" id="feArt">立绘<i>IMAGO</i></span><span id="feHint">● FELINIA</span></span>
+    <span class="l"><span class="go back" id="feBack">返回<i>ESC</i></span><span id="feHint">● FELINIA</span></span>
     <span><span class="go" id="feGo">下一步<i>PERGERE ⏎</i></span></span>
   </div>
 </div>
@@ -5499,10 +5498,9 @@ function feOpen2(row,line){
   return true;
 }
 function feClose(){feArtClose();$('#feWrap').classList.remove('on');}
-/* 窄螢幕上立繪平時不佔位，按這顆才整屏浮出來，兩塊板同時淡掉。
-   pointerup 跟這一頁其餘的鈕一致（click 在觸控上會慢一拍）。 */
-try{$('#feArt').addEventListener('pointerup',function(e){
-  e.stopPropagation();$('#feWrap').classList.toggle('artOn');});}catch(_){}
+/* 脚上那颗「立绘」钮撤了：拣谁就浮谁，本来就不用再按一下。
+   连带它那条 artOn 的直接开关也一并撤掉——那条绕开了 feArtOpen，
+   不给出场记号（FE._artIn）也不认宽窄屏，留着迟早出岔子。 */
 function feIsOpen(){return $('#feWrap').classList.contains('on');}
 
 /* 内容换好之后要做的那一摊，原样从 feStep 里拆出来——转场分两半，
