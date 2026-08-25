@@ -1872,7 +1872,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 /* 幕布、✕、左右箭头三件只属于窄屏（样式全写在那条 media 里）。
    这儿得先一律关掉：不关的话，宽屏上它们没有任何规则可依，
    就按 div／button 的本相排进台子里——三颗光秃秃的钮杵在立绘上方。 */
-#feArtVeil,#feArtX,#feArtP,#feArtN{display:none}
+#feArtVeil,#feArtX,#feArtP,#feArtN,#feArtOk{display:none}
 /* 這顆只在窄螢幕的立身與識人兩步出現，桌面用不著（那裡立繪一直在）。
    得寫成 #feFoot #feArt —— 上頭 #feFoot .go 那條是 display:inline-block，
    權重壓得過單一個 #feArt，只寫 id 會被蓋回去照樣顯示。 */
@@ -2083,6 +2083,18 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   #feWrap.artOn[data-step="soc"] #feArtP,
   #feWrap.artOn[data-step="per"] #feArtN,
   #feWrap.artOn[data-step="soc"] #feArtN{display:flex}
+  /* 名字底下那一枚「确认」：看完了按它，立绘转出去，
+     底下那张单子顺势跳到这一位那一条。它和名牌一样挂在立绘盒子里，
+     所以转场时跟着一起走。台子是 pointer-events:none，这儿得自己开回来。 */
+  #feArtOk{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:2;
+      pointer-events:auto;padding:7px 24px;-webkit-appearance:none;appearance:none;
+      -webkit-tap-highlight-color:transparent;cursor:pointer;
+      border:1px solid rgba(235,219,184,.34);background:rgba(18,13,7,.72);
+      color:rgba(241,231,210,.92);font:11px/1.2 var(--mono);
+      letter-spacing:.24em;text-indent:.24em;
+      text-shadow:0 1px 4px #000}
+  #feWrap.artOn[data-step="per"] #feArtOk,
+  #feWrap.artOn[data-step="soc"] #feArtOk{display:block}
   /* 平时整个不在（display:none），按了才铺开——这样环形滑动的第一帧
      是在「已经铺开」之后才画的，不会被 display 切换吃掉。 */
   #feWrap[data-step="per"] #fePerPortrait,
@@ -2104,7 +2116,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   /* 脚下那个名字照对局里视觉小说的写法：不挂框、不垫底色，
      一样的暖金、一样疏的字距，靠一层黑影从画上浮出来。
      字距加在每个字后面（末一个也加），居中会整体偏左半格，补一样大的首行缩进抵平。 */
-  #feWrap.artOn #fePerPortraitCap{bottom:14px;padding:0;border:0;background:none;
+  #feWrap.artOn #fePerPortraitCap{bottom:52px;padding:0;border:0;background:none;
       color:rgba(230,204,150,.86);font:12px/1.5 var(--mono);
       letter-spacing:.25em;text-indent:.25em;
       text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72),0 0 2px rgba(0,0,0,.95)}
@@ -2821,6 +2833,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <div id="fePerPortrait" aria-live="polite">
       <img id="fePerPortraitImg" alt="">
       <div id="fePerPortraitCap"></div>
+      <!-- 窄屏才出现：看完了按这一枚，立绘转出去，底下那张单子跳到这一位那一条。
+           它挂在立绘这只盒子里，所以转的时候跟着一起转——名牌也是这么挂的。 -->
+      <button id="feArtOk" type="button">确认</button>
     </div>
 
     <div class="fePan" id="fePanL">
@@ -6210,13 +6225,50 @@ function feArtOn(){
   try{return feNarrow()&&$('#feWrap').classList.contains('artOn')
            &&(FE.step==='per'||FE.step==='soc');}catch(_){return false;}
 }
-function feArtClose(){try{$('#feWrap').classList.remove('artOn');}catch(_){}}
+/* 收立绘也转一圈：出场是从右边转进来，收就朝左转出去——
+   和换人时那半程一模一样的 .pTurn，只是转完不再有人转回来。
+   转完再撤 artOn：先撤的话元素当场 display:none，动画一帧都看不见。 */
+function feArtClose(){
+  try{
+    var w=$('#feWrap');if(!w||!w.classList.contains('artOn'))return;
+    var box=$('#fePerPortrait');
+    if(!box||!feNarrow()){w.classList.remove('artOn');return;}
+    /* 顶掉还在飞的那一轮换人（fePortTurn），免得它半路把类摘了、把图换了 */
+    box._run=(box._run||0)+1;
+    if(box._t){clearTimeout(box._t);box._t=0;}
+    if(box._g){clearTimeout(box._g);box._g=0;}
+    box.classList.remove('pEnter');
+    box.classList.add('pTurn');
+    if(w._artT)clearTimeout(w._artT);
+    w._artT=setTimeout(function(){
+      w._artT=0;w.classList.remove('artOn');box.classList.remove('pTurn');
+    },FE_PTURN);
+  }catch(_){try{$('#feWrap').classList.remove('artOn');}catch(_2){}}
+}
+/* 按了「确认」之后：底下那张单子跳到刚才看的那一位那一条。
+   不用 scrollIntoView——那个会把整页一起滚。自己找到真正会滚的那只盒子，
+   把选中的一条挪到它正中。 */
+function feArtJump(){
+  try{
+    var el=document.querySelector(FE.step==='soc'?'#feSocList .feCard.cur':'#fePreList .fePre.on');
+    if(!el)return;
+    var sc=el.parentNode;
+    while(sc&&sc!==document.body&&sc.scrollHeight-sc.clientHeight<=4)sc=sc.parentNode;
+    if(!sc||sc===document.body)return;
+    var er=el.getBoundingClientRect(),sr=sc.getBoundingClientRect();
+    var to=sc.scrollTop+(er.top-sr.top)-(sr.height-er.height)/2;
+    to=Math.max(0,Math.min(to,sc.scrollHeight-sc.clientHeight));
+    try{sc.scrollTo({top:to,behavior:'smooth'});}catch(_){sc.scrollTop=to;}
+  }catch(_){}
+}
 function feArtOpen(){
   if(!feNarrow())return;
   var w=$('#feWrap');if(!w||w.classList.contains('artOn'))return;
   /* 从「没开着」到「开着」这一下非转一圈不可：立绘本来藏着，
      不给这个记号的话，同一位再点一次会撞上 fePerPortrait 那条
      「同一张就别再转」的闸，人直接杵在那儿，没有出场。 */
+  if(w._artT){clearTimeout(w._artT);w._artT=0;}          /* 上一次收窗还没落定就又开了 */
+  var box=$('#fePerPortrait');if(box)box.classList.remove('pTurn','pEnter');
   FE._artIn=1;w.classList.add('artOn');
 }
 /* 立绘浮着的时候翻人：左右滑，或者按两边那对箭头。两条路同一套环形滑动，
@@ -6245,7 +6297,7 @@ function feArtOpen(){
     var w=$('#feWrap');if(!w)return;
     w.addEventListener('pointerdown',function(e){
       if(!feArtOn()){reset();return;}
-      if(e.target&&e.target.closest&&e.target.closest('#feArtX,#feArtP,#feArtN'))return;
+      if(e.target&&e.target.closest&&e.target.closest('#feArtX,#feArtP,#feArtN,#feArtOk'))return;
       S.id=e.pointerId;S.x=e.clientX;S.y=e.clientY;S.dx=0;S.dy=0;S.moved=0;
     },true);
     w.addEventListener('pointermove',function(e){
@@ -6272,6 +6324,13 @@ function feArtOpen(){
     });
     var x=$('#feArtX');
     if(x)x.addEventListener('click',function(e){e.stopPropagation();feArtClose();});
+    /* 「确认」：转出去，转完把单子挪到刚才看的那一位那一条。
+       挪要等转完——转的时候底下那张单子正被幕布压着，先挪看不见。 */
+    var ok=$('#feArtOk');
+    if(ok)ok.addEventListener('click',function(e){
+      e.stopPropagation();feArtClose();
+      setTimeout(feArtJump,FE_PTURN+40);
+    });
     /* 两边那对箭头：整屏一划够不着的手，按一下也能翻。
        它们浮在幕布之上，点了不能连带把立绘收掉。 */
     var pv=$('#feArtP');
