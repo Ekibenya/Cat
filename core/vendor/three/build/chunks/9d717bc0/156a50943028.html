@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=4">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=5">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -619,7 +619,9 @@ html.lux #esBrand b{color:#4a4237}
       transition:background .2s,color .2s}
 #game .gSend:hover{background:var(--gold);color:#e9e3d6}
 /* right MFD — TABVLARIVM */
-#game .gMfd{--mut:#5f5c53;position:absolute;right:0;top:46px;bottom:0;width:322px;overflow-y:auto;z-index:20;
+/* z-index 要压得过视觉小说那扇窗（#pnTx 是 25）。原来是 20，窗子一开、
+   尤其是全屏那一档（窗子铺满整屏），情报台整叠就被盖在底下，读不着也点不着。 */
+#game .gMfd{--mut:#5f5c53;position:absolute;right:0;top:46px;bottom:0;width:322px;overflow-y:auto;z-index:28;
       border-left:1px solid rgba(19,18,13,.14);background:rgba(235,229,215,.26);padding:20px 18px 34px}
 .mSec{margin-bottom:26px}
 .mHead{font-size:12px;letter-spacing:.3em;color:var(--txt);margin-bottom:13px}
@@ -2282,10 +2284,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   <div id="pnTx"><div id="vnIsle"><img id="vnBgA" alt=""><img id="vnBgB" alt=""><div id="vnEnsemble"></div><div id="vnWash"></div><div id="vnCast"></div><div id="vnEra"></div><div id="vnLoc"></div><div id="vnSpeaker"></div><button id="vnZoom" type="button" title="点一下换一档：默认 → 放大 → 全屏 → 收起">⤢</button><button id="vnHome" type="button" title="窗子挪过位了，点一下归位">⤾</button><div id="vnTalk"><b id="vnTalkWho"></b><div id="vnTalkBody"></div><i id="vnTalkNum"></i><i id="vnTalkTip">▼</i><button id="vnTalkX" type="button" title="收起对话框">✕</button></div><button id="vnReplay" type="button" title="把这一回从头念一遍">▸&nbsp;念这一回</button></div>
   </div>
   <div class="g3dRail">
-    <div class="gArr" id="arr3d" title="视觉小说绘卷　点一下换一档：默认 → 放大 → 全屏 → 收起">
+    <div class="gArr" id="arr3d" title="视觉小说　点一下换一档：默认 → 放大 → 全屏 → 收起">
       <div class="win"><canvas class="m3d" width="128" height="88"></canvas></div>
       <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2.6 21 7.4v9.2L12 21.4 3 16.6V7.4z"/><path d="M3 7.4l9 4.8 9-4.8M12 12.2v9.2"/></svg></div>
-      <span class="t">绘卷</span></div>
+      <span class="t">视觉小说</span></div>
   </div>
   <div class="gPanel" id="pnMap">
     <div id="gmMap" data-nodrag><div id="gmMapIn"></div></div>
@@ -6020,9 +6022,9 @@ function felPix(cv,img,opt){
   }
   requestAnimationFrame(fr);
 }
-/* 这一份只给对局屏的绘卷用（在另一个文件里：felinia-vn.js）。
+/* 这一份只给对局屏的视觉小说用（在另一个文件里：felinia-vn.js）。
    铸局这一屏原来也用它，换人时人碎了又砌，看着闹——改走环形滑动（fePortTurn）。
-   两处的差别在于做的是哪件事：绘卷是「这一位显影出场」，一层层浮出来才对；
+   两处的差别在于做的是哪件事：视觉小说是「这一位显影出场」，一层层浮出来才对；
    铸局这一屏是「翻到下一位」，翻页就该像翻页。 */
 try{window.felPix=felPix;}catch(_){}
 /* 换人那一趟。与 feStep 换步同一套：先朝左转出去，图取到了再换上，
@@ -6573,7 +6575,7 @@ function gameShow(){
   gmActsFresh();
   GAME.on=true;gEl.classList.add('show');gEl.setAttribute('data-pg','narr');
   /* 桌面端进入游戏默认展开天下面板（默认条档） */
-  if(true){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');setTimeout(zj3dTick,300);} /* 视觉小说绘卷默认展开 */
+  if(true){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');setTimeout(zj3dTick,300);} /* 视觉小说视觉小说默认展开 */
   /* 这里直接改了 txOpen 与 class，绕过了展开／收起两钮的重绘——不补这一脚，
      钮的灰态会一直停在「脚本刚解析时」的样子。 */
   try{if(window.__arrPaint)window.__arrPaint();}catch(_){}
@@ -7786,7 +7788,7 @@ function fmtBody(par){
     .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」');
 }
 var TYPE_GEN=0;   /* 代际令牌：换开局/读档/重演时旧打字链立刻失效 */
-/* 绘卷全屏时底下那只对话框在另一个文件里（felinia-vn.js），
+/* 视觉小说全屏时底下那只对话框在另一个文件里（felinia-vn.js），
    它要按玩家自己调的字速打字，也要知道这一回是不是还在流——
    还在流就别抢着播，等这一回落定再从头念。 */
 try{
@@ -9299,7 +9301,7 @@ function hDrag(el){
    那几条字正好落在间距里，是这条轨道上最常被扫到的地方）。
 
    轨道的框只在「一枚都没亮着」的时候重量。理由不是省事，是这两条轨道会挪：
-   #game 没开的时候量到的全是零，开了局才有位置；--ui 一变、绘卷那一栏收放，
+   #game 没开的时候量到的全是零，开了局才有位置；--ui 一变、视觉小说那一栏收放，
    位置也跟着走。改用一个量出来的边界提前返回，就会被开局前那份零锁死——
    进了局往左扫，边界还停在 40，永远早退，这一栏再也不亮。
    所以边界写成固定的 200（两条轨道都在 left:3～6，宽 76 上下，够宽了），
@@ -9807,7 +9809,7 @@ function applyGlass(){
        底色不该有两套。 */
     +'.gPanel,#pnTx{background:rgba(237,231,217,'+(.04+.16*a).toFixed(2)+') !important}'
     /* 地图·装备·商店三扇一起再实一档。它们是成列的字与数目，
-       底下那层三维画面透太多，字就浮在花纹上读不动。绘卷（#pnTx）不在此列。 */
+       底下那层三维画面透太多，字就浮在花纹上读不动。视觉小说（#pnTx）不在此列。 */
     +'#game #pnMap,#game #pnArm,#game #pnShop'
     +'{background:rgba(237,231,217,'+(.16+.26*a).toFixed(2)+') !important}'
     /* 情报台那六扇又拆出来单给一档更薄的。
@@ -13858,7 +13860,7 @@ function svLoad(v){
     gmActsFresh();
   }
 }
-/* ═══ 绘卷这扇窗：自己的档位钮，以及可以拖到任意位置 ═══
+/* ═══ 视觉小说这扇窗：自己的档位钮，以及可以拖到任意位置 ═══
    拖动的做法照 ghost 那张卡里那一套：按住窗身（避开钮与输入框）拖，
    位移记进 sessionStorage（刷新前一直记着），clamp 保证窗缘不出视口，
    挪过位就在窗上浮出一枚归位钮。
@@ -15158,11 +15160,65 @@ function railMapThumb(){
    所以拷完抽查几个点：真有像素就用，全黑就退回自己画一张地平线示意，
    总好过挂一块死黑的方块。收起状态下画面本来就没有，直接画示意。 */
 function rail3dThumb(){
-  if(window.__ZJ3D_OFF__)return;   /* 三维整层停用，这一枚连同那一列钮都收起来了 */
+  /* 三维那一层在这张卡上整个停用（见 __ZJ3D_OFF__ 那一行的理由），
+     可这一枚缩略窗现在照的不是三维，是视觉小说那一层——所以不能在这儿就掉头走。
+     停用只跳过下面拷 WebGL 画布与那张地平线示意的老路子。 */
   var c=document.querySelector('#arr3d .m3d');if(!c)return;
   var g=c.getContext('2d');if(!g)return;
   var W=c.width,H=c.height,live=false;
+  /* ── 视觉小说这一层是 DOM 拼的（一张背景图 + 几张立绘画布），不是 WebGL。
+     底下那段照 WebGL 找画布的老路子在这张卡上永远扑空，缩略窗于是一直画着
+     那张退而求其次的地平线示意——点开是人和城，缩略窗里是三根竖条。
+     这儿照着 #vnIsle 的比例把它缩画一遍：背景按 cover 铺满，立绘按各自
+     在框里的位置与 object-fit:contain 的实际落位贴上去。
+     这张画布一变，整页的滤镜与毛玻璃就要重算一遍，所以内容没变就不重画。 */
+  if(GAME.txOpen){
+    var isle=document.getElementById('vnIsle');
+    if(isle){
+      var ir=isle.getBoundingClientRect();
+      var bg=null,q,im;
+      var bgs=[document.getElementById('vnBgA'),document.getElementById('vnBgB')];
+      for(q=0;q<2;q++){
+        im=bgs[q];if(!im||!im.naturalWidth)continue;
+        var op=1;try{op=parseFloat(getComputedStyle(im).opacity)||0;}catch(_){}
+        if(op>.5)bg=im;
+      }
+      var acts=isle.querySelectorAll('#vnCast canvas'),sig=[W,H,bg?bg.src:''];
+      for(q=0;q<acts.length;q++)sig.push(acts[q].getAttribute('data-name')||q);
+      sig=sig.join('|');
+      if(c._vsig===sig&&ir.width>4)return;
+      if(ir.width>4){
+        c._vsig=sig;
+        g.clearRect(0,0,W,H);
+        if(bg){
+          try{
+            var sc=Math.max(W/bg.naturalWidth,H/bg.naturalHeight);
+            var dw=bg.naturalWidth*sc,dh=bg.naturalHeight*sc;
+            g.drawImage(bg,(W-dw)/2,(H-dh)/2,dw,dh);live=true;
+          }catch(_){}
+        }
+        for(q=0;q<acts.length;q++){
+          var el=acts[q];if(!el.width||!el.height)continue;
+          var r=el.getBoundingClientRect();
+          if(r.width<2||r.height<2)continue;
+          /* 屏上是 object-fit:contain + object-position:center bottom：
+             盒子比人高出好几倍，照盒子贴会把人拉扁。这里把实际落位算出来。 */
+          var bw2=r.width/ir.width*W,bh2=r.height/ir.height*H;
+          var k=Math.min(bw2/el.width,bh2/el.height);
+          var iw2=el.width*k,ih2=el.height*k;
+          var x=(r.left-ir.left)/ir.width*W+(bw2-iw2)/2;
+          var y=(r.top-ir.top)/ir.height*H+(bh2-ih2);
+          try{g.drawImage(el,x,y,iw2,ih2);live=true;}catch(_){}
+        }
+        if(live)return;
+      }
+    }
+  }
+  c._vsig='';
   g.clearRect(0,0,W,H);
+  /* 三维停用时没有画布可拷，那张地平线示意也不该再画——窗里明明是人和城。
+     视觉小说那一层还没铺好（刚进局、图还在路上）就先空着，下一拍再来。 */
+  if(window.__ZJ3D_OFF__)return;
   if(GAME.txOpen){
     var hosts=['zjScene3D','mdScene3D','modScene3D'],src=null,i,j;
     for(i=0;i<hosts.length&&!src;i++){
@@ -15347,7 +15403,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
      那条规则本是给图片字体三维包写的，它们确实不变；这三支是会改的代码。
      光改文件救不了已经存下的那一份（immutable 是存进去时就写死的），换掉地址才行。
      所以改过其中任何一支，就把这里的版本号加一：这一页本身是 no-cache，改了就到。 -->
-<script src="/core/res/vn/felinia-vn.js?v=4"></script>
+<script src="/core/res/vn/felinia-vn.js?v=5"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <script src="/core/res/ko/felinia-ko.js?v=2"></script>
 </body>

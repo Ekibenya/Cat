@@ -224,13 +224,18 @@
     var el=tEl('vnReplay');if(!el)return;
     el.classList.toggle('on',isBig()&&!T.on&&T.segs.length>0);
   }
-  /* 全屏时输入条（#gInput）盖在绘卷上头（它 z-index 27、绘卷 25），
+  /* 全屏时输入条（.gInput）盖在视觉小说窗上头（它 z-index 27、窗子 25），
      对话框贴着底就被它压住半截。这里量一次它的高，把框抬到它上面去。
-     写死一个数是不行的：手机、字号、安全区都会让它变高。 */
+     写死一个数是不行的：手机、字号、安全区都会让它变高。
+     只有全屏这一档要让：小窗与放大两档的窗子在屏幕上半，输入条在最底下，压不着。
+     不分档一律留这一段的话，立绘脚下的名牌会被顶起六十几像素——顶到人脸上去。 */
   function talkGap(){
     var isle=tEl('vnIsle');if(!isle)return;
-    var g=document.querySelector('#game .gInput'),h=0;
-    try{if(g){var r=g.getBoundingClientRect();if(r.height>4)h=Math.round(r.height)+6;}}catch(_){}
+    var h=0;
+    if(isBig()){
+      try{var g=document.querySelector('#game .gInput');
+          if(g){var r=g.getBoundingClientRect();if(r.height>4)h=Math.round(r.height)+6;}}catch(_){}
+    }
     isle.style.setProperty('--vnGap',h+'px');
   }
   function talkPaint(){

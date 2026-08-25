@@ -57,7 +57,7 @@
    立绘是画布（装不下别的元素），而且它的盒子比人高出好几倍——
    靠 object-fit 裁出上半身，名字挂在它身上会飘到画外去。
    说话的那一位亮一档，和立绘那边同一个记号。 */
-#vnCast .vnName{position:absolute;bottom:calc(var(--vnTalkH,0px) + var(--vnGap,0px) + 8px);z-index:4;
+#vnCast .vnName{position:absolute;bottom:calc(var(--vnTalkH,0px) + var(--vnGap,0px) + 5px);z-index:4;
   transform:translateX(-50%);padding:3px 9px;white-space:nowrap;pointer-events:none;
   border:1px solid rgba(201,155,63,.42);background:rgba(18,13,7,.74);
   color:rgba(241,231,210,.86);font:10px/1.25 var(--mono);font-weight:400;letter-spacing:.14em;
@@ -95,8 +95,9 @@
   border:1px solid rgba(235,219,184,.26);background:rgba(18,13,7,.6);
   color:rgba(241,231,210,.7);font:11px/1 var(--mono);cursor:pointer}
 #vnTalkX:hover{border-color:rgba(201,155,63,.7);color:#fff}
-#arr3d .t{font-size:0}
-#arr3d .t::before{content:'绘卷';font-size:8px}
+/* 轨上的名字有四个字，字距收一档，免得连同「·全屏」一起横着摊出去。 */
+#arr3d .t{font-size:0;letter-spacing:.1em}
+#arr3d .t::before{content:'视觉小说';font-size:8px}
 #game.txOpen.tx2 #arr3d .t::after{content:'·放大';font-size:8px}
 #game.txOpen.txBig #arr3d .t::after{content:'·全屏';font-size:8px}
 @media(max-width:760px){
