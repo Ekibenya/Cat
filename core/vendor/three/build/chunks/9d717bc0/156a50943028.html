@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=6">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1869,6 +1869,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   pointer-events:none;align-items:flex-end;justify-content:center;overflow:visible}
 #feWrap[data-step="per"] #fePerPortrait,
 #feWrap[data-step="soc"] #fePerPortrait{display:flex}
+/* 幕布、✕、左右箭头三件只属于窄屏（样式全写在那条 media 里）。
+   这儿得先一律关掉：不关的话，宽屏上它们没有任何规则可依，
+   就按 div／button 的本相排进台子里——三颗光秃秃的钮杵在立绘上方。 */
+#feArtVeil,#feArtX,#feArtP,#feArtN{display:none}
 /* 這顆只在窄螢幕的立身與識人兩步出現，桌面用不著（那裡立繪一直在）。
    得寫成 #feFoot #feArt —— 上頭 #feFoot .go 那條是 display:inline-block，
    權重壓得過單一個 #feArt，只寫 id 會被蓋回去照樣顯示。 */
@@ -2039,16 +2043,63 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   /* 其余三步地图只是背景，板子可以占满 */
   #feWrap:not([data-step="loc"]) #fePanL{height:34%}
   #feWrap:not([data-step="loc"]) #fePanR{height:calc(66% - 18px)}
-  /* 立繪原本在窄螢幕整個關掉（上下兩塊板佔滿螢幕，中間沒有空檔擺）。
-     改成平時仍然不佔位，按了底下那顆「立繪」才整屏浮出來，兩塊板同時淡掉。 */
+  /* ── 拣人时立绘整屏浮出来 ──
+     窄屏上两块板把整屏占满，中间没有空档摆立绘，底下那颗「立绘」钮得自己去按——
+     等于没人看得到。改成拣哪一位就浮哪一位：背景压暗，立绘留真彩，
+     右上角一枚 ✕；点立绘以外任意地方也收。
+     出场用的是桌面换人那一套环形滑动（.pTurn/.pEnter）——原先这儿写了一条
+     transition:opacity 把它整条盖掉了，窄屏于是只剩淡入淡出。这次不盖，
+     改用 display 控制出没；透视也要还给台子，纯 rotateY 少了它就是平的。 */
+  #feWrap.artOn #feStage{z-index:8;perspective:1700px}
+  /* 台子整块是 pointer-events:none（板子自己再各开各的），
+     这三件挂在台子里就跟着继承了「不接点击」——幕布点不着、✕ 按不下、
+     箭头也翻不动。每一件都得自己把它开回来。 */
+  #feArtVeil{display:none;position:absolute;left:0;right:0;top:-52px;bottom:-44px;z-index:5;
+      background:rgba(8,6,4,.74);pointer-events:auto;touch-action:none;
+      -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  #feArtX{display:none;position:absolute;right:10px;top:-42px;z-index:7;
+      width:34px;height:34px;padding:0;align-items:center;justify-content:center;
+      pointer-events:auto;
+      border:1px solid rgba(235,219,184,.34);background:rgba(18,13,7,.72);
+      color:rgba(241,231,210,.9);font:14px/1 var(--mono);cursor:pointer}
+  #feWrap.artOn[data-step="per"] #feArtVeil,
+  #feWrap.artOn[data-step="soc"] #feArtVeil{display:block}
+  #feWrap.artOn[data-step="per"] #feArtX,
+  #feWrap.artOn[data-step="soc"] #feArtX{display:flex}
+  /* 两边最外沿那对箭头：整屏一划够不着的手，按一下也能翻人。
+     贴着屏幕左右缘、竖向居中，压在幕布之上（z 7）。 */
+  #feArtP,#feArtN{display:none;position:absolute;top:50%;transform:translateY(-50%);
+      z-index:7;width:38px;height:76px;padding:0;align-items:center;justify-content:center;
+      pointer-events:auto;
+      border:1px solid rgba(235,219,184,.28);background:rgba(18,13,7,.62);
+      color:rgba(241,231,210,.9);font:20px/1 var(--mono);cursor:pointer}
+  #feArtP{left:0;border-left:0}
+  #feArtN{right:0;border-right:0}
+  #feWrap.artOn[data-step="per"] #feArtP,
+  #feWrap.artOn[data-step="soc"] #feArtP,
+  #feWrap.artOn[data-step="per"] #feArtN,
+  #feWrap.artOn[data-step="soc"] #feArtN{display:flex}
+  /* 平时整个不在（display:none），按了才铺开——这样环形滑动的第一帧
+     是在「已经铺开」之后才画的，不会被 display 切换吃掉。 */
   #feWrap[data-step="per"] #fePerPortrait,
-  #feWrap[data-step="soc"] #fePerPortrait{display:flex;left:0;right:0;top:38px;bottom:46px;
-      z-index:6;opacity:0;pointer-events:none;transition:opacity .26s}
+  #feWrap[data-step="soc"] #fePerPortrait{display:none;left:0;right:0;top:-14px;bottom:6px;z-index:6}
+  #feWrap.artOn[data-step="per"] #fePerPortrait,
+  #feWrap.artOn[data-step="soc"] #fePerPortrait{display:flex}
   #feWrap:not([data-step="per"]):not([data-step="soc"]) #fePerPortrait{display:none}
-  #feWrap.artOn #fePerPortrait{opacity:1}
+  /* 图框收成图本身那么大：这样「立绘以外」才是真的以外——
+     铺满整框的话，画面上明明是空白的地方也算按在立绘上，点了收不掉。
+     图上接点（不收）、框上不接（漏给幕布，收）。 */
+  #feWrap.artOn #fePerPortraitImg{width:auto;height:auto;max-width:100%;max-height:100%;
+      pointer-events:auto;touch-action:none}
   #feWrap.artOn #fePanL,#feWrap.artOn #fePanR{opacity:.06;pointer-events:none;
       transition:opacity .26s}
-  #feWrap.artOn #fePerPortraitCap{font-size:11px;bottom:14px;letter-spacing:.1em}
+  /* 脚下那个名字照对局里视觉小说的写法：不挂框、不垫底色，
+     一样的暖金、一样疏的字距，靠一层黑影从画上浮出来。
+     字距加在每个字后面（末一个也加），居中会整体偏左半格，补一样大的首行缩进抵平。 */
+  #feWrap.artOn #fePerPortraitCap{bottom:14px;padding:0;border:0;background:none;
+      color:rgba(230,204,150,.86);font:12px/1.5 var(--mono);
+      letter-spacing:.25em;text-indent:.25em;
+      text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72),0 0 2px rgba(0,0,0,.95)}
   #feWrap[data-step="per"] #feFoot #feArt,
   #feWrap[data-step="soc"] #feFoot #feArt{display:inline-block}
   #feWrap.artOn #feArt{color:var(--gold-hi)}
@@ -2751,6 +2802,14 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
        露出地图的缝收——与情报台那一叠同一套透视（perspective 520，±10°，
        scaleY 抵掉近边被放大的那一点）。 -->
   <div id="feStage">
+    <!-- 窄屏拣人时立绘整屏浮出来，这两件跟着一起出：一块压暗背景兼接「立绘外」
+         那一点的幕布，和右上角一枚 ✕。两件都摆在 #feStage 里，
+         因为立绘也在这儿——层叠得在同一个上下文里排，才压得住彼此。
+         幕布用负的 inset 探出台子，把上下那两条也一并盖住。宽屏一律不出现。 -->
+    <div id="feArtVeil"></div>
+    <button id="feArtX" type="button" aria-label="收起立绘">✕</button>
+    <button id="feArtP" type="button" aria-label="上一位">‹</button>
+    <button id="feArtN" type="button" aria-label="下一位">›</button>
     <div id="fePerPortrait" aria-live="polite">
       <img id="fePerPortraitImg" alt="">
       <div id="fePerPortraitCap"></div>
@@ -5406,7 +5465,7 @@ function feOpen2(row,line){
   feStep('loc',0,1);
   return true;
 }
-function feClose(){$('#feWrap').classList.remove('on');}
+function feClose(){feArtClose();$('#feWrap').classList.remove('on');}
 /* 窄螢幕上立繪平時不佔位，按這顆才整屏浮出來，兩塊板同時淡掉。
    pointerup 跟這一頁其餘的鈕一致（click 在觸控上會慢一拍）。 */
 try{$('#feArt').addEventListener('pointerup',function(e){
@@ -5931,6 +5990,7 @@ function fePerRender(){
 function fePerPick(k){
   if(k<0){FE.hero=feMake(FE.era,null,'hero'+(FE.salt||0));FE.hero.self=1;FE.hero.pre=-1;}
   else{var s=FE.pool[k];FE.hero=feMake(FE.era,s.fig,s.salt);FE.hero.pre=k;FE.hero.self=0;}
+  feArtOpen();                           /* 窄屏：拣了谁就把谁的立绘浮出来 */
   fePerRender();feFootSync();
 }
 function fePerForm(){
@@ -6085,18 +6145,15 @@ function fePortTurn(src,alt,capText){
   },2600);
   im.src=src;
 }
-function fePerPortrait(person,empty){
-  var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=empty?null:(person||FE.hero);
-  if(!img||!cap||!FE.vn){return;}
-  function blank(){
-    var box=$('#fePerPortrait');
-    if(box){box._run=(box._run||0)+1;box.classList.remove('pTurn','pEnter');}
-    img.removeAttribute('src');img.classList.remove('ready');img.alt='';
-  }
-  if(!h){blank();cap.textContent='';return;}
+/* 这一位配哪一张立绘、名牌上写什么——拆出来单放，
+   因为窄屏那只整屏浮出来的立绘要的是同一份答案：
+   两处各算一遍，早晚会算出两张不同的图来。
+   算不出来（本代没有名录、没有这一族的图）就交回 null。 */
+function fePortOf(h){
+  if(!h||!FE.vn)return null;
   var era=null,i;
   for(i=0;i<FE.vn.eras.length;i++)if(FE.vn.eras[i].eraIndex===FE.era.i){era=FE.vn.eras[i];break;}
-  if(!era){blank();cap.textContent='';return;}
+  if(!era)return null;
   var exact=null;
   for(i=0;i<era.assets.single.length;i++){
     if(era.assets.single[i].species===h.sp&&era.assets.single[i].character===h.n){
@@ -6105,21 +6162,116 @@ function fePerPortrait(person,empty){
   }
   var pool=era.assets.single.filter(function(a){return a.species===h.sp&&!a.character;});
   if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===h.sp;});
-  if(!pool.length){blank();cap.textContent='';return;}
+  if(!pool.length)return null;
   var idx;
   if(h.pre>=0){
     var same=[];
     for(i=0;i<FE.pool.length;i++)if(FE.pool[i].sp===h.sp&&FE.pool[i].fig)same.push(i);
     idx=Math.max(0,same.indexOf(h.pre))%pool.length;
   }else idx=feHash(h.id+'|'+h.sp)%pool.length;
-  var src=exact?exact.src:pool[idx].src;
-  var who=h.n+'（'+(h.sp==='cat'?'猫娘':'人类')+'）';
-  var capText=h.n+'　·　'+(h.sp==='cat'?'猫娘':'人类');
-  /* 同一张就别再转一遍：识人那一步点谁都会重跑这个函数，
-     不拦住的话，同一个人的立绘会在原地反复转出去又转回来。 */
-  if(img.getAttribute('src')===src){cap.textContent=capText;img.classList.add('ready');return;}
-  fePortTurn(src,who,capText);
+  var sp=(h.sp==='cat'?'猫娘':'人类');
+  return {src:exact?exact.src:pool[idx].src,who:h.n+'（'+sp+'）',cap:h.n+'　·　'+sp};
 }
+function fePerPortrait(person,empty){
+  var img=$('#fePerPortraitImg'),cap=$('#fePerPortraitCap'),h=empty?null:(person||FE.hero);
+  if(!img||!cap||!FE.vn){return;}
+  function blank(){
+    var box=$('#fePerPortrait');
+    if(box){box._run=(box._run||0)+1;box.classList.remove('pTurn','pEnter');}
+    img.removeAttribute('src');img.classList.remove('ready');img.alt='';
+  }
+  var got=h?fePortOf(h):null;
+  if(!got){blank();cap.textContent='';return;}
+  /* 同一张就别再转一遍：识人那一步点谁都会重跑这个函数，
+     不拦住的话，同一个人的立绘会在原地反复转出去又转回来。
+     刚把立绘唤出来那一下例外（FE._artIn）——那是出场，非转不可。 */
+  if(!FE._artIn&&img.getAttribute('src')===got.src){cap.textContent=got.cap;img.classList.add('ready');return;}
+  FE._artIn=0;
+  fePortTurn(got.src,got.who,got.cap);
+}
+
+/* ── 窄屏：拣人时把立绘整屏浮出来 ──
+   窄屏上两块板把整屏占满，中间没有空档摆立绘，底下那颗「立绘」钮得自己去按——
+   等于没人看得到。改成拣哪一位就浮哪一位：背景压暗，右上角一枚 ✕，
+   点立绘以外任意地方也收。出场用的就是桌面那一套环形滑动，不另做一份。
+   宽屏一律不碰：那边立绘本来就常驻在两块板中间的缝里。 */
+function feNarrow(){
+  try{return window.matchMedia('(max-width:860px)').matches;}catch(_){return innerWidth<=860;}
+}
+function feArtOn(){
+  try{return feNarrow()&&$('#feWrap').classList.contains('artOn')
+           &&(FE.step==='per'||FE.step==='soc');}catch(_){return false;}
+}
+function feArtClose(){try{$('#feWrap').classList.remove('artOn');}catch(_){}}
+function feArtOpen(){
+  if(!feNarrow())return;
+  var w=$('#feWrap');if(!w||w.classList.contains('artOn'))return;
+  /* 从「没开着」到「开着」这一下非转一圈不可：立绘本来藏着，
+     不给这个记号的话，同一位再点一次会撞上 fePerPortrait 那条
+     「同一张就别再转」的闸，人直接杵在那儿，没有出场。 */
+  FE._artIn=1;w.classList.add('artOn');
+}
+/* 立绘浮着的时候翻人：左右滑，或者按两边那对箭头。两条路同一套环形滑动，
+   背后两块板跟着换成同一位。立身那一步「看谁」就是「演谁」；
+   识人那一步只换看的那一位——带不带进这一局仍旧只由点击决定，
+   滑一下就把人带进去太容易误伤。 */
+(function(){
+  var S={id:null,x:0,y:0,dx:0,dy:0,moved:0};
+  function list(){
+    var out=[];
+    if(FE.step==='per'){out.push(-1);FE.pool.forEach(function(p,k){if(p.fig)out.push(k);});}
+    else if(FE.step==='soc'){FE.pool.forEach(function(p,k){
+      if(!(FE.hero&&FE.hero.pre===k))out.push(k);});}
+    return out;
+  }
+  function cur(){return FE.step==='per'?(FE.hero?FE.hero.pre:-1):FE.cur;}
+  function go(d){
+    var L=list();if(L.length<2)return;
+    var i=L.indexOf(cur());if(i<0)i=0;
+    var k=L[(i+d+L.length)%L.length];
+    if(FE.step==='per')fePerPick(k);
+    else{FE.cur=k;feSocRender();feFootSync();}
+  }
+  function reset(){S.id=null;S.moved=0;}
+  try{
+    var w=$('#feWrap');if(!w)return;
+    w.addEventListener('pointerdown',function(e){
+      if(!feArtOn()){reset();return;}
+      if(e.target&&e.target.closest&&e.target.closest('#feArtX,#feArtP,#feArtN'))return;
+      S.id=e.pointerId;S.x=e.clientX;S.y=e.clientY;S.dx=0;S.dy=0;S.moved=0;
+    },true);
+    w.addEventListener('pointermove',function(e){
+      if(S.id===null||e.pointerId!==S.id)return;
+      S.dx=e.clientX-S.x;S.dy=e.clientY-S.y;
+      if(Math.abs(S.dx)>10&&Math.abs(S.dx)>Math.abs(S.dy))S.moved=1;
+    },true);
+    w.addEventListener('pointercancel',reset,true);
+    w.addEventListener('pointerup',function(e){
+      if(S.id===null||e.pointerId!==S.id)return;
+      var dx=S.dx,dy=S.dy,moved=S.moved;reset();
+      if(!feArtOn())return;
+      if(!moved||Math.abs(dx)<44||Math.abs(dx)<=Math.abs(dy))return;
+      /* 滑完紧跟着还会补一发 click，那一发落在幕布上就成了「点了立绘外」。
+         挂个短命的记号，让收窗那条认得出来这不是点。 */
+      FE._swipe=1;setTimeout(function(){FE._swipe=0;},280);
+      go(dx<0?1:-1);
+      e.preventDefault();e.stopPropagation();
+    },true);
+    var veil=$('#feArtVeil');
+    if(veil)veil.addEventListener('click',function(e){
+      if(FE._swipe)return;
+      e.stopPropagation();feArtClose();
+    });
+    var x=$('#feArtX');
+    if(x)x.addEventListener('click',function(e){e.stopPropagation();feArtClose();});
+    /* 两边那对箭头：整屏一划够不着的手，按一下也能翻。
+       它们浮在幕布之上，点了不能连带把立绘收掉。 */
+    var pv=$('#feArtP');
+    if(pv)pv.addEventListener('click',function(e){e.stopPropagation();go(-1);});
+    var nx=$('#feArtN');
+    if(nx)nx.addEventListener('click',function(e){e.stopPropagation();go(1);});
+  }catch(_){}
+})();
 
 /* ═══ 三 · 识人 ═══ */
 function feSocRender(){
@@ -6144,6 +6296,7 @@ function feSocTap(k){
   var i=FE.soc.indexOf(k);
   if(i>=0)FE.soc.splice(i,1);
   else if(FE.soc.length<5)FE.soc.push(k);
+  feArtOpen();                           /* 窄屏：点了谁就把谁的立绘浮出来 */
   feSocRender();feFootSync();
 }
 function feSocDoss(){
@@ -6496,6 +6649,10 @@ function feSyncEngine(){
         feNext();ev.preventDefault();ev.stopPropagation();}
       return;
     }
+    /* 立绘浮着的时候，ESC 先收它——那是眼下压在最上面的一层，
+       这一下要是直接退回上一步，人会觉得多退了一格。 */
+    if(ev.key==='Escape'&&feArtOn()){
+      feArtClose();ev.preventDefault();ev.stopPropagation();return;}
     if(ev.key==='Enter'){feNext();ev.preventDefault();ev.stopPropagation();}
     else if(ev.key==='Escape'){fePrev();ev.preventDefault();ev.stopPropagation();}
   },true);

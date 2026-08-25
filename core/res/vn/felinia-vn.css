@@ -26,11 +26,19 @@
 #game.tx2 #vnEnsemble img,#game.tx2 #vnEnsemble canvas{top:2%;bottom:auto;width:108%;height:160%}
 #game.txBig #vnCast .vnActor{top:auto;bottom:0;height:94%;max-width:46%}
 #game.txBig #vnEnsemble img,#game.txBig #vnEnsemble canvas{top:auto;bottom:0;width:96%;height:94%}
-#vnEra{position:absolute;left:13px;top:10px;z-index:5;max-width:62%;padding:5px 8px;
-  color:#f3ead8;background:rgba(22,16,9,.66);border-left:2px solid rgba(201,155,63,.8);
-  font:10px/1.45 var(--mono);letter-spacing:.12em;text-shadow:0 1px 4px #000}
-#vnEra b{display:block;font-weight:500;color:#d7b56d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#vnEra span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(243,234,216,.76)}
+/* 纪年与时地：原先是一块带底色和金色左边框的牌子，压在左上角那一位的头脸上。
+   撤掉底与框，照立绘脚下名牌（.vnName）与右上角地名（#vnLoc）同一种写法——
+   字直接落在画上，靠一层黑影浮出来。两行一金一浅，主次还在。 */
+#vnEra{position:absolute;left:13px;top:10px;z-index:5;max-width:62%;pointer-events:none;
+  font:11px/1.6 var(--mono);letter-spacing:.25em;
+  /* 比名牌多垫一层贴身的暗影：名牌落在画面下缘（多半是暗处），
+     这两行在左上角，背后常常是一整片亮天，只有散影撑不住。
+     贴身那一层不是描边，是把笔画根部压深一档，远看仍是「字直接落在画上」。 */
+  text-shadow:0 1px 6px #000,0 0 10px rgba(0,0,0,.72),0 0 2px rgba(0,0,0,.95)}
+#vnEra b{display:block;font-weight:400;color:rgba(230,204,150,.86);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vnEra span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:rgba(238,228,208,.72)}
 #vnLoc{position:absolute;right:12px;top:10px;z-index:5;writing-mode:vertical-rl;max-height:65%;overflow:hidden;
   color:rgba(230,204,150,.86);font:11px/1.5 var(--mono);letter-spacing:.25em;text-shadow:0 1px 6px #000}
 #vnSpeaker{position:absolute;left:13px;bottom:calc(var(--vnGap,0px) + 10px);z-index:5;padding:4px 8px;
@@ -115,7 +123,7 @@
   #game.tx2 #vnEnsemble img,#game.tx2 #vnEnsemble canvas{height:150%;width:114%}
   #game.txBig #vnCast .vnActor{top:auto;height:92%;max-width:52%}
   #game.txBig #vnEnsemble img,#game.txBig #vnEnsemble canvas{top:auto;height:92%;width:102%}
-  #vnEra{left:8px;top:7px;max-width:68%;font-size:8px}
+  #vnEra{left:8px;top:7px;max-width:68%;font-size:9px;letter-spacing:.18em}
   #vnLoc{right:7px;top:7px;font-size:9px}
   #vnSpeaker{left:8px;bottom:7px;font-size:8px}
   #vnZoom,#vnHome{right:6px;width:22px;height:22px;font-size:11px}
