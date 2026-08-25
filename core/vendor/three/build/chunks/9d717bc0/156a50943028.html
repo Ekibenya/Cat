@@ -2014,12 +2014,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    覆写必须用 #fePanL/#fePanR：上面那两条是 id 选择器，权重压得过 .fePan，
    只写 .fePan 会被原样盖回去（面板会叠在一起）。
 
-   倾斜从前在这儿整个关掉了（注释说「窄屏上只会把字挤糊」）。现在照搬宽屏那一份：
-   同一根 --feTilt、同一个绕 Y 轴的转法、同一个方向——上板 +8°、下板 -8°，
-   与宽屏的左板／右板一一对上。这两块在窄屏上是整幅宽的，转起来比宽屏那两条窄板
-   温和得多，字并不糊。
-   玻璃那一层（底色·边框·投影·blur(8px)）本来就没在窄屏另写过一条，
-   和宽屏本就是同一份，不必再抄。 */
+   静止时不倾斜：整幅宽的板子斜着摆，一屏的字全跟着歪，读起来累。
+   换步那一下照旧转（见下面 feTurn／feEnter）——那是「转过来」的动作，不是常态的姿势，
+   转完就正回来。透视留着，正是给那一下用的。
+   玻璃那一层的底色单给窄屏调薄了一档（见 applyGlass）：宽屏那两条窄板身后是纸底，
+   窄屏这两块几乎盖满整屏，同一个数看着就是一堵不透光的墙。 */
 @media (max-width:860px){
   #feHead{padding:0 12px;font-size:10px}
   /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
@@ -2037,14 +2036,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      留着横向手势只会误触——手指想往下翻档案，稍稍带一点横的就被拿去做别的事。
      min-width:0 是给里头的 grid／flex 用的：不写这一条，子项按内容的最小宽度
      撑开，板子被顶宽，字就被切在边上。 */
-  /* 左右各让 4%（原来 3%）：绕 Y 转过之后近的那一条竖边被透视放大，
-     贴着 3% 放会探出台子一两像素。宽屏那边靠 max-height 让，这儿让的是左右。 */
   #fePanL,#fePanR{left:4%;right:4%;width:auto;max-height:none;
     touch-action:pan-y;min-width:0;overflow-x:hidden}
-  /* 与宽屏同轴同向：上板取宽屏左板那一档（+），下板取右板那一档（-）。
-     只是不带 translateY——窄屏这两块是贴着上下沿放的，不走「竖向居中」那一套。 */
-  #fePanL{transform:rotateY(var(--feTilt))}
-  #fePanR{transform:rotateY(calc(var(--feTilt) * -1))}
+  #fePanL,#fePanR{transform:none}
   /* 换步那一下也照搬宽屏：两块一起朝左转出去，换完内容再一起从右边转回来。
      宽屏那几条带着 translateY(-50%)（那边两块是竖向居中的），窄屏这两块贴着上下沿放，
      照抄会把板子甩到画外去——所以逐条重写一遍，只去掉那个 translateY，
@@ -2061,16 +2055,16 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   #fePanL .feIn *,#fePanR .feIn *{min-width:0;max-width:100%}
   /* 长词、长地名不许把行顶宽，宁可折行 */
   #fePanL .feIn,#fePanR .feIn{overflow-wrap:anywhere;word-break:break-word}
-  /* 上下各让 12 像素（原来 6）：绕 Y 转过之后近的那一条竖边被透视放大，
-     连带这一侧的上下角也往外探出去几像素——贴着 6 像素放会顶出台子。 */
-  #fePanL{top:12px;bottom:auto}
-  #fePanR{top:auto;bottom:12px}
-  /* 择地那一步中间要留出地图给手点，两块都收短 */
-  #feWrap[data-step="loc"] #fePanL{height:30%}
-  #feWrap[data-step="loc"] #fePanR{height:26%}
-  /* 其余三步地图只是背景，板子可以占满 */
-  #feWrap:not([data-step="loc"]) #fePanL{height:34%}
-  #feWrap:not([data-step="loc"]) #fePanR{height:calc(66% - 18px)}
+  #fePanL{top:10px;bottom:auto}
+  #fePanR{top:auto;bottom:10px}
+  /* 两块都比从前收一档。原来非择地那两步是 34% + 66%，加起来正好一整屏，
+     上下贴死、中间不留缝——一眼看过去就是两块板把屏幕填满了，密不透风。
+     现在各让一截，中间留出一条空：择地那一步那条缝是给地图的（图会自己铺满它），
+     其余几步那条缝是留白，让两块板各自看得出边界。 */
+  #feWrap[data-step="loc"] #fePanL{height:26%}
+  #feWrap[data-step="loc"] #fePanR{height:22%}
+  #feWrap:not([data-step="loc"]) #fePanL{height:29%}
+  #feWrap:not([data-step="loc"]) #fePanR{height:calc(55% - 18px)}
   /* ── 拣人时立绘整屏浮出来 ──
      窄屏上两块板把整屏占满，中间没有空档摆立绘，底下那颗「立绘」钮得自己去按——
      等于没人看得到。改成拣哪一位就浮哪一位：背景压暗，立绘留真彩，
@@ -10164,6 +10158,15 @@ function applyGlass(){
        整幅世界图上的，身后连地名标记一起动，同一档下字压不住底纹。 */
     +'#feWrap[data-step="loc"] .feGl'
     +'{background:rgba(250,249,246,'+(.58+.26*a).toFixed(2)+') !important}'
+    /* 窄屏单给一档薄得多的。宽屏那两条板子只占屏幕的三成宽，身后大片纸底露着，
+       所以 .7 上下看着仍是「一层玻璃」；窄屏这两块几乎盖满整屏，同一个数
+       等于把整面屏糊上一层奶油，肉眼看就是不透明。系数与起点一起压下来，
+       毛玻璃那 8 像素照旧——底薄了正靠它把身后的马赛克世界图糊开，字才压得住。 */
+    +'@media (max-width:860px){'
+    +'.feGl{background:rgba(250,249,246,'+(.26+.22*a).toFixed(2)+') !important}'
+    +'#feWrap[data-step="loc"] .feGl'
+    +'{background:rgba(250,249,246,'+(.30+.22*a).toFixed(2)+') !important}'
+    +'}'
     /* 全屏档背后被自己盖满，透太多只会把正文透出来糊成一片，单给一档更实的 */
     +'#game.txBig #pnTx{background:rgba(237,231,217,'+(.28+.18*a).toFixed(2)+') !important}'
     /* 视觉小说进了全屏，情报台那六扇与缩略那一列就浮在整幅立绘上了。
