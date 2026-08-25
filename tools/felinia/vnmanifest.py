@@ -41,6 +41,7 @@ def main() -> None:
     result = []
     all_assets = []
     source_only = []
+    portrait_coverage = {"roster": 0, "exact": 0, "missing": []}
 
     folders = sorted(p for p in IMAGE_ROOT.iterdir() if p.is_dir() and re.match(r"^\d\d_", p.name))
     for folder in folders:
@@ -94,6 +95,7 @@ def main() -> None:
         if len(reachable_backgrounds) != background_count:
             raise RuntimeError(f"not every background has a scene trigger: {folder.name}")
         roster = {figure["n"]: figure["sp"] for figure in era.get("figs", [])}
+        portrait_coverage["roster"] += len(roster)
         claimed = set()
         for asset in by_kind["single"]:
             character = asset.get("character")
@@ -106,6 +108,11 @@ def main() -> None:
             if character in claimed:
                 raise RuntimeError(f"character has repeated portraits: {character} in {folder.name}")
             claimed.add(character)
+        portrait_coverage["exact"] += len(claimed)
+        portrait_coverage["missing"].extend(
+            {"eraIndex": era["i"], "character": character}
+            for character in sorted(set(roster) - claimed)
+        )
         for species in ("cat", "human"):
             known = sum(1 for figure in era.get("figs", []) if figure["sp"] == species)
             groups = sum(1 for asset in by_kind["group"] if asset["species"] == species)
@@ -148,6 +155,7 @@ def main() -> None:
             kind: sum(1 for era in result for asset in era["assets"][kind])
             for kind in ("background", "single", "group")
         },
+        "portraitCoverage": portrait_coverage,
         "eras": sorted(result, key=lambda item: item["eraIndex"]),
         "all": all_assets,
         "sourceOnly": sorted(source_only),

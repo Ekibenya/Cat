@@ -86,8 +86,12 @@
     var host=$('vnCast');if(!host)return;host.innerHTML='';
     var shown=cast.slice(0,4),pos=actorPositions(shown.length);
     shown.forEach(function(person,i){
-      var pool=era.assets.single.filter(function(a){return a.species===person.species;});if(!pool.length)return;
-      var known=rosterEntry(era,person.name),idx=person.hero?0:(known?era.characters.indexOf(known)%pool.length:hash(person.name)%pool.length),asset=pool[idx],im=document.createElement('img');
+      var known=person.hero?null:rosterEntry(era,person.name);
+      var exact=known&&era.assets.single.find(function(a){return a.species===person.species&&a.character===known.name;});
+      var pool=era.assets.single.filter(function(a){return a.species===person.species&&!a.character;});
+      if(!pool.length)pool=era.assets.single.filter(function(a){return a.species===person.species;});
+      var asset=exact||(pool.length?pool[hash(person.name)%pool.length]:null);if(!asset)return;
+      var im=document.createElement('img');
       im.className='vnActor'+(person.name===speaker?' speaking':'');im.alt='';im.dataset.name=person.name;im.style.left=pos[i]+'%';im.src=asset.src;
       im.onload=function(){mark(asset.src);paintAudit(era);};host.appendChild(im);
     });
@@ -126,7 +130,7 @@
   function init(){
     var coverage=$('vnCoverage'),audit=$('vnAudit');
     if(coverage)coverage.addEventListener('click',function(e){e.stopPropagation();if(audit)audit.classList.toggle('on');});
-    fetch('/core/res/data/felinia/vn-images.json').then(function(r){if(!r.ok)throw new Error('image index '+r.status);return r.json();}).then(function(data){
+    fetch('/core/res/data/felinia/vn-images.json?v=2').then(function(r){if(!r.ok)throw new Error('image index '+r.status);return r.json();}).then(function(data){
       V.manifest=data;V.ready=true;tick();
       setInterval(tick,600);
     }).catch(function(err){if(coverage)coverage.textContent='图库索引未载入';try{console.warn('[visual-novel]',err);}catch(_){}});
