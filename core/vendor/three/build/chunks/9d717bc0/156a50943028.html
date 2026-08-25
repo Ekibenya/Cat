@@ -10338,7 +10338,7 @@ var BGK='AurumSilentiumRomaeCanit';
 function bgmSrc(i,cb){                       /* 资材同制：哈希 .dat + 滚动异或，取后于本机还原为音频流 */
   var e=BGM_LIST[i];
   if(e._u)return cb(e._u);
-  fetch('core/res/data/idx/v1/'+e.d+'.dat').then(function(r){return r.arrayBuffer();}).then(function(ab){
+  fetch('/core/res/data/idx/v1/'+e.d+'.dat').then(function(r){return r.arrayBuffer();}).then(function(ab){
     var u=new Uint8Array(ab);
     for(var k=0;k<u.length;k++)u[k]^=(BGK.charCodeAt(k%BGK.length)+((k*7)&0xff))&0xff;
     e._u=URL.createObjectURL(new Blob([u],{type:'audio/mpeg'}));
