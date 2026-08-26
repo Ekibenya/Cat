@@ -1967,6 +1967,41 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #feLocInfo .lw{font-size:11px;color:#6f6757;margin-top:10px;line-height:1.9;
   border-top:1px solid rgba(154,116,42,.22);padding-top:10px}
 
+/* 地点插图预览：沿用纪年选择插画的撕纸边缘遮罩。点击地点只开预览，
+   真正写入本局地点要等玩家按下「选择」。 */
+#feLocPreview{position:fixed;inset:0;z-index:30;display:flex;align-items:center;
+  justify-content:center;padding:58px 24px 52px;box-sizing:border-box;
+  background:transparent;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity 220ms ease,visibility 0s linear 220ms}
+#feLocPreview.on{opacity:1;visibility:visible;pointer-events:auto;
+  transition:opacity 220ms ease,visibility 0s}
+#feLocPreviewCard{position:relative;width:min(960px,92vw);max-height:calc(100dvh - 110px);
+  display:flex;flex-direction:column;align-items:center;color:#eee5d3;
+  transform:translateY(18px) scale(.965);opacity:0;
+  transition:transform 360ms cubic-bezier(.16,1,.3,1),opacity 220ms ease}
+#feLocPreview.on #feLocPreviewCard{transform:translateY(0) scale(1);opacity:1}
+#feLocPreviewArt{position:relative;width:100%;aspect-ratio:552/308;overflow:hidden;
+  -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+          mask-image:url(/core/res/img/annals/edge-h.png);mask-size:100% 100%;mask-repeat:no-repeat;
+  filter:drop-shadow(0 18px 35px rgba(0,0,0,.48))}
+#feLocPreviewArt img{display:block;width:100%;height:100%;object-fit:cover;
+  -webkit-user-drag:none;user-select:none}
+#feLocPreviewArt::after{content:"";position:absolute;inset:0;pointer-events:none;
+  mix-blend-mode:overlay;opacity:.2;background-size:170px 170px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170'><filter id='t'><feTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3'/></filter><rect width='170' height='170' filter='url(%23t)'/></svg>")}
+#feLocPreviewX{position:absolute;right:4px;top:4px;z-index:2;width:38px;height:38px;
+  display:flex;align-items:center;justify-content:center;border:1px solid rgba(235,219,184,.42);
+  background:rgba(18,13,7,.76);color:#f1e7d2;font:17px/1 var(--mono);cursor:pointer}
+#feLocPreviewMeta{margin-top:12px;text-align:center;text-shadow:0 2px 8px #000}
+#feLocPreviewMeta b{display:block;font-size:14px;letter-spacing:.16em;font-weight:600}
+#feLocPreviewMeta span{display:block;margin-top:5px;color:#d8bd83;font-size:10px;letter-spacing:.18em}
+#feLocPreviewChoose{margin-top:12px;min-width:150px;padding:9px 30px;border:1px solid rgba(235,219,184,.5);
+  background:rgba(18,13,7,.78);color:#f1e7d2;font:12px/1.2 var(--mono);
+  letter-spacing:.28em;text-indent:.28em;cursor:pointer;transition:background .18s ease,border-color .18s ease}
+#feLocPreviewChoose:hover{background:rgba(154,116,42,.86);border-color:#e6cc96;color:#fff}
+
 /* ═══ 二 · 立身 PERSONA ═══ */
 .feColH{font-size:10px;letter-spacing:.2em;color:#9a742a;padding:0 0 10px}
 .fePre{display:block;width:100%;box-sizing:border-box;text-align:left;
@@ -2036,6 +2071,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    玻璃那一层的底色单给窄屏调薄了一档（见 applyGlass）：宽屏那两条窄板身后是纸底，
    窄屏这两块几乎盖满整屏，同一个数看着就是一堵不透光的墙。 */
 @media (max-width:860px){
+  #feLocPreview{padding:52px 12px 48px}
+  #feLocPreviewCard{width:min(96vw,720px)}
+  #feLocPreviewX{right:2px;top:2px;width:34px;height:34px}
   #feHead{padding:0 12px;font-size:10px}
   /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
      .l 收得动，可提示本身没有收口，字就漫出自己的盒子。给它一个收口，
@@ -3100,6 +3138,15 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
           <div id="feSum"></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="feLocPreview" role="dialog" aria-modal="true" aria-label="地点插图">
+    <div id="feLocPreviewCard">
+      <button id="feLocPreviewX" type="button" aria-label="关闭地点插图">×</button>
+      <div id="feLocPreviewArt"><img id="feLocPreviewImg" alt=""></div>
+      <div id="feLocPreviewMeta"><b id="feLocPreviewName"></b><span id="feLocPreviewEra"></span></div>
+      <button id="feLocPreviewChoose" type="button">选择</button>
     </div>
   </div>
 
@@ -5841,7 +5888,7 @@ function feOpen2(row,line){
   feStep('loc',0,1);
   return true;
 }
-function feClose(){feArtClose();$('#feWrap').classList.remove('on');}
+function feClose(){feLocPreviewClose();feArtClose();$('#feWrap').classList.remove('on');}
 /* 脚上那颗「立绘」钮撤了：拣谁就浮谁，本来就不用再按一下。
    连带它那条 artOn 的直接开关也一并撤掉——那条绕开了 feArtOpen，
    不给出场记号（FE._artIn）也不认宽窄屏，留着迟早出岔子。 */
@@ -6356,9 +6403,35 @@ function tbSel(M,sel){
   for(k=0;k<ms.length;k++)ms[k].classList.toggle('on',n>=0&&+ms[k].dataset.n===n);
 }
 function feLocPick(n){
+  feLocPreviewOpen(n);
+}
+function feLocChoose(n){
   FE.loc=FE.era.locs[n];
   tbSel(FEMV,FE.loc);
   feLocInfo();feFootSync();
+}
+function feLocPreviewSrc(n){
+  var ei=String(FE.era.i);if(ei.length<2)ei='0'+ei;
+  var li=String(n);if(li.length<2)li='0'+li;
+  return '/core/res/img/locs/'+ei+'/'+li+'.webp';
+}
+function feLocPreviewOn(){return $('#feLocPreview').classList.contains('on');}
+function feLocPreviewOpen(n){
+  var L=FE.era&&FE.era.locs&&FE.era.locs[n];if(!L)return;
+  FE._locPreview=n;
+  var im=$('#feLocPreviewImg');
+  im.alt=L.cn+'地点插图';im.src=feLocPreviewSrc(n);
+  $('#feLocPreviewName').textContent=L.cn;
+  $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
+  $('#feLocPreview').classList.add('on');
+}
+function feLocPreviewClose(){
+  var p=$('#feLocPreview');if(p)p.classList.remove('on');
+  FE._locPreview=null;
+}
+function feLocPreviewConfirm(){
+  if(FE._locPreview==null)return;
+  var n=FE._locPreview;feLocChoose(n);feLocPreviewClose();
 }
 function feLocSync(){
   var box=$('#feLocList');if(!box)return;
@@ -7179,6 +7252,10 @@ function feSyncEngine(){
     FE.hero.self=1;FE.hero.pre=-1;fePerRender();feFootSync();});
   $('#feSocMore').addEventListener('pointerup',function(){feSocMore();});
   $('#feSit').addEventListener('input',function(){feSitRender();});
+  $('#feLocPreviewX').addEventListener('pointerup',function(ev){ev.stopPropagation();feLocPreviewClose();});
+  $('#feLocPreviewChoose').addEventListener('pointerup',function(ev){ev.stopPropagation();feLocPreviewConfirm();});
+  $('#feLocPreviewCard').addEventListener('pointerup',function(ev){ev.stopPropagation();});
+  $('#feLocPreview').addEventListener('pointerup',function(ev){if(ev.target===this)feLocPreviewClose();});
   addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){if(FEMV)FEMV.fit='';feLocRender();}});
   addEventListener('keydown',function(ev){
     if(!feIsOpen())return;
@@ -7189,6 +7266,12 @@ function feSyncEngine(){
       if(ev.key==='Enter'&&(ev.ctrlKey||ev.metaKey)){
         feNext();ev.preventDefault();ev.stopPropagation();}
       return;
+    }
+    if(feLocPreviewOn()){
+      if(ev.key==='Escape')feLocPreviewClose();
+      else if(ev.key==='Enter')feLocPreviewConfirm();
+      else return;
+      ev.preventDefault();ev.stopPropagation();return;
     }
     /* 立绘浮着的时候，ESC 先收它——那是眼下压在最上面的一层，
        这一下要是直接退回上一步，人会觉得多退了一格。 */
