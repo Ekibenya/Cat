@@ -943,6 +943,34 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
 #dlgCfg .gt:hover,#dlgApi .gt:hover{color:var(--gold-hi);border-color:var(--gold)}
 .gDlg h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:var(--txt);margin:20px 0 8px}
 .gDlg .sub{font-size:9px;letter-spacing:.22em;color:var(--mut);line-height:2}
+/* 正文地图中，本纪自带的二十处地点直接以对应插图充当 ITER 弹窗。
+   世界册补进来的其他地点没有插图，仍使用上面的原版纸色弹窗。 */
+#dlgIter .box.itBg{box-sizing:border-box;width:min(calc(70vw/var(--ui)),560px);
+      min-width:0!important;max-width:min(calc(70vw/var(--ui)),560px)!important;
+      min-height:min(calc(50vh/var(--ui)),390px);
+      display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;
+      background-color:#17120c!important;
+      background-image:linear-gradient(to bottom,rgba(7,5,3,.02) 0%,rgba(7,5,3,.12) 34%,rgba(7,5,3,.72) 68%,rgba(7,5,3,.94) 100%),var(--itBg)!important;
+      background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
+      border:0;-webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
+      -webkit-mask-repeat:no-repeat;mask-image:url(/core/res/img/annals/edge-h.png);
+      mask-size:100% 100%;mask-repeat:no-repeat;filter:drop-shadow(0 18px 36px rgba(0,0,0,.44));
+      -webkit-backdrop-filter:none;backdrop-filter:none;color:#fff4dc}
+#dlgIter .box.itBg>.tag{align-self:flex-start;color:#e6cc96;border-color:rgba(230,204,150,.6);
+      background:rgba(10,7,4,.58);text-shadow:0 2px 7px #000}
+#dlgIter .box.itBg h2{color:#fff4dc;text-shadow:0 2px 8px #000,0 0 2px #000}
+#dlgIter .box.itBg #itBrief{box-sizing:border-box;max-height:min(24vh,190px);overflow-y:auto;
+      margin-top:10px!important;padding:4px 0;color:#fff4dc!important;background:transparent;border:0;
+      text-shadow:0 2px 5px #000,0 0 3px #000;line-height:2!important;scrollbar-width:thin}
+#dlgIter .box.itBg #itBrief i{color:#f0cf8b!important}
+#dlgIter .box.itBg .eBtn{color:#fff4dc;border-color:rgba(230,204,150,.62);
+      background:rgba(8,6,4,.72);text-shadow:0 1px 4px #000}
+#dlgIter .box.itBg .eBtn:hover{color:#fff;border-color:#f0cf8b;background:rgba(154,116,42,.82)}
+#dlgIter .box.itBg .esc2{color:rgba(255,244,220,.72);text-shadow:0 1px 4px #000}
+@media (max-width:760px){
+  #dlgIter .box.itBg{width:min(calc(78vw/var(--ui)),420px);min-height:min(calc(50vh/var(--ui)),390px)}
+  #dlgIter .box.itBg #itBrief{max-height:min(22vh,170px)}
+}
 .sRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 40px;
       border-bottom:1px solid rgba(19,18,13,.12);padding:13px 0;font-size:9px;
       letter-spacing:.24em;color:var(--mut)}
@@ -7427,7 +7455,7 @@ function gameShow(){
   var _fl=null;
   try{_fl=(GAME.op&&GAME.op.feLocs&&GAME.op.feLocs.length)?GAME.op.feLocs:null;}catch(_){}
   if(!_fl){try{_fl=(FE&&FE.era&&FE.era.locs)||null;}catch(_){}}
-  if(_fl&&_fl.length)gmActsSet(_fl);
+  if(_fl&&_fl.length)gmActsSet(_fl,_fl.length);
   else if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));
   gmActsFresh();
   GAME.on=true;gEl.classList.add('show');gEl.setAttribute('data-pg','narr');
@@ -7444,10 +7472,11 @@ function gameShow(){
   $('#stage').style.display='none';$('#rail').style.display='none';$('#mission').style.display='none';try{$('#luxTg').style.display='none';}catch(_){}
   setTimeout(gmapRefresh,80);
 }
-function gmActsSet(locs){
+function gmActsSet(locs,illustrated){
   var r=Math.PI/180;
   ERA.act=locs.map(function(L,i){
     return {n:L.n,cn:L.cn,la:L.la,lo0:L.lo,d:L.d,w:L.w?1:0,
+            bg:(illustrated!=null&&i<illustrated)?i:null,
             cl:Math.cos(L.la*r),sy:Math.sin(L.la*r),lo:L.lo*r,delay:i*90};});
 }
 /* 地点表当初是随开局锚点一起存下来的（读档续局时铸局那一层不会再开，
@@ -7468,7 +7497,7 @@ function gmActsFresh(){
       return {n:L.n,cn:L.cn,la:L.la,lo:L.lo,d:L.d};});}catch(_){}
     var yr=(e.y==null?(ERA.year==null?-221:ERA.year):e.y);
     orbisLoad(function(){
-      gmActsSet(orbisMerge(e.locs,yr));
+      gmActsSet(orbisMerge(e.locs,yr),e.locs.length);
       /* 目的地是按名字记的，换过表就未必还对得上 */
       var hit=false,j;
       for(j=0;j<ERA.act.length;j++)if(ERA.act[j].n===GAME.dest)hit=true;
@@ -7776,6 +7805,10 @@ function gmapDest(){
 /* —— ITER：地点介绍 + 确认前往（前往即推进一轮） —— */
 var PENDSITE=null;
 function siteIntro(s){
+  /* 本纪二十处各自已经有准确、简短的地点说明，也正好与背景图一一对应。
+     这些地点禁止再拿名字去地点志／世界书模糊搜索：短名很容易误撞人物或事件
+     （例如「夜市」撞到宋徽宗，「信号所」撞到猫耳条目）。 */
+  if(s&&s.bg!=null&&s.d)return s.d;
   /* 先给地点志：这地方为什么在这里、你选的这一年它正在经历什么。
      原来这里只有一句「道路与传闻都通向它，前往需途中数日」——对每一座城都一样，
      等于什么都没说。世界书里若另有本卡的条目，附在后面。 */
@@ -7814,9 +7847,21 @@ function siteIntroPlain(s){
     +'此处不在诸城之列，志中无载——'+(y<0?('前'+(-y)+'年'):(y+'年'))
     +'的这一带是什么模样，要到了才知道。';
 }
+function iterBg(s){
+  if(!s||s.bg==null)return '';
+  var ei=null;try{ei=GAME.op&&GAME.op.ei;}catch(_){}
+  if(ei==null)return '';
+  ei=String(ei);if(ei.length<2)ei='0'+ei;
+  var li=String(s.bg);if(li.length<2)li='0'+li;
+  return '/core/res/img/locs/'+ei+'/'+li+'.webp';
+}
 function iterAsk(s){
   if(window.SX)SX('site');
   PENDSITE={s:s,t:performance.now()};
+  var _box=$('#dlgIter .box'),_bg=iterBg(s);
+  _box.classList.toggle('itBg',!!_bg);
+  if(_bg)_box.style.setProperty('--itBg','url("'+_bg+'")');
+  else _box.style.removeProperty('--itBg');
   $('#itTitle').textContent=s.n+' · '+s.cn;
   var _ib=siteIntro(s);
   $('#itBrief').innerHTML=esc2(_ib).replace(/\n/g,'<br>')
