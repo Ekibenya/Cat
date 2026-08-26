@@ -5914,7 +5914,10 @@ function feFootSync(){
   if(FE.step==='loc'){ok=!!FE.loc;hint.textContent='● LOCVS　在图上拣一处';}
   if(FE.step==='per'){ok=!!(FE.hero&&String(FE.hero.n||'').trim());
     hint.textContent='● PERSONA　这一局你扮演的人';}
-  if(FE.step==='soc'){hint.textContent='● SOCII　已选 '+FE.soc.length+' 位（可以一位不选）';}
+  if(FE.step==='soc'){
+    ok=FE.soc.length>0;
+    hint.textContent='● SOCII　已选 '+FE.soc.length+' 位（至少选择一位）';
+  }
   if(FE.step==='sit'){txt='铸局<i>INCIPERE ⏎</i>';hint.textContent='● SITVS　写完就开局';}
   go.innerHTML=txt;
   go.classList.toggle('off',!ok);
@@ -5924,6 +5927,9 @@ function feFootSync(){
    人看着是「点了没反应」。 */
 function feCur(){return FE._pend||FE.step;}
 function feNext(){
+  /* 同伴是开局的必选项。不能只靠按钮灰态：回车、快速连点或别处直接调用
+     feNext 时也必须在这里拦住，没选人绝不进入 SITVS。 */
+  if(feCur()==='soc'&&!FE.soc.length){feFootSync();return;}
   if($('#feGo').classList.contains('off'))return;
   var i=0,k;for(k=0;k<FE_STEPS.length;k++)if(FE_STEPS[k][0]===feCur())i=k;
   if(i<FE_STEPS.length-1)feStep(FE_STEPS[i+1][0]);
@@ -7001,6 +7007,8 @@ function feFailMsg(msg,again){
   return p;
 }
 function feForge(){
+  /* 最后一层保险：即便以后有新入口绕过四步导航，也不能铸出零同伴的开局。 */
+  if(!FE.soc.length){feStep('soc',1);return;}
   var e=FE.era,h=FE.hero,L=FE.loc;
   var y=e.y, yl=e.yl, cn=L?L.cn:e.t, nm=L?L.n:'FELINIA';
   var line=FE.line||'luzhi';
