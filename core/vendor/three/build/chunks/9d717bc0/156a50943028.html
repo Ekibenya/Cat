@@ -2015,6 +2015,15 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 /* 地点插图预览：沿用纪年选择插画的撕纸边缘遮罩。点击地点只开预览，
    真正写入本局地点要等玩家按下「选择」。 */
+#feWrap[data-step="loc"] #fePanL{
+  -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;-webkit-mask-position:center;
+          mask-image:url(/core/res/img/annals/edge-h.png);mask-size:100% 100%;
+          mask-repeat:no-repeat;mask-position:center;
+  filter:drop-shadow(0 10px 18px rgba(82,60,25,.28))}
+#feWrap[data-step="loc"] #fePanL .feGl{
+  background:rgba(235,227,209,.82);border:0;
+  box-shadow:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 #feWrap[data-step="loc"] #fePanR:not(.locArtOn){display:none}
 #fePanR.locArtOn #feLocInfo{display:none}
 #fePanR.locArtOn .feGl{display:none}
@@ -2180,7 +2189,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      上下贴死、中间不留缝——一眼看过去就是两块板把屏幕填满了，密不透风。
      现在各让一截，中间留出一条空：择地那一步那条缝是给地图的（图会自己铺满它），
      其余几步那条缝是留白，让两块板各自看得出边界。 */
-  #feWrap[data-step="loc"] #fePanL{height:26%;translate:0 -24px}
+  #feWrap[data-step="loc"] #fePanL{height:37.44%;translate:0 -24px}
   #feWrap[data-step="loc"] #fePanR{height:22%}
   #feWrap[data-step="loc"] #fePanR.locArtOn{height:auto;max-height:none;
     bottom:calc(var(--feG) - 8px);overflow:visible;touch-action:none;scrollbar-width:none}
@@ -2200,7 +2209,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
             mask-size:100% 100%;mask-position:center}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt img{
     display:block;width:100%;height:auto;object-fit:contain}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta{flex:none;padding:6px 8px 2px}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta{
+    position:relative;z-index:2;flex:none;padding:6px 8px 2px}
   /* 手机端图片下方的地名、介绍与「选择」统一收小一成；面板贴底，省出的高度
      自然留在图片上方，于是整组内容下移，不再另造会互相打架的 top 偏移。 */
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta b{
