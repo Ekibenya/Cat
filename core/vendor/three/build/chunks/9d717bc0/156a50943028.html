@@ -444,8 +444,8 @@ html.lux #eraSel .pip b{color:#c0b59c}
 html.lux #eraSel .pip.mark b{color:#9a9184}
 html.lux #eraSel .pip.on b{color:#9a742a}
 html.lux #esFoot{color:#9a9184;background:rgba(252,252,252,.92)}
-html.lux #esFoot .go{color:#4a4237;border-color:rgba(154,116,42,.5);background:rgba(255,255,255,.45)}
-html.lux #esFoot .go:hover{color:#1f1a13;border-color:#9a742a}
+html.lux #esFoot .go{color:#4a4237;border:0;border-bottom:1px solid rgba(154,116,42,.58);background:transparent}
+html.lux #esFoot .go:hover{color:#9a742a;border-bottom-color:#9a742a;background:transparent}
 html.lux #esBrand{color:#9a9184}
 html.lux #esBrand b{color:#4a4237}
 #luxTg{position:absolute;top:16px;right:18px;z-index:60;cursor:pointer;font-size:16px;line-height:1;
@@ -976,7 +976,9 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
       text-indent:.18em;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
 #dlgIter .box.itBg .esc2{display:none}
 @media (max-width:760px){
-  #dlgIter .box.itBg{width:min(calc(88vw/var(--ui)),552px)}
+  /* 对局界面本身已经按 --ui 缩放过，手机宽度不能再除一次 --ui；
+     否则 390px 屏上场景图只剩一百多像素。 */
+  #dlgIter .box.itBg{width:min(88vw,552px);max-width:min(88vw,552px)!important}
   #dlgIter .box.itBg #itBrief{max-height:min(20vh,150px)}
 }
 .sRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 40px;
@@ -2013,6 +2015,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 /* 地点插图预览：沿用纪年选择插画的撕纸边缘遮罩。点击地点只开预览，
    真正写入本局地点要等玩家按下「选择」。 */
+#feWrap[data-step="loc"] #fePanR:not(.locArtOn){display:none}
 #fePanR.locArtOn #feLocInfo{display:none}
 #fePanR.locArtOn .feGl{display:none}
 #fePanR.locArtOn>.feIn{padding:0;overflow:visible}
@@ -2044,8 +2047,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #feLocPreviewMeta b{display:block;color:#1b1710;font-size:15px;letter-spacing:.16em;font-weight:700;
   -webkit-text-stroke:.2px rgba(27,23,16,.7);
   text-shadow:0 1px 0 rgba(255,255,255,.98),0 0 7px rgba(255,255,255,.96)}
-#feLocPreviewMeta span{display:block;margin-top:5px;color:#6f4b0f;font-size:11px;letter-spacing:.14em;
-  font-weight:600;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
+#feLocPreviewMeta span{display:block;margin:6px auto 0;max-width:520px;color:#4a4237;
+  font-size:11.5px;line-height:1.72;letter-spacing:.035em;font-weight:500;
+  text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
 #feLocPreviewChoose{margin-top:2px;width:auto;min-width:130px;padding:7px 18px;
   border:0;border-bottom:1px solid rgba(154,116,42,.58);background:transparent;
   color:#211a10;font:600 12px/1.2 var(--mono);
@@ -2136,7 +2140,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      挤不下时收成省略号，压在钮上总归是读不成的。 */
   #feFoot{padding:0 12px}
   #feFoot .l{flex:1 1 auto;min-width:0}
-  #feHint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #feHint{display:none}
   #feSteps i{display:none}
   #feSteps i.on{display:inline}
   /* 透视比宽屏那档近一些：这儿的台子只有三四百像素宽，
@@ -2176,23 +2180,39 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      上下贴死、中间不留缝——一眼看过去就是两块板把屏幕填满了，密不透风。
      现在各让一截，中间留出一条空：择地那一步那条缝是给地图的（图会自己铺满它），
      其余几步那条缝是留白，让两块板各自看得出边界。 */
-  #feWrap[data-step="loc"] #fePanL{height:26%}
+  #feWrap[data-step="loc"] #fePanL{height:26%;translate:0 -24px}
   #feWrap[data-step="loc"] #fePanR{height:22%}
-  /* 手机上地图本身已经说明了怎么选；未打开场景图时不再摆一块空的说明弹窗。 */
-  #feWrap[data-step="loc"] #fePanR:not(.locArtOn){display:none}
-  #feWrap[data-step="loc"] #fePanR.locArtOn{height:38%}
+  #feWrap[data-step="loc"] #fePanR.locArtOn{height:auto;max-height:none;
+    bottom:calc(var(--feG) - 8px);overflow:visible;touch-action:none;scrollbar-width:none}
+  #feWrap[data-step="loc"] #fePanR.locArtOn::-webkit-scrollbar{display:none}
   /* 手机上预览必须整张落在这一块里：图片只吃掉文字和「选择」以外的剩余高度，
      横屏或矮屏也按高度缩小，绝不再用整屏宽度把按钮顶到滚动区下面。 */
-  #feWrap[data-step="loc"] #fePanR.locArtOn>.feIn{height:100%;min-height:0;
-    display:flex;align-items:center;justify-content:center;overflow:hidden}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreview{height:100%;min-height:0}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewCard{height:100%;min-height:0;
-    justify-content:flex-end;overflow:hidden}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:1 1 auto;
-    width:auto;height:auto;min-height:0;max-width:100%;max-height:calc(100% - 64px)}
+  #feWrap[data-step="loc"] #fePanR.locArtOn>.feIn{height:auto;min-height:0;
+    display:flex;align-items:center;justify-content:center;overflow:visible}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreview{height:auto;min-height:0}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewCard{height:auto;min-height:0;
+    width:min(76vw,300px);justify-content:flex-end;overflow:visible}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:0 0 auto;
+    width:100%;height:auto;min-height:0;max-width:100%;max-height:none;
+    translate:0 32px;
+    aspect-ratio:auto;
+    -webkit-mask-size:100% 100%;-webkit-mask-position:center;
+            mask-size:100% 100%;mask-position:center}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt img{
+    display:block;width:100%;height:auto;object-fit:contain}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta{flex:none;padding:6px 8px 2px}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta span{margin-top:2px}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewChoose{flex:none;margin-top:0;padding:5px 16px}
+  /* 手机端图片下方的地名、介绍与「选择」统一收小一成；面板贴底，省出的高度
+     自然留在图片上方，于是整组内容下移，不再另造会互相打架的 top 偏移。 */
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta b{
+    color:#fff0bd;font-size:13.5px;letter-spacing:.144em;
+    -webkit-text-stroke:.45px rgba(31,20,6,.95);
+    text-shadow:0 1px 1px rgba(0,0,0,.98),0 0 4px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.72)}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta span{
+    margin-top:2px;font-size:10.35px;letter-spacing:.0315em;translate:0 6px}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewChoose{
+    flex:none;margin-top:0;min-width:129px;padding:5px 15.8px;
+    font-size:11.9px;letter-spacing:.277em;text-indent:.277em;translate:0 4px}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewX{translate:0 32px}
   /* 台高减掉三道间距（上、中、下）之后，剩下的按 34 : 66 分给两块板 ——
      上面那块是名录／清单，下面那块是表格与档案，本来就该长一些。
      这么分，中间那道缝落下来正好等于 --feG。 */
@@ -2286,9 +2306,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    地名和按钮必须留在页脚上方。 */
 @media (max-width:860px) and (max-height:560px){
   #feWrap[data-step="loc"] #fePanL{height:20%}
-  #feWrap[data-step="loc"] #fePanR.locArtOn{height:70%}
-  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:none;width:auto;height:auto;
-    max-width:100%;max-height:calc(70vh - 132px)}
+  #feWrap[data-step="loc"] #fePanR.locArtOn{height:auto;max-height:none;overflow:visible}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:0 0 auto;width:100%;height:auto;
+    max-width:100%;max-height:none;aspect-ratio:auto}
 }
 #eraSel{position:fixed;inset:0;z-index:46;display:none;background:rgba(6,6,6,.97);touch-action:none}
 #eraSel.on{display:block}
@@ -2471,9 +2491,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    内衬由 9×14 收到 5×9，字面由继承的十像素收到九像素，
    四十像素高的底栏里它占三十来像素、现在占二十出头，不再是这一条的主角。 */
 #esFoot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;
-  font-size:9px;padding:5px 9px;margin-left:8px;
-  border:1px solid rgba(201,155,63,.45);background:rgba(201,155,63,.06)}
-#esFoot .go:hover{color:var(--gold-hi)}
+  min-width:86px;font-size:9px;font-weight:600;text-align:center;padding:7px 4px;margin-left:8px;
+  border:0;border-bottom:1px solid rgba(201,155,63,.58);background:transparent;
+  transition:color .18s ease,border-color .18s ease}
+#esFoot .go:hover{color:var(--gold-hi);border-bottom-color:var(--gold-hi);background:transparent}
 /* 「返回」挪到左边（那是退的方向），中文在前，拉丁文缩成小字当记号——
    和主菜单「INITIVM · 开始」那一套是同一个写法。
    这三条原先只写在窄屏那一段里，宽屏上不生效也看不出来：
@@ -2482,7 +2503,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    所以提到外头来，宽窄一个样。 */
 #esFoot .l{display:flex;align-items:center;gap:14px;min-width:0}
 #esFoot .go.back{margin-left:0}
-#esFoot .go i{font-style:normal;font-size:9px;letter-spacing:.2em;
+#esFoot .go .key{font-style:normal!important;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
   opacity:.6;margin-left:9px}
 #esBrand{position:fixed;top:18px;left:18px;z-index:48;font-family:var(--mono);font-size:10px;
   letter-spacing:.2em;color:var(--mut);pointer-events:none}
@@ -2551,7 +2572,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    和主菜单「INITIVM · 开始」那一套本来就是同一个写法，只有这两条底栏没跟上。 */
 #feFoot .l{display:flex;align-items:center;gap:14px;min-width:0}
 #feFoot .go.back{margin-left:0;min-width:86px}
-#feFoot .go i{font-style:normal;font-size:9px;letter-spacing:.2em;
+#feFoot .go .key{font-style:normal!important;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
   opacity:.6;margin-left:9px}
 }
 </style>
@@ -2573,7 +2594,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <div id="esPips"></div>
   </div>
   <div id="esFoot">
-    <span class="l"><span class="go back" id="esBack">返回<i>ESC</i></span><span class="lbl">CLICK / DRAG / ← → TO MOVE</span></span>
+    <span class="l"><span class="go back" id="esBack">返回<span class="key">ESC</span></span><span class="lbl">CLICK / DRAG / ← → TO MOVE</span></span>
   </div>
 </div>
 <canvas id="grain"></canvas>
@@ -3204,7 +3225,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
             <div id="feLocPreviewCard">
               <button id="feLocPreviewX" type="button" aria-label="关闭地点插图">×</button>
               <div id="feLocPreviewArt"><img id="feLocPreviewImg" alt=""></div>
-              <div id="feLocPreviewMeta"><b id="feLocPreviewName"></b><span id="feLocPreviewEra"></span></div>
+              <div id="feLocPreviewMeta"><b id="feLocPreviewName"></b><span id="feLocPreviewDesc"></span></div>
               <button id="feLocPreviewChoose" type="button">选择</button>
             </div>
           </div>
@@ -3229,8 +3250,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   </div>
 
   <div id="feFoot">
-    <span class="l"><span class="go back" id="feBack">返回<i>ESC</i></span><span id="feHint">● FELINIA</span></span>
-    <span><span class="go" id="feGo">下一步<i>PERGERE ⏎</i></span></span>
+    <span class="l"><span class="go back" id="feBack">返回<span class="key">ESC</span></span><span id="feHint">● FELINIA</span></span>
+    <span><span class="go" id="feGo">下一步<span class="key">NEXT ⏎</span></span></span>
   </div>
 </div>
 <div id="persona">
@@ -6047,7 +6068,7 @@ function feFootSync(){
   var go=$('#feGo'),hint=$('#feHint');
   /* 中文在前、拉丁文缩成小字当记号 —— 与底栏那一版写法一致。
      这里原来整句盖成 'PERGERE ⏎'，把标记里写好的中文冲掉了。 */
-  var ok=true,txt='下一步<i>PERGERE ⏎</i>';
+  var ok=true,txt='下一步<span class="key">NEXT ⏎</span>';
   if(FE.step==='loc'){ok=!!FE.loc;hint.textContent='● LOCVS　在图上拣一处';}
   if(FE.step==='per'){ok=!!(FE.hero&&String(FE.hero.n||'').trim());
     hint.textContent='● PERSONA　这一局你扮演的人';}
@@ -6055,7 +6076,7 @@ function feFootSync(){
     ok=FE.soc.length>0;
     hint.textContent='● SOCII　已选 '+FE.soc.length+' 位（至少选择一位）';
   }
-  if(FE.step==='sit'){txt='铸局<i>INCIPERE ⏎</i>';hint.textContent='● SITVS　写完就开局';}
+  if(FE.step==='sit'){txt='铸局<span class="key">INCIPERE ⏎</span>';hint.textContent='● SITVS　写完就开局';}
   go.innerHTML=txt;
   go.classList.toggle('off',!ok);
 }
@@ -6497,6 +6518,43 @@ function feLocPreviewSrc(n){
 }
 function feLocPreviewOn(){return $('#feLocPreview').classList.contains('on');}
 var FE_LTURN=190;
+/* 第一次唤出地点插图时，右栏原本由 display:none 直接切成 display:flex，
+   卡片已经落在最终位置，所以桌面和手机都没有入场动作。先把图取到手，
+   再从与换地点相同的 lEnter 姿态转回来；这样既有动画，也不会先转进一张空图。 */
+function feLocPreviewEnter(n,L){
+  var p=$('#feLocPreview'),card=$('#feLocPreviewCard'),im=$('#feLocPreviewImg');
+  if(!p||!card||!im)return;
+  var src=feLocPreviewSrc(n),run=(card._run=(card._run||0)+1),next=new Image();
+  if(card._t){clearTimeout(card._t);card._t=0;}
+  if(card._g){clearTimeout(card._g);card._g=0;}
+  card.classList.remove('lTurn');card.classList.add('lEnter');
+  p.classList.add('on');
+  function show(){
+    if(card._run!==run)return;
+    if(card._g){clearTimeout(card._g);card._g=0;}
+    im.src=src;im.alt=L.cn+'地点插图';
+    $('#feLocPreviewName').textContent=L.cn;
+    $('#feLocPreviewDesc').textContent=L.d||'';
+    $('#feLocPreviewChoose').textContent=(FE.loc===L?'已选择':'选择');
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      if(card._run===run)card.classList.remove('lEnter');
+    });});
+  }
+  next.onload=show;
+  next.onerror=function(){
+    if(card._run!==run)return;
+    card.classList.remove('lEnter');
+    im.alt=L.cn+'地点插图';
+    $('#feLocPreviewName').textContent=L.cn;
+    $('#feLocPreviewDesc').textContent=L.d||'';
+    $('#feLocPreviewChoose').textContent=(FE.loc===L?'已选择':'选择');
+  };
+  try{if(window.SX)SX('slide');}catch(_){}
+  card._g=setTimeout(function(){
+    card._g=0;if(card._run===run)card.classList.remove('lEnter');
+  },2600);
+  next.src=src;
+}
 function feLocPreviewSwap(n,L){
   var card=$('#feLocPreviewCard'),im=$('#feLocPreviewImg');if(!card||!im)return;
   var src=feLocPreviewSrc(n),run=(card._run=(card._run||0)+1);
@@ -6508,7 +6566,7 @@ function feLocPreviewSwap(n,L){
     if(card._g){clearTimeout(card._g);card._g=0;}
     im.src=src;im.alt=L.cn+'地点插图';
     $('#feLocPreviewName').textContent=L.cn;
-    $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
+    $('#feLocPreviewDesc').textContent=L.d||'';
     $('#feLocPreviewChoose').textContent=(FE.loc===L?'已选择':'选择');
     card.classList.remove('lTurn');card.classList.add('lEnter');
     requestAnimationFrame(function(){requestAnimationFrame(function(){
@@ -6532,11 +6590,7 @@ function feLocPreviewOpen(n){
   FE._locPreview=n;
   $('#fePanR').classList.add('locArtOn');
   if(was&&im.getAttribute('src')){feLocPreviewSwap(n,L);return;}
-  im.alt=L.cn+'地点插图';im.src=feLocPreviewSrc(n);
-  $('#feLocPreviewName').textContent=L.cn;
-  $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
-  $('#feLocPreviewChoose').textContent=(FE.loc===L?'已选择':'选择');
-  p.classList.add('on');
+  feLocPreviewEnter(n,L);
 }
 function feLocPreviewClose(){
   var p=$('#feLocPreview');if(p)p.classList.remove('on');
@@ -10505,6 +10559,9 @@ function auPluck(){
   o.connect(g);g.connect(AU.mgain);o.start(t);o.stop(t+2.4);
   AU.timer=setTimeout(auPluck,1800+Math.random()*4200);
 }
+/* 本地预览只用于改界面，不让音乐反复打扰测试；线上域名照常播放。
+   file:// 也算本地，免得误点本地 HTML 后第一下交互突然响起来。 */
+var LOCAL_TEST=/^(localhost|127\.0\.0\.1|\[?::1\]?)$/i.test(location.hostname)||location.protocol==='file:';
 /* —— 幕间乐：真曲库（古乐 34 + 攻壳 13，Fons Vitae 为首曲；按曲点播、放完自动下一首循环） —— */
 var BGM_LIST=[
  /* 前二十二首搬自三叶那一份，排在最前，所以开机第一首就是它们
@@ -10608,6 +10665,11 @@ function bgmSrc(i,cb){                       /* 资材同制：哈希 .dat + 滚
   }).catch(function(){cb(null);});
 }
 function bgmPlay(i){
+  if(LOCAL_TEST){
+    BGM.on=false;
+    try{$('#gtSnd').classList.remove('on');$('#gtSnd').title='MVSICA · 本地测试已静音';}catch(_){}
+    return;
+  }
   BGM.i=i;var a=bgmEl();
   BGM.on=true;$('#gtSnd').classList.add('on');
   $('#gtSnd').title='MVSICA · '+BGM_LIST[i].t+'（点击开启播放器）';
@@ -10637,6 +10699,7 @@ function bgmStart(a,i){
   if(p&&p.catch)p.catch(function(){bgmArm();}); /* 自动播放被拦：菜单上的首次交互补放 */
 }
 function bgmToggle(){
+  if(LOCAL_TEST){BGM.on=false;if(BGM.a)BGM.a.pause();bgmUi();return;}
   if(BGM.on){BGM.on=false;$('#gtSnd').classList.remove('on');if(BGM.a)BGM.a.pause();return;}
   if(BGM.a&&BGM.a.src){var p=BGM.a.play();if(p&&p.catch)p.catch(function(){});BGM.on=true;$('#gtSnd').classList.add('on');return;}
   BGM.skip=0;bgmPlay(0);
@@ -10645,6 +10708,11 @@ function bgmToggle(){
 var BGVOL=60;try{BGVOL=Math.max(0,Math.min(100,parseInt(localStorage.getItem('rome_bgmvol'))||60));}catch(_){}
 function bgmUi(){
   var now=$('#bgNow'),ico=$('#bgPlayIco');
+  if(LOCAL_TEST){
+    if(now)now.textContent='本地测试 · 音乐已关闭';
+    if(ico)ico.innerHTML='<path d="M6 6l12 12M18 6L6 18"/>';
+    return;
+  }
   if(now)now.textContent=(BGM.a&&BGM.a.src)?((BGM.on?'▶ ':'❚❚ ')+(BGM_LIST[BGM.i]?BGM_LIST[BGM.i].t:'')):'未在播放 · 点曲目或 ▶ 开始';
   if(ico)ico.innerHTML=BGM.on?'<path d="M8 4v16M16 4v16"/>':'<path d="M6 4l14 8-14 8z"/>';
   var ls=$('#bgList');
