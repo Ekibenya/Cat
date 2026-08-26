@@ -943,33 +943,39 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
 #dlgCfg .gt:hover,#dlgApi .gt:hover{color:var(--gold-hi);border-color:var(--gold)}
 .gDlg h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:var(--txt);margin:20px 0 8px}
 .gDlg .sub{font-size:9px;letter-spacing:.22em;color:var(--mut);line-height:2}
-/* 正文地图中，本纪自带的二十处地点直接以对应插图充当 ITER 弹窗。
-   世界册补进来的其他地点没有插图，仍使用上面的原版纸色弹窗。 */
-#dlgIter .box.itBg{box-sizing:border-box;width:min(calc(70vw/var(--ui)),560px);
-      min-width:0!important;max-width:min(calc(70vw/var(--ui)),560px)!important;
-      min-height:min(calc(50vh/var(--ui)),390px);
-      display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;
-      background-color:#17120c!important;
-      background-image:linear-gradient(to bottom,rgba(7,5,3,.02) 0%,rgba(7,5,3,.12) 34%,rgba(7,5,3,.72) 68%,rgba(7,5,3,.94) 100%),var(--itBg)!important;
-      background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
-      border:0;-webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
-      -webkit-mask-repeat:no-repeat;mask-image:url(/core/res/img/annals/edge-h.png);
-      mask-size:100% 100%;mask-repeat:no-repeat;filter:drop-shadow(0 18px 36px rgba(0,0,0,.44));
-      -webkit-backdrop-filter:none;backdrop-filter:none;color:#fff4dc}
-#dlgIter .box.itBg>.tag{align-self:flex-start;color:#e6cc96;border-color:rgba(230,204,150,.6);
-      background:rgba(10,7,4,.58);text-shadow:0 2px 7px #000}
-#dlgIter .box.itBg h2{color:#fff4dc;text-shadow:0 2px 8px #000,0 0 2px #000}
-#dlgIter .box.itBg #itBrief{box-sizing:border-box;max-height:min(24vh,190px);overflow-y:auto;
-      margin-top:10px!important;padding:4px 0;color:#fff4dc!important;background:transparent;border:0;
-      text-shadow:0 2px 5px #000,0 0 3px #000;line-height:2!important;scrollbar-width:thin}
-#dlgIter .box.itBg #itBrief i{color:#f0cf8b!important}
-#dlgIter .box.itBg .eBtn{color:#fff4dc;border-color:rgba(230,204,150,.62);
-      background:rgba(8,6,4,.72);text-shadow:0 1px 4px #000}
-#dlgIter .box.itBg .eBtn:hover{color:#fff;border-color:#f0cf8b;background:rgba(154,116,42,.82)}
-#dlgIter .box.itBg .esc2{color:rgba(255,244,220,.72);text-shadow:0 1px 4px #000}
+/* 正文地图中，本纪自带的二十处地点与开局择地共用同一种场景图展示：
+   图片独立成层、保持原比例完整显示，地名与说明排在图下，不再拿渐变压暗图片。 */
+#itScene{display:none}
+#dlgIter .itActions{display:flex;gap:14px;margin-top:26px}
+#dlgIter .itActions .eBtn{margin-top:0;border:0;background:transparent;box-shadow:none;
+      padding:7px 4px;color:var(--txt);text-align:center;text-shadow:none}
+#dlgIter .itActions #itGo{flex:1}
+#dlgIter .itActions .eBtn:hover{border:0;background:transparent;color:var(--gold-hi);box-shadow:none}
+#dlgIter .box.itBg{box-sizing:border-box;width:min(calc(35vw/var(--ui)),552px);
+      min-width:0!important;max-width:min(calc(35vw/var(--ui)),552px)!important;
+      padding:0;overflow:visible;background:transparent!important;border:0;box-shadow:none;
+      -webkit-backdrop-filter:none;backdrop-filter:none;color:var(--txt)}
+#dlgIter .box.itBg #itScene{position:relative;display:block;width:100%;aspect-ratio:552/308;
+      overflow:hidden;-webkit-mask-image:url(/core/res/img/annals/edge-h.png);
+      -webkit-mask-size:100% 100%;-webkit-mask-repeat:no-repeat;
+      mask-image:url(/core/res/img/annals/edge-h.png);mask-size:100% 100%;mask-repeat:no-repeat;
+      filter:drop-shadow(0 18px 36px rgba(19,18,13,.22))}
+#dlgIter .box.itBg #itSceneImg{display:block;width:100%;height:100%;object-fit:contain;
+      object-position:center;background:transparent;filter:none}
+#dlgIter .box.itBg h2{margin:12px 8px 0;color:#1b1710;font-size:15px;font-weight:700;
+      letter-spacing:.16em;text-align:center;-webkit-text-stroke:.2px rgba(27,23,16,.7);
+      text-shadow:0 1px 0 rgba(255,255,255,.98),0 0 7px rgba(255,255,255,.96)}
+#dlgIter .box.itBg #itBrief{box-sizing:border-box;max-height:min(22vh,175px);overflow-y:auto;
+      margin:7px 12px 0!important;padding:0;color:#4a3a21!important;background:transparent;border:0;
+      text-align:center;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98);
+      line-height:1.8!important;scrollbar-width:thin}
+#dlgIter .box.itBg #itBrief i{color:#8a6118!important}
+#dlgIter .box.itBg .itActions{margin:6px 12px 0}
+#dlgIter .box.itBg .itActions .eBtn{font-weight:600;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
+#dlgIter .box.itBg .esc2{display:none}
 @media (max-width:760px){
-  #dlgIter .box.itBg{width:min(calc(78vw/var(--ui)),420px);min-height:min(calc(50vh/var(--ui)),390px)}
-  #dlgIter .box.itBg #itBrief{max-height:min(22vh,170px)}
+  #dlgIter .box.itBg{width:min(calc(88vw/var(--ui)),552px)}
+  #dlgIter .box.itBg #itBrief{max-height:min(20vh,150px)}
 }
 .sRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 40px;
       border-bottom:1px solid rgba(19,18,13,.12);padding:13px 0;font-size:9px;
@@ -1997,19 +2003,15 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 /* 地点插图预览：沿用纪年选择插画的撕纸边缘遮罩。点击地点只开预览，
    真正写入本局地点要等玩家按下「选择」。 */
-#feLocPreview{position:fixed;inset:0;z-index:30;display:flex;align-items:center;
-  justify-content:center;padding:58px 24px 52px;box-sizing:border-box;
-  background:transparent;perspective:1700px;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity 220ms ease,visibility 0s linear 220ms}
-#feLocPreview.on{opacity:1;visibility:visible;pointer-events:none;
-  transition:opacity 220ms ease,visibility 0s}
-#feLocPreviewCard{position:relative;width:min(520px,48vw);max-height:calc(100dvh - 110px);
-  display:flex;flex-direction:column;align-items:center;color:#eee5d3;pointer-events:auto;
-  transform-origin:50% 50%;
-  transform:translateY(18px) scale(.965);opacity:0;
-  transition:transform 360ms cubic-bezier(.16,1,.3,1),opacity 220ms ease}
-#feLocPreview.on #feLocPreviewCard{transform:translateY(0) scale(1);opacity:1}
+#fePanR.locArtOn #feLocInfo{display:none}
+#fePanR.locArtOn .feGl{display:none}
+#fePanR.locArtOn>.feIn{padding:0;overflow:visible}
+#feLocPreview{position:relative;width:100%;display:none;box-sizing:border-box;perspective:1700px}
+#feLocPreview.on{display:flex;align-items:center;justify-content:center}
+#feLocPreviewCard{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;
+  color:#211a10;pointer-events:auto;transform-origin:50% 50%;opacity:1;
+  transition:transform .34s cubic-bezier(.2,.85,.25,1),opacity .24s ease}
+#feLocPreview.on #feLocPreviewCard{transform:none;opacity:1}
 #feLocPreview.on #feLocPreviewCard.lTurn{transition:transform .19s cubic-bezier(.55,0,.85,.3),opacity .16s ease;
   transform:translateX(-58%) rotateY(-42deg) scale(.93);opacity:0}
 #feLocPreview.on #feLocPreviewCard.lEnter{transition:none;
@@ -2027,13 +2029,19 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #feLocPreviewX{position:absolute;right:4px;top:4px;z-index:2;width:38px;height:38px;
   display:flex;align-items:center;justify-content:center;border:1px solid rgba(235,219,184,.42);
   background:rgba(18,13,7,.76);color:#f1e7d2;font:17px/1 var(--mono);cursor:pointer}
-#feLocPreviewMeta{margin-top:12px;text-align:center;text-shadow:0 2px 8px #000}
-#feLocPreviewMeta b{display:block;font-size:14px;letter-spacing:.16em;font-weight:600}
-#feLocPreviewMeta span{display:block;margin-top:5px;color:#d8bd83;font-size:10px;letter-spacing:.18em}
-#feLocPreviewChoose{margin-top:12px;min-width:150px;padding:9px 30px;border:1px solid rgba(235,219,184,.5);
-  background:rgba(18,13,7,.78);color:#f1e7d2;font:12px/1.2 var(--mono);
+#feLocPreviewMeta{box-sizing:border-box;width:100%;padding:11px 10px 5px;text-align:center;
+  background:transparent;border:0;text-shadow:none}
+#feLocPreviewMeta b{display:block;color:#1b1710;font-size:15px;letter-spacing:.16em;font-weight:700;
+  -webkit-text-stroke:.2px rgba(27,23,16,.7);
+  text-shadow:0 1px 0 rgba(255,255,255,.98),0 0 7px rgba(255,255,255,.96)}
+#feLocPreviewMeta span{display:block;margin-top:5px;color:#6f4b0f;font-size:11px;letter-spacing:.14em;
+  font-weight:600;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
+#feLocPreviewChoose{margin-top:2px;width:auto;min-width:130px;padding:7px 18px;
+  border:0;border-bottom:1px solid rgba(154,116,42,.58);background:transparent;
+  color:#211a10;font:600 12px/1.2 var(--mono);
+  text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98);
   letter-spacing:.28em;text-indent:.28em;cursor:pointer;transition:background .18s ease,border-color .18s ease}
-#feLocPreviewChoose:hover{background:rgba(154,116,42,.86);border-color:#e6cc96;color:#fff}
+#feLocPreviewChoose:hover{background:transparent;border-color:#e4c37d;color:#fff}
 @media (prefers-reduced-motion:reduce){
   #feLocPreviewCard,#feLocPreview.on #feLocPreviewCard.lTurn{transition:none}
   #feLocPreview.on #feLocPreviewCard.lTurn,#feLocPreview.on #feLocPreviewCard.lEnter{
@@ -2109,8 +2117,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    玻璃那一层的底色单给窄屏调薄了一档（见 applyGlass）：宽屏那两条窄板身后是纸底，
    窄屏这两块几乎盖满整屏，同一个数看着就是一堵不透光的墙。 */
 @media (max-width:860px){
-  #feLocPreview{padding:52px 12px 48px}
-  #feLocPreviewCard{width:min(78vw,440px)}
+  #feLocPreview{padding:0}
+  #feLocPreviewCard{width:100%}
   #feLocPreviewX{right:2px;top:2px;width:34px;height:34px}
   #feHead{padding:0 12px;font-size:10px}
   /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
@@ -2160,6 +2168,19 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      其余几步那条缝是留白，让两块板各自看得出边界。 */
   #feWrap[data-step="loc"] #fePanL{height:26%}
   #feWrap[data-step="loc"] #fePanR{height:22%}
+  #feWrap[data-step="loc"] #fePanR.locArtOn{height:52%}
+  /* 手机上预览必须整张落在这一块里：图片只吃掉文字和「选择」以外的剩余高度，
+     横屏或矮屏也按高度缩小，绝不再用整屏宽度把按钮顶到滚动区下面。 */
+  #feWrap[data-step="loc"] #fePanR.locArtOn>.feIn{height:100%;min-height:0;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreview{height:100%;min-height:0}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewCard{height:100%;min-height:0;
+    justify-content:center;overflow:hidden}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:1 1 auto;
+    width:auto;height:auto;min-height:0;max-width:100%;max-height:calc(100% - 64px)}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta{flex:none;padding:6px 8px 2px}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta span{margin-top:2px}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewChoose{flex:none;margin-top:0;padding:5px 16px}
   /* 台高减掉三道间距（上、中、下）之后，剩下的按 34 : 66 分给两块板 ——
      上面那块是名录／清单，下面那块是表格与档案，本来就该长一些。
      这么分，中间那道缝落下来正好等于 --feG。 */
@@ -2248,6 +2269,14 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   .feMk .nm{font-size:9px}
   .feGrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #feSit{min-height:150px}
+}
+/* 手机横屏高度特别短，预览打开时临时多借一点地图区域；图片仍按原比例缩小，
+   地名和按钮必须留在页脚上方。 */
+@media (max-width:860px) and (max-height:560px){
+  #feWrap[data-step="loc"] #fePanL{height:20%}
+  #feWrap[data-step="loc"] #fePanR.locArtOn{height:70%}
+  #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:none;width:auto;height:auto;
+    max-width:100%;max-height:calc(70vh - 132px)}
 }
 #eraSel{position:fixed;inset:0;z-index:46;display:none;background:rgba(6,6,6,.97);touch-action:none}
 #eraSel.on{display:block}
@@ -3018,12 +3047,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 
 <div class="gDlg" id="dlgIter" style="z-index:88">
   <div class="box" style="max-width:460px">
-    <span class="tag">ITER</span>
+    <div id="itScene"><img id="itSceneImg" alt=""></div>
     <h2 id="itTitle"></h2>
     <div class="sub" id="itBrief" style="font-size:11px;line-height:2.2;letter-spacing:.08em;color:#35342b;margin-top:14px"></div>
-    <div style="display:flex;gap:14px;margin-top:26px">
-      <span class="eBtn" id="itGo" style="margin-top:0;flex:1;text-align:center">PROFICISCI&nbsp;·&nbsp;确认前往&nbsp;⏎</span>
-      <span class="eBtn" id="itNo" style="margin-top:0">取消</span>
+    <div class="itActions">
+      <span class="eBtn" id="itGo">确认前往&nbsp;⏎</span>
+      <span class="eBtn" id="itNo">取消</span>
     </div>
     <div class="esc2">ESC&nbsp;//&nbsp;RETVRN</div>
   </div>
@@ -3159,6 +3188,14 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
             <div class="ld" id="feLocD">这一代能落脚的地方都标在图上。点一处，这里会写清那里是做什么的。</div>
             <div class="lw" id="feLocW"></div>
           </div>
+          <div id="feLocPreview" role="dialog" aria-label="地点插图">
+            <div id="feLocPreviewCard">
+              <button id="feLocPreviewX" type="button" aria-label="关闭地点插图">×</button>
+              <div id="feLocPreviewArt"><img id="feLocPreviewImg" alt=""></div>
+              <div id="feLocPreviewMeta"><b id="feLocPreviewName"></b><span id="feLocPreviewEra"></span></div>
+              <button id="feLocPreviewChoose" type="button">选择</button>
+            </div>
+          </div>
         </div>
         <div class="feSec" data-s="per">
           <div class="feRow"><span class="t" id="fePerT">自拟一个人</span>
@@ -3176,15 +3213,6 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
           <div id="feSum"></div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div id="feLocPreview" role="dialog" aria-label="地点插图">
-    <div id="feLocPreviewCard">
-      <button id="feLocPreviewX" type="button" aria-label="关闭地点插图">×</button>
-      <div id="feLocPreviewArt"><img id="feLocPreviewImg" alt=""></div>
-      <div id="feLocPreviewMeta"><b id="feLocPreviewName"></b><span id="feLocPreviewEra"></span></div>
-      <button id="feLocPreviewChoose" type="button">选择</button>
     </div>
   </div>
 
@@ -5936,6 +5964,7 @@ function feIsOpen(){return $('#feWrap').classList.contains('on');}
    这一摊得落在两半中间（板已经转出画外、还没转回来的那一刻）。 */
 function feStepApply(s){
   FE.step=s;
+  if(s!=='loc')feLocPreviewClose();
   var w=$('#feWrap');w.setAttribute('data-step',s);
   w.classList.remove('artOn');       /* 換一步就把立繪收回去 */
   var idx=0,k;
@@ -6447,6 +6476,7 @@ function feLocChoose(n){
   FE.loc=FE.era.locs[n];
   tbSel(FEMV,FE.loc);
   feLocInfo();feFootSync();
+  if(FE._locPreview===n)$('#feLocPreviewChoose').textContent='已选择';
 }
 function feLocPreviewSrc(n){
   var ei=String(FE.era.i);if(ei.length<2)ei='0'+ei;
@@ -6467,6 +6497,7 @@ function feLocPreviewSwap(n,L){
     im.src=src;im.alt=L.cn+'地点插图';
     $('#feLocPreviewName').textContent=L.cn;
     $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
+    $('#feLocPreviewChoose').textContent=(FE.loc===L?'已选择':'选择');
     card.classList.remove('lTurn');card.classList.add('lEnter');
     requestAnimationFrame(function(){requestAnimationFrame(function(){
       if(card._run===run)card.classList.remove('lEnter');
@@ -6487,14 +6518,17 @@ function feLocPreviewOpen(n){
   var p=$('#feLocPreview'),im=$('#feLocPreviewImg'),was=p.classList.contains('on');
   if(was&&FE._locPreview===n)return;
   FE._locPreview=n;
+  $('#fePanR').classList.add('locArtOn');
   if(was&&im.getAttribute('src')){feLocPreviewSwap(n,L);return;}
   im.alt=L.cn+'地点插图';im.src=feLocPreviewSrc(n);
   $('#feLocPreviewName').textContent=L.cn;
   $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
+  $('#feLocPreviewChoose').textContent=(FE.loc===L?'已选择':'选择');
   p.classList.add('on');
 }
 function feLocPreviewClose(){
   var p=$('#feLocPreview');if(p)p.classList.remove('on');
+  var pan=$('#fePanR');if(pan)pan.classList.remove('locArtOn');
   var card=$('#feLocPreviewCard');if(card){
     card._run=(card._run||0)+1;
     if(card._t){clearTimeout(card._t);card._t=0;}
@@ -6505,7 +6539,7 @@ function feLocPreviewClose(){
 }
 function feLocPreviewConfirm(){
   if(FE._locPreview==null)return;
-  var n=FE._locPreview;feLocChoose(n);feLocPreviewClose();
+  feLocChoose(FE._locPreview);
 }
 function feLocSync(){
   var box=$('#feLocList');if(!box)return;
@@ -7860,8 +7894,9 @@ function iterAsk(s){
   PENDSITE={s:s,t:performance.now()};
   var _box=$('#dlgIter .box'),_bg=iterBg(s);
   _box.classList.toggle('itBg',!!_bg);
-  if(_bg)_box.style.setProperty('--itBg','url("'+_bg+'")');
-  else _box.style.removeProperty('--itBg');
+  var _im=$('#itSceneImg');
+  if(_bg){_im.src=_bg;_im.alt=s.cn+'地点插图';}
+  else{_im.removeAttribute('src');_im.alt='';}
   $('#itTitle').textContent=s.n+' · '+s.cn;
   var _ib=siteIntro(s);
   $('#itBrief').innerHTML=esc2(_ib).replace(/\n/g,'<br>')
