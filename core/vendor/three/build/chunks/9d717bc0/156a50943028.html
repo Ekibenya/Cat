@@ -11,6 +11,17 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/core/res/icon/favicon-48.png?v2">
 <link rel="apple-touch-icon" sizes="180x180" href="/core/res/icon/apple-touch-icon.png?v2">
 <link rel="manifest" href="/manifest.webmanifest">
+<script>
+/* Apple 设备保留原生 SF Mono／苹方；其余平台才启用游戏内置的近似字体。 */
+(function(){
+  var p='';
+  try{p=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'';}catch(_){}
+  var u='';try{u=navigator.userAgent||'';}catch(_){}
+  if(!/(Mac|iPhone|iPad|iPod)/i.test(p)&&!/(iPhone|iPad|iPod)/i.test(u))
+    document.documentElement.classList.add('feNonApple');
+})();
+</script>
+<link rel="stylesheet" href="/core/res/font/felinia-fonts.css?v=1">
 <link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=12">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
