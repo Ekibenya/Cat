@@ -946,10 +946,10 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
 /* 正文地图中，本纪自带的二十处地点与开局择地共用同一种场景图展示：
    图片独立成层、保持原比例完整显示，地名与说明排在图下，不再拿渐变压暗图片。 */
 #itScene{display:none}
-#dlgIter .itActions{display:flex;gap:14px;margin-top:26px}
+#dlgIter .itActions{display:flex;align-items:center;justify-content:center;gap:32px;margin-top:26px}
 #dlgIter .itActions .eBtn{margin-top:0;border:0;background:transparent;box-shadow:none;
-      padding:7px 4px;color:var(--txt);text-align:center;text-shadow:none}
-#dlgIter .itActions #itGo{flex:1}
+      min-width:110px;padding:7px 4px;color:var(--txt);text-align:center;text-shadow:none}
+#dlgIter .itActions #itGo{flex:none}
 #dlgIter .itActions .eBtn:hover{border:0;background:transparent;color:var(--gold-hi);box-shadow:none}
 #dlgIter .box.itBg{box-sizing:border-box;width:min(calc(35vw/var(--ui)),552px);
       min-width:0!important;max-width:min(calc(35vw/var(--ui)),552px)!important;
@@ -966,12 +966,14 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
       letter-spacing:.16em;text-align:center;-webkit-text-stroke:.2px rgba(27,23,16,.7);
       text-shadow:0 1px 0 rgba(255,255,255,.98),0 0 7px rgba(255,255,255,.96)}
 #dlgIter .box.itBg #itBrief{box-sizing:border-box;max-height:min(22vh,175px);overflow-y:auto;
-      margin:7px 12px 0!important;padding:0;color:#4a3a21!important;background:transparent;border:0;
+      margin:5px 12px 0!important;padding:0;color:#6f4b0f!important;background:transparent;border:0;
+      font-size:11px!important;font-weight:600;letter-spacing:.08em!important;
       text-align:center;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98);
       line-height:1.8!important;scrollbar-width:thin}
 #dlgIter .box.itBg #itBrief i{color:#8a6118!important}
-#dlgIter .box.itBg .itActions{margin:6px 12px 0}
-#dlgIter .box.itBg .itActions .eBtn{font-weight:600;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
+#dlgIter .box.itBg .itActions{width:100%;margin:4px 0 0}
+#dlgIter .box.itBg .itActions .eBtn{font:600 12px/1.2 var(--mono);letter-spacing:.18em;
+      text-indent:.18em;text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
 #dlgIter .box.itBg .esc2{display:none}
 @media (max-width:760px){
   #dlgIter .box.itBg{width:min(calc(88vw/var(--ui)),552px)}
@@ -1845,11 +1847,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   padding:0 20px;font-size:11px;letter-spacing:.14em;color:#6f6757;
   background:linear-gradient(0deg,rgba(233,226,210,.94) 0%,rgba(233,226,210,.62) 62%,rgba(233,226,210,0) 100%)}
 #feFoot .go{color:#4a4237;cursor:pointer;display:inline-block;white-space:nowrap;
-  padding:5px 12px;margin-left:10px;border:1px solid rgba(154,116,42,.5);
-  background:rgba(255,255,255,.5)}
-#feFoot .go:hover{color:#1f1a13;border-color:#9a742a}
-#feFoot .go.off{opacity:.35;cursor:default;border-color:#cec3ab}
-#feFoot .go.off:hover{color:#4a4237;border-color:#cec3ab}
+  min-width:130px;padding:7px 4px;margin-left:10px;border:0;
+  border-bottom:1px solid rgba(154,116,42,.58);background:transparent;
+  text-align:center;font-weight:600;transition:color .18s ease,border-color .18s ease}
+#feFoot .go:hover{color:#9a742a;border-bottom-color:#9a742a;background:transparent}
+#feFoot .go.off{opacity:.35;cursor:default;border-bottom-color:rgba(154,116,42,.28)}
+#feFoot .go.off:hover{color:#4a4237;border-bottom-color:rgba(154,116,42,.28)}
 
 /* ═══ 两块倾斜的玻璃板 ═══ */
 /* 透视只能加一次：给舞台一层，板子本身就走纯 rotateY。
@@ -1986,6 +1989,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 .feMk:hover .nm{color:#1f1a13}
 .feMk.on .dot{background:#9a742a;box-shadow:0 0 0 4px rgba(154,116,42,.22);width:16px;height:16px}
 .feMk.on .nm{color:#1f1a13;background:rgba(255,255,255,.95);border-bottom:1px solid #9a742a}
+/* 只用于正文左侧地图：能打开场景图的地点用冷青色菱形，与普通金色地点一眼分开。 */
+.feMk.pict .dot{width:15px;height:15px;border-color:#147f83;background:#d9f2ec;
+  box-shadow:0 0 0 3px rgba(20,127,131,.2)}
+.feMk.pict:hover .dot,.feMk.pict.on .dot{background:#147f83;border-color:#0b5f63;
+  box-shadow:0 0 0 4px rgba(20,127,131,.28)}
+.feMk.pict .nm{color:#0b5f63}
+.feMk.pict.on .nm{border-bottom-color:#147f83}
 
 .feLoc{display:block;width:100%;box-sizing:border-box;text-align:left;
   padding:8px 10px;border:0;border-left:2px solid transparent;background:none;
@@ -2168,14 +2178,16 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      其余几步那条缝是留白，让两块板各自看得出边界。 */
   #feWrap[data-step="loc"] #fePanL{height:26%}
   #feWrap[data-step="loc"] #fePanR{height:22%}
-  #feWrap[data-step="loc"] #fePanR.locArtOn{height:52%}
+  /* 手机上地图本身已经说明了怎么选；未打开场景图时不再摆一块空的说明弹窗。 */
+  #feWrap[data-step="loc"] #fePanR:not(.locArtOn){display:none}
+  #feWrap[data-step="loc"] #fePanR.locArtOn{height:38%}
   /* 手机上预览必须整张落在这一块里：图片只吃掉文字和「选择」以外的剩余高度，
      横屏或矮屏也按高度缩小，绝不再用整屏宽度把按钮顶到滚动区下面。 */
   #feWrap[data-step="loc"] #fePanR.locArtOn>.feIn{height:100%;min-height:0;
     display:flex;align-items:center;justify-content:center;overflow:hidden}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreview{height:100%;min-height:0}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewCard{height:100%;min-height:0;
-    justify-content:center;overflow:hidden}
+    justify-content:flex-end;overflow:hidden}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewArt{flex:1 1 auto;
     width:auto;height:auto;min-height:0;max-width:100%;max-height:calc(100% - 64px)}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta{flex:none;padding:6px 8px 2px}
@@ -2538,7 +2550,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    退回挪到左边（那是退的方向），中文在前，拉丁文缩成小字当记号 ——
    和主菜单「INITIVM · 开始」那一套本来就是同一个写法，只有这两条底栏没跟上。 */
 #feFoot .l{display:flex;align-items:center;gap:14px;min-width:0}
-#feFoot .go.back{margin-left:0}
+#feFoot .go.back{margin-left:0;min-width:86px}
 #feFoot .go i{font-style:normal;font-size:9px;letter-spacing:.2em;
   opacity:.6;margin-left:9px}
 }
@@ -6194,7 +6206,7 @@ function tbSpread(pts,mind,mindW){
 function tbMake(host,inn,opt){
   return {host:host,inn:inn,mm:null,img:'',locs:[],sel:null,
           bw:0,bh:0,minw:0,fit:'',key:'',
-          fill:!!(opt&&opt.fill),band:(opt&&opt.band)||null,
+          fill:!!(opt&&opt.fill),art:!!(opt&&opt.art),band:(opt&&opt.band)||null,
           onPick:(opt&&opt.onPick)||function(){}};
 }
 function tbProjX(lo){return (lo+180)/360;}
@@ -6449,7 +6461,7 @@ function tbRender(M){
       var d=document.createElement('div');
       var b=lbBox(mx,my,Lo.cn),show=(M.sel===Lo)||lbFree(b);
       if(show)lbTake(b);
-      d.className='feMk'+(M.sel===Lo?' on':'')+(show?'':' mute');
+      d.className='feMk'+(M.art&&Lo.bg!=null?' pict':'')+(M.sel===Lo?' on':'')+(show?'':' mute');
       d.dataset.n=n;
       d.style.left=mx+'px';
       d.style.top=my+'px';
@@ -7362,13 +7374,6 @@ function feSyncEngine(){
   $('#feSit').addEventListener('input',function(){feSitRender();});
   $('#feLocPreviewX').addEventListener('pointerup',function(ev){ev.stopPropagation();feLocPreviewClose();});
   $('#feLocPreviewChoose').addEventListener('pointerup',function(ev){ev.stopPropagation();feLocPreviewConfirm();});
-  $('#feLocPreviewCard').addEventListener('pointerup',function(ev){ev.stopPropagation();});
-  document.addEventListener('pointerup',function(ev){
-    if(!feLocPreviewOn())return;
-    var t=ev.target;
-    if(t&&t.closest&&(t.closest('#feLocPreviewCard')||t.closest('.feLoc')||t.closest('.feMk')))return;
-    feLocPreviewClose();
-  });
   addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){if(FEMV)FEMV.fit='';feLocRender();}});
   addEventListener('keydown',function(ev){
     if(!feIsOpen())return;
@@ -7814,7 +7819,7 @@ function gmMM(){
    换成 DOM 之后这些全没了：标记是真元素，斜不斜都由浏览器自己去算命中。 */
 var GMMV=null;
 function gmapView(){
-  if(!GMMV)GMMV=tbMake($('#gmMap'),$('#gmMapIn'),{fill:1,onPick:function(n){
+  if(!GMMV)GMMV=tbMake($('#gmMap'),$('#gmMapIn'),{fill:1,art:1,onPick:function(n){
     var s=(ERA.act||[])[n];if(s)iterAsk(s);}});
   return GMMV;
 }
@@ -7823,7 +7828,7 @@ function gmapRefresh(){
   if(!mm||!im)return;                       /* 图还没到；gmMM 已经派人去取了 */
   var A=ERA.act||[],i;
   M.mm=mm;M.img=im.src;
-  M.locs=A.map(function(a){return {n:a.n,cn:a.cn,la:a.la,lo:a.lo0,d:a.d,w:a.w};});
+  M.locs=A.map(function(a){return {n:a.n,cn:a.cn,la:a.la,lo:a.lo0,d:a.d,w:a.w,bg:a.bg};});
   M.key=A.length+'|'+((A[0]&&A[0].n)||'');
   M.sel=null;
   for(i=0;i<M.locs.length;i++)if(M.locs[i].n===GAME.dest)M.sel=M.locs[i];
@@ -7897,7 +7902,7 @@ function iterAsk(s){
   var _im=$('#itSceneImg');
   if(_bg){_im.src=_bg;_im.alt=s.cn+'地点插图';}
   else{_im.removeAttribute('src');_im.alt='';}
-  $('#itTitle').textContent=s.n+' · '+s.cn;
+  $('#itTitle').textContent=s.cn;
   var _ib=siteIntro(s);
   $('#itBrief').innerHTML=esc2(_ib).replace(/\n/g,'<br>')
     .replace(/〔([^〕]*)〕/g,'<i style="font-style:normal;color:var(--gold)">〔$1〕</i>');
