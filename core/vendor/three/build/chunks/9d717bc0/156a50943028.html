@@ -1971,16 +1971,21 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    真正写入本局地点要等玩家按下「选择」。 */
 #feLocPreview{position:fixed;inset:0;z-index:30;display:flex;align-items:center;
   justify-content:center;padding:58px 24px 52px;box-sizing:border-box;
-  background:transparent;
+  background:transparent;perspective:1700px;
   opacity:0;visibility:hidden;pointer-events:none;
   transition:opacity 220ms ease,visibility 0s linear 220ms}
-#feLocPreview.on{opacity:1;visibility:visible;pointer-events:auto;
+#feLocPreview.on{opacity:1;visibility:visible;pointer-events:none;
   transition:opacity 220ms ease,visibility 0s}
-#feLocPreviewCard{position:relative;width:min(960px,92vw);max-height:calc(100dvh - 110px);
-  display:flex;flex-direction:column;align-items:center;color:#eee5d3;
+#feLocPreviewCard{position:relative;width:min(520px,48vw);max-height:calc(100dvh - 110px);
+  display:flex;flex-direction:column;align-items:center;color:#eee5d3;pointer-events:auto;
+  transform-origin:50% 50%;
   transform:translateY(18px) scale(.965);opacity:0;
   transition:transform 360ms cubic-bezier(.16,1,.3,1),opacity 220ms ease}
 #feLocPreview.on #feLocPreviewCard{transform:translateY(0) scale(1);opacity:1}
+#feLocPreview.on #feLocPreviewCard.lTurn{transition:transform .19s cubic-bezier(.55,0,.85,.3),opacity .16s ease;
+  transform:translateX(-58%) rotateY(-42deg) scale(.93);opacity:0}
+#feLocPreview.on #feLocPreviewCard.lEnter{transition:none;
+  transform:translateX(58%) rotateY(42deg) scale(.93);opacity:0}
 #feLocPreviewArt{position:relative;width:100%;aspect-ratio:552/308;overflow:hidden;
   -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
   -webkit-mask-repeat:no-repeat;
@@ -2001,6 +2006,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   background:rgba(18,13,7,.78);color:#f1e7d2;font:12px/1.2 var(--mono);
   letter-spacing:.28em;text-indent:.28em;cursor:pointer;transition:background .18s ease,border-color .18s ease}
 #feLocPreviewChoose:hover{background:rgba(154,116,42,.86);border-color:#e6cc96;color:#fff}
+@media (prefers-reduced-motion:reduce){
+  #feLocPreviewCard,#feLocPreview.on #feLocPreviewCard.lTurn{transition:none}
+  #feLocPreview.on #feLocPreviewCard.lTurn,#feLocPreview.on #feLocPreviewCard.lEnter{
+    opacity:1;transform:none}
+}
 
 /* ═══ 二 · 立身 PERSONA ═══ */
 .feColH{font-size:10px;letter-spacing:.2em;color:#9a742a;padding:0 0 10px}
@@ -2072,7 +2082,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    窄屏这两块几乎盖满整屏，同一个数看着就是一堵不透光的墙。 */
 @media (max-width:860px){
   #feLocPreview{padding:52px 12px 48px}
-  #feLocPreviewCard{width:min(96vw,720px)}
+  #feLocPreviewCard{width:min(78vw,440px)}
   #feLocPreviewX{right:2px;top:2px;width:34px;height:34px}
   #feHead{padding:0 12px;font-size:10px}
   /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
@@ -3141,7 +3151,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     </div>
   </div>
 
-  <div id="feLocPreview" role="dialog" aria-modal="true" aria-label="地点插图">
+  <div id="feLocPreview" role="dialog" aria-label="地点插图">
     <div id="feLocPreviewCard">
       <button id="feLocPreviewX" type="button" aria-label="关闭地点插图">×</button>
       <div id="feLocPreviewArt"><img id="feLocPreviewImg" alt=""></div>
@@ -6416,17 +6426,53 @@ function feLocPreviewSrc(n){
   return '/core/res/img/locs/'+ei+'/'+li+'.webp';
 }
 function feLocPreviewOn(){return $('#feLocPreview').classList.contains('on');}
+var FE_LTURN=190;
+function feLocPreviewSwap(n,L){
+  var card=$('#feLocPreviewCard'),im=$('#feLocPreviewImg');if(!card||!im)return;
+  var src=feLocPreviewSrc(n),run=(card._run=(card._run||0)+1);
+  if(card._t){clearTimeout(card._t);card._t=0;}
+  if(card._g){clearTimeout(card._g);card._g=0;}
+  var loaded=false,turned=false,next=new Image();
+  function done(){
+    if(card._run!==run||!loaded||!turned)return;
+    if(card._g){clearTimeout(card._g);card._g=0;}
+    im.src=src;im.alt=L.cn+'地点插图';
+    $('#feLocPreviewName').textContent=L.cn;
+    $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
+    card.classList.remove('lTurn');card.classList.add('lEnter');
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      if(card._run===run)card.classList.remove('lEnter');
+    });});
+  }
+  next.onload=function(){loaded=true;done();};
+  next.onerror=function(){if(card._run===run)card.classList.remove('lTurn','lEnter');};
+  card.classList.add('lTurn');
+  try{if(window.SX)SX('slide');}catch(_){}
+  card._t=setTimeout(function(){card._t=0;turned=true;done();},FE_LTURN);
+  card._g=setTimeout(function(){
+    card._g=0;if(card._run===run&&!loaded)card.classList.remove('lTurn','lEnter');
+  },2600);
+  next.src=src;
+}
 function feLocPreviewOpen(n){
   var L=FE.era&&FE.era.locs&&FE.era.locs[n];if(!L)return;
+  var p=$('#feLocPreview'),im=$('#feLocPreviewImg'),was=p.classList.contains('on');
+  if(was&&FE._locPreview===n)return;
   FE._locPreview=n;
-  var im=$('#feLocPreviewImg');
+  if(was&&im.getAttribute('src')){feLocPreviewSwap(n,L);return;}
   im.alt=L.cn+'地点插图';im.src=feLocPreviewSrc(n);
   $('#feLocPreviewName').textContent=L.cn;
   $('#feLocPreviewEra').textContent=FE.era.yl+'　·　'+FE.era.t;
-  $('#feLocPreview').classList.add('on');
+  p.classList.add('on');
 }
 function feLocPreviewClose(){
   var p=$('#feLocPreview');if(p)p.classList.remove('on');
+  var card=$('#feLocPreviewCard');if(card){
+    card._run=(card._run||0)+1;
+    if(card._t){clearTimeout(card._t);card._t=0;}
+    if(card._g){clearTimeout(card._g);card._g=0;}
+    card.classList.remove('lTurn','lEnter');
+  }
   FE._locPreview=null;
 }
 function feLocPreviewConfirm(){
@@ -7255,7 +7301,12 @@ function feSyncEngine(){
   $('#feLocPreviewX').addEventListener('pointerup',function(ev){ev.stopPropagation();feLocPreviewClose();});
   $('#feLocPreviewChoose').addEventListener('pointerup',function(ev){ev.stopPropagation();feLocPreviewConfirm();});
   $('#feLocPreviewCard').addEventListener('pointerup',function(ev){ev.stopPropagation();});
-  $('#feLocPreview').addEventListener('pointerup',function(ev){if(ev.target===this)feLocPreviewClose();});
+  document.addEventListener('pointerup',function(ev){
+    if(!feLocPreviewOn())return;
+    var t=ev.target;
+    if(t&&t.closest&&(t.closest('#feLocPreviewCard')||t.closest('.feLoc')||t.closest('.feMk')))return;
+    feLocPreviewClose();
+  });
   addEventListener('resize',function(){if(feIsOpen()&&FE.step==='loc'){if(FEMV)FEMV.fit='';feLocRender();}});
   addEventListener('keydown',function(ev){
     if(!feIsOpen())return;
