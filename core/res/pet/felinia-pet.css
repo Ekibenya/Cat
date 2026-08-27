@@ -1,0 +1,70 @@
+#fePet{
+  --pet-w:144px;
+  --pet-h:156px;
+  position:fixed;
+  left:calc(100vw - 216px);
+  top:calc(100vh - 242px);
+  width:var(--pet-w);
+  height:var(--pet-h);
+  z-index:55;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .24s ease,visibility .24s;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+}
+
+#fePet.fePetOn{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+#fePetSprite{
+  width:100%;
+  height:100%;
+  background-image:url('/core/res/pet/rooftop-courier-360-v2.webp');
+  background-repeat:no-repeat;
+  background-size:800% 1100%;
+  background-position:0 0;
+  cursor:grab;
+  touch-action:none;
+  filter:drop-shadow(0 8px 7px rgba(42,29,12,.22));
+  transform:translateZ(0) scale(1);
+  transform-origin:50% 100%;
+  transition:transform .12s ease;
+}
+
+#fePet.fePetDrag #fePetSprite{cursor:grabbing}
+
+/* Direction rows contain one authored frame per angle. Reuse the uneven idle
+   cadence as a tiny sideways weight shift; never bob vertically or rescale. */
+#fePetSprite.fePetLookAlive{
+  animation:fePetLookAlive 2.2s steps(1,end) infinite;
+}
+@keyframes fePetLookAlive{
+  0%,100%{transform:translateZ(0) translateX(0) rotate(0)}
+  25.45%{transform:translateZ(0) translateX(-1px) rotate(-.28deg)}
+  35.45%{transform:translateZ(0) translateX(0) rotate(.12deg)}
+  45.45%{transform:translateZ(0) translateX(-.5px) rotate(-.12deg)}
+  58.18%{transform:translateZ(0) translateX(1px) rotate(.28deg)}
+  70.91%{transform:translateZ(0) translateX(.5px) rotate(.1deg)}
+}
+
+@media (max-width:860px){
+  #fePet{
+    --pet-w:108px;
+    --pet-h:117px;
+    left:calc(100vw - 118px);
+    top:calc(100vh - 192px);
+    z-index:55;
+  }
+  #fePetSprite{filter:drop-shadow(0 6px 5px rgba(42,29,12,.2))}
+}
+
+@media (prefers-reduced-motion:reduce){
+  #fePet,#fePetSprite{transition:none}
+  #fePetSprite.fePetLookAlive{animation:none}
+}

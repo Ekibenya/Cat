@@ -23,6 +23,8 @@
 </script>
 <link rel="stylesheet" href="/core/res/font/felinia-fonts.css?v=1">
 <link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=12">
+<link rel="stylesheet" href="/core/res/pet/felinia-pet.css?v=16">
+<script defer src="/core/res/pet/felinia-pet.js?v=27"></script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -174,8 +176,9 @@ canvas{display:block}
 #menu:not(.era):not(.gbg) .mItems{top:auto;bottom:104px;transform:translateX(-50%);z-index:3}
 #menu:not(.era):not(.gbg) .mItem{color:#463d2f}
 #menu:not(.era):not(.gbg) .mItem i{color:#916a24}
-#menu:not(.era):not(.gbg) .mItem:hover{color:#1d1810;border-color:rgba(145,106,36,.55);
-  background:rgba(240,234,220,.45);text-shadow:none}
+#menu:not(.era):not(.gbg) .mItem:hover,
+#menu:not(.era):not(.gbg) .mItem:active{color:#9a742a;background:transparent;
+  text-shadow:0 0 12px rgba(154,116,42,.48)}
 #menu:not(.era):not(.gbg) .mFoot{color:#978a72;z-index:3;bottom:68px}
 #menu:not(.era):not(.gbg) #luxTg{color:#463d2f;border-color:rgba(70,61,47,.35)}
 #menu:not(.era):not(.gbg) #luxTg:hover{border-color:#916a24}
@@ -186,12 +189,12 @@ canvas{display:block}
 #menu .mItems{position:absolute;left:50%;top:56%;transform:translateX(-50%);
       display:flex;gap:4vw;white-space:nowrap}
 #menu .mItem{font-size:11px;letter-spacing:.42em;color:#918d80;cursor:pointer;
-      padding:11px 30px 9px;border:1px solid transparent;
-      transition:color .2s,border-color .2s,text-shadow .2s}
+      padding:11px 30px 9px;border:0;background:transparent;
+      transition:color .2s,text-shadow .2s}
 #menu .mItem i{font-style:normal;color:var(--gold)}
 @media (max-width:760px){
 }
-#menu .mItem:hover{color:var(--gold-hi);border-color:rgba(189,142,54,.45);
+#menu .mItem:hover,#menu .mItem:active{color:var(--gold-hi);background:transparent;
       text-shadow:0 0 14px rgba(222,184,104,.5)}
 #menu .mFoot{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
       font-size:9px;letter-spacing:.4em;color:#46443b;white-space:nowrap}
@@ -353,6 +356,8 @@ canvas{display:block}
    不加 opacity：选局那张就是满色出的，这里再压半透明，山就成了一层灰雾。 */
 #game #gTerr{position:absolute;inset:0;width:100%;height:100%;z-index:-1;
       pointer-events:none}
+/* 正文后不再铺任何装饰底图：线场与马赛克地图都关闭，只留原来的奶油底。 */
+#game #gTerr{display:none}
 #menu.gbg{opacity:1;pointer-events:none;transition:none}
 #menu canvas{transform:translateZ(0)}
 #menu.gbg .mItems,#menu.gbg .mFoot,#menu.gbg #eraHud{display:none}
@@ -444,8 +449,8 @@ html.lux #eraSel .pip b{color:#c0b59c}
 html.lux #eraSel .pip.mark b{color:#9a9184}
 html.lux #eraSel .pip.on b{color:#9a742a}
 html.lux #esFoot{color:#9a9184;background:rgba(252,252,252,.92)}
-html.lux #esFoot .go{color:#4a4237;border:0;border-bottom:1px solid rgba(154,116,42,.58);background:transparent}
-html.lux #esFoot .go:hover{color:#9a742a;border-bottom-color:#9a742a;background:transparent}
+html.lux #esFoot .go{color:#4a4237;border:0;border-bottom:1px solid transparent;background:transparent}
+html.lux #esFoot .go:hover,html.lux #esFoot .go:active{color:#9a742a;border-bottom-color:#9a742a;background:transparent}
 html.lux #esBrand{color:#9a9184}
 html.lux #esBrand b{color:#4a4237}
 #luxTg{position:absolute;top:16px;right:18px;z-index:60;cursor:pointer;font-size:16px;line-height:1;
@@ -925,6 +930,19 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
       -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
       padding:34px 42px;
       min-width:min(calc(92vw/var(--ui)),360px);max-width:min(calc(94vw/var(--ui)),680px);max-height:calc(92vh/var(--ui));overflow:auto}
+/* 选中开局插画后出现的时代资料确认窗：与择地上窗使用同一张撕纸边缘。 */
+#dlgEra .box{
+  border:0;background:rgba(235,227,209,.82);box-shadow:none;
+  -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;-webkit-mask-position:center;
+          mask-image:url(/core/res/img/annals/edge-h.png);mask-size:100% 100%;
+          mask-repeat:no-repeat;mask-position:center;
+  filter:drop-shadow(0 10px 18px rgba(82,60,25,.28))}
+#dlgEra .eBtn{
+  border:0;border-bottom:1px solid transparent;background:transparent;
+  box-shadow:none;text-align:center;transition:color .18s ease,border-color .18s ease}
+#dlgEra .eBtn:hover,#dlgEra .eBtn:active{
+  border-bottom-color:#9a742a;background:transparent;box-shadow:none;color:#9a742a}
 /* 设置窗尺寸锁死：12 个页签内容长短不一，原本外框跟着内容伸缩，每切一页窗就跳一次。
    改成外框定高、标题与页签钉住，只有内容区自己滚。scrollbar-gutter 让滚动条常驻留白，
    免得「这页要滚那页不要滚」时正文宽度再横向抖一下。 */
@@ -1325,6 +1343,18 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       box-shadow:0 14px 34px rgba(242,236,222,.5);
       -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
       visibility:hidden;transform:translateY(-113%) translateZ(0);transition:transform .45s cubic-bezier(.2,.85,.25,1),height .3s,visibility .45s;overflow:hidden;font-family:var(--mono)}
+/* 视觉小说画面框试验：只换外缘，画面、玻璃罩与三档尺寸全部保持原样。 */
+#pnTx{
+      border:0;box-shadow:none;
+      -webkit-mask-image:url(/core/res/img/annals/edge-h.png),url(/core/res/img/annals/edge-v.png),url(/core/res/img/annals/edge-v.png),linear-gradient(#000 0 0);
+      -webkit-mask-size:100% 100%,auto 100%,auto 100%,calc(100% - 16px) calc(100% - 16px);
+      -webkit-mask-repeat:no-repeat,no-repeat,no-repeat,no-repeat;
+      -webkit-mask-position:center,left center,right center,center;
+              mask-image:url(/core/res/img/annals/edge-h.png),url(/core/res/img/annals/edge-v.png),url(/core/res/img/annals/edge-v.png),linear-gradient(#000 0 0);
+              mask-size:100% 100%,auto 100%,auto 100%,calc(100% - 16px) calc(100% - 16px);
+              mask-repeat:no-repeat,no-repeat,no-repeat,no-repeat;
+              mask-position:center,left center,right center,center;
+      filter:drop-shadow(0 10px 18px rgba(82,60,25,.28))}
 /* 里头两层场景宿主本来没底色；现代城那层原是实心 #f0eadc，改成半透。 */
 #pnTx #modScene3D{background:rgba(240,234,220,.72) !important}
 /* ── 三维画面：只做一点点统调，不许抽色 ──
@@ -1850,11 +1880,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   background:linear-gradient(0deg,rgba(233,226,210,.94) 0%,rgba(233,226,210,.62) 62%,rgba(233,226,210,0) 100%)}
 #feFoot .go{color:#4a4237;cursor:pointer;display:inline-block;white-space:nowrap;
   min-width:130px;padding:7px 4px;margin-left:10px;border:0;
-  border-bottom:1px solid rgba(154,116,42,.58);background:transparent;
+  border-bottom:1px solid transparent;background:transparent;
   text-align:center;font-weight:600;transition:color .18s ease,border-color .18s ease}
-#feFoot .go:hover{color:#9a742a;border-bottom-color:#9a742a;background:transparent}
-#feFoot .go.off{opacity:.35;cursor:default;border-bottom-color:rgba(154,116,42,.28)}
-#feFoot .go.off:hover{color:#4a4237;border-bottom-color:rgba(154,116,42,.28)}
+#feFoot .go:hover,#feFoot .go:active{color:#9a742a;border-bottom-color:#9a742a;background:transparent}
+#feFoot .go.off{opacity:.35;cursor:default;border-bottom-color:transparent}
+#feFoot .go.off:hover,#feFoot .go.off:active{color:#4a4237;border-bottom-color:transparent}
 
 /* ═══ 两块倾斜的玻璃板 ═══ */
 /* 透视只能加一次：给舞台一层，板子本身就走纯 rotateY。
@@ -2024,6 +2054,21 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #feWrap[data-step="loc"] #fePanL .feGl{
   background:rgba(235,227,209,.82);border:0;
   box-shadow:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+/* 统一试验：人物、同伴与开场页的两扇大窗沿用择地上窗的撕纸边缘。
+   只裁窗体本身，不动窗里的字段、人物条目、按钮和文字。 */
+#feWrap[data-step="per"] .fePan,
+#feWrap[data-step="soc"] .fePan,
+#feWrap[data-step="sit"] .fePan{
+  -webkit-mask-image:url(/core/res/img/annals/edge-h.png);-webkit-mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;-webkit-mask-position:center;
+          mask-image:url(/core/res/img/annals/edge-h.png);mask-size:100% 100%;
+          mask-repeat:no-repeat;mask-position:center;
+  filter:drop-shadow(0 10px 18px rgba(82,60,25,.28))}
+#feWrap[data-step="per"] .fePan .feGl,
+#feWrap[data-step="soc"] .fePan .feGl,
+#feWrap[data-step="sit"] .fePan .feGl{
+  background:rgba(235,227,209,.82);border:0;
+  box-shadow:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 #feWrap[data-step="loc"] #fePanR:not(.locArtOn){display:none}
 #fePanR.locArtOn #feLocInfo{display:none}
 #fePanR.locArtOn .feGl{display:none}
@@ -2049,8 +2094,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   mix-blend-mode:overlay;opacity:.2;background-size:170px 170px;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='170' height='170'><filter id='t'><feTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3'/></filter><rect width='170' height='170' filter='url(%23t)'/></svg>")}
 #feLocPreviewX{position:absolute;right:4px;top:4px;z-index:2;width:38px;height:38px;
-  display:flex;align-items:center;justify-content:center;border:1px solid rgba(235,219,184,.42);
-  background:rgba(18,13,7,.76);color:#f1e7d2;font:17px/1 var(--mono);cursor:pointer}
+  display:flex;align-items:center;justify-content:center;border:0;padding:0;outline:0;box-shadow:none;
+  -webkit-appearance:none;appearance:none;
+  background:transparent;color:#fff;font:17px/1 var(--mono);cursor:pointer;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 7px rgba(0,0,0,.8)}
+#feLocPreviewX:hover,#feLocPreviewX:active,#feLocPreviewX:focus{border:0;outline:0;box-shadow:none;background:transparent}
 #feLocPreviewMeta{box-sizing:border-box;width:100%;padding:11px 10px 5px;text-align:center;
   background:transparent;border:0;text-shadow:none}
 #feLocPreviewMeta b{display:block;color:#1b1710;font-size:15px;letter-spacing:.16em;font-weight:700;
@@ -2060,11 +2108,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   font-size:11.5px;line-height:1.72;letter-spacing:.035em;font-weight:500;
   text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98)}
 #feLocPreviewChoose{margin-top:2px;width:auto;min-width:130px;padding:7px 18px;
-  border:0;border-bottom:1px solid rgba(154,116,42,.58);background:transparent;
+  border:0;border-bottom:1px solid transparent;background:transparent;
   color:#211a10;font:600 12px/1.2 var(--mono);
   text-shadow:0 1px 0 #fff,0 0 7px rgba(255,255,255,.98);
   letter-spacing:.28em;text-indent:.28em;cursor:pointer;transition:background .18s ease,border-color .18s ease}
-#feLocPreviewChoose:hover{background:transparent;border-color:#e4c37d;color:#fff}
+#feLocPreviewChoose:hover,#feLocPreviewChoose:active{background:transparent;border-color:#e4c37d;color:#fff}
 @media (prefers-reduced-motion:reduce){
   #feLocPreviewCard,#feLocPreview.on #feLocPreviewCard.lTurn{transition:none}
   #feLocPreview.on #feLocPreviewCard.lTurn,#feLocPreview.on #feLocPreviewCard.lEnter{
@@ -2142,7 +2190,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 @media (max-width:860px){
   #feLocPreview{padding:0}
   #feLocPreviewCard{width:100%}
-  #feLocPreviewX{right:2px;top:2px;width:34px;height:34px}
+  #feLocPreviewX{right:2px;top:2px;width:36px;height:36px}
   #feHead{padding:0 12px;font-size:10px}
   /* 脚上那句提示碰上很窄的屏（320 一档）会顶到「下一步」底下去：
      .l 收得动，可提示本身没有收口，字就漫出自己的盒子。给它一个收口，
@@ -2215,8 +2263,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
      自然留在图片上方，于是整组内容下移，不再另造会互相打架的 top 偏移。 */
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta b{
     color:#fff0bd;font-size:13.5px;letter-spacing:.144em;
-    -webkit-text-stroke:.45px rgba(31,20,6,.95);
-    text-shadow:0 1px 1px rgba(0,0,0,.98),0 0 4px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.72)}
+    -webkit-text-stroke:0 transparent;
+    text-shadow:0 1px 2px rgba(26,17,7,.92),0 0 5px rgba(26,17,7,.78),0 0 11px rgba(26,17,7,.58)}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewMeta span{
     margin-top:2px;font-size:10.35px;letter-spacing:.0315em;translate:0 6px}
   #feWrap[data-step="loc"] #fePanR.locArtOn #feLocPreviewChoose{
@@ -2502,9 +2550,9 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
    四十像素高的底栏里它占三十来像素、现在占二十出头，不再是这一条的主角。 */
 #esFoot .go{color:var(--txt);cursor:pointer;display:inline-block;white-space:nowrap;
   min-width:86px;font-size:9px;font-weight:600;text-align:center;padding:7px 4px;margin-left:8px;
-  border:0;border-bottom:1px solid rgba(201,155,63,.58);background:transparent;
+  border:0;border-bottom:1px solid transparent;background:transparent;
   transition:color .18s ease,border-color .18s ease}
-#esFoot .go:hover{color:var(--gold-hi);border-bottom-color:var(--gold-hi);background:transparent}
+#esFoot .go:hover,#esFoot .go:active{color:var(--gold-hi);border-bottom-color:var(--gold-hi);background:transparent}
 /* 「返回」挪到左边（那是退的方向），中文在前，拉丁文缩成小字当记号——
    和主菜单「INITIVM · 开始」那一套是同一个写法。
    这三条原先只写在窄屏那一段里，宽屏上不生效也看不出来：
@@ -2585,6 +2633,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
 #feFoot .go .key{font-style:normal!important;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
   opacity:.6;margin-left:9px}
 }
+
 </style>
 
 <div id="eraSel">
@@ -6304,7 +6353,12 @@ function tbClamp(M){
     if(bd2){
       var keep=Math.min(bh,bd2.bottom-bd2.top)*0.45;
       T=Math.max(bd2.top-bh+keep,Math.min(bd2.bottom-keep,T));
-    }else T=(H-bh)/2;
+    }else if(window.matchMedia('(max-width:860px)').matches){
+      /* 手机端两块面板会盖住地图的一部分；即使此刻算不出中间带，也仍允许
+         上下拖动。至少保留四成五在画面内，不让整张地图被拖丢。 */
+      var keep2=Math.min(bh,H)*0.45;
+      T=Math.max(-bh+keep2,Math.min(H-keep2,T));
+    }else T=(H-bh)/2; /* 电脑端放得下，纵向固定居中，只允许横向拖动 */
   }
   box.style.left=L+'px';box.style.top=T+'px';
 }
@@ -12179,12 +12233,13 @@ function apiOpen(){
    完整设置面板本来只挂在游戏内的工具栏上，开局之前根本够不著预设、世界书、生图这几项。
    这里直接借用设置面板里现成的档案输入与页签，不另起一套逻辑。 */
 function qkImport(fileSel,msgSel){
-  var m=$(msgSel);
+  var m=$(msgSel),input=$(fileSel);
+  if(!m||!input){$('#apiMsg').textContent='导入控件尚未就绪';return;}
   /* 汇入结果本来写在设置面板的提示位上（此刻不可见），镜射一份到本窗，用户才看得到成败 */
   var ob=new MutationObserver(function(){$('#apiMsg').textContent=m.textContent;ob.disconnect();});
   ob.observe(m,{childList:true,characterData:true,subtree:true});
   setTimeout(function(){ob.disconnect();},120000);   /* 用户取消选档就不会有回写，超时收掉 */
-  $(fileSel).click();
+  input.click();
 }
 $('#qkPre').addEventListener('click',function(){qkImport('#preFile','#preMsg');});
 $('#qkLore').addEventListener('click',function(){qkImport('#loreFile','#loreMsg');});
