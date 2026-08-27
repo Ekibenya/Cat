@@ -7199,13 +7199,11 @@ function feSceneZh(){
     });
   }else o.push('（没有指定。这一幕里可以只有叙述者一个人。不要另起新的人名。）');
   o.push('');
-  /* 新版铸局走「译入 → 韩文写作 → 译出」三段链，不再经过旧的 condereSys。
-     这里必须把本代、地点、主角、同伴和玩家场面一起交给 loreFor；否则界面虽显示
-     世界书已启用，真正写开局的三次 API 请求却只拿到上面那份短摘要。 */
-  var loreQ=[e.yl,e.t,e.reg,L&&L.cn,L&&L.n,h.n,sit];
-  FE.soc.forEach(function(k){var p=FE.pool[k];if(p&&p.n)loreQ.push(p.n);});
+  /* 开局用专用资料包，不能直接调正常回合的 loreFor。后者会无条件带上二十五条
+     常驻规则，再被「中国／夜市」一类宽词牵出无关人物；实测一幕会膨胀到一万八千字，
+     译入只回前四行就撞上限，真正的地点与场面反而落在截断点后面。 */
   var openingLore='';
-  try{openingLore=loreFor(loreQ.filter(Boolean).join(' '));}catch(_){}
+  try{openingLore=feOpeningLore(e,h,L,sit);}catch(_){}
   if(openingLore){
     o.push('［世界书·本幕激活资料］');
     o.push(openingLore);
@@ -7224,6 +7222,40 @@ function feSceneZh(){
   return o.join('\n');
 }
 
+/* 新版铸局的精准资料包：所选主角与同伴的丰富六条必须全带；世界资料只取本代
+   真正命中年代、地点和玩家场面的前四条。短版 figs[].d/q、常驻文风和无关人物均不进。 */
+function feOpeningLore(e,h,L,sit){
+  var lb=(CARDS&&CARDS.luzhi&&CARDS.luzhi.lorebook)||[],names=[],seen={},out=[];
+  function addName(n){n=String(n||'').trim();if(n&&!seen[n]){seen[n]=1;names.push(n);}}
+  addName(h&&h.n);
+  (FE.soc||[]).forEach(function(k){var p=FE.pool[k];if(p)addName(p.n);});
+  var ei=e&&e.i;
+  names.forEach(function(n){
+    var cat='人 · '+n,a=[];
+    for(var i=0;i<lb.length;i++){
+      var x=lb[i];
+      if(!x||x.on===false||x.lay!=='figures'||x.cat!==cat)continue;
+      if(ei!=null&&x.era!=null&&x.era!==ei)continue;
+      a.push(x);
+    }
+    a.sort(function(x,y){return String(x.title||'').localeCompare(String(y.title||''),'zh-Hans-CN',{numeric:true});});
+    a.forEach(function(x){out.push('『'+(x.title||'')+'』'+(x.content||''));});
+  });
+  var q=[e&&e.yl,e&&e.t,e&&e.reg,L&&L.cn,L&&L.n,sit].filter(Boolean).join(' ').toLowerCase();
+  var world=[],worldChars=0;
+  for(var j=0;j<lb.length&&world.length<4;j++){
+    var w=lb[j];
+    if(!w||w.on===false||w.constant||w.lay!=='world'||w.era!==ei)continue;
+    if(!/〕(?:国家|历史|地点|这一代该照的母本条款)$/.test(String(w.title||'')))continue;
+    var hit=(w.keys||[]).some(function(k){k=String(k||'').trim().toLowerCase();return k&&q.indexOf(k)>=0;});
+    if(!hit)continue;
+    var s='『'+(w.title||'')+'』'+(w.content||'');
+    if(worldChars+s.length>3600)continue;
+    world.push(s);worldChars+=s.length;
+  }
+  return world.concat(out).join('\n');
+}
+
 /* 交给译入沙盒的中文指示。用中文写是对的：这一段本来就是「中文指示 → 韩语」那一步。 */
 var FE_P0='把下面这份「场面事实」改写成韩语，交回两块内容。\n\n'
  +'第一块，以单独一行「[jangmyeon]」开头，其后是韩语的场面文件：\n'
@@ -7240,9 +7272,9 @@ var FE_P0='把下面这份「场面事实」改写成韩语，交回两块内容
 function feSplit0(txt){
   var s=String(txt||'');
   var a=s.indexOf('[jangmyeon]'), b=s.indexOf('[ireumpyo]');
-  if(a<0)return null;
-  var scene=(b>a)?s.slice(a+11,b):s.slice(a+11);
-  var names=(b>a)?s.slice(b+10):'';
+  if(a<0||b<=a)return null;
+  var scene=s.slice(a+11,b);
+  var names=s.slice(b+10);
   return{scene:scene.trim(),names:names.trim()};
 }
 
@@ -7415,10 +7447,14 @@ function feForge(){
   function stage0(retry){
     call([{role:'system',content:FE.ko.hand},
           {role:'user',content:FE_P0+'\n\n'+zh}],
-         {max_tokens:2600},
+         {max_tokens:7000},
          function(out){
            var sp=feSplit0(out);
-           if(!sp||!sp.scene){ if(!retry)return stage0(1); return fail('场面文件没有回来'); }
+           var need=[FE.hero&&FE.hero.n];
+           (FE.soc||[]).forEach(function(k){var p=FE.pool[k];if(p)need.push(p.n);});
+           var named=sp&&need.filter(Boolean).every(function(n){return sp.names.indexOf(n)>=0;});
+           if(!sp||sp.scene.length<800||!sp.names||!named){
+             if(!retry)return stage0(1);return fail('场面文件不完整，已拒收四行残稿');}
            if(feHan(sp.scene)>0){ if(!retry)return stage0(1);
              return fail('场面文件里还留着汉字'); }
            stage1(sp,0);
@@ -7429,28 +7465,29 @@ function feForge(){
     var prompt=FE.ko.write.replace('{{견본}}',FE.ko.samples.join('\n\n'))
                           .replace('{{장면}}',sp.scene);
     if(feHan(prompt)>0)return fail('提示词里混进了汉字，已停手');
-    call([{role:'system',content:FE_MEOW_KO+'\n'+FE_STYLE_KO+'\n'+FE_CHECK_KO},
+    call([{role:'system',content:FE_MEOW_KO+'\n'+FE_STYLE_KO+'\n'+FE_CHECK_KO
+            +'\n본문은 공백을 제외하고 최소 1800자 이상 쓴다. 네 줄짜리 요약이나 개요는 원고가 아니다.'},
           {role:'user',content:prompt}],
          {max_tokens:3600,onDelta:function(t){try{genFirstToken();GEN.chars=t.length;}catch(_){}}},
          function(ms){
            ms=ms.trim();
-           if(!ms){ if(!retry)return stage1(sp,1); return fail('原稿没有回来'); }
+           if(ms.length<1200){if(!retry)return stage1(sp,1);return fail('韩文原稿过短，已拒收三行残稿');}
            if(feHan(ms)>0){ if(!retry)return stage1(sp,1); return fail('原稿里混进了汉字'); }
-           stage2(sp,ms);
+           stage2(sp,ms,0);
          });
   }
   /* ② 译出：必须是另一次请求，不带上文——同一个沙盒既写又译，会把自己的稿子润一遍。 */
-  function stage2(sp,ms){
+  function stage2(sp,ms,retry){
     var tr=FE.ko.tr.replace('{{원고}}',ms).replace('{{표기}}',sp.names||'(없음)');
     call([{role:'system',content:FE_MEOW_ZH+'\n'+FELINIA_STYLE+'\n'+FELINIA_EXAMPLES
           +'\n翻译时必须保留原稿的韩轻句法、分段、拟音、口语与内外反差，不得润色成中文小说腔；必须保留或补齐猫娘句尾规则。'},
           {role:'user',content:tr}],
          {max_tokens:3600,onDelta:function(t){try{GEN.chars=t.length;}catch(_){}}},
          function(out){
-           BUSY=false;genClose();
            if(!alive())return;
            var txt=String(out||'').trim();
-           if(!txt)return fail('译文没有回来');
+           if(txt.length<900){if(!retry)return stage2(sp,ms,1);return fail('中文译文过短，已拒收三行残稿');}
+           BUSY=false;genClose();
            if(!/<mvu_panel>/.test(txt))txt=txt+'\n\n'+panel;
            loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:txt},loc);
            GAME.hero=_hero;                 /* loadOpening 又清了一次，写回来 */
@@ -9989,9 +10026,10 @@ function oracleCall(messages,cb,err,opt){
     function _num(v,d){var t=String(v==null?'':v).trim();
       return /^\d+(\.\d+)?$/.test(t)?parseFloat(t):d;}
     var _mt=_num((typeof SET!=='undefined')?SET.samp.maxt:'',0);
+    var _storyFloor=wantTag?4096:64;
     var body={model:API.model,messages:msgs,
       temperature:_num((typeof SET!=='undefined')?SET.samp.temp:'',.9),
-      max_tokens:(_mt>=64)?Math.round(_mt):4096};
+      max_tokens:(_mt>=_storyFloor)?Math.round(_mt):(wantTag?4096:((_mt>=64)?Math.round(_mt):4096))};
     for(var ok in opt)body[ok]=opt[ok];
     if(typeof SET!=='undefined'){
       var _tp=_num(SET.samp.topp,-1);
@@ -10190,24 +10228,22 @@ function buildOracleMsgs(){
   for(var _k=hist.length-1;_k>=0;_k--)if(hist[_k].role==='assistant'){_lastA=_k;break;}
   for(var _i=0;_i<hist.length;_i++)
     if(_i!==_lastA&&hist[_i].role==='assistant')hist[_i].content=stripMvu(hist[_i].content);
-  var msgs=[{role:'system',content:sysPrompt()}];
-  /* 开局那一幕从来没进过 TURNS（loadOpening 一上来就 TURNS=[]），
-     模型此前完全不知道自己要接的是哪一场戏、哪一年、谁在场——只能按卡里那段
-     一百多字的通用【场景】自己编一个开头，每局都编同一个。这就是「剧情一直循环」。 */
-  if(GAME.opText)msgs.push({role:'assistant',content:GAME.opText});
-  msgs=msgs.concat(hist);
-  /* post_history_instructions 顾名思义该落在历史之后。埋在 system 里会被前面
-     几万字稀释，铁则一和面板自查都守不住；在队尾再钉一次。 */
   var _G2=CARDS[ACTIVE]||{},_phi=macroFill(heroRebind(_G2.post_history_instructions||''));
-  msgs.push({role:'system',content:'【本回合落笔前·最后自查】'+_phi
+  var finalCheck='【本回合落笔前·最后自查】'+_phi
     +'\n【铁则一·压倒一切，高于任何文体规范】'+(heroName())
     +'的台词、动作、决定，一个字都不许你写。需要她表态时，把场面推到她面前，停笔，交还玩家。'
     +'\n唯一例外：状态栏 <mvu_panel> 里的 ◆心声 那一行——玩家这回写了 ~ 独白就照抄，'
     +'没写就据本幕处境写一句新的（每幕不同，不许照抄上一幕）。'
     +'正文里依旧不许出现她的内心独白，那一句只能待在状态栏那一行里。'
-    /* 文风与范文已经在 sysPrompt 中完整出现。末尾只重压猫娘句尾和自检，
-       不再把数千字规范、范文原样复制第二遍。 */
-    +'\n'+MEOW_RULE+'\n'+FELINIA_CHECK});
+    +'\n'+MEOW_RULE+'\n'+FELINIA_CHECK;
+  /* 所有 system 内容都放在第一条。兼容接口常要求最后一条必须是 user；旧代码在玩家
+     输入后又塞一条 system，部分中转会忽略玩家输入或只回三行。 */
+  var msgs=[{role:'system',content:sysPrompt()+'\n\n'+finalCheck}];
+  /* 开局那一幕从来没进过 TURNS（loadOpening 一上来就 TURNS=[]），
+     模型此前完全不知道自己要接的是哪一场戏、哪一年、谁在场——只能按卡里那段
+     一百多字的通用【场景】自己编一个开头，每局都编同一个。这就是「剧情一直循环」。 */
+  if(GAME.opText)msgs.push({role:'assistant',content:GAME.opText});
+  msgs=msgs.concat(hist);
   return msgs;
 }
 function askOracleSend(msgs){
