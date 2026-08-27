@@ -2951,9 +2951,11 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       </div>
     </div>
     <div class="cfgPane" id="cp_api" style="display:none">
-      <div class="sub">主接口在&nbsp;ORACVLVM&nbsp;弹窗（顶栏）配置&nbsp;·&nbsp;此处为档案／副模型／采样</div>
+      <div class="sub">主接口在&nbsp;ORACVLVM&nbsp;弹窗（顶栏）配置&nbsp;·&nbsp;此处可同步选择协议，并配置档案／副模型／采样</div>
+      <div class="sRow"><span>主接口类型</span><select id="apFormat" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"><option value="openai">OpenAI&nbsp;兼容（含&nbsp;Gemini&nbsp;CLI）</option><option value="responses">OpenAI&nbsp;Responses</option><option value="anthropic">Anthropic&nbsp;原生</option><option value="gemini">Google&nbsp;Gemini&nbsp;原生</option><option value="mistral">Mistral&nbsp;原生</option><option value="ollama">Ollama&nbsp;原生</option></select></div>
       <div class="sRow"><span>接口档案</span><span style="display:flex;gap:8px;align-items:center"><select id="apProfs" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:150px"></select><span class="gt" id="apProfSave">存当前</span><span class="gt" id="apProfDel">删</span><span class="gt" id="apOpen">主接口⇗</span></span></div>
-      <div class="sub" style="margin-top:14px">副模型&nbsp;·&nbsp;杂务分工（可选&nbsp;·&nbsp;OpenAI&nbsp;兼容）：配好后，绘图提示词、摘要、密语闲聊等杂务自动改走副模型，省钱提速；正文仍由主模型执笔。留空则全部走主模型。</div>
+      <div class="sub" style="margin-top:14px">副模型&nbsp;·&nbsp;杂务分工（可选）：配好后，绘图提示词、摘要、密语闲聊等杂务自动改走副模型，省钱提速；正文仍由主模型执笔。留空则全部走主模型。</div>
+      <div class="sRow"><span>副接口类型</span><select id="subFormat" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"><option value="openai">OpenAI&nbsp;兼容（含&nbsp;Gemini&nbsp;CLI）</option><option value="responses">OpenAI&nbsp;Responses</option><option value="anthropic">Anthropic&nbsp;原生</option><option value="gemini">Google&nbsp;Gemini&nbsp;原生</option><option value="mistral">Mistral&nbsp;原生</option><option value="ollama">Ollama&nbsp;原生</option></select></div>
       <div class="sRow"><span>副&nbsp;BASE</span><input class="aIn" id="subBase" style="width:240px"></div>
       <div class="sRow"><span>副密钥</span><input class="aIn" id="subKey" type="password" style="width:200px"></div>
       <div class="sRow"><span>副模型</span><input class="aIn" id="subModel" placeholder="留空全走主模型" style="width:200px"></div>
@@ -3082,9 +3084,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
   <div class="box">
     <span class="tag">ORACVLVM</span>
     <h2>接入神谕&nbsp;·&nbsp;连接AI</h2>
-    <div class="sub">OpenAI&nbsp;相容接口&nbsp;·&nbsp;配置只存在本浏览器</div>
+    <div class="sub">选择接口协议&nbsp;·&nbsp;配置只存在本浏览器</div>
+    <div class="sRow"><span>接口类型</span><select id="apiFormat" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:6px;max-width:280px"><option value="openai">OpenAI&nbsp;兼容（含&nbsp;Gemini&nbsp;CLI）</option><option value="responses">OpenAI&nbsp;Responses</option><option value="anthropic">Anthropic&nbsp;原生</option><option value="gemini">Google&nbsp;Gemini&nbsp;原生</option><option value="mistral">Mistral&nbsp;原生</option><option value="ollama">Ollama&nbsp;原生</option></select></div>
     <div class="sRow"><span>BASE&nbsp;URL</span><input class="aIn" id="apiBase" placeholder="https://api.example.com/v1" style="width:280px"></div>
-    <div class="sRow"><span>密钥&nbsp;KEY</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiKey" type="password" placeholder="sk-…" style="width:220px"><span class="gt" id="apiEye" title="显示/隐藏密钥">目</span></span></div>
+    <div class="sRow"><span>密钥&nbsp;KEY（可选）</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiKey" type="password" placeholder="sk-…" style="width:220px"><span class="gt" id="apiEye" title="显示/隐藏密钥">目</span></span></div>
     <div class="sRow"><span>MODEL</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiModel" placeholder="模型名 · 或点击拉取" style="width:180px"><span class="gt" id="apiPull">拉取模型</span></span></div>
     <div class="sRow" id="apiModelsRow" style="display:none"><span>可用模型</span><select id="apiModels" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:6px;max-width:280px"></select></div>
     <div class="sRow"><span>生图接口（可选）</span><input class="aIn" id="apiImg" placeholder="https://…（暂存配置）" style="width:280px"></div>
@@ -9011,10 +9014,10 @@ function genClose(){
   if(GEN.el){try{GEN.el.remove();}catch(_){}GEN.el=null;GEN.fill=null;GEN.txt=null;}
 }
 /* —— 神谕（AI）接入 —— */
-var API={base:'',key:'',model:'',img:''};
+var API={format:'openai',base:'',key:'',model:'',img:''};
 try{Object.assign(API,JSON.parse(localStorage.getItem('rome_api')||'{}'));}catch(_){}
 function apiStore(){lsSet('rome_api',JSON.stringify(API))}
-function apiReady(){return !!(API.base&&API.key&&API.model);}
+function apiReady(){return !!(API.base&&API.model);}
 /* 关键词可能被写成 "罗马,元老院" 这样的字符串（不少 ST 世界书就是这么存的）。
    当数组用的话 .length 是字符数、[k] 是单字，「她走进马厩」里的「马」就会误命中。 */
 function _loreKeys(v){
@@ -10620,7 +10623,7 @@ $('#gtFull').addEventListener('click',function(){
 var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
   tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
   img:{on:0,base:'',key:'',model:'',size:0,style:0},   /* style 0 ＝ NovelAI，见 IMGSTY */
-  sub:{base:'',key:'',model:''},
+  sub:{format:'openai',base:'',key:'',model:''},
   trans:{provider:'google',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:''},
   semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
   vars:{},gvars:{},
@@ -10638,7 +10641,7 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
     tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
     img:{on:0,auto:0,count:0,cam:0,disp:2,base:'',key:'',model:'',size:0,style:0,
          steps:'',cfg:'',w:'',h:'',seed:'',workflow:''},
-    sub:{base:'',key:'',model:''},
+    sub:{format:'openai',base:'',key:'',model:''},
     trans:{provider:'google',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:''},
     semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
     vars:{},gvars:{},
@@ -10696,20 +10699,15 @@ function felRisuNpcKeys(eraIndex){
   var era=null;try{for(var i=0;i<FE.eras.length;i++)if(FE.eras[i].i===eraIndex){era=FE.eras[i];break;}}catch(_){}
   return era&&era.figs?era.figs.map(function(fig,index){return 'era:'+eraIndex+':npc:'+index+':'+fig.n;}):[];
 }
-function felRisuFormat(base,model){
-  var b=String(base||'').toLowerCase(),m=String(model||'').toLowerCase();
-  if(/anthropic\.com/.test(b)||(/^claude/.test(m)&&b.indexOf('openrouter')<0))return 'anthropic';
-  if(/googleapis\.com|generativelanguage/.test(b)||(/^gemini/.test(m)&&b.indexOf('openrouter')<0))return 'gemini';
-  if(/mistral\.ai/.test(b))return 'mistral';
-  if(/ollama/.test(b))return 'ollama';
-  if(/\/responses\/?$/.test(b))return 'responses';
-  return 'openai';
+function felRisuFormat(value){
+  value=String(value||'openai').toLowerCase();
+  return /^(openai|responses|anthropic|gemini|mistral|ollama)$/.test(value)?value:'openai';
 }
 function felRisuProvider(source){
   source=source||API;
   var mt=parseInt(SET.samp&&SET.samp.maxt,10)||4096;
   var temp=parseFloat(SET.samp&&SET.samp.temp),top=parseFloat(SET.samp&&SET.samp.topp);
-  return {base:source.base,key:source.key||API.key,model:source.model,format:felRisuFormat(source.base,source.model),
+  return {base:source.base,key:source.key||API.key,model:source.model,format:felRisuFormat(source.format),
     temperature:isNaN(temp)?.9:temp,topP:isNaN(top)?1:top,maxTokens:mt<64?4096:mt,
     contextTokens:parseInt(SET.context,10)||65536,stream:SET.stream!==0};
 }
@@ -11672,6 +11670,8 @@ function apPaneLoad(){
   var o0=document.createElement('option');o0.value='';o0.textContent=names.length?'— 拣选档案 —':'— 无档案 —';
   sel.appendChild(o0);
   names.forEach(function(n){var o=document.createElement('option');o.value=o.textContent=n;sel.appendChild(o);});
+  $('#apFormat').value=felRisuFormat(API.format);
+  $('#subFormat').value=felRisuFormat(SET.sub.format);
   $('#subBase').value=SET.sub.base;$('#subKey').value=SET.sub.key;$('#subModel').value=SET.sub.model;
   $('#apTemp').value=SET.samp.temp;$('#apTopP').value=SET.samp.topp;
   $('#apMaxT').value=SET.samp.maxt;$('#apMinC').value=SET.samp.minc;
@@ -11713,14 +11713,16 @@ $('#semBudget').addEventListener('input',function(){
   SET.semantic.budget=Math.max(400,parseInt(v,10)||3000);setStore();
 });
 $('#semGpu').addEventListener('change',function(){SET.semantic.gpu=this.checked?1:0;setStore();});
+$('#apFormat').addEventListener('change',function(){API.format=felRisuFormat(this.value);apiStore();});
+$('#subFormat').addEventListener('change',function(){SET.sub.format=felRisuFormat(this.value);setStore();});
 $('#apProfSave').addEventListener('click',function(){
   var n=prompt('档案名（如：主力deepseek）');if(!n)return;
-  SET.profs[n]={base:API.base,key:API.key,model:API.model,img:API.img};
+  SET.profs[n]={format:felRisuFormat(API.format),base:API.base,key:API.key,model:API.model,img:API.img};
   setStore();apPaneLoad();
 });
 $('#apProfs').addEventListener('change',function(){
   var p=SET.profs[this.value];if(!p)return;
-  API.base=p.base;API.key=p.key;API.model=p.model;API.img=p.img||'';apiStore();
+  API.format=felRisuFormat(p.format);API.base=p.base;API.key=p.key;API.model=p.model;API.img=p.img||'';apiStore();apPaneLoad();
 });
 $('#apProfDel').addEventListener('click',function(){
   var n=$('#apProfs').value;if(!n)return;
@@ -12004,6 +12006,7 @@ $('#exNo').addEventListener('click',function(){$('#dlgExit').style.display='none
 })();
 /* —— ORACVLVM 接入面板 —— */
 function apiOpen(){
+  $('#apiFormat').value=felRisuFormat(API.format);
   $('#apiBase').value=API.base||'';$('#apiKey').value=API.key||'';
   $('#apiModel').value=API.model||'';$('#apiImg').value=API.img||'';
   $('#apiMsg').textContent=apiReady()?'状态：已配置 · '+API.model:'状态：未接线';
@@ -12033,35 +12036,36 @@ $('#apiEye').addEventListener('click',function(){
   var k=$('#apiKey');k.type=k.type==='password'?'text':'password';
 });
 $('#apiPull').addEventListener('click',function(){
-  var base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim();
+  var format=felRisuFormat($('#apiFormat').value),base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim();
   if(!base){$('#apiMsg').textContent='先填 BASE URL';return;}
   $('#apiMsg').textContent='拉取模型中…';
-  felRisuBoot().then(function(risu){return risu.listModels(felRisuProvider({base:base,key:key,model:'model-list'}));}).then(function(list){
+  felRisuBoot().then(function(risu){return risu.listModels(felRisuProvider({format:format,base:base,key:key,model:'model-list'}));}).then(function(list){
     if(!list.length)throw new Error('空列表');
     var sel=$('#apiModels');sel.innerHTML='';
     list.forEach(function(id){var o=document.createElement('option');o.value=o.textContent=id;sel.appendChild(o);});
     $('#apiModelsRow').style.display='';
     $('#apiMsg').textContent='拉到 '+list.length+' 个模型，从下拉拣选';
-  }).catch(function(e){$('#apiMsg').textContent='拉取失败：'+(e&&e.message||e);});
+  }).catch(function(e){$('#apiMsg').textContent='拉取失败：'+felPublicError(e);});
 });
 $('#apiModels').addEventListener('change',function(){$('#apiModel').value=this.value;});
 $('#apiTest').addEventListener('click',function(){
-  var base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim(),model=$('#apiModel').value.trim();
+  var format=felRisuFormat($('#apiFormat').value),base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim(),model=$('#apiModel').value.trim();
   if(!base||!model){$('#apiMsg').textContent='BASE URL 与 MODEL 必填';return;}
   $('#apiMsg').textContent='测试中…';
-  felRisuBoot().then(function(risu){return risu.request({provider:Object.assign(felRisuProvider({base:base,key:key,model:model}),{maxTokens:8,stream:false}),
+  felRisuBoot().then(function(risu){return risu.request({provider:Object.assign(felRisuProvider({format:format,base:base,key:key,model:model}),{maxTokens:8,stream:false}),
     messages:[{role:'user',content:'Reply only: pong'}],maxTokens:8});})
   .then(function(){$('#apiMsg').textContent='✓ 通了。SERVARE 储存后即可对话';})
-  .catch(function(e){$('#apiMsg').textContent='✕ 不通：'+(e&&e.message||e);});
+  .catch(function(e){$('#apiMsg').textContent='✕ 不通：'+felPublicError(e);});
 });
 $('#apiSave').addEventListener('click',function(){
+  API.format=felRisuFormat($('#apiFormat').value);
   API.base=$('#apiBase').value.trim();API.key=$('#apiKey').value.trim();
   API.model=$('#apiModel').value.trim();API.img=$('#apiImg').value.trim();
   apiStore();
   $('#apiMsg').textContent=apiReady()?'已储存 · 神谕在线':'已储存（尚缺必填项）';
 });
 $('#apiClear').addEventListener('click',function(){
-  API={base:'',key:'',model:'',img:''};apiStore();apiOpen();
+  API={format:'openai',base:'',key:'',model:'',img:''};apiStore();apiOpen();
 });
 /* —— VOCES 密语频道 —— */
 var VOCQ=['帕拉丁那边今晚有宴，去不去？','听说行省又送来一批怪东西。','你的剑该磨了——别瞪我，是真的。','街角面包坊涨价了，世道啊。','昨夜有人看见流星，占卜官忙疯了。','别问，问就是元老院的意思。'];
