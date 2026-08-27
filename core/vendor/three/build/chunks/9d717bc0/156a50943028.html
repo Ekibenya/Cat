@@ -2971,7 +2971,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>DeepLX&nbsp;URL</span><input class="aIn" id="trDeepLXUrl" placeholder="http://localhost:1188" style="width:240px"></div>
       <div class="sRow"><span>DeepLX&nbsp;TOKEN</span><input class="aIn" id="trDeepLXToken" type="password" placeholder="可留空" style="width:200px"></div>
       <div class="sub" id="trStatus">翻译缓存保存在本浏览器；韩语原稿随存档保存。</div>
-      <div class="sub" style="margin-top:16px">韩语长程记忆&nbsp;·&nbsp;按&nbsp;RisuAI&nbsp;的&nbsp;Hypa／Hanurai&nbsp;方式，用最近四条韩语原稿检索更早的韩语剧情；不会读取中文显示层，也不会重复塞入最近历史。</div>
+      <div class="sub" style="margin-top:16px">韩语长程记忆&nbsp;·&nbsp;按&nbsp;Hypa／Hanurai&nbsp;方式，用最近四条韩语原稿检索更早的韩语剧情；不会读取中文显示层，也不会重复塞入最近历史。</div>
       <div class="sRow"><span>语义记忆</span><input type="checkbox" id="semOn"></div>
       <div class="sRow"><span>检索方式</span><select id="semMode" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:220px"><option value="hybrid">韩语 BGE 混合（推荐）</option><option value="bge-ko">韩语 BGE 精确（等待模型）</option><option value="api">玩家接口 Embeddings</option><option value="lexical">本地词义检索（最快）</option></select></div>
       <div class="sRow"><span>Embeddings&nbsp;模型</span><input class="aIn" id="semModel" placeholder="text-embedding-3-small" style="width:220px"></div>
@@ -5731,7 +5731,7 @@ function feLoad(cb){
     }).catch(function(){done(false);});
 }
 
-/* 世界资料只负责装入固定内容对象；实际检索由 RisuAI 原生 lorebook 管线执行。 */
+/* 世界资料只负责装入固定内容对象；实际检索由原生 lorebook 管线执行。 */
 function feLoreInstall(){
   try{
     var C=CARDS&&CARDS.luzhi;if(!C)return;
@@ -9820,7 +9820,7 @@ function sysPrompt(){
     GENIVS.brief(),
     (typeof memChronicle==='function'&&typeof S!=='undefined'&&S.memOn!==false&&S.mem&&S.mem.length>1)?('【长程记忆·编年长卷】以下为本局开局至今全部既定事实的编年纪要（越靠后越接近当下）。正文历史若有缺失，以此卷为准；任何叙事不得与之矛盾：\n'+memChronicle()):'',
     (function(){if(typeof npcFavorDigest!=='function')return '';var _fd=npcFavorDigest();return _fd?('【人物好感·续记（不得健忘）】以下为曾登场人物最近一次的好感度与近况。他们即便暂时离场，好感与关系也须【延续记忆】：再次出场时自此数值起继续自然演变，严禁凭空重置、归零或大幅跳变；确有剧情推动方可增减：\n'+_fd):'';})(),
-    /* 世界书不在页面拼接；RisuAI 的原生 lorebook 管线按当前时代和人物扫描。 */
+    /* 世界书不在页面拼接；原生 lorebook 管线按当前时代和人物扫描。 */
     eraGate(),                         /* 本回合是哪一年，就只准知道到哪一年 */
     powerSpec(),                       /* 皇帝在场时才发：那个高度怎么写出来 */
     abacusBand(),                      /* 她标价的单位跟着位置走，不是一路数到底 */
@@ -9852,7 +9852,7 @@ function risuInvoke(messages,cb,err,opt){
   if(!aux)GENAC=ac;
   var fired=false;
   function fail(e){if(fired)return;fired=true;
-    err((e&&e.message)||String(e||'未知错误'));}
+    err(felPublicError(e));}
   (aux?felRisuBoot().then(function(risu){
     var ei=_eraNow()||1;return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){return risu;});
   }):felRisuPrepare(messages)).then(function(risu){
@@ -9870,7 +9870,7 @@ function risuInvoke(messages,cb,err,opt){
 }
 function askOracle(){
   BUSY=true;genOpen('gen');
-  /* 组装阶段（FELINIA 状态整理与 Risu 原生提示词编译）一旦抛错，BUSY 就永久停在 true：
+  /* 组装阶段（FELINIA 状态整理与原生提示词编译）一旦抛错，BUSY 就永久停在 true：
      send 遇到 BUSY 是光秃秃的
      return，玩家点「发送」什么都不发生、输入框里的字也不清，剧情彻底不再前进，
      而且没有任何复位途径——只能退回主菜单。所以整段包起来，失败就地复位并说明原因。 */
@@ -9879,8 +9879,9 @@ function askOracle(){
     askOracleSend(msgs);
   }).catch(function(e){
     BUSY=false;try{genClose();}catch(_){}
-    felTrStatus('翻译／组装失败：'+((e&&e.message)||e),1);
-    narrAdd('sys','⚠&nbsp;组装神谕请求失败：'+esc2((e&&e.message)||e)+'&nbsp;——&nbsp;本回未发出',null);
+    var em=felPublicError(e);
+    felTrStatus('翻译／组装失败：'+em,1);
+    narrAdd('sys','⚠&nbsp;组装神谕请求失败：'+esc2(em)+'&nbsp;——&nbsp;本回未发出',null);
   });
 }
 function buildOracleMsgs(){
@@ -10655,18 +10656,23 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
   if(!SET.loreState||typeof SET.loreState!=='object')SET.loreState={};
 })();
 function setStore(){lsSet('rome_set',JSON.stringify(SET))}
-/* FELINIA is a fixed game hosted by the original RisuAI runtime. The runtime
+/* FELINIA is a fixed game hosted by its embedded narrative runtime. The runtime
    database contains 41 era characters plus the 590 preset-character slots;
    only one era is selected, and its era characters are attached to that
    single narrator session. */
 var FEL_RISU=null,FEL_RISU_BOOT=null;
+function felPublicError(e){
+  return String((e&&e.message)||e||'未知错误')
+    .replace(/Risu\s*AI|RisuAI|Risuai/gi,'FELINIA')
+    .replace(/```risuerror\s*/gi,'').replace(/```/g,'').trim();
+}
 function felRisuLoad(){
   if(FEL_RISU)return Promise.resolve(FEL_RISU);
   function take(){return window.RisuHeadless.load('feliniaGame').then(function(mod){
     FEL_RISU=mod.FeliniaRisu;return FEL_RISU;});}
   if(window.RisuHeadless)return take();
   return new Promise(function(resolve,reject){
-    var tm=setTimeout(function(){reject(new Error('RisuAI 运行内核没有载入'));},20000);
+    var tm=setTimeout(function(){reject(new Error('FELINIA 叙事内核没有载入'));},20000);
     addEventListener('risu-headless-ready',function ready(){
       removeEventListener('risu-headless-ready',ready);clearTimeout(tm);take().then(resolve,reject);
     });
@@ -10738,7 +10744,7 @@ function felRisuStart(){
 }
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',felRisuStart,{once:true});
 else felRisuStart();
-/* —— Risu browser core · 韩语原稿 / 中文显示双层管线 ——
+/* —— 浏览器叙事核心 · 韩语原稿 / 中文显示双层管线 ——
    content 永远是模型下一轮会读到的韩语原稿；display 只给 FELINIA 界面、TTS 与
    本地中文状态推演使用。翻译结果绝不写回 content，MVU 控制块由核心逐字保护。
    老存档没有这两个标记时，会在下一次发送前就地升级。 */
@@ -11776,8 +11782,8 @@ $('#preFile').addEventListener('change',function(){
   var input=this;
   f.arrayBuffer().then(function(buf){return felRisuBoot().then(function(risu){
     return risu.importPreset(f.name,new Uint8Array(buf));
-  });}).then(function(){$('#preMsg').textContent='已由 RisuAI 原生预设导入器启用';})
-    .catch(function(e){$('#preMsg').textContent='预设解析失败：'+((e&&e.message)||e);})
+  });}).then(function(){$('#preMsg').textContent='原生预设已经启用';})
+    .catch(function(e){$('#preMsg').textContent='预设解析失败：'+felPublicError(e);})
     .then(function(){input.value='';});
 });
 $('#preExp').addEventListener('click',function(){
@@ -16348,9 +16354,9 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/vn/felinia-vn.js?v=7"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <script src="/core/res/ko/felinia-ko.js?v=2"></script>
-<!-- Original RisuAI browser runtime. FELINIA supplies the only interface and fixed game data. -->
+<!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=3"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=4"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

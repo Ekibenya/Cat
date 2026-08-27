@@ -204,7 +204,12 @@ function normalizeOllamaStreamResponse(response: Response): Response {
 
 export async function requestChatData(arg:requestDataArgument, model:ModelModeExtended, abortSignal:AbortSignal=null):Promise<requestDataResponse> {
     const db = getDatabase()
-    const fallBackModels:string[] = safeStructuredClone(db?.fallbackModels?.[model] ?? [])
+    // A caller-provided static model is an explicit route (the FELINIA browser
+    // host uses it for the player's configured OpenAI-compatible endpoint).
+    // Do not replace that route with an auxiliary/default fallback model.
+    const fallBackModels:string[] = arg.staticModel
+        ? []
+        : safeStructuredClone(db?.fallbackModels?.[model] ?? [])
     const tools = arg.tools ?? (await getTools())
     fallBackModels.push('')
     let da:requestDataResponse
@@ -267,7 +272,7 @@ export async function requestChatData(arg:requestDataArgument, model:ModelModeEx
     
             da = await requestChatDataMain({
                 ...arg,
-                staticModel: fallBackModels[fallbackIndex],
+                staticModel: arg.staticModel || fallBackModels[fallbackIndex],
                 tools: tools,
             }, model, abortSignal)
 

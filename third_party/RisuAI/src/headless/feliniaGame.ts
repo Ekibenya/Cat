@@ -456,7 +456,15 @@ async function runtime(): Promise<Runtime> {
 }
 
 function emptyDatabase(): Partial<Database> {
-  return { characters: [], language: 'en', useStreaming: true, botPresets: [], botPresetsId: 0 };
+  return {
+    characters: [],
+    language: 'en',
+    useStreaming: true,
+    usePlainFetch: true,
+    inlayErrorResponse: true,
+    botPresets: [],
+    botPresetsId: 0,
+  };
 }
 
 export async function installFeliniaGame(definition: FeliniaGameDefinition) {
@@ -601,6 +609,23 @@ export async function configureFeliniaProvider(provider: FeliniaProvider) {
   db.maxContext = provider.contextTokens ?? 65536;
   db.useStreaming = provider.stream ?? true;
   db.autofillRequestUrl = provider.autofillRequestUrl ?? true;
+  // FELINIA is a static browser game and deliberately ships no proxy server.
+  // Route requests straight to the endpoint configured by the player.
+  db.usePlainFetch = true;
+  db.inlayErrorResponse = true;
+}
+
+function generationError(chat: Chat, startLength: number): string {
+  const added = chat.message.slice(startLength);
+  const errorMessage = [...added].reverse().find((message) =>
+    message.role === 'char' && /```risuerror\b/i.test(message.data || '')
+  );
+  if (!errorMessage) return '';
+  chat.message = chat.message.slice(0, startLength);
+  return String(errorMessage.data || '')
+    .replace(/^```risuerror\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
 }
 
 function risuMessage(turn: FeliniaTurn): Message {
@@ -639,6 +664,11 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
   if (options.provider) await configureFeliniaProvider(options.provider);
   const current = rt.database.getCurrentCharacter();
   if (!current || current.type === 'group') throw new Error('No FELINIA era is active');
+  const currentChat = current.chats[current.chatPage];
+  const startLength = currentChat.message.length;
+  // The original visual client releases this store after awaiting sendChat.
+  // The headless host owns that lifecycle now, including recovery after errors.
+  rt.process.doingChat.set(false);
   let previous = current.chats[current.chatPage].message.at(-1)?.data || '';
   let timer: ReturnType<typeof setInterval> | undefined;
   if (options.onDelta) {
@@ -654,18 +684,21 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
       signal: options.signal,
       preview: options.preview,
     });
-    if (!ok) throw new Error('RisuAI generation failed');
+    if (!ok) throw new Error(generationError(currentChat, startLength) || '生成请求失败');
     if (options.preview) return {
       text: JSON.stringify(rt.process.previewFormated),
       prompt: clone(rt.process.previewFormated),
       history: await getFeliniaHistory(),
     };
     const message = rt.database.getCurrentChat()?.message.at(-1);
-    if (!message || message.role !== 'char') throw new Error('RisuAI returned no assistant message');
+    if (!message || message.role !== 'char' || !String(message.data || '').trim()) {
+      throw new Error('接口没有返回可显示的正文');
+    }
     options.onDelta?.(message.data);
     return { text: message.data, history: await getFeliniaHistory() };
   } finally {
     if (timer) clearInterval(timer);
+    rt.process.doingChat.set(false);
   }
 }
 

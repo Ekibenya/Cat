@@ -18,6 +18,7 @@ import { applyAdditionalParameters, applyParameters, getAdditionalParameters } f
 import type { Contents, OpenAIChatExtra, OpenAIChatFull, ToolCall } from './types'
 
 import { getLocalNetworkRequestOptions, type LocalNetworkRequestOptions } from './shared'
+import { createOpenAICompatibleStream, extractOpenAICompatibleText, normalizeOpenAICompatibleUrl } from './compat'
 export { requestOpenAIResponseAPI, __testResponsesAPI } from './responses'
 function isOfficialOpenAIURL(url: string): boolean {
     try {
@@ -523,21 +524,8 @@ export async function requestOpenAI(arg:RequestDataArgumentExtended):Promise<req
         replacerURL = replacerURL.replace("risu::", '')
     }
 
-    if(aiModel === 'reverse_proxy' && db.autofillRequestUrl){
-        if(replacerURL.endsWith('v1')){
-            replacerURL += '/chat/completions'
-        }
-        else if(replacerURL.endsWith('v1/')){
-            replacerURL += 'chat/completions'
-        }
-        else if(!(replacerURL.endsWith('completions') || replacerURL.endsWith('completions/'))){
-            if(replacerURL.endsWith('/')){
-                replacerURL += 'v1/chat/completions'
-            }
-            else{
-                replacerURL += '/v1/chat/completions'
-            }
-        }
+    if(aiModel === 'reverse_proxy'){
+        replacerURL = normalizeOpenAICompatibleUrl(replacerURL, db.autofillRequestUrl)
     }
 
     if(db.openAIFlexProcessing && shouldUseOpenAIFlexProcessing(aiModel, replacerURL, arg.modelInfo.provider)){
@@ -617,18 +605,15 @@ export async function requestOpenAI(arg:RequestDataArgumentExtended):Promise<req
             requestTimeoutMs: streamingLocalNetworkOptions.requestTimeoutMs
         })
 
-        if(da.status !== 200){
+        if(da.status < 200 || da.status >= 300){
             return {
                 type: "fail",
                 result: await textifyReadableStream(da.body)
             }
         }
 
-        if (!da.headers.get('Content-Type').includes('text/event-stream')){
-            return {
-                type: "fail",
-                result: await textifyReadableStream(da.body)
-            }
+        if(!da.body){
+            return { type: 'fail', result: 'The endpoint returned an empty response body.' }
         }
 
         addFetchLog({
@@ -639,7 +624,7 @@ export async function requestOpenAI(arg:RequestDataArgumentExtended):Promise<req
             status: da.status,
         })
 
-        const transtream = getTranStream(arg)
+        const transtream = createOpenAICompatibleStream()
 
         da.body.pipeTo(transtream.writable)
 
@@ -684,8 +669,9 @@ export async function requestHTTPOpenAI(
     })
 
     function processTextResponse(dat: any):string{
-        if(dat?.choices[0]?.text){
-            let text = dat.choices[0].text as string
+        const choice = dat?.choices?.[0]
+        if(choice?.text){
+            let text = choice.text as string
             if(arg.extractJson && (db.jsonSchemaEnabled || arg.schema)){
                 try {
                     const parsed = JSON.parse(text)
@@ -699,11 +685,11 @@ export async function requestHTTPOpenAI(
             return text
         }
         if(arg.extractJson && (db.jsonSchemaEnabled || arg.schema)){
-            return extractJSON(dat.choices[0].message.content, arg.extractJson)
+            return extractJSON(choice?.message?.content ?? extractOpenAICompatibleText(dat), arg.extractJson)
         }
-        const msg:OpenAIChatFull = (dat.choices[0].message)
-        let result = msg.content ?? ''
-        const reasoningContentField = dat?.choices[0]?.reasoning_content ?? dat?.choices[0]?.message?.reasoning_content
+        let result = extractOpenAICompatibleText(dat)
+        const reasoningContentField = choice?.reasoning_content ?? choice?.message?.reasoning_content ??
+            choice?.reasoning ?? choice?.message?.reasoning ?? choice?.thinking ?? choice?.message?.thinking
         if(arg.modelInfo.flags.includes(LLMFlags.deepSeekThinkingOutput) && !reasoningContentField){
             let reasoningContent = ""
             result = result.replace(/(.*)\<\/think\>/gms, (m, p1) => {
@@ -715,14 +701,6 @@ export async function requestHTTPOpenAI(
                 result = `<Thoughts>\n${reasoningContent}\n</Thoughts>\n${result}`
             }
         }
-        if(reasoningContentField && !result.startsWith('<Thoughts>')){
-            result = `<Thoughts>\n${reasoningContentField}\n</Thoughts>\n${result}`
-        }
-        // For openrouter, https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request#response.body.choices.message.reasoning
-        if(dat?.choices?.[0]?.message?.reasoning){
-            result = `<Thoughts>\n${dat.choices[0].message.reasoning}\n</Thoughts>\n${result}`
-        }
-
         return result
     }
 

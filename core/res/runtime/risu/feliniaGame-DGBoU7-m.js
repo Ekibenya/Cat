@@ -232,12 +232,12 @@ function f(e) {
 }
 async function p() {
 	return t ||= Promise.all([
-		import("./database.svelte-4EkJLDA8.js"),
-		import("./index.svelte-CufZQXtV.js"),
-		import("./scripts-DTxco9ho.js"),
-		import("./stores.svelte-CFiysrz_.js"),
-		import("./translator-CcOwkrIR.js"),
-		import("./globalApi.svelte-C8ZLL2it.js")
+		import("./database.svelte-BILtDHEt.js"),
+		import("./index.svelte-BE14p_UG.js"),
+		import("./scripts-BKuXHPeN.js"),
+		import("./stores.svelte-BjS6ivxJ.js"),
+		import("./translator-Dtoe3kqo.js"),
+		import("./globalApi.svelte-BiPwOSIh.js")
 	]).then(([e, t, n, r, i, a]) => ({
 		database: e,
 		process: t,
@@ -252,6 +252,8 @@ function m() {
 		characters: [],
 		language: "en",
 		useStreaming: !0,
+		usePlainFetch: !0,
+		inlayErrorResponse: !0,
 		botPresets: [],
 		botPresetsId: 0
 	};
@@ -339,9 +341,13 @@ function C(t) {
 }
 async function w(e) {
 	let t = (await p()).database.getDatabase();
-	t.aiModel = "reverse_proxy", t.proxyRequestModel = "custom", t.customProxyRequestModel = e.model, t.forceReplaceUrl = e.base, t.proxyKey = e.key || "", t.customAPIFormat = C(e.format), t.temperature = Math.round((e.temperature ?? .9) * 100), t.top_p = e.topP ?? 1, t.maxResponse = e.maxTokens ?? 4096, t.maxContext = e.contextTokens ?? 65536, t.useStreaming = e.stream ?? !0, t.autofillRequestUrl = e.autofillRequestUrl ?? !0;
+	t.aiModel = "reverse_proxy", t.proxyRequestModel = "custom", t.customProxyRequestModel = e.model, t.forceReplaceUrl = e.base, t.proxyKey = e.key || "", t.customAPIFormat = C(e.format), t.temperature = Math.round((e.temperature ?? .9) * 100), t.top_p = e.topP ?? 1, t.maxResponse = e.maxTokens ?? 4096, t.maxContext = e.contextTokens ?? 65536, t.useStreaming = e.stream ?? !0, t.autofillRequestUrl = e.autofillRequestUrl ?? !0, t.usePlainFetch = !0, t.inlayErrorResponse = !0;
 }
-function T(e) {
+function T(e, t) {
+	let n = [...e.message.slice(t)].reverse().find((e) => e.role === "char" && /```risuerror\b/i.test(e.data || ""));
+	return n ? (e.message = e.message.slice(0, t), String(n.data || "").replace(/^```risuerror\s*/i, "").replace(/```\s*$/i, "").trim()) : "";
+}
+function E(e) {
 	return {
 		role: e.role === "assistant" || e.role === "char" ? "char" : "user",
 		data: String(e.content || ""),
@@ -350,12 +356,12 @@ function T(e) {
 		time: e.time ?? Date.now()
 	};
 }
-async function E(e) {
+async function D(e) {
 	let t = await p(), n = t.database.getCurrentCharacter();
 	if (!n || n.type === "group") throw Error("No FELINIA era is active");
-	n.chats[n.chatPage].message = e.filter((e) => e.role !== "system").map(T), t.database.setCurrentCharacter(n);
+	n.chats[n.chatPage].message = e.filter((e) => e.role !== "system").map(E), t.database.setCurrentCharacter(n);
 }
-async function D() {
+async function O() {
 	let e = (await p()).database.getCurrentCharacter();
 	return !e || e.type === "group" ? [] : e.chats[e.chatPage].message.map((e) => ({
 		role: e.role === "char" ? "assistant" : "user",
@@ -365,40 +371,42 @@ async function D() {
 		time: e.time
 	}));
 }
-async function O(e = {}) {
+async function k(e = {}) {
 	let t = await p();
 	e.provider && await w(e.provider);
 	let r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
-	let i = r.chats[r.chatPage].message.at(-1)?.data || "", a;
-	e.onDelta && (a = setInterval(() => {
+	let i = r.chats[r.chatPage], a = i.message.length;
+	t.process.doingChat.set(!1);
+	let o = r.chats[r.chatPage].message.at(-1)?.data || "", s;
+	e.onDelta && (s = setInterval(() => {
 		let n = t.database.getCurrentChat()?.message.at(-1);
-		n?.role !== "char" || n.data === i || (i = n.data, e.onDelta?.(i));
+		n?.role !== "char" || n.data === o || (o = n.data, e.onDelta?.(o));
 	}, 50));
 	try {
 		if (!await t.process.sendChat(-1, {
 			signal: e.signal,
 			preview: e.preview
-		})) throw Error("RisuAI generation failed");
+		})) throw Error(T(i, a) || "生成请求失败");
 		if (e.preview) return {
 			text: JSON.stringify(t.process.previewFormated),
 			prompt: n(t.process.previewFormated),
-			history: await D()
+			history: await O()
 		};
 		let r = t.database.getCurrentChat()?.message.at(-1);
-		if (!r || r.role !== "char") throw Error("RisuAI returned no assistant message");
+		if (!r || r.role !== "char" || !String(r.data || "").trim()) throw Error("接口没有返回可显示的正文");
 		return e.onDelta?.(r.data), {
 			text: r.data,
-			history: await D()
+			history: await O()
 		};
 	} finally {
-		a && clearInterval(a);
+		s && clearInterval(s), t.process.doingChat.set(!1);
 	}
 }
-async function k(e) {
+async function A(e) {
 	let t = await p();
 	e.provider && await w(e.provider);
-	let n = await import("./request-CRhmGyvI.js"), r = t.database.getCurrentCharacter();
+	let n = await import("./request-CQOPA_9t.js"), r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	let i = await n.requestChatData({
 		formated: e.messages,
@@ -425,7 +433,7 @@ async function k(e) {
 	}
 	return i.type === "multiline" ? { text: i.result.join("\n") } : { text: i.result };
 }
-async function A(e) {
+async function j(e) {
 	let t = await p(), n = `${e.base.replace(/\/$/, "").replace(/\/(chat\/completions|responses)$/i, "")}/models`, r = await t.globalApi.globalFetch(n, {
 		method: "GET",
 		headers: e.key ? { Authorization: `Bearer ${e.key}` } : {},
@@ -434,24 +442,24 @@ async function A(e) {
 	if (!r.ok) throw Error(typeof r.data == "string" ? r.data : `HTTP ${r.status}`);
 	return (Array.isArray(r.data?.data) ? r.data.data : Array.isArray(r.data?.models) ? r.data.models : []).map((e) => String(e?.id || e?.name || "")).filter(Boolean);
 }
-async function j(e) {
+async function M(e) {
 	let t = await p(), n = t.database.getCurrentCharacter();
 	return n ? t.scripts.processScript(n, e, "editdisplay") : e;
 }
-async function M() {
+async function N() {
 	return (await p()).database.getDatabase({ snapshot: !0 });
 }
-async function N(e) {
+async function P(e) {
 	let t = await p();
 	t.database.setDatabase(e);
 	let n = e.characters.findIndex((e) => e.type !== "group" && f(e)?.kind === "era");
 	t.stores.selectedCharID.set(n);
 }
-async function P() {
+async function F() {
 	let e = await p();
 	e.database.setDatabase(m()), e.stores.selectedCharID.set(-1);
 }
-var F = Object.freeze({
+var I = Object.freeze({
 	version: "2026.8.250",
 	upstreamCommit: "e565563a288ebe4c65b6099a1645ba477d1c84b4",
 	install: h,
@@ -464,15 +472,15 @@ var F = Object.freeze({
 	setNpcState: x,
 	importPreset: S,
 	configureProvider: w,
-	setHistory: E,
-	getHistory: D,
-	generate: O,
-	request: k,
-	listModels: A,
-	processDisplay: j,
-	snapshot: M,
-	restore: N,
-	reset: P
+	setHistory: D,
+	getHistory: O,
+	generate: k,
+	request: A,
+	listModels: j,
+	processDisplay: M,
+	snapshot: N,
+	restore: P,
+	reset: F
 });
 //#endregion
-export { F as FeliniaRisu, _ as activateFeliniaEra, u as compileFeliniaDefinition, y as configureFeliniaMemory, w as configureFeliniaProvider, O as generateFeliniaTurn, D as getFeliniaHistory, S as importRisuPreset, g as installFeliniaContent, h as installFeliniaGame, A as listFeliniaModels, j as processFeliniaDisplay, k as requestFeliniaAux, P as resetFeliniaRisu, N as restoreFeliniaRisu, E as setFeliniaHistory, x as setFeliniaNpcState, v as setFeliniaSessionContent, M as snapshotFeliniaRisu, b as translateFelinia };
+export { I as FeliniaRisu, _ as activateFeliniaEra, u as compileFeliniaDefinition, y as configureFeliniaMemory, w as configureFeliniaProvider, k as generateFeliniaTurn, O as getFeliniaHistory, S as importRisuPreset, g as installFeliniaContent, h as installFeliniaGame, j as listFeliniaModels, M as processFeliniaDisplay, A as requestFeliniaAux, F as resetFeliniaRisu, P as restoreFeliniaRisu, D as setFeliniaHistory, x as setFeliniaNpcState, v as setFeliniaSessionContent, N as snapshotFeliniaRisu, b as translateFelinia };
