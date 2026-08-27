@@ -2906,7 +2906,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <div class="cfgPane" id="cp_lore" style="display:none">
       <div class="sub">你写的世界书条目与本卡自带世界书一同生效：正文近几轮提到「关键词」时自动注入该条设定；勾选常驻则每轮必注入（占用篇幅，慎用）。已支持&nbsp;ST&nbsp;高级字段：「次级关键词」（须与主关键词同时命中）、注入「顺序」、触发「概率」；导入的扫描深度与递归设置也自动生效。条目只存于你这台设备的浏览器。</div>
       <div class="sub" style="margin-top:10px">注入预算：每轮注入世界书的总字数上限（默认&nbsp;9k）。世界书每轮全量重发：拉高＝更多设定同时生效，但每轮更贵更慢；拉满＝不限（配大上下文模型用）。你的自定义条目永远最先装桶不被内置挤掉。</div>
-      <div class="sRow"><span>注入预算（字）</span><span style="display:flex;gap:10px;align-items:center"><input type="range" id="loreBud" min="3000" max="30000" step="1000" value="5000"><b id="loreBudV" style="font-weight:400;color:var(--gold-hi);font-size:10px">5000</b></span></div>
+      <div class="sRow"><span>注入预算（字）</span><span style="display:flex;gap:10px;align-items:center"><input type="range" id="loreBud" min="3000" max="30000" step="1000" value="9000"><b id="loreBudV" style="font-weight:400;color:var(--gold-hi);font-size:10px">9000</b></span></div>
       <div id="loreList" style="margin-top:10px;max-height:180px;overflow-y:auto"></div>
       <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
         <span class="eBtn" id="loreNew" style="margin-top:0">新写一条</span>
@@ -7140,6 +7140,7 @@ function feSitRender(){
    不写情节、目标、障碍、结束的地方。那几样不归这里定。 */
 function feSceneZh(){
   var e=FE.era,h=FE.hero,L=FE.loc,o=[];
+  var sit=String($('#feSit').value||'').trim();
   o.push('［世界］');
   o.push('年代：'+e.yl+'（'+e.age+'）　地区：'+e.reg);
   o.push('这一代：'+e.w);
@@ -7198,10 +7199,21 @@ function feSceneZh(){
     });
   }else o.push('（没有指定。这一幕里可以只有叙述者一个人。不要另起新的人名。）');
   o.push('');
+  /* 新版铸局走「译入 → 韩文写作 → 译出」三段链，不再经过旧的 condereSys。
+     这里必须把本代、地点、主角、同伴和玩家场面一起交给 loreFor；否则界面虽显示
+     世界书已启用，真正写开局的三次 API 请求却只拿到上面那份短摘要。 */
+  var loreQ=[e.yl,e.t,e.reg,L&&L.cn,L&&L.n,h.n,sit];
+  FE.soc.forEach(function(k){var p=FE.pool[k];if(p&&p.n)loreQ.push(p.n);});
+  var openingLore='';
+  try{openingLore=loreFor(loreQ.filter(Boolean).join(' '));}catch(_){}
+  if(openingLore){
+    o.push('［世界书·本幕激活资料］');
+    o.push(openingLore);
+    o.push('');
+  }
   o.push('［要写的那一幕］');
   o.push('这是开局。');
   o.push('时刻与地点：'+(L?(L.cn+'（'+L.n+'）。'+L.d+'。'):'由这一代与这个身份自然推出。'));
-  var sit=String($('#feSit').value||'').trim();
   if(sit)o.push('此刻：'+sit);
   o.push('');
   o.push('［写的时候］');
@@ -9080,7 +9092,7 @@ function loreFor(text){
   /* 关键词一律小写后比对：ST 世界书默认 caseSensitive:false，
      原来是裸 indexOf，从酒馆搬过来的英文关键词几乎全哑火。 */
   var _lt=String(text==null?'':text).toLowerCase();
-  var out=[],budget=(typeof SET!=='undefined'&&SET.loreBud)||5000,dropped=0;
+  var out=[],budget=(typeof SET!=='undefined'&&SET.loreBud)||9000,dropped=0;
   /* 第一遍：constant（铁则）条目无条件全量注入，不参与预算竞争。
      原来它们和普通词条按数组顺序抢同一个预算，结果排在后面的几条【铁则】
      每回合都被前面的普通词条吃光预算、静默丢弃——其中就包括管另一个主角
@@ -9891,8 +9903,10 @@ function sysPrompt(){
   var G=CARDS[ACTIVE]||{};
   /* 检索文本不要掺 gearLine()：装备名每回合都一样，会让一批兵器甲胄词条
      恒定命中、稳定占掉预算，把真正跟当前情节相关的条目挤出去。 */
-  var recent=TURNS.slice(-6).map(function(t){return t.content;}).join('\n')
-    +_narrTail(1500);
+  /* 检索不能只靠最近正文。把本局开场、纪年地点、主角和当前面板也放进检索词，
+     即使玩家这一句很短，模型仍能拿到当代、当地与在场人物的资料。 */
+  var recent=[GAME.opText||'',heroName(),_narrTail(2200)]
+    .concat(TURNS.slice(-6).map(function(t){return t.content;})).join('\n');
   var preFront=[],preEnd=[];
   if(typeof SET!=='undefined')(SET.presets||[]).forEach(function(p){
     if(p.on===false)return;(p.pos===1?preEnd:preFront).push(p.text);});
@@ -9943,7 +9957,9 @@ function oracleCall(messages,cb,err,opt){
   opt=opt||{};
   var onDelta=opt.onDelta;delete opt.onDelta;
   var noStream=opt.noStream;delete opt.noStream;
-  var maxCont=(opt.maxCont==null?2:opt.maxCont);delete opt.maxCont;   /* 截断后最多自动续写几轮 */
+  /* 一次点击只发一次主请求。旧默认会在误判截断后自动再发两次完整请求，
+     既把一分钟拉成三五分钟，也会把「承上续写」元指令诱导成可见正文。 */
+  var maxCont=(opt.maxCont==null?0:opt.maxCont);delete opt.maxCont;
   var wantTag=opt.wantTag||'';delete opt.wantTag;                    /* 正常收尾必然出现的标记 */
   /* 辅助调用（NPC 档案抽取、浅字提示、配图提示词、字幕）不许碰 GENAC。
      GENAC 是「✕ 中断」和 gameExit 唯一能掐的那个把手；被辅助请求覆盖之后，
@@ -9985,6 +10001,23 @@ function oracleCall(messages,cb,err,opt){
     if(stream)body.stream=true;
     return body;
   }
+  /* OpenAI 兼容端点并不都把正文写成单一字符串：有的返回 content parts 数组，
+     有的流式桥接写在 delta.text。只取可见正文，reasoning_content 永远不取。 */
+  function visibleText(v){
+    if(v==null)return '';
+    if(typeof v==='string')return v;
+    if(Array.isArray(v))return v.map(function(p){
+      if(typeof p==='string')return p;
+      if(!p)return '';
+      if(typeof p.text==='string')return p.text;
+      if(p.text&&typeof p.text.value==='string')return p.text.value;
+      if(typeof p.content==='string')return p.content;
+      return '';
+    }).join('');
+    if(typeof v.text==='string')return v.text;
+    if(v.text&&typeof v.text.value==='string')return v.text.value;
+    return '';
+  }
   function bump(t){try{onDelta&&onDelta(acc+t);}catch(_){}}
   /* 撞上 token 上限：自动接着写下去，玩家无感（正文与状态栏都可能被腰斩） */
   function contMsgs(base,partial){
@@ -10001,7 +10034,11 @@ function oracleCall(messages,cb,err,opt){
        三个条件同时成立才判定截断（没收到 [DONE]、没拿到 finish_reason、约定的收尾
        标记也没出现），交给既有的自动续写机制接着写完。wantTag 只有讲故事那一路会传，
        摘要/配图/字幕那些短调用不受影响。 */
-    if(!fr&&!sawDone&&wantTag&&String(text||'').trim()&&full.indexOf(wantTag)<0)fr='length';
+    /* 没有 [DONE]/finish_reason 只说明代理的 SSE 收尾不标准，不等于 token 用完。
+       只有服务端明确返回 length/max_tokens 才允许续写；否则绝不暗中再发一轮。 */
+    if(fr==='max_tokens')fr='length';
+    if(!fr&&wantTag&&String(full||'').trim()&&full.indexOf(wantTag)<0)
+      fr=sawDone?'incomplete':'stream_end';
     if(fr==='length'&&round<maxCont&&String(text||'').trim()){
       round++;acc=full;
       /* 续写必须始终从「最初那份 messages」接续。原来传的是本轮实际发出去的数组，
@@ -10011,7 +10048,7 @@ function oracleCall(messages,cb,err,opt){
     }
     /* 续写额度用完了还是 length，或者被复读掐断——正文与状态栏都可能停在半句上。
        原来一声不吭地收工，玩家只会认为「AI 又断了 / 不更新」。 */
-    cb(full,{trunc:(fr==='length'||fr==='repeat'),reason:fr||''});
+    cb(full,{trunc:(fr==='length'||fr==='repeat'||fr==='incomplete'||fr==='stream_end'),reason:fr||''});
   }
   function whole(msgs){
     var ac=window.AbortController?new AbortController():null;if(!aux)GENAC=ac;
@@ -10022,7 +10059,7 @@ function oracleCall(messages,cb,err,opt){
     .then(function(d){
       if(to)clearTimeout(to);
       var ch=d.choices&&d.choices[0];
-      var c=ch&&ch.message&&ch.message.content;
+      var c=visibleText(ch&&ch.message&&ch.message.content);
       if(!c&&!acc)throw new Error('神谕沉默（空回复）');
       sawDone=true;                                    /* 整包 JSON 到手＝正常收尾 */
       bump(c||'');finish(msgs,c||'',ch&&ch.finish_reason);
@@ -10057,7 +10094,16 @@ function oracleCall(messages,cb,err,opt){
         try{
           var j=JSON.parse(ln),ch=j.choices&&j.choices[0];
           if(ch&&ch.finish_reason)fr=ch.finish_reason;
-          var d2=(ch&&ch.delta&&ch.delta.content)||'';
+          var d2=visibleText(ch&&ch.delta&&ch.delta.content);
+          if(!d2)d2=visibleText(ch&&ch.delta&&ch.delta.text);
+          if(!d2)d2=visibleText(ch&&ch.text);
+          if(!d2&&j.delta)d2=visibleText(j.delta.text||j.delta.content);
+          /* 少数中转在 stream:true 下仍逐块发送 message.content，甚至每块都带
+             「截至当前的全文」。兼容它，但只追加新增长的尾巴，避免全文反复叠加。 */
+          if(!d2){
+            var mc=visibleText(ch&&ch.message&&ch.message.content);
+            if(mc)d2=(mc.indexOf(text)===0)?mc.slice(text.length):mc;
+          }
           if(d2){got=true;text+=d2;bump(text);}
         }catch(_){}
       }
@@ -10073,7 +10119,7 @@ function oracleCall(messages,cb,err,opt){
           }
           kick();                                   /* 还在出字：看门狗续命 */
           buf+=dec.decode(x.value,{stream:true});
-          var parts=buf.split('\n');buf=parts.pop();
+          var parts=buf.split(/\r?\n/);buf=parts.pop();
           parts.forEach(feed);
           /* 复读掐断：末尾 1-12 字模式连刷 ≥30 次即停拉流，止损 token */
           /* 只在尾部 400 字上验：模式最长 12 字 ×30 次＝360 字，400 字足够覆盖。
@@ -10159,7 +10205,9 @@ function buildOracleMsgs(){
     +'\n唯一例外：状态栏 <mvu_panel> 里的 ◆心声 那一行——玩家这回写了 ~ 独白就照抄，'
     +'没写就据本幕处境写一句新的（每幕不同，不许照抄上一幕）。'
     +'正文里依旧不许出现她的内心独白，那一句只能待在状态栏那一行里。'
-    +'\n'+MEOW_RULE+'\n'+FELINIA_STYLE+'\n'+FELINIA_EXAMPLES+'\n'+FELINIA_CHECK});
+    /* 文风与范文已经在 sysPrompt 中完整出现。末尾只重压猫娘句尾和自检，
+       不再把数千字规范、范文原样复制第二遍。 */
+    +'\n'+MEOW_RULE+'\n'+FELINIA_CHECK});
   return msgs;
 }
 function askOracleSend(msgs){
@@ -10197,6 +10245,17 @@ function askOracleSend(msgs){
     /* 这一局已经换掉了（读档／回主菜单／重演）：这条回复属于上一局，不许往新局里塞。
        没有这道守卫的话，退出后跑完的那个请求会凭空补进一条幽灵回合。 */
     if(gen0!==TYPE_GEN)return;
+    reply=stripCoT(reply);
+    /* 兼容端点若仍把内部规划塞进 content，宁可明确报错也不能把它写入剧情和存档。
+       这些短语来自旧自动续写污染；正常英文角色对白不会同时命中两项。 */
+    var _ml=String(reply||''),_ms=0;
+    [/the second prompt says/i,/previous turn was cut off/i,/let'?s make sure/i,
+     /refining the narrative flow/i,/continue writing right after the cutoff/i]
+      .forEach(function(r){if(r.test(_ml))_ms++;});
+    if(_ms>=2){
+      narrAdd('sys','⚠&nbsp;接口返回了内部推理草稿，已拦截且没有写入剧情。请直接重演本回。',null);
+      return;
+    }
     var idx=TURNI++;
     TURNS.push({role:'assistant',content:reply,t:idx});
     try{GENIVS.absorb(reply,idx);}catch(_){}       /* 正文里的建／拆／来／去落到三维场景上 */
@@ -10832,7 +10891,7 @@ $('#gtFull').addEventListener('click',function(){
   else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
 });
 /* ============ 设置·控制中枢（12页签，代码级对齐 Ghost setBody） ============ */
-var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:5000,
+var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,
   tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
   img:{on:0,base:'',key:'',model:'',size:0,style:0},   /* style 0 ＝ NovelAI，见 IMGSTY */
   sub:{base:'',key:'',model:''},
@@ -10846,7 +10905,7 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
    「绘此幕」点了整个函数当场中断、毫无反应；cam/disp 为 undefined 则查表得 undefined，
    提示词里混进字面量「undefined」、图片显示宽度失效。这就是「设置里某些项目不作用」。 */
 (function(){
-  var D={glass:80,forma:0,face:0,mvuRing:1,loreBud:5000,
+  var D={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,
     tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
     img:{on:0,auto:0,count:0,cam:0,disp:2,base:'',key:'',model:'',size:0,style:0,
          steps:'',cfg:'',w:'',h:'',seed:'',workflow:''},
@@ -12874,7 +12933,11 @@ function renderMvu(panel){
 var S={history:[],memNpc:null,_npcMetaBusy:null,memEdit:null,secG:true,secA:true,secM:true,
   graphHidden:[],npcMeta:{},mem:[],memOn:true,memN:0};
 function esc(s){return esc2(s);}
-function stripCoT(t){return String(t||'').replace(/<think>[\s\S]*?<\/think>/gi,'');}
+function stripCoT(t){
+  return String(t||'')
+    .replace(/<(think|analysis|reasoning)>[\s\S]*?<\/\1>/gi,'')
+    .replace(/```(?:analysis|reasoning|think)\s*[\s\S]*?```/gi,'');
+}
 function reducedMotion(){try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
 function currentOpening(){return GAME.op||null;}
 function zjSelf(){return heroName();}
