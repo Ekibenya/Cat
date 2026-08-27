@@ -334,9 +334,15 @@
   }
 
   function syncGeneration(){
-    var active=!!(window.GEN&&GEN.active&&GEN.mode==='gen');
+    /* The visible progress bar is the authoritative signal. Some providers
+       expose or update the internal request object later than the UI. */
+    var bar=!!(narr&&narr.querySelector('.genBar'));
+    var live=!!(narr&&narr.querySelector('.liveWrap'));
+    var gen=window.GEN||null;
+    var active=bar||!!(gen&&gen.active);
+    var chars=gen&&isFinite(gen.chars)?Number(gen.chars):0;
     if(active&&!genWasActive)beginDelivery();
-    if(active&&!tokenWas&&GEN.chars>0){tokenWas=true;firstToken();}
+    if(active&&!tokenWas&&(chars>0||live)){tokenWas=true;firstToken();}
     if(!active&&genWasActive&&jobPhase==='waiting'){
       jobPhase='failed';setState('failed',true);
       setTimeout(finishDelivery,1050);
@@ -428,6 +434,7 @@
 
     new MutationObserver(syncVisibility).observe(game,{attributes:true,attributeFilter:['class']});
     new MutationObserver(syncVisibility).observe(menu,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(syncGeneration).observe(narr,{childList:true});
     if(eraSel)new MutationObserver(syncVisibility).observe(eraSel,{attributes:true,attributeFilter:['class']});
     if(opening)new MutationObserver(syncVisibility).observe(opening,{attributes:true,attributeFilter:['class','data-step']});
     setInterval(syncGeneration,80);
