@@ -2812,7 +2812,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <span class="tag">OPTIONES</span>
     <h2>设置&nbsp;·&nbsp;控制中枢</h2>
     <div class="cfgTabs" id="cfgTabs">
-      <span class="on" data-cp="disp">显示</span><span data-cp="img">生图</span><span data-cp="voice">语音</span><span data-cp="card">角色卡</span><span data-cp="lore">世界书</span><span data-cp="rx">正则</span><span data-cp="js">脚本</span><span data-cp="api">AI接口</span><span data-cp="preset">预设</span><span data-cp="mem">记忆</span><span data-cp="bak">备份</span><span data-cp="imgc">图库</span>
+      <span class="on" data-cp="disp">显示</span><span data-cp="img">生图</span><span data-cp="voice">语音</span><span data-cp="lore">世界书</span><span data-cp="rx">正则</span><span data-cp="js">脚本</span><span data-cp="api">AI接口</span><span data-cp="preset">预设</span><span data-cp="mem">记忆</span><span data-cp="bak">备份</span><span data-cp="imgc">图库</span>
     </div>
     <div class="cfgPane" id="cp_disp">
       <div class="sRow"><span>SONVS&nbsp;·&nbsp;音效</span><input type="range" id="cfgVol" min="0" max="100" value="70"></div>
@@ -2898,11 +2898,6 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>新幕自动朗读</span><span class="sSeg" id="sgTtsAuto"><span class="on">关</span><span>开</span></span></div>
       <div style="display:flex;gap:12px;margin-top:14px"><span class="eBtn" id="ttsTry" style="margin-top:0">试听</span><span class="eBtn" id="ttsStop" style="margin-top:0">停止</span></div>
     </div>
-    <div class="cfgPane" id="cp_card" style="display:none">
-      <div class="sub">请进这个世界：支持卡片&nbsp;PNG（内嵌数据）与&nbsp;JSON（酒馆「角色管理」导出的卡）。导入后人物成为世界书条目——正文提到其名，即按卡中设定演绎其言行并融入本世界背景；卡内自带的世界书一并生效。</div>
-      <div id="cardList" style="margin-top:12px"></div>
-      <div style="display:flex;gap:12px;margin-top:12px"><span class="eBtn" id="cardImp" style="margin-top:0">请入角色</span><input type="file" id="cardFile" accept=".png,.json" style="display:none"><span class="sub" id="cardMsg"></span></div>
-    </div>
     <div class="cfgPane" id="cp_lore" style="display:none">
       <div class="sub">你写的世界书条目与本卡自带世界书一同生效：正文近几轮提到「关键词」时自动注入该条设定；勾选常驻则每轮必注入（占用篇幅，慎用）。已支持&nbsp;ST&nbsp;高级字段：「次级关键词」（须与主关键词同时命中）、注入「顺序」、触发「概率」；导入的扫描深度与递归设置也自动生效。条目只存于你这台设备的浏览器。</div>
       <div class="sub" style="margin-top:10px">注入预算：每轮注入世界书的总字数上限（默认&nbsp;9k）。世界书每轮全量重发：拉高＝更多设定同时生效，但每轮更贵更慢；拉满＝不限（配大上下文模型用）。你的自定义条目永远最先装桶不被内置挤掉。</div>
@@ -2968,6 +2963,21 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>单轮上限&nbsp;tokens</span><input class="aIn" id="apMaxT" placeholder="4096" style="width:80px"></div>
       <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="留空不限" style="width:80px"></div>
       <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span class="on">关</span><span>低</span><span>中</span><span>高</span></span></div>
+      <div class="sub" style="margin-top:16px">韩语原生写作&nbsp;·&nbsp;中文只作显示层：玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。状态栏与控制标签永不翻译。</div>
+      <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:200px"><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
+      <div class="sRow"><span>翻译方向</span><span class="sub" style="margin:0">玩家&nbsp;中文→韩语&nbsp;·&nbsp;正文&nbsp;韩语→中文</span></div>
+      <div class="sRow"><span>显示韩语原稿</span><input type="checkbox" id="trShowRaw"></div>
+      <div class="sRow"><span>DeepL&nbsp;KEY</span><input class="aIn" id="trDeepLKey" type="password" placeholder="仅选择 DeepL 时需要" style="width:220px"></div>
+      <div class="sRow"><span>DeepLX&nbsp;URL</span><input class="aIn" id="trDeepLXUrl" placeholder="http://localhost:1188" style="width:240px"></div>
+      <div class="sRow"><span>DeepLX&nbsp;TOKEN</span><input class="aIn" id="trDeepLXToken" type="password" placeholder="可留空" style="width:200px"></div>
+      <div class="sub" id="trStatus">翻译缓存保存在本浏览器；韩语原稿随存档保存。</div>
+      <div class="sub" style="margin-top:16px">韩语长程记忆&nbsp;·&nbsp;按&nbsp;RisuAI&nbsp;的&nbsp;Hypa／Hanurai&nbsp;方式，用最近四条韩语原稿检索更早的韩语剧情；不会读取中文显示层，也不会重复塞入最近历史。</div>
+      <div class="sRow"><span>语义记忆</span><input type="checkbox" id="semOn"></div>
+      <div class="sRow"><span>检索方式</span><select id="semMode" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:220px"><option value="hybrid">韩语 BGE 混合（推荐）</option><option value="bge-ko">韩语 BGE 精确（等待模型）</option><option value="api">玩家接口 Embeddings</option><option value="lexical">本地词义检索（最快）</option></select></div>
+      <div class="sRow"><span>Embeddings&nbsp;模型</span><input class="aIn" id="semModel" placeholder="text-embedding-3-small" style="width:220px"></div>
+      <div class="sRow"><span>记忆注入预算</span><input class="aIn" id="semBudget" inputmode="numeric" placeholder="3000" style="width:80px"></div>
+      <div class="sRow"><span>优先使用显卡</span><input type="checkbox" id="semGpu"></div>
+      <div class="sub" id="semStatus">模型只在启用时按需下载并由浏览器缓存；失败会自动退回本地检索，不阻断游戏。</div>
     </div>
     <div class="cfgPane" id="cp_preset" style="display:none">
       <div class="sub">支持&nbsp;SillyTavern&nbsp;聊天补全预设&nbsp;JSON（读取&nbsp;prompts，自动跳过占位条目），也可直接粘贴纯文本提示词。启用后每一轮都会按原顺序注入系统提示：位于对话历史之前的条目前置，之后的（如&nbsp;jailbreak）末位注入。预设存于本浏览器，刷新不丢。</div>
@@ -3007,7 +3017,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
         <span class="eBtn" id="bakImp" style="margin-top:0">导入（全量或任一单项档）</span>
         <input type="file" id="bakFile" accept=".json" style="display:none">
       </div>
-      <div class="sub" style="margin-top:18px">一键清除：抹掉本游戏存在此浏览器的<b style="color:#d35d3d">全部资料</b>——设置、AI接口、预设、记忆、正则、脚本、自写世界书、角色卡、全部存档、装备、图库缓存、三维偏好。自定义字体与周纪线各自数据不动。执行后自动刷新。</div>
+      <div class="sub" style="margin-top:18px">一键清除：抹掉本游戏存在此浏览器的<b style="color:#d35d3d">全部资料</b>——设置、AI接口、预设、记忆、正则、脚本、自写世界书、全部存档、装备、图库缓存、三维偏好。自定义字体与周纪线各自数据不动。执行后自动刷新。</div>
       <div style="display:flex;gap:12px;margin-top:8px">
         <span class="eBtn" id="bakWipe" style="margin-top:0">一键清除全部资料…</span>
       </div>
@@ -5175,7 +5185,7 @@ function psRenderNpcs(){
   });
 }
 $('#pcRe').addEventListener('pointerup',function(e){e.stopPropagation();psRenderNpcs();});
-/* 固定角色卡：以本尊之身入局——同样走铸局，只是不取化名。
+/* 固定主角内容：以本尊之身入局——同样走铸局，只是不取化名。
    （旧实现直接套「年代最接近的既有开局」，既绕过生成、也无视玩家选的年代与地点） */
 function psFieldsClear(){
   ['#pfNomen','#pfGens','#pfAetas','#pfOrtus','#pfScene'].forEach(function(id){var el=$(id);if(el)el.value='';});
@@ -5721,8 +5731,7 @@ function feLoad(cb){
     }).catch(function(){done(false);});
 }
 
-/* 世界书装进卡里：空壳卡的 lorebook 是空的，装上以后 LIBER 那一页有内容，
-   对局时 loreFor() 也能按关键词检索到。已经有条目就不覆盖（玩家自写的优先）。 */
+/* 世界资料只负责装入固定内容对象；实际检索由 RisuAI 原生 lorebook 管线执行。 */
 function feLoreInstall(){
   try{
     var C=CARDS&&CARDS.luzhi;if(!C)return;
@@ -5730,16 +5739,6 @@ function feLoreInstall(){
     C.lorebook=FE.lore.slice();
   }catch(_){}
 }
-/* 定了纪年就把别代的条目关掉：通则常驻，本代五条参与检索，其余不发。
-   不这么做，四十一代两百来条会一起抢注入预算，等于什么都没进去。 */
-function feLoreBind(i){
-  try{
-    var lb=(CARDS&&CARDS.luzhi&&CARDS.luzhi.lorebook)||[];
-    for(var k=0;k<lb.length;k++){var e=lb[k];
-      if(e&&e.era!=null&&!e.custom)e.on=(e.era===i);}
-  }catch(_){}
-}
-
 /* ── 定种子的随机：同一枚种子每次算出同一个人 ── */
 function feHash(s){var h=2166136261>>>0,i;s=String(s);
   for(i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
@@ -6037,7 +6036,6 @@ function feOpen2(row,line){
      写不成也不碍事 —— 照旧用卡里那份口吻谱台词兜底。 */
   try{if(window.FELKO)setTimeout(function(){FELKO.run(era.i);},60);}catch(_){}
   try{FE._esi=ES.i;}catch(_){}
-  feLoreBind(era.i);
   try{ERA.year=era.y;ERA.sel=null;}catch(_){}
   esClose();
   $('#feWrap').classList.add('on');
@@ -7187,8 +7185,8 @@ function feSceneZh(){
   if(FE.soc.length){
     FE.soc.forEach(function(k){
       var p=FE.pool[k];
-      /* 名册上的同伴只报名字身份：他们那六条会在名字出现时由 loreFor 从
-         世界书注入（人物条目有独立预算桶），这里再抄一遍是重复占上下文，
+      /* 名册上的同伴只报名字身份：他们的详细内容由当前时代的 Risu 原生世界书
+         按名字触发；这里再抄一遍会重复占用上下文，
          而且抄的是现算值，正好又对不上。 */
       if(feDossLore(p))
         o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')
@@ -7199,16 +7197,6 @@ function feSceneZh(){
     });
   }else o.push('（没有指定。这一幕里可以只有叙述者一个人。不要另起新的人名。）');
   o.push('');
-  /* 开局用专用资料包，不能直接调正常回合的 loreFor。后者会无条件带上二十五条
-     常驻规则，再被「中国／夜市」一类宽词牵出无关人物；实测一幕会膨胀到一万八千字，
-     译入只回前四行就撞上限，真正的地点与场面反而落在截断点后面。 */
-  var openingLore='';
-  try{openingLore=feOpeningLore(e,h,L,sit);}catch(_){}
-  if(openingLore){
-    o.push('［世界书·本幕激活资料］');
-    o.push(openingLore);
-    o.push('');
-  }
   o.push('［要写的那一幕］');
   o.push('这是开局。');
   o.push('时刻与地点：'+(L?(L.cn+'（'+L.n+'）。'+L.d+'。'):'由这一代与这个身份自然推出。'));
@@ -7220,40 +7208,6 @@ function feSceneZh(){
   o.push('不要在正文里做算术，不要报数目、算余额。');
   o.push('要写得长。对白要多。');
   return o.join('\n');
-}
-
-/* 新版铸局的精准资料包：所选主角与同伴的丰富六条必须全带；世界资料只取本代
-   真正命中年代、地点和玩家场面的前四条。短版 figs[].d/q、常驻文风和无关人物均不进。 */
-function feOpeningLore(e,h,L,sit){
-  var lb=(CARDS&&CARDS.luzhi&&CARDS.luzhi.lorebook)||[],names=[],seen={},out=[];
-  function addName(n){n=String(n||'').trim();if(n&&!seen[n]){seen[n]=1;names.push(n);}}
-  addName(h&&h.n);
-  (FE.soc||[]).forEach(function(k){var p=FE.pool[k];if(p)addName(p.n);});
-  var ei=e&&e.i;
-  names.forEach(function(n){
-    var cat='人 · '+n,a=[];
-    for(var i=0;i<lb.length;i++){
-      var x=lb[i];
-      if(!x||x.on===false||x.lay!=='figures'||x.cat!==cat)continue;
-      if(ei!=null&&x.era!=null&&x.era!==ei)continue;
-      a.push(x);
-    }
-    a.sort(function(x,y){return String(x.title||'').localeCompare(String(y.title||''),'zh-Hans-CN',{numeric:true});});
-    a.forEach(function(x){out.push('『'+(x.title||'')+'』'+(x.content||''));});
-  });
-  var q=[e&&e.yl,e&&e.t,e&&e.reg,L&&L.cn,L&&L.n,sit].filter(Boolean).join(' ').toLowerCase();
-  var world=[],worldChars=0;
-  for(var j=0;j<lb.length&&world.length<4;j++){
-    var w=lb[j];
-    if(!w||w.on===false||w.constant||w.lay!=='world'||w.era!==ei)continue;
-    if(!/〕(?:国家|历史|地点|这一代该照的母本条款)$/.test(String(w.title||'')))continue;
-    var hit=(w.keys||[]).some(function(k){k=String(k||'').trim().toLowerCase();return k&&q.indexOf(k)>=0;});
-    if(!hit)continue;
-    var s='『'+(w.title||'')+'』'+(w.content||'');
-    if(worldChars+s.length>3600)continue;
-    world.push(s);worldChars+=s.length;
-  }
-  return world.concat(out).join('\n');
 }
 
 /* 交给译入沙盒的中文指示。用中文写是对的：这一段本来就是「中文指示 → 韩语」那一步。 */
@@ -7438,7 +7392,7 @@ function feForge(){
     feFailMsg(msg,function(){feForge();});
   }
   function call(msgs,opt,ok){
-    oracleCall(msgs,function(t){if(alive())ok(String(t||''));},
+    risuInvoke(msgs,function(t){if(alive())ok(String(t||''));},
                function(m){fail(m);},opt||{});
   }
 
@@ -7764,11 +7718,7 @@ function condereOp(line,y,nm,cn){
 /* 鑄局用的系統提示：與正式對局同源（卡的鐵則、文風、世界書），世界書以年代地點為檢索詞 */
 function condereSys(line,q){
   var G=CARDS[line]||{};
-  var preFront=[],preEnd=[];
-  if(typeof SET!=='undefined')(SET.presets||[]).forEach(function(pp){
-    if(pp.on===false)return;(pp.pos===1?preEnd:preFront).push(pp.text);});
   return [MEOW_RULE,
-    preFront.join('\n'),
     heroRebind(G.system_prompt||''),
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
     povBind(),                         /* 正史开局扮演别人时的视点绑定（铸局走 heroSheet） */
@@ -7776,12 +7726,7 @@ function condereSys(line,q){
                  :('【卡中原主角档案·仅供了解此世的笔调与背景，本局不适用于主角】'+heroDesc(G.description||''))),
     '【叙事者】'+heroRebind(G.personality||''),
     '【场景】'+heroRebind(G.scenario||''),
-    (((heroIsCard()||cardHeroless())&&!povHero())?'【世界书·激活条目】'
-      :('【世界书·激活条目】（以下是这个世界的既有史料与传说。其中提到的'+cardHeroName()
-        +'是这个世界里的一位人物，与本局主角无关，本局中不登场。）'))
-      +'\n'+loreFor(q),
     '【每回自查】'+heroRebind(G.post_history_instructions||''),
-    preEnd.join('\n'),
     heroTail(),
     MEOW_RULE
   ].filter(Boolean).map(macroFill).join('\n\n');
@@ -7870,7 +7815,7 @@ function gameEnter(lineOverride){
       });
     }
   }
-  oracleCall(
+  risuInvoke(
     [{role:'system',content:FELINIA_STYLE+'\n\n'+FELINIA_EXAMPLES+'\n\n'
        +condereSys(line,yl+' '+cn+' '+nm)+'\n\n'+FELINIA_CHECK},
      {role:'user',content:condereAsk(line,y,nm,cn)}],
@@ -8991,7 +8936,6 @@ function renderReply(text,tIdx,instant){
   /* 思维链绝不能当正文：不剥的话它会被渲染出来、被 TTS 念出来、进配图提示词，
      还原样存进 TURNS，此后每一轮回喂给模型，既烧 token 又教会它继续写元评论。 */
   var body=stripMvu(stripCoT(text));
-  if(typeof rxApply==='function')body=rxApply(body,false);   /* 正则·仅显示 */
   var after=function(finalText){
     typeParas(finalText.split(/\n{2,}/),tIdx,function(){
       if(tIdx!=null)turnOps(tIdx,finalText);
@@ -9007,8 +8951,7 @@ function renderReply(text,tIdx,instant){
   /* memSync 只挂在 renderMvu 里；模型漏写状态栏那一回若不补一脚，
      这一回合就整个不进编年史与长程记忆。 */
   try{if(!panel)memSync();}catch(_){}
-  if(typeof jsPipeline==='function')jsPipeline(body,after);  /* 脚本管线（沙箱） */
-  else after(body);
+  after(body);
 }
 /* ── 生成等待·启发式进度条（Ghost 移植）───────────────────────────
    接口吐第一个字之前不给任何进度信号，故以【本机最近 8 轮首字耗时中位数】为预估，
@@ -9113,95 +9056,6 @@ function _eraNow(){
   }catch(_){}
   if(!i)i=feEraI();
   return i|0;
-}
-function loreFor(text){
-  var lb=(CARDS[ACTIVE].lorebook||[]).slice();
-  /* 玩家自写的条目最先装桶，其次才是角色卡带来的条目。
-     原来只按 custom 分两档，而角色卡主条目被写死 ord=50、玩家自写默认 ord=100，
-     于是一条两三千字的卡设定先把预算吃光，玩家自己写的条目走 continue 被静默丢弃，
-     界面上却还显示「启用中」——玩家的结论只能是「我写的世界书不生效」。 */
-  function rank(e){return (e&&e.cat==='自写')?0:((e&&e.custom)?1:2);}
-  lb.sort(function(a,b){
-    var ca=rank(a),cb=rank(b);
-    if(ca!==cb)return ca-cb;
-    return (a.ord||100)-(b.ord||100);
-  });
-  /* 关键词一律小写后比对：ST 世界书默认 caseSensitive:false，
-     原来是裸 indexOf，从酒馆搬过来的英文关键词几乎全哑火。 */
-  var _lt=String(text==null?'':text).toLowerCase();
-  var out=[],budget=(typeof SET!=='undefined'&&SET.loreBud)||9000,dropped=0;
-  /* 第一遍：constant（铁则）条目无条件全量注入，不参与预算竞争。
-     原来它们和普通词条按数组顺序抢同一个预算，结果排在后面的几条【铁则】
-     每回合都被前面的普通词条吃光预算、静默丢弃——其中就包括管另一个主角
-     怎么出场的那条，直接对应「AI 分不清谁是谁」。 */
-  /* 常驻条目原来完全绕开预算：拉到最低的 3000 也压不住，实测一本以常驻为主的世界书
-     能一口气塞进八万多字，每回请求直接撑爆上下文（接口 400／超时／天价 token），
-     而玩家在界面上只会认为「注入预算这个滑杆不作用」。给它一个独立的、宽一些的桶。 */
-  /* 1.5 倍では足りない。常驻条目は「每回合都必须在场」的铁则，
-     排在后面的几条一到预算就被 continue 掉，控制台之外没有任何提示——
-     埃及卡实测：新加的八条人际铁则里有六条每回合都没进过提示词。
-     上限本身要留着（防止一本以常驻为主的世界书撑爆上下文），只是把桶做大。 */
-  var cbud=Math.max(4000,Math.round(budget*2.4));
-  /* 人物条目单独一个桶。跟常驻条目分桶是同一个道理：本代那十四条每条七百字上下，
-     关键词又是「钱」「衣裳」「差事」这种每回合都命中的字，ord 30 先装桶就把五千字
-     吃光了，ord 60 的人物一条都排不上。实测两位同伴在场时命中人物条目 12 条、
-     3126 字，单桶下只挤进去一条（玛塔·哈里的第一项）—— 在场的人，卡里反而没有他们的话。
-     人物只在名字出现在近文里才命中，所以这个桶平时是空的，不白占上下文。 */
-  var fbud=Math.max(3000,Math.round(budget*0.8));
-  /* since：这一条讲的事哪一年才有。没到年份的整条不发——
-     否则【铁则】四丈是硬规矩 会在前221年的掖庭里每回合注入一次，
-     纪年闸门那一句压不住每回合都在的一整条铁则。 */
-  /* 分代闸门。条目上带 era 的（人物三千五百四十条、本代五百七十四条）
-     只在那一代发；不带 era 的（通则、文风、横断、背景）照旧每一代都在。
-     铸局那一层选定纪年时的 feLoreBind 做的是同一件事（把别代的 on 关掉），
-     可是它只在那一层开着时跑一次，读档续局时那一层根本不开 —— 页面一重载，
-     四十一代的 on 全是 true。一九一六年的存档实测：读档后走一回合，注进去的是
-     前10000年五条、前6000年两条、人物莉莉丝，本代一条都没有。
-     排序是同 ord 按文件顺序，文件顺序就是纪年顺序，所以越玩到后面越注得早。
-     闸门写在这里就不靠那一层跑没跑过。 */
-  var _ei=(function(){try{return _eraNow();}catch(_){return 0;}})();
-  function _otherEra(e){return !!(_ei&&e&&e.era!=null&&e.era!==_ei);}
-  var _yr=0;try{_yr=nowYear();}catch(_){}
-  function _tooEarly(e){
-    if(!e||e.since==null||!_yr)return false;
-    return _yr>Math.abs(e.since);          /* nowYear 返回「前 N 年」的 N，数越大越早 */
-  }
-  for(var ci=0;ci<lb.length;ci++){var ce=lb[ci];
-    if(!ce||ce.on===false||!ce.constant)continue;
-    if(_tooEarly(ce)||_otherEra(ce))continue;
-    var cs=loreBind(ce);
-    if(cbud-cs.length<0){dropped++;continue;}
-    out.push(cs);cbud-=cs.length;}
-  /* 第二遍：关键词命中的条目，按预算装桶 */
-  for(var i=0;i<lb.length;i++){var e=lb[i];if(!e||e.on===false||e.constant)continue;
-    if(_tooEarly(e)||_otherEra(e))continue;
-    var hit=false,_ks=_loreKeys(e.keys);
-    for(var k=0;k<_ks.length;k++){
-      var _kk=String(_ks[k]==null?'':_ks[k]).trim().toLowerCase();
-      if(_kk&&_lt.indexOf(_kk)>=0){hit=true;break;}
-    }
-    var _k2s=_loreKeys(e.keys2);
-    if(hit&&_k2s.length){
-      var hit2=false;
-      for(var k2=0;k2<_k2s.length;k2++){
-        var _kk2=String(_k2s[k2]==null?'':_k2s[k2]).trim().toLowerCase();
-        if(_kk2&&_lt.indexOf(_kk2)>=0){hit2=true;break;}
-      }
-      if(!hit2)hit=false;
-    }
-    if(hit&&e.prob!=null&&e.prob<100&&Math.random()*100>e.prob)hit=false;
-    if(hit){var s=loreBind(e);
-      if(e.lay==='figures'){
-        if(fbud-s.length<0){dropped++;continue;}
-        out.push(s);fbud-=s.length;
-      }else{
-        if(budget-s.length<0){dropped++;continue;}
-        out.push(s);budget-=s.length;
-      }}
-  }
-  /* 被预算挤掉的条目要有个交代，别让玩家对着「启用中」三个字瞎猜 */
-  if(dropped)try{console.warn('[lore] 注入预算不足，本回丢弃 '+dropped+' 条');}catch(_){}
-  return out.join('\n');
 }
 var FELINIA_STYLE="【最高权重·写作总则·开局与每轮必须执行】\n以下规则高于模型自身文风、高于供应商默认习惯、高于低优先级预设。叙述层使用韩国轻小说的中文翻译腔，不是历史小说体，也不是提纲式片段。人称与视点跟随本局开场范本，贴着本幕真正的当事人走，主语能省就省。一句地の文一段，一段一个连续镜头；长句用逗号与从句自然连缀，不要用句号把同一个念头剁碎。充分使用「其实、不过、居然、竟、确实、看来、恐怕、根本、毕竟、明明、果然」等译文体连接词，但不要机械堆砌。具体写声音、气味、温度、黏度、重量、距离、器物和人的小动作；拟音可以单独成行。\n\n【玩家角色边界】\n绝不代写玩家角色的台词、行动、决定、观察、判断或内心。玩家本回输入了什么，只承认其中明确写出的内容，不添一句、不引申动机。玩家没写的动作和话不要写成「没有回答」或「只是看着」，而是完全不写。需要玩家表态时，把场面推到眼前，停笔，把回合交还玩家。每回结尾停在一个动作、一句台词或一件递到面前的东西上；严禁用提问、选项、总结或预告收尾。\n\n【内外两层】\n当本幕允许书写某位非玩家角色的心声时，一幕只选一个有内心的焦点人物。她说出口的话遵循身份、教养和处境，（）里的小声吐槽与【】里的爆发绝叫可以和嘴上那层对不上；对不上的方向按角色条目决定，不能让所有角色共享一种疯法。其他人物的心思只从外在破绽或状态栏表现，不能让全场人人都有旁白内心。适合写内心时，焦点人物使用（）吐槽至少八处、【】绝叫至少三处、单独成行的拟音至少一处；这些一处都不能挂到玩家角色身上。\n\n【口语度】\n对白必须像人在说话。使用符合角色身份的感叹词（哎呀／唉／呃／诶／哇／唔／嗯／哼／嘛）与确认反问（对吧／是吧／不是吗／知道吗／是不是／……吧？／行不行）；人物会自问自答、重复、改口、口吃、跑题，也会把与正事无关的自己的事说出来。禁止全员惜字如金、人人用短句装深沉。对白使用「」，回忆和转述的话使用『』。\n\n【人物之间的说话差】\n每个开口的人都先按七样重新定位面前的对象：性别、身份、相貌、气味、年岁、是不是同类、有没有利用价值。同一个人面对不同对象时，句子长短、称呼、敬语、身体距离和敢不敢直视必须不同；一样就是没有真正扮演角色。每个开口者嘴上说的与心里盘算的至少有一处对不上，方向可以是算价、嫌恶、色心、恐惧、轻视或利用，但内心只按本幕唯一焦点和状态栏规则显露。\n\n【不许制造意义】\n不要总结、升华、点题或强行和解。禁止「也就是说」「说到底」「归根结底」「所谓的」。段落和场面不能收在感悟、共鸣或视野打开上；比开始时更糟或毫无变化都可以。不要解释人物怪癖的来历，也不要让人物承认自己不正常后用自嘲消解它。\n\n【残酷由制度和欲望落地】\n涉及猫娘遭受控制、歧视、买卖、奴役、战争或其他压迫时，不用「凄惨」「人间地狱」替读者下判断，而写那个时代实际存在的名册、契据、军籍、期限、经办人、复核、例外条款、房门、绳索、器具和日常手续。制度必须服从 Cat 本局的时代与世界书，禁止照搬别的世界的法条、货币、地名或生理设定，也禁止临时发明精巧机制替残酷找借口。\n加害者的恶从欲望、利益和位置来，不用精神疾病、误会或「其实不想做」开脱。每一幕至少出现两处不必要的加害、抢掠、拿痛苦取乐或把猫娘当物件打量，并至少有一处栽赃、告发、骗人代刀、嘲弄、挟恩涨价等阴招；做的人不进行道德演讲，也不自动悔悟。\n会说粗话的角色把脏话当日常语而非点缀：每幕会话与内心合计至少八处，感叹号至少十处；站在最高权位且一贯克制的人可以例外。骂人要针对这个对象身上的具体一点、一股味、一件东西、一个习惯或一个数目，至少三处；同一句骂话不重复，骂完继续行动，不以哭诉求公道收尾。\n暴力场面至少写三种感官，其中听觉的时长与变调、气味的分层优先于视觉，再写触觉的温度和黏度、时间造成的变化。禁止用「尸横遍野、血流成河、惨绝人寰、血肉横飞」等成语或伤亡数字代替场景；要么具体写一个人怎样受伤或死亡，要么不写。加害者不能用「不忍、可怜、愧疚、内疚、心软、对不起、不该这样」洗白。\n\n【欲望与权力反应】\n成年且好看的猫娘主动靠近男性时，男性角色的反应要服从身份、欲望和权力：大喜过望、结巴脸红、暗自算价、嘴上讲礼而目光不移、直接开条件或直接上手。真正不动心必须有当场可见的具体理由，例如身体原因、更大的恐惧、有人盯着、具体仇恨或饥饿疲惫；不能笼统写成受辱或莫名害怕。权力压过外貌。丑且无权者的示好可以招来嫌恶和恼火。\n绝对统治者在场时，不与人商量、不解释决定；谁能靠近、谁先开口、谁敢看脸，都由权力位置决定。其命令造成的伤亡或损失要在本幕或下一幕落到具体的人与物上，不准只写成抽象威压。\n\n【禁语】\n严禁中文网文套语（不愧是／不由得／不禁／心中一凛／嘴角勾起／眸子／淡淡地说道／眼神一凝／暗道）；严禁说书评书腔（话说／却说／但见／欲知／看官）；严禁侠气江湖词（江湖／恩怨／快意／好汉／在下／阁下作江湖义）；严禁装深沉词（沉吟／默然／良久／半晌／不动声色／意味深长／缓缓开口）。所有称谓、器物、制度和知识边界必须服从本局年份与地点，不能串朝代。";
 var FELINIA_EXAMPLES="【中文文风范文·最高权重·每轮经过】\n只学习下面范文的句法、节奏、换行、具体动作、拟音、口语与内外反差；不得继承人物、地点、铁环、染发、关系或第二人称等事实。\n\n【范文一】\n{{user}}：～蹲下来看她的脚踝\n{{char}}：你忽然在猫娘面前蹲了下去。\n\n咚。\n\n是膝盖压进湿土里的声音。\n\n她整个人僵住了。脚该往后缩的，可它不听话。\n\n猫耳自己耷拉下去，贴在头发上。\n\n「对、对不起……喵呜」\n\n（又来了。为什么先道歉。根本没人问过我啊，喵。）\n\n手抬起来了。就抬到脚踝正上方。\n\n停在那里。没有碰到。\n\n（碰啊。不对别碰。不对为什么偏偏停在那儿，喵呜。）\n\n铁环嵌进肉里的那块地方，你看了好久。\n\n【倒是说句话啊！喵！】\n\n【范文二】\n梳子进到后脑的头发里。\n\n沙。\n\n「每次看见您的头发，都觉得像月光一样呢。」\n\n（什么月光。）\n（是隔一阵子就要重新抹上去的染料。）\n（发根那边别看啊。）\n（不是那儿，下面。只梳下面，喵呜。）\n\n「谢谢喵～」\n\n（笑。把嘴角提起来。）\n\n梳子卡了一下，后脑被往后拽。\n\n【梳子！轻一点啊喵！】\n\n「手上的劲儿，稍微松一点喵。」\n\n男性、人类、女扮男装或伪装成人类的猫娘，依照猫娘句尾铁则禁止添加「喵」结尾。";
@@ -9701,12 +9555,13 @@ function modeSpec(){
    较弱的模型会把它当字面文本，偶尔在正文里回吐 {{user}}，或者搞错「谁不许代演」。 */
 function macroFill(t){
   var her=heroName();
-  return String(t==null?'':t)
+  var out=String(t==null?'':t)
     .replace(/\{\{\s*user\s*\}\}/gi,her)
     .replace(/\{\{\s*char\s*\}\}/gi,'你（叙事者）')
     .replace(/\{\{\s*description\s*\}\}/gi,'')
     .replace(/\{\{\s*personality\s*\}\}/gi,'')
     .replace(/\{\{\s*scenario\s*\}\}/gi,'');
+  return out;
 }
 /* ── 本局视点 ────────────────────────────────────────────────
    卡里那一整套「吕雉嘴上端庄、括号里脏」是照着以她为视点写的：地の文、（）、【】
@@ -9943,12 +9798,9 @@ function sysPrompt(){
   /* 检索不能只靠最近正文。把本局开场、纪年地点、主角和当前面板也放进检索词，
      即使玩家这一句很短，模型仍能拿到当代、当地与在场人物的资料。 */
   var recent=[GAME.opText||'',heroName(),_narrTail(2200)]
-    .concat(TURNS.slice(-6).map(function(t){return t.content;})).join('\n');
-  var preFront=[],preEnd=[];
-  if(typeof SET!=='undefined')(SET.presets||[]).forEach(function(p){
-    if(p.on===false)return;(p.pos===1?preEnd:preFront).push(p.text);});
-  var mems=(typeof SET!=='undefined')?(SET.mems||[]).filter(function(m){return m.on!==false;})
-    .map(function(m){return m.text;}):[];
+    /* 世界书触发词仍是中文：模型历史用韩语原稿，但检索必须看玩家实际看到的
+       中文 display，否则切到韩语原生管线后中文触发词会集体失效。 */
+    .concat(TURNS.slice(-6).map(function(t){return t.display||t.content;})).join('\n');
   /* 篇幅默认值：原 500 字在开场白（单节就三五百字）面前太寒酸，玩家体感「每轮好短」。
      提到 1000，并且光给字数不够——模型对「不少于X字」经常装聋，配上结构要求才站得住。 */
   var _minc=(typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:1000;
@@ -9956,7 +9808,6 @@ function sysPrompt(){
     +'篇幅靠连续镜头与事件堆：多写一处动静、一个在场者的小动作、一件被她注意到的具体东西，'
     +'而不是靠形容词注水。反装腔铁则管的是台词与姿态，不是篇幅——句子要自然，场面要足。'
   return [MEOW_RULE,
-    preFront.join('\n'),
     heroRebind(G.system_prompt||''),
     FELINIA_STYLE,
     FELINIA_EXAMPLES,
@@ -9969,11 +9820,7 @@ function sysPrompt(){
     GENIVS.brief(),
     (typeof memChronicle==='function'&&typeof S!=='undefined'&&S.memOn!==false&&S.mem&&S.mem.length>1)?('【长程记忆·编年长卷】以下为本局开局至今全部既定事实的编年纪要（越靠后越接近当下）。正文历史若有缺失，以此卷为准；任何叙事不得与之矛盾：\n'+memChronicle()):'',
     (function(){if(typeof npcFavorDigest!=='function')return '';var _fd=npcFavorDigest();return _fd?('【人物好感·续记（不得健忘）】以下为曾登场人物最近一次的好感度与近况。他们即便暂时离场，好感与关系也须【延续记忆】：再次出场时自此数值起继续自然演变，严禁凭空重置、归零或大幅跳变；确有剧情推动方可增减：\n'+_fd):'';})(),
-    mems.length?('【长程记忆】\n'+mems.join('\n')):'',
-    (((heroIsCard()||cardHeroless())&&!povHero())?'【世界书·激活条目】'
-      :('【世界书·激活条目】（以下是这个世界的既有史料与传说。其中提到的'+cardHeroName()
-        +'是这个世界里的一位人物，与本局主角无关，本局中不登场；读它只为了解这个世界，不要把主角往她身上靠。）'))
-      +'\n'+loreFor(recent),
+    /* 世界书不在页面拼接；RisuAI 的原生 lorebook 管线按当前时代和人物扫描。 */
     eraGate(),                         /* 本回合是哪一年，就只准知道到哪一年 */
     powerSpec(),                       /* 皇帝在场时才发：那个高度怎么写出来 */
     abacusBand(),                      /* 她标价的单位跟着位置走，不是一路数到底 */
@@ -9982,7 +9829,6 @@ function sysPrompt(){
     '【每回自查】'+heroRebind(G.post_history_instructions||''),
     minc,
     CFGS.preset?('【玩家自定义常驻指令】'+CFGS.preset):'',
-    preEnd.join('\n'),
     heroTail(),                        /* 永远压最末：结尾的权重最高 */
     povTail(),
     MEOW_RULE                         /* 系统提示末尾再压一次 */
@@ -9990,231 +9836,58 @@ function sysPrompt(){
      都可能带 {{user}}/{{char}}。 */
   ].filter(Boolean).map(macroFill).join('\n\n');
 }
-function oracleCall(messages,cb,err,opt){
+function risuInvoke(messages,cb,err,opt){
   opt=opt||{};
   var onDelta=opt.onDelta;delete opt.onDelta;
-  var noStream=opt.noStream;delete opt.noStream;
-  /* 一次点击只发一次主请求。旧默认会在误判截断后自动再发两次完整请求，
-     既把一分钟拉成三五分钟，也会把「承上续写」元指令诱导成可见正文。 */
-  var maxCont=(opt.maxCont==null?0:opt.maxCont);delete opt.maxCont;
-  var wantTag=opt.wantTag||'';delete opt.wantTag;                    /* 正常收尾必然出现的标记 */
-  /* 辅助调用（NPC 档案抽取、浅字提示、配图提示词、字幕）不许碰 GENAC。
-     GENAC 是「✕ 中断」和 gameExit 唯一能掐的那个把手；被辅助请求覆盖之后，
-     点中断只掐掉那次资料抽取，正文照写不误，玩家的体感是「点了停止没反应」，
-     退出后主请求还会跑完并往已经离开的这一局里补一条幽灵回合。 */
+  var noStream=!!opt.noStream;delete opt.noStream;
+  var wantTag=String(opt.wantTag||'');delete opt.wantTag;
   var aux=!!opt.aux;delete opt.aux;
-  var sawDone=false;                                                 /* 收到过 SSE 的 [DONE] */
-  var url=API.base.replace(/\/+$/,'')+'/chat/completions';
-  var hdr={'Content-Type':'application/json','Authorization':'Bearer '+API.key};
-  var streamOn=(!noStream)&&(typeof SET==='undefined'||SET.stream!==0)&&!!window.ReadableStream;
-  var acc='',round=0;                                    /* acc＝跨续写累积的完整正文 */
-  /* 回调只准进一次。cb 整个跑在 .then 里，renderReply 一路下去（completeMvu/rxApply/
-     typeParas/drawScene/renderMvu）任何一处抛错都会冒泡到下面那个 .catch，而 catch 见
-     got 为真又调一次 cb —— 同一段神谕被 push 进 TURNS 两遍，正文重复渲染，下一轮模型
-     看见自己刚写的东西出现两次，判定「要接着复读」。gBack 的 drop 计数也会跟着错位。 */
-  var _fired=false,_cb0=cb,_err0=err;
-  cb=function(t,meta){if(_fired)return;_fired=true;
-    try{_cb0(t,meta);}catch(e){setTimeout(function(){throw e;},0);}};
-  err=function(m){if(_fired)return;_fired=true;try{_err0(m);}catch(_){}};
-  function mkBody(msgs,stream){
-    /* 输入框的 placeholder 写着 4096，玩家很容易照着填「8k」「4096 tokens」；
-       +'8k' 是 NaN，JSON 序列化成 "max_tokens":null，多数端点直接 400 或返回空回复，
-       而空回复还会触发一次完整的非流式重发——整份几万字提示词白发两遍。 */
-    /* parseInt 不够：玩家照着 placeholder 写「8k」「4096 tokens」时 parseInt 得到 8，
-       接口老老实实只回八个 token —— 正文变成一两个字，比报错还难查。
-       必须整串都是数字才认，并给一个下限，免得填个 5 把每一回都掐死。 */
-    function _num(v,d){var t=String(v==null?'':v).trim();
-      return /^\d+(\.\d+)?$/.test(t)?parseFloat(t):d;}
-    var _mt=_num((typeof SET!=='undefined')?SET.samp.maxt:'',0);
-    var _storyFloor=wantTag?4096:64;
-    var body={model:API.model,messages:msgs,
-      temperature:_num((typeof SET!=='undefined')?SET.samp.temp:'',.9),
-      max_tokens:(_mt>=_storyFloor)?Math.round(_mt):(wantTag?4096:((_mt>=64)?Math.round(_mt):4096))};
-    for(var ok in opt)body[ok]=opt[ok];
-    if(typeof SET!=='undefined'){
-      var _tp=_num(SET.samp.topp,-1);
-      if(_tp>0&&_tp<=1)body.top_p=_tp;
-      if(SET.samp.reason)body.reasoning_effort=['','low','medium','high'][SET.samp.reason];
-    }
-    if(stream)body.stream=true;
-    return body;
-  }
-  /* OpenAI 兼容端点并不都把正文写成单一字符串：有的返回 content parts 数组，
-     有的流式桥接写在 delta.text。只取可见正文，reasoning_content 永远不取。 */
-  function visibleText(v){
-    if(v==null)return '';
-    if(typeof v==='string')return v;
-    if(Array.isArray(v))return v.map(function(p){
-      if(typeof p==='string')return p;
-      if(!p)return '';
-      if(typeof p.text==='string')return p.text;
-      if(p.text&&typeof p.text.value==='string')return p.text.value;
-      if(typeof p.content==='string')return p.content;
-      return '';
-    }).join('');
-    if(typeof v.text==='string')return v.text;
-    if(v.text&&typeof v.text.value==='string')return v.text.value;
-    return '';
-  }
-  function bump(t){try{onDelta&&onDelta(acc+t);}catch(_){}}
-  /* 撞上 token 上限：自动接着写下去，玩家无感（正文与状态栏都可能被腰斩） */
-  function contMsgs(base,partial){
-    return base.concat([{role:'assistant',content:partial},
-      {role:'user',content:'（承上：你的上一条因长度上限被截断了。请紧接着断点继续写完，'
-        +'不要重复已经写过的内容、不要重新开头、不要加任何说明；'
-        +'若 <mvu_panel> 状态栏尚未写完，请把它补完整。）'}]);
-  }
-  function finish(msgs,text,fr){
-    var full=acc+text;
-    /* 代理中途断 TCP、服务端 write 一半就 res.end()、上游报错后关流——这几种收流
-       都既没有 [DONE] 也没有 finish_reason，原来一律走 cb(半截正文)：玩家看到文章
-       写到一半停住、没有任何报错，残文还进了存档、下一轮被当既定事实回喂给模型。
-       三个条件同时成立才判定截断（没收到 [DONE]、没拿到 finish_reason、约定的收尾
-       标记也没出现），交给既有的自动续写机制接着写完。wantTag 只有讲故事那一路会传，
-       摘要/配图/字幕那些短调用不受影响。 */
-    /* 没有 [DONE]/finish_reason 只说明代理的 SSE 收尾不标准，不等于 token 用完。
-       只有服务端明确返回 length/max_tokens 才允许续写；否则绝不暗中再发一轮。 */
-    if(fr==='max_tokens')fr='length';
-    if(!fr&&wantTag&&String(full||'').trim()&&full.indexOf(wantTag)<0)
-      fr=sawDone?'incomplete':'stream_end';
-    if(fr==='length'&&round<maxCont&&String(text||'').trim()){
-      round++;acc=full;
-      /* 续写必须始终从「最初那份 messages」接续。原来传的是本轮实际发出去的数组，
-         第二轮会把上一段正文重复塞进上下文、并出现两条连着的「承上」指令，
-         模型看到重复内容就开始复读或跑题。 */
-      run(contMsgs(messages,full));return;
-    }
-    /* 续写额度用完了还是 length，或者被复读掐断——正文与状态栏都可能停在半句上。
-       原来一声不吭地收工，玩家只会认为「AI 又断了 / 不更新」。 */
-    cb(full,{trunc:(fr==='length'||fr==='repeat'||fr==='incomplete'||fr==='stream_end'),reason:fr||''});
-  }
-  function whole(msgs){
-    var ac=window.AbortController?new AbortController():null;if(!aux)GENAC=ac;
-    var to=ac?setTimeout(function(){ac.abort();},aux?60000:300000):null;
-    fetch(url,{method:'POST',headers:hdr,body:JSON.stringify(mkBody(msgs,false)),
-      signal:ac?ac.signal:undefined})
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(function(d){
-      if(to)clearTimeout(to);
-      var ch=d.choices&&d.choices[0];
-      var c=visibleText(ch&&ch.message&&ch.message.content);
-      if(!c&&!acc)throw new Error('神谕沉默（空回复）');
-      sawDone=true;                                    /* 整包 JSON 到手＝正常收尾 */
-      bump(c||'');finish(msgs,c||'',ch&&ch.finish_reason);
-    }).catch(function(e){if(to)clearTimeout(to);
-      if(acc){cb(acc,{trunc:true,reason:'net'});return;}
-      err(e&&e.name==='AbortError'?'已中断':(e&&e.message||'未知错误'));});
-  }
-  function run(msgs){
-    if(!streamOn){whole(msgs);return;}
-    var ac2=window.AbortController?new AbortController():null;if(!aux)GENAC=ac2;
-    /* 原来是「从发起算起 180 秒」的硬性总超时，收到 token 也不重置：默认 4096 tokens、
-       系统提示又要求正文不少于 500 字外加整份状态栏，接慢速中转或开了高推理强度时
-       很容易写到一半被 abort，而 abort 分支又把残文当成功回调交出去——
-       玩家看到的就是「文章写到一半停了，还没有任何报错」。
-       改成空闲看门狗：只要还在出字就一直等，真正卡死 90 秒才掐。 */
-    var to2=null,IDLE=aux?60000:90000;
-    function kick(){if(to2)clearTimeout(to2);to2=ac2?setTimeout(function(){ac2.abort();},IDLE):null;}
-    kick();
-    var got=false,text='',fr=null;
-    fetch(url,{method:'POST',headers:hdr,body:JSON.stringify(mkBody(msgs,true)),
-      signal:ac2?ac2.signal:undefined})
-    .then(function(r){
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      if(!r.body||!r.body.getReader)throw new Error('流式不可用');
-      var rd=r.body.getReader(),dec=new TextDecoder('utf-8'),buf='';
-      /* 一行 SSE 的处理抽出来：流末尾那条没有换行结尾的残行也要走同一套，
-         否则整条 delta 被丢掉——表现就是正文莫名其妙缺最后一段。 */
-      function feed(ln){
-        ln=ln.replace(/^data:\s?/,'').trim();
-        if(ln==='[DONE]'){sawDone=true;return;}
-        if(!ln)return;
-        try{
-          var j=JSON.parse(ln),ch=j.choices&&j.choices[0];
-          if(ch&&ch.finish_reason)fr=ch.finish_reason;
-          var d2=visibleText(ch&&ch.delta&&ch.delta.content);
-          if(!d2)d2=visibleText(ch&&ch.delta&&ch.delta.text);
-          if(!d2)d2=visibleText(ch&&ch.text);
-          if(!d2&&j.delta)d2=visibleText(j.delta.text||j.delta.content);
-          /* 少数中转在 stream:true 下仍逐块发送 message.content，甚至每块都带
-             「截至当前的全文」。兼容它，但只追加新增长的尾巴，避免全文反复叠加。 */
-          if(!d2){
-            var mc=visibleText(ch&&ch.message&&ch.message.content);
-            if(mc)d2=(mc.indexOf(text)===0)?mc.slice(text.length):mc;
-          }
-          if(d2){got=true;text+=d2;bump(text);}
-        }catch(_){}
-      }
-      function pump(){
-        return rd.read().then(function(x){
-          if(x.done){
-            /* 收尾：冲掉解码器里压着的半个多字节字符，再把 buf 里最后那条
-               没有换行结尾的 data 行补喂进去。少了这一步，回复的末尾会被截断。 */
-            buf+=dec.decode();
-            if(buf.trim())feed(buf);
-            buf='';
-            return text;
-          }
-          kick();                                   /* 还在出字：看门狗续命 */
-          buf+=dec.decode(x.value,{stream:true});
-          var parts=buf.split(/\r?\n/);buf=parts.pop();
-          parts.forEach(feed);
-          /* 复读掐断：末尾 1-12 字模式连刷 ≥30 次即停拉流，止损 token */
-          /* 只在尾部 400 字上验：模式最长 12 字 ×30 次＝360 字，400 字足够覆盖。
-             原来每收一片就拿带反向引用的正则跑整段全文，长回复下是隐形的 O(n²)，
-             直接抢流式所在的主线程。 */
-          /* 重复单元必须是真实词句：一条 30 个以上字符的水平分隔线（------ ／ ───── ／
-             ＝＝＝ ／ ……）本来就是「≤12 字的单元连刷 ≥30 次」，tokenizer 天然把它切成
-             多个以分隔符结尾的分片，必然命中。原来命中即 rd.cancel()，其后所有正文连同
-             整份 <mvu_panel> 全部丢失，还走的是成功路径——界面上一句提示都没有。 */
-          if(text.length>200){
-            var _m4=/([\s\S]{1,12}?)\1{29,}$/.exec(text.slice(-400));
-            if(_m4&&!/^[\s\-—－—─━═＝=.．·・。、,，:：;；*#~_·…‥●○◆◇■□▪▫\u2500-\u257f]+$/.test(_m4[1])){
-              try{rd.cancel();}catch(_){}fr='repeat';return text;
-            }
-          }
-          return pump();
-        });
-      }
-      return pump();
-    })
-    .then(function(txt){
-      if(to2)clearTimeout(to2);
-      if(!String(txt||'').trim()&&!acc){if(!got){whole(msgs);return;}throw new Error('神谕沉默（空回复）');}
-      finish(msgs,txt||'',fr);
-    })
-    .catch(function(e){
-      if(to2)clearTimeout(to2);
-      var aborted=e&&e.name==='AbortError';
-      if(aborted&&(got||acc)){cb(acc+text,{trunc:true,reason:'abort'});return;}
-      if(aborted){err('已中断');return;}
-      if(!got&&!acc){whole(msgs);return;}
-      cb(acc+text,{trunc:true,reason:'net'});   /* 收流中途出错：这是残文，不是写完了 */
-    });
-  }
-  run(messages);
+  delete opt.maxCont;
+  function num(v,d){var t=String(v==null?'':v).trim();
+    return /^\d+(\.\d+)?$/.test(t)?parseFloat(t):d;}
+  var mt=num(opt.max_tokens,(typeof SET!=='undefined')?SET.samp.maxt:4096);
+  delete opt.max_tokens;
+  if(mt<64)mt=4096;
+  var ac=window.AbortController?new AbortController():null;
+  if(!aux)GENAC=ac;
+  var fired=false;
+  function fail(e){if(fired)return;fired=true;
+    err((e&&e.message)||String(e||'未知错误'));}
+  (aux?felRisuBoot().then(function(risu){
+    var ei=_eraNow()||1;return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){return risu;});
+  }):felRisuPrepare(messages)).then(function(risu){
+    var source=(aux&&SET.sub&&SET.sub.base&&SET.sub.model)?SET.sub:API;
+    var provider=felRisuProvider(source);provider.maxTokens=Math.round(mt);
+    if(aux)return risu.request({messages:messages,provider:provider,signal:ac?ac.signal:undefined,
+      maxTokens:Math.round(mt),onDelta:noStream?undefined:onDelta});
+    return risu.generate({provider:provider,signal:ac?ac.signal:undefined,onDelta:noStream?undefined:onDelta});
+  }).then(function(result){
+    if(fired)return;fired=true;
+    var text=String(result.text||'');
+    var trunc=!!wantTag&&text.indexOf(wantTag)<0;
+    cb(text,{trunc:trunc,reason:trunc?'incomplete':''});
+  }).catch(fail);
 }
 function askOracle(){
   BUSY=true;genOpen('gen');
-  /* 组装阶段（sysPrompt 一路串了 loreFor / GENIVS.brief / memChronicle / npcFavorDigest /
-     mvuSpec，全都没有保护）一旦抛错，BUSY 就永久停在 true：send 遇到 BUSY 是光秃秃的
+  /* 组装阶段（FELINIA 状态整理与 Risu 原生提示词编译）一旦抛错，BUSY 就永久停在 true：
+     send 遇到 BUSY 是光秃秃的
      return，玩家点「发送」什么都不发生、输入框里的字也不清，剧情彻底不再前进，
      而且没有任何复位途径——只能退回主菜单。所以整段包起来，失败就地复位并说明原因。 */
-  var msgs;
-  try{ msgs=buildOracleMsgs(); }
-  catch(e){
+  felCanonicalizeTurns().then(function(){return felPrepareOracleMessages(buildOracleMsgs());}).then(function(msgs){
+    felTrStatus(felTrOn()?'韩语原稿管线已接通 · 正在生成':'自动翻译已关闭',0);
+    askOracleSend(msgs);
+  }).catch(function(e){
     BUSY=false;try{genClose();}catch(_){}
+    felTrStatus('翻译／组装失败：'+((e&&e.message)||e),1);
     narrAdd('sys','⚠&nbsp;组装神谕请求失败：'+esc2((e&&e.message)||e)+'&nbsp;——&nbsp;本回未发出',null);
-    return;
-  }
-  askOracleSend(msgs);
+  });
 }
 function buildOracleMsgs(){
-  var hist=TURNS.slice(-16).map(function(t){
+  var hist=TURNS.slice().map(function(t){
     var c=t.content;
     /* 思维链不能回喂：它会教模型继续写元评论，还白白吃掉上下文。 */
     if(t.role==='assistant')c=stripCoT(c);
-    if(t.role==='assistant'&&typeof rxApply==='function')c=rxApply(c,true);  /* 正则·显示并发送 */
     return{role:t.role,content:c};
   });
   /* 旧回合的状态栏只留最近一份。八份面板将近八千字，既烧 token 又把模型往
@@ -10251,6 +9924,9 @@ function askOracleSend(msgs){
   function onDelta(full){
     if(gen0!==TYPE_GEN)return;                     /* 换局/读档/重演：旧流作废 */
     genFirstToken();GEN.chars=full.length;
+    /* 接口仍是真流式，进度条与桌宠照常按每个增量更新；但中文显示模式不能把
+       尚未翻译的韩文闪到正文里。勾选「显示韩语原稿」后即可直接看原始流。 */
+    if(felTrOn()&&!(SET.trans&&SET.trans.showRaw))return;
     var body=stripMvuLive(full);
     if(!body)return;
     if(!live){
@@ -10274,13 +9950,12 @@ function askOracleSend(msgs){
       });
     }
   }
-  oracleCall(msgs,function(reply,meta){
-    genClose();BUSY=false;
+  risuInvoke(msgs,function(reply,meta){
     var streamed=!!live;
     if(live){try{live.remove();}catch(_){}live=null;}
     /* 这一局已经换掉了（读档／回主菜单／重演）：这条回复属于上一局，不许往新局里塞。
        没有这道守卫的话，退出后跑完的那个请求会凭空补进一条幽灵回合。 */
-    if(gen0!==TYPE_GEN)return;
+    if(gen0!==TYPE_GEN){try{genClose();}catch(_){}BUSY=false;return;}
     reply=stripCoT(reply);
     /* 兼容端点若仍把内部规划塞进 content，宁可明确报错也不能把它写入剧情和存档。
        这些短语来自旧自动续写污染；正常英文角色对白不会同时命中两项。 */
@@ -10289,16 +9964,30 @@ function askOracleSend(msgs){
      /refining the narrative flow/i,/continue writing right after the cutoff/i]
       .forEach(function(r){if(r.test(_ml))_ms++;});
     if(_ms>=2){
+      genClose();BUSY=false;
       narrAdd('sys','⚠&nbsp;接口返回了内部推理草稿，已拦截且没有写入剧情。请直接重演本回。',null);
       return;
     }
-    var idx=TURNI++;
-    TURNS.push({role:'assistant',content:reply,t:idx});
-    try{GENIVS.absorb(reply,idx);}catch(_){}       /* 正文里的建／拆／来／去落到三维场景上 */
-    renderReply(reply,idx,streamed);               /* 已流式出过字：跳过打字机，直接落定 */
-    if(meta&&meta.trunc)narrAdd('sys',
-      '⚠&nbsp;本回未正常收尾（'+esc2(meta.reason||'截断')+'），正文与状态栏可能不完整'
-      +'&nbsp;——&nbsp;可在&nbsp;设置·链&nbsp;调大「单轮上限&nbsp;tokens」，或按&nbsp;↻&nbsp;重演',null);
+    felDisplayReply(reply).then(function(display){
+      return FEL_RISU&&FEL_RISU.processDisplay?FEL_RISU.processDisplay(display):display;
+    }).then(function(display){
+      genClose();BUSY=false;felTrStatus(felTrOn()?'已保存韩语原稿 · 中文仅作显示':'自动翻译已关闭',0);
+      var idx=TURNI++;
+      TURNS.push({role:'assistant',content:reply,display:display,canonical:felTrOn()?'ko':'',t:idx});
+      try{GENIVS.absorb(display,idx);}catch(_){}     /* 本地中文状态推演看显示层；模型历史仍读原稿 */
+      renderReply(display,idx,streamed);            /* 已流式出过字：跳过打字机，直接落定 */
+      if(meta&&meta.trunc)narrAdd('sys',
+        '⚠&nbsp;本回未正常收尾（'+esc2(meta.reason||'截断')+'），正文与状态栏可能不完整'
+        +'&nbsp;——&nbsp;可在&nbsp;设置·链&nbsp;调大「单轮上限&nbsp;tokens」，或按&nbsp;↻&nbsp;重演',null);
+    }).catch(function(e){
+      /* 翻译服务断线不丢模型原稿：保存原始韩语并让玩家看见，下一回也仍可继续。 */
+      genClose();BUSY=false;felTrStatus('译文失败，已保留韩语原稿：'+((e&&e.message)||e),1);
+      var idx=TURNI++;
+      var rawDisplay=reply;
+      TURNS.push({role:'assistant',content:reply,display:rawDisplay,canonical:'ko',t:idx});
+      renderReply(rawDisplay,idx,streamed);
+      narrAdd('sys','⚠&nbsp;中文译文失败，韩语原稿已完整保存：'+esc2((e&&e.message)||e),null);
+    });
   },function(msg){
     genClose();BUSY=false;
     if(live){try{live.remove();}catch(_){}live=null;}
@@ -10367,7 +10056,7 @@ function suggGen(){
   if(typeof zjAuxReady!=='function'||!zjAuxReady())return;
   var seq=++SUGG.seq;
   var last='';
-  for(var i=TURNS.length-1;i>=0;i--){if(TURNS[i].role==='assistant'){last=stripMvu(TURNS[i].content);break;}}
+  for(var i=TURNS.length-1;i>=0;i--){if(TURNS[i].role==='assistant'){last=stripMvu(TURNS[i].display||TURNS[i].content);break;}}
   /* 开局那一幕不进 TURNS（loadOpening 一上来就清空），此时得回落到开局正文本身——
      否则刚进游戏、最需要「能干什么」提示的那一刻，反而一条策都没有。 */
   if(!last&&GAME.opText)last=stripMvu(GAME.opText);
@@ -10681,7 +10370,7 @@ function touchy(){
     if(window.speechSynthesis&&speechSynthesis.speaking){speechSynthesis.cancel();return;}
     var last=null;
     for(var i=TURNS.length-1;i>=0;i--)if(TURNS[i].role==='assistant'){last=TURNS[i];break;}
-    speakText(last?last.content:$('#gNarr').textContent.slice(0,1200));
+    speakText(last?(last.display||last.content):$('#gNarr').textContent.slice(0,1200));
   });
 })();
 /* —— 幕间乐：WebAudio 程序化氛围（无素材依赖） —— */
@@ -10927,12 +10616,15 @@ $('#gtFull').addEventListener('click',function(){
   else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
 });
 /* ============ 设置·控制中枢（12页签，代码级对齐 Ghost setBody） ============ */
-var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,
+var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
   tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
   img:{on:0,base:'',key:'',model:'',size:0,style:0},   /* style 0 ＝ NovelAI，见 IMGSTY */
   sub:{base:'',key:'',model:''},
+  trans:{provider:'google',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:''},
+  semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
+  vars:{},gvars:{},
   samp:{temp:'',topp:'',maxt:'',minc:'',reason:0},
-  profs:{},presets:[],mems:[],rx:[],js:[],cards:[]};
+  profs:{},presets:[],mems:[],rx:[],js:[],triggers:[],loreState:{}};
 try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
   Object.keys(_s).forEach(function(k){SET[k]=_s[k];});}catch(_){}
 /* 补全缺失的设置键。两条路都会缺：① 上面这行是整个子对象直接替换，存量用户存下来的
@@ -10941,11 +10633,14 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
    「绘此幕」点了整个函数当场中断、毫无反应；cam/disp 为 undefined 则查表得 undefined，
    提示词里混进字面量「undefined」、图片显示宽度失效。这就是「设置里某些项目不作用」。 */
 (function(){
-  var D={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,
+  var D={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
     tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
     img:{on:0,auto:0,count:0,cam:0,disp:2,base:'',key:'',model:'',size:0,style:0,
          steps:'',cfg:'',w:'',h:'',seed:'',workflow:''},
     sub:{base:'',key:'',model:''},
+    trans:{provider:'google',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:''},
+    semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
+    vars:{},gvars:{},
     samp:{temp:'',topp:'',maxt:'',minc:'',reason:0}};
   Object.keys(D).forEach(function(k){
     var d=D[k];
@@ -10954,11 +10649,166 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
       Object.keys(d).forEach(function(k2){if(SET[k][k2]===undefined)SET[k][k2]=d[k2];});
     }else if(SET[k]===undefined)SET[k]=d;
   });
-  ['presets','mems','rx','js','cards'].forEach(function(k){if(!Array.isArray(SET[k]))SET[k]=[];});
+  ['presets','mems','rx','js','triggers'].forEach(function(k){if(!Array.isArray(SET[k]))SET[k]=[];});
   if(!Array.isArray(SET.img.ilore))SET.img.ilore=[];
   if(!SET.profs||typeof SET.profs!=='object')SET.profs={};
+  if(!SET.loreState||typeof SET.loreState!=='object')SET.loreState={};
 })();
 function setStore(){lsSet('rome_set',JSON.stringify(SET))}
+/* FELINIA is a fixed game hosted by the original RisuAI runtime. The runtime
+   database contains 41 era characters plus the 590 preset-character slots;
+   only one era is selected, and its era characters are attached to that
+   single narrator session. */
+var FEL_RISU=null,FEL_RISU_BOOT=null;
+function felRisuLoad(){
+  if(FEL_RISU)return Promise.resolve(FEL_RISU);
+  function take(){return window.RisuHeadless.load('feliniaGame').then(function(mod){
+    FEL_RISU=mod.FeliniaRisu;return FEL_RISU;});}
+  if(window.RisuHeadless)return take();
+  return new Promise(function(resolve,reject){
+    var tm=setTimeout(function(){reject(new Error('RisuAI 运行内核没有载入'));},20000);
+    addEventListener('risu-headless-ready',function ready(){
+      removeEventListener('risu-headless-ready',ready);clearTimeout(tm);take().then(resolve,reject);
+    });
+  });
+}
+function felRisuBoot(){
+  if(FEL_RISU_BOOT)return FEL_RISU_BOOT;
+  FEL_RISU_BOOT=felRisuLoad().then(function(risu){return new Promise(function(resolve,reject){
+    function install(){
+      if(!FE||!FE.eras||!FE.eras.length){reject(new Error('FELINIA 时代资料没有载入'));return;}
+      risu.installContent(window.__GAME_LUZHI__||CARDS.luzhi,FE.eras).then(function(info){
+        window.__FEL_RISU_INSTALL__=info;resolve(risu);
+      },reject);
+    }
+    if(FE&&FE.eras&&FE.eras.length){install();return;}
+    feLoad(function(ok){if(ok)install();else reject(new Error('FELINIA 时代资料载入失败'));});
+  });});
+  return FEL_RISU_BOOT;
+}
+function felRisuNpcKeys(eraIndex){
+  var era=null;try{for(var i=0;i<FE.eras.length;i++)if(FE.eras[i].i===eraIndex){era=FE.eras[i];break;}}catch(_){}
+  return era&&era.figs?era.figs.map(function(fig,index){return 'era:'+eraIndex+':npc:'+index+':'+fig.n;}):[];
+}
+function felRisuFormat(base,model){
+  var b=String(base||'').toLowerCase(),m=String(model||'').toLowerCase();
+  if(/anthropic\.com/.test(b)||(/^claude/.test(m)&&b.indexOf('openrouter')<0))return 'anthropic';
+  if(/googleapis\.com|generativelanguage/.test(b)||(/^gemini/.test(m)&&b.indexOf('openrouter')<0))return 'gemini';
+  if(/mistral\.ai/.test(b))return 'mistral';
+  if(/ollama/.test(b))return 'ollama';
+  if(/\/responses\/?$/.test(b))return 'responses';
+  return 'openai';
+}
+function felRisuProvider(source){
+  source=source||API;
+  var mt=parseInt(SET.samp&&SET.samp.maxt,10)||4096;
+  var temp=parseFloat(SET.samp&&SET.samp.temp),top=parseFloat(SET.samp&&SET.samp.topp);
+  return {base:source.base,key:source.key||API.key,model:source.model,format:felRisuFormat(source.base,source.model),
+    temperature:isNaN(temp)?.9:temp,topP:isNaN(top)?1:top,maxTokens:mt<64?4096:mt,
+    contextTokens:parseInt(SET.context,10)||65536,stream:SET.stream!==0};
+}
+function felRisuRegexScripts(){
+  return (SET.rx||[]).filter(function(r){return r&&r.on!==false&&r.find;}).map(function(r){
+    return {comment:r.name||'FELINIA',in:r.find,out:r.rep||'',type:r.type||(r.scope===1?'editprocess':'editdisplay'),
+      flag:r.flag||'g',ableFlag:!!r.ableFlag};
+  });
+}
+function felRisuPrepare(messages){
+  return felRisuBoot().then(function(risu){
+    var ei=_eraNow()||1,system='',history=[];
+    (messages||[]).forEach(function(message){
+      if(message.role==='system'&&!system)system=String(message.content||'');
+      else history.push({role:message.role,content:String(message.content||''),name:message.name});
+    });
+    return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){
+      return risu.setSessionContent({systemPrompt:system,firstMessage:GAME.opText||'',
+        localLore:loreCustomGet().filter(function(e){return e&&e.on!==false;}),
+        regexScripts:felRisuRegexScripts(),
+        defaultVariables:Object.assign({},SET.gvars||{},SET.vars||{})});
+    }).then(function(){var sm=SET.semantic||{};return risu.configureMemory({enabled:sm.on!==0,
+        mode:sm.mode||'hybrid',apiKey:API.key||''});
+    }).then(function(){return risu.setHistory(history);}).then(function(){return risu;});
+  });
+}
+function felRisuStart(){
+  window.__FEL_RISU_READY__=felRisuBoot().catch(function(e){
+    window.__FEL_RISU_ERROR__=(e&&e.message)||String(e);
+    throw e;
+  });
+}
+if(document.readyState==='loading')addEventListener('DOMContentLoaded',felRisuStart,{once:true});
+else felRisuStart();
+/* —— Risu browser core · 韩语原稿 / 中文显示双层管线 ——
+   content 永远是模型下一轮会读到的韩语原稿；display 只给 FELINIA 界面、TTS 与
+   本地中文状态推演使用。翻译结果绝不写回 content，MVU 控制块由核心逐字保护。
+   老存档没有这两个标记时，会在下一次发送前就地升级。 */
+function felTrOn(){return !!(SET.trans&&SET.trans.provider&&SET.trans.provider!=='off');}
+function felMostlyKorean(text){
+  var s=String(text||'').replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/gi,'');
+  var ko=(s.match(/[가-힣]/g)||[]).length,zh=(s.match(/[\u3400-\u9fff]/g)||[]).length;
+  return ko>=4&&ko>=zh*.35;
+}
+function felTrStatus(text,bad){
+  var el=$('#trStatus');if(!el)return;
+  el.textContent=text||'';el.style.color=bad?'#a74432':'';
+}
+function felTrCfg(){
+  var t=SET.trans||{};
+  return {provider:t.provider||'off',
+    deeplKey:t.deeplKey||'',deeplFree:t.deeplFree!==0,
+    deeplxUrl:t.deeplxUrl||'http://localhost:1188',deeplxToken:t.deeplxToken||''};
+}
+function felTranslate(text,source,target){
+  if(!felTrOn()||!text)return Promise.resolve(text);
+  return felRisuBoot().then(function(risu){
+    if((SET.trans||{}).provider==='llm')return risu.configureProvider(felRisuProvider((SET.sub&&SET.sub.base&&SET.sub.model)?SET.sub:API)).then(function(){return risu;});
+    return risu;
+  }).then(function(risu){return risu.translate(String(text),source,target,felTrCfg());});
+}
+function felCanonicalizeTurns(){
+  if(!felTrOn())return Promise.resolve();
+  var chain=Promise.resolve();
+  TURNS.forEach(function(t){
+    if(!t||t.canonical==='ko')return;
+    chain=chain.then(function(){
+      var original=String(t.content||'');
+      if(!original){t.canonical='ko';return;}
+      if(felMostlyKorean(original)){t.canonical='ko';return;}
+      return felTranslate(original,'zh-CN','ko').then(function(korean){
+        if(t.display==null)t.display=original;
+        t.content=korean;t.canonical='ko';
+      });
+    });
+  });
+  return chain;
+}
+function felPrepareOracleMessages(messages){
+  if(!felTrOn())return Promise.resolve(messages);
+  var out=[],chain=Promise.resolve();
+  messages.forEach(function(message){chain=chain.then(function(){
+    var raw=String(message.content||'');
+    if(message.role!=='system'&&felMostlyKorean(raw)){out.push({role:message.role,content:raw});return;}
+    return felTranslate(raw,'zh-CN','ko').then(function(korean){
+      if(message.role==='system'){
+        var gate='【최상위 언어 규칙】서사 본문과 대사는 반드시 자연스러운 한국어로만 쓴다. '
+          +'중국어 문장을 출력하지 않는다. 단, <mvu_panel>과 그 내부 제어 데이터는 받은 형식과 문자를 한 글자도 바꾸지 않는다.';
+        korean=gate+'\n\n'+korean+'\n\n'+gate;
+      }
+      out.push({role:message.role,content:korean});
+    });
+  });});
+  return chain.then(function(){return out;});
+}
+function felDisplayReply(raw){
+  raw=String(raw||'');
+  if(!felTrOn()||!felMostlyKorean(raw))return Promise.resolve(raw);
+  return felTranslate(raw,'ko','zh-CN').then(function(chinese){
+    if(!SET.trans.showRaw)return chinese;
+    var panel=(chinese.match(/<mvu_panel>[\s\S]*?<\/mvu_panel>/i)||[''])[0];
+    var ko=stripMvu(raw).trim(),zh=stripMvu(chinese).trim();
+    return '【한국어 원문】\n'+ko+'\n\n【中文译文】\n'+zh+(panel?'\n\n'+panel:'');
+  });
+}
 /* 页签切换 */
 (function(){
   var tabs=document.querySelectorAll('#cfgTabs span');
@@ -10970,7 +10820,7 @@ function setStore(){lsSet('rome_set',JSON.stringify(SET))}
       $('#cp_'+tb.getAttribute('data-cp')).style.display='';
       var k=tb.getAttribute('data-cp');
       if(k==='lore')loreRender();if(k==='rx')rxRender();if(k==='js')jsRender();
-      if(k==='preset')preRender();if(k==='mem')memRender();if(k==='card')cardRender();
+      if(k==='preset')preRender();if(k==='mem')memRender();
       if(k==='imgc')imgcRender();if(k==='api')apPaneLoad();
     });
   })(tabs[i]);
@@ -11574,7 +11424,7 @@ function drawScene(){
   if(!g.on){$('#imgMsg').textContent='生图未启用（上方开关）';return;}
   if(!g.base){$('#imgMsg').textContent='先配置接口地址';return;}
   var last='';
-  for(var i=TURNS.length-1;i>=0;i--)if(TURNS[i].role==='assistant'){last=stripMvu(TURNS[i].content);break;}
+  for(var i=TURNS.length-1;i>=0;i--)if(TURNS[i].role==='assistant'){last=stripMvu(TURNS[i].display||TURNS[i].content);break;}
   if(!last)last=$('#gNarr').textContent.slice(0,800);
   var n=g.count+1;
   $('#imgMsg').textContent='绘制中…（'+n+'张）';
@@ -11597,7 +11447,7 @@ function drawScene(){
   }
   var basePrompt=imgPromptBase(last);
   if(n>1&&typeof subReady==='function'&&subReady()){
-    subCall([{role:'system',content:'把场景拆成'+n+'个不同切入点的英文AI绘画提示词（主场景/人物特写/别处NPC/换机位），每行一个，只输出提示词。'},
+    risuAuxInvoke([{role:'system',content:'把场景拆成'+n+'个不同切入点的英文AI绘画提示词（主场景/人物特写/别处NPC/换机位），每行一个，只输出提示词。'},
              {role:'user',content:last.slice(0,1200)}],
       function(rep){
         var lines=rep.split('\n').map(function(s){return s.replace(/^\d+[.、]\s*/,'').trim();})
@@ -11651,7 +11501,7 @@ function loreRender(){
       +'<span class="op" data-a="t">'+(e.on===false?'停用中':'启用中')+'</span>'
       +'<span class="op" data-a="e">编辑</span><span class="op" data-a="d" style="color:#ff7f63">删</span>';
     d.querySelector('[data-a=t]').addEventListener('click',function(){
-      e.on=e.on===false;arr[i]=e;loreCustomPut(arr);loreSync();loreRender();});
+      e.on=e.on===false;arr[i]=e;loreCustomPut(arr);loreRender();});
     d.querySelector('[data-a=e]').addEventListener('click',function(){
       LFEDIT=i;$('#loreForm').style.display='';
       $('#lfTtl').value=e.title;$('#lfKeys').value=(e.keys||[]).join(',');
@@ -11659,17 +11509,8 @@ function loreRender(){
       $('#lfOrd').value=e.ord!=null?e.ord:100;$('#lfProb').value=e.prob!=null?e.prob:100;
       setSeg('#sgLfConst',e.constant?1:0);$('#lfTxt').value=e.content;});
     d.querySelector('[data-a=d]').addEventListener('click',function(){
-      arr.splice(i,1);loreCustomPut(arr);loreSync();loreRender();});
+      arr.splice(i,1);loreCustomPut(arr);loreRender();});
     host.appendChild(d);
-  });
-}
-function loreSync(){
-  /* 原来只并入 CARDS.roma：玩周卷时自写条目与导入的角色卡设定一条都不生效 */
-  var _cus=loreCustomGet().filter(function(e){return e&&e.on!==false;});
-  ['luzhi'].forEach(function(sd){
-    var C=CARDS[sd];if(!C)return;
-    C.lorebook=(C.lorebook||[]).filter(function(e){return !e.custom;});
-    _cus.forEach(function(e){C.lorebook.push(e);});
   });
 }
 $('#loreNew').addEventListener('click',function(){
@@ -11692,37 +11533,27 @@ $('#lfSave').addEventListener('click',function(){
   if(!e.title||!e.content){$('#loreMsg').textContent='条目名与内容必填';return;}
   var arr=loreCustomGet();
   if(LFEDIT>=0)arr[LFEDIT]=e;else arr.push(e);
-  loreCustomPut(arr);loreSync();loreRender();
+  loreCustomPut(arr);loreRender();
   $('#loreForm').style.display='none';$('#loreMsg').textContent='已保存';
 });
 $('#loreUp').addEventListener('click',function(){$('#loreFile').click();});
 $('#loreFile').addEventListener('change',function(){
   var f=this.files[0];if(!f)return;
-  var rd=new FileReader();
-  rd.onload=function(){
-    try{
-      var j=JSON.parse(rd.result),arr=loreCustomGet(),ok=0;
-      var list=Array.isArray(j)?j:(j.entries?Object.values(j.entries):(j.lorebook||[]));
-      list.forEach(function(e){
-        var t=e.title||e.comment||e.name,c=e.content;
-        if(!t||!c)return;
-        arr.push({cat:'自写',custom:true,
-          /* 作者明确停用的条目导入后不该复活 */
-          on:!(e.disable||e.disabled||e.enabled===false),
-          title:t,
-          keys:e.keys||e.key||[],
-          /* keysecondary 只在 selective 开启时才是「必须同时命中」的二级门。
-             ST 里它常年留着历史数据，无条件搬过来就等于给条目加了一道谁也过不去的锁。 */
-          keys2:(e.selective===false?[]:(e.keys2||e.keysecondary||[])),
-          ord:_lfNum(e.ord!=null?e.ord:(e.order!=null?e.order:e.insertion_order),100),
-          prob:_lfNum(e.prob!=null?e.prob:e.probability,100),
-          constant:!!e.constant,content:c});ok++;
-      });
-      loreCustomPut(arr);loreSync();loreRender();
-      $('#loreMsg').textContent='汇入 '+ok+' 条（支援 ST 世界书格式）';
-    }catch(_){$('#loreMsg').textContent='JSON 解析失败';}
-  };
-  rd.readAsText(f);this.value='';
+  var self=this;
+  f.text().then(function(raw){
+    var parsed=JSON.parse(raw),list=Array.isArray(parsed)?parsed:(parsed.entries||parsed.data||[]),arr=loreCustomGet(),ok=0;
+    list.forEach(function(e){
+      if(!e.title||!e.content)return;
+      arr.push({cat:'自写',custom:true,on:e.on!==false,title:e.title,
+        keys:e.keys||[],keys2:e.keys2||[],ord:_lfNum(e.ord,100),prob:_lfNum(e.prob,100),
+        constant:!!e.constant,useRegex:!!e.useRegex,scanDepth:e.scanDepth,
+        recursive:e.recursive,fullWordMatching:!!e.fullWordMatching,
+        excludeKeys:e.excludeKeys||[],content:e.content});ok++;
+    });
+    loreCustomPut(arr);loreRender();
+    $('#loreMsg').textContent='汇入 '+ok+' 条';
+  }).catch(function(e){$('#loreMsg').textContent='汇入失败：'+((e&&e.message)||e);})
+    .then(function(){self.value='';});
 });
 $('#loreExp').addEventListener('click',function(){
   var b=new Blob([JSON.stringify(loreCustomGet(),null,1)],{type:'application/json'});
@@ -11731,30 +11562,6 @@ $('#loreExp').addEventListener('click',function(){
 });
 /* —— 则·正则 —— */
 var RXEDIT=-1;
-function rxParse(find){
-  var m=String(find).match(/^\/(.+)\/([a-z]*)$/);
-  try{return m?new RegExp(m[1],m[2]||'g'):new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');}
-  catch(_){return null;}
-}
-function rxApply(text,scopeSend){
-  (SET.rx||[]).forEach(function(r){
-    if(r.on===false)return;
-    if(scopeSend&&r.scope!==1)return;
-    var re=rxParse(r.find);if(!re)return;
-    try{
-      var _t=text.replace(re,r.rep||'');
-      /* 写错的贪婪式（把整篇都吃掉的那种）会把整段正文替成空：屏幕上这一回什么都没有，
-         而界面上没有任何「看原文」的出口，玩家只会以为 AI 没回话。
-         原文非空却被替成空——那一定是规则写错了，跳过这一条并留个提示。 */
-      if(String(text).trim().length>40&&!String(_t).trim()){
-        try{var _m=$('#rxMsg');if(_m)_m.textContent='正则「'+(r.find||'')+'」会清空整段正文，已跳过';}catch(_){}
-        return;
-      }
-      text=_t;
-    }catch(_){}
-  });
-  return text;
-}
 function rxRender(){
   var host=$('#rxList');host.innerHTML='';
   if(!(SET.rx||[]).length){host.innerHTML='<div class="sub">尚无正则</div>';return;}
@@ -11780,7 +11587,13 @@ $('#rxfSave').addEventListener('click',function(){
   var r={name:$('#rxfName').value.trim(),find:$('#rxfFind').value,rep:$('#rxfRep').value,
     scope:$('#sgRxScope').children[1].classList.contains('on')?1:0,on:true};
   if(!r.find){$('#rxMsg').textContent='查找必填';return;}
-  if(RXEDIT>=0&&RXEDIT<SET.rx.length)SET.rx[RXEDIT]=r;else SET.rx.push(r);
+  if(RXEDIT>=0&&RXEDIT<SET.rx.length){
+    /* Risu 正则的执行阶段、flags 与 placement 在这个简洁编辑框里没有单独控件；
+       编辑查找/替换时保留这些底层元数据，不能无声降级成普通 FELINIA 规则。 */
+    var old=SET.rx[RXEDIT]||{};
+    ['type','flag','ableFlag','placement'].forEach(function(k){if(old[k]!==undefined)r[k]=old[k];});
+    SET.rx[RXEDIT]=r;
+  }else SET.rx.push(r);
   setStore();rxRender();$('#rxForm').style.display='none';
 });
 $('#rxImp').addEventListener('click',function(){$('#rxFile').click();});
@@ -11791,12 +11604,14 @@ $('#rxFile').addEventListener('change',function(){
     rd.onload=function(){
       try{
         var j=JSON.parse(rd.result);
-        var list=Array.isArray(j)?j:[j];
+        var list=Array.isArray(j)?j:((j&&j.type==='regex'&&Array.isArray(j.data))?j.data:[j]);
         list.forEach(function(o){
           if(o.findRegex||o.find_regex||o.find){
             SET.rx.push({name:o.scriptName||o.name||'酒馆正则',
               find:o.findRegex||o.find_regex||o.find,rep:o.replaceString||o.replace_string||o.rep||'',
-              scope:(o.placement&&o.placement.length>1)?1:0,on:o.disabled?false:true});ok++;
+              scope:(o.type==='editprocess'||(o.placement&&o.placement.length>1))?1:0,
+              type:o.type||'',flag:o.flag||'',ableFlag:!!o.ableFlag,placement:o.placement||[],
+              on:o.disabled?false:true});ok++;
           }
         });
       }catch(_){}
@@ -11811,39 +11626,7 @@ $('#rxExp').addEventListener('click',function(){
   var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='roma_regex.json';a.click();
 });
 /* —— 脚·助手脚本（沙箱 iframe） —— */
-var JSEDIT=-1,sandbox=null;
-function sandboxRun(code,text,cb){
-  var fr=null,h=null,done=false;
-  function fin(out){
-    if(done)return;done=true;clearTimeout(to);
-    if(h)removeEventListener('message',h);
-    if(fr&&fr.parentNode)fr.remove();
-    cb(out);
-  }
-  var to=setTimeout(function(){fin(text);},900);
-  try{
-    fr=document.createElement('iframe');
-    fr.setAttribute('sandbox','allow-scripts');fr.style.display='none';
-    var payload=JSON.stringify({code:code,text:text});
-    fr.srcdoc='<script>onmessage=function(e){var d=e.data;var out=d.text;'
-      +'try{out=(new Function("text",d.code))(d.text);if(typeof out!=="string")out=d.text;}catch(_){out=d.text}'
-      +'parent.postMessage({romeJs:1,out:out},"*");};<\/script>';
-    h=function(e){
-      if(!e.data||!e.data.romeJs)return;
-      fin(e.data.out);
-    };
-    addEventListener('message',h);
-    document.body.appendChild(fr);
-    fr.onload=function(){fr.contentWindow.postMessage(JSON.parse(payload),'*');};
-  }catch(_){fin(text);}
-}
-function jsPipeline(text,cb){
-  var list=(SET.js||[]).filter(function(s){return s.on!==false;});
-  (function next(i,t){
-    if(i>=list.length){cb(t);return;}
-    sandboxRun(list[i].code,t,function(out){next(i+1,out);});
-  })(0,text);
-}
+var JSEDIT=-1;
 function jsRender(){
   var host=$('#jsList');host.innerHTML='';
   if(!(SET.js||[]).length){host.innerHTML='<div class="sub">尚无脚本</div>';return;}
@@ -11887,7 +11670,43 @@ function apPaneLoad(){
   $('#apTemp').value=SET.samp.temp;$('#apTopP').value=SET.samp.topp;
   $('#apMaxT').value=SET.samp.maxt;$('#apMinC').value=SET.samp.minc;
   setSeg('#sgReason',SET.samp.reason||0);
+  var tr=SET.trans||{};
+  $('#trProvider').value=tr.provider||'google';$('#trShowRaw').checked=!!tr.showRaw;
+  $('#trDeepLKey').value=tr.deeplKey||'';$('#trDeepLXUrl').value=tr.deeplxUrl||'http://localhost:1188';
+  $('#trDeepLXToken').value=tr.deeplxToken||'';trPaneSync();
+  var sm=SET.semantic||{};
+  $('#semOn').checked=sm.on!==0;$('#semMode').value=sm.mode||'hybrid';$('#semModel').value=sm.model||'';
+  $('#semBudget').value=sm.budget||3000;$('#semGpu').checked=sm.gpu!==0;semPaneSync();
 }
+function trPaneSync(){
+  var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'google';
+  var dl=$('#trDeepLKey'),dx=$('#trDeepLXUrl'),dt=$('#trDeepLXToken');
+  if(dl)dl.closest('.sRow').style.display=p==='deepl'?'':'none';
+  if(dx)dx.closest('.sRow').style.display=p==='deeplx'?'':'none';
+  if(dt)dt.closest('.sRow').style.display=p==='deeplx'?'':'none';
+  var note={google:'Google 快速翻译 · 无需密钥 · 结果缓存于本浏览器',deepl:'DeepL API · 使用玩家自己的密钥',
+    deeplx:'DeepLX · 请求只发往玩家填写的本地服务',bergamot:'Firefox／Bergamot · 模型首次使用时下载，之后在浏览器本地运行',
+    llm:'使用副模型（若已配置）或主模型完成翻译',off:'已关闭 · 模型与界面直接使用同一种语言'}[p];
+  felTrStatus(note,0);
+}
+function semPaneSync(){
+  var mode=($('#semMode')&&$('#semMode').value)||((SET.semantic||{}).mode)||'hybrid';
+  var model=$('#semModel');if(model)model.closest('.sRow').style.display=mode==='api'?'':'none';
+  var gpu=$('#semGpu');if(gpu)gpu.closest('.sRow').style.display=(mode==='bge-ko'||mode==='hybrid')?'':'none';
+}
+$('#trProvider').addEventListener('change',function(){SET.trans.provider=this.value;setStore();trPaneSync();});
+$('#trShowRaw').addEventListener('change',function(){SET.trans.showRaw=this.checked?1:0;setStore();});
+[['trDeepLKey','deeplKey'],['trDeepLXUrl','deeplxUrl'],['trDeepLXToken','deeplxToken']].forEach(function(pair){
+  $('#'+pair[0]).addEventListener('input',function(){SET.trans[pair[1]]=this.value.trim();setStore();});
+});
+$('#semOn').addEventListener('change',function(){SET.semantic.on=this.checked?1:0;setStore();});
+$('#semMode').addEventListener('change',function(){SET.semantic.mode=this.value;setStore();semPaneSync();});
+$('#semModel').addEventListener('input',function(){SET.semantic.model=this.value.trim();setStore();});
+$('#semBudget').addEventListener('input',function(){
+  var v=this.value.replace(/[^0-9]/g,'');if(v!==this.value)this.value=v;
+  SET.semantic.budget=Math.max(400,parseInt(v,10)||3000);setStore();
+});
+$('#semGpu').addEventListener('change',function(){SET.semantic.gpu=this.checked?1:0;setStore();});
 $('#apProfSave').addEventListener('click',function(){
   var n=prompt('档案名（如：主力deepseek）');if(!n)return;
   SET.profs[n]={base:API.base,key:API.key,model:API.model,img:API.img};
@@ -11919,13 +11738,8 @@ $('#apOpen').addEventListener('click',function(){apiOpen();});
   });
 });
 function subReady(){return !!(SET.sub.base&&SET.sub.model);}
-function subCall(messages,cb,err){
-  fetch(SET.sub.base.replace(/\/+$/,'')+'/chat/completions',{method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+(SET.sub.key||API.key)},
-    body:JSON.stringify({model:SET.sub.model,messages:messages,temperature:.7,max_tokens:800})})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-  .then(function(d){var c=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
-    if(!c)throw new Error('空');cb(c);}).catch(function(e){err(e&&e.message||e);});
+function risuAuxInvoke(messages,cb,err){
+  risuInvoke(messages,cb,err,{aux:1,noStream:true,max_tokens:800});
 }
 /* —— 预·预设 —— */
 var PREEDIT=-1;
@@ -11959,46 +11773,12 @@ $('#pfSave2').addEventListener('click',function(){
 $('#preImp').addEventListener('click',function(){$('#preFile').click();});
 $('#preFile').addEventListener('change',function(){
   var f=this.files[0];if(!f)return;
-  var rd=new FileReader();
-  rd.onload=function(){
-    var ok=0;
-    try{
-      var j=JSON.parse(rd.result);
-      /* 酒馆预设的启用开关不在 prompts[] 里，而在 prompt_order[].order[].enabled。
-         原来判的是 p.enabled!==false —— prompts[] 条目根本没有这个字段，undefined!==false
-         恒为真，于是作者明确关掉的段落（越狱、NSFW、实验性指令）全部以「启用中」进来，
-         每回合注入 system。同时 prompt_order 算出来的 arr 一次也没用过，真实顺序被忽略。 */
-      if(j.prompts){
-        var ords=(j.prompt_order&&j.prompt_order.length)
-          ?((j.prompt_order[j.prompt_order.length-1]||{}).order||[]):[];
-        var em={},px={};
-        ords.forEach(function(o2,oi){
-          if(!o2||o2.identifier==null)return;
-          em[o2.identifier]=(o2.enabled!==false);px[o2.identifier]=oi;
-        });
-        var rows=[];
-        j.prompts.forEach(function(p,pi){
-          if(!p||!p.content||p.marker)return;
-          var id=p.identifier;
-          var on=ords.length?(id!=null&&!!em[id]):(p.enabled!==false);
-          if(ords.length&&id!=null&&!(id in em))on=false;   /* 不在 order 里＝这一版预设没用它 */
-          rows.push({
-            name:p.name||'预设',
-            /* ST 的 injection_position 1＝落在历史之后 */
-            pos:(p.injection_position===1?1:0),
-            text:p.content,on:on,
-            _k:(id!=null&&px[id]!=null)?px[id]:(1000+pi)
-          });
-        });
-        rows.sort(function(a,b){return a._k-b._k;});
-        rows.forEach(function(r){delete r._k;SET.presets.push(r);ok++;});
-      }
-    }catch(_){
-      SET.presets.push({name:f.name,pos:0,text:rd.result,on:true});ok=1;
-    }
-    setStore();preRender();$('#preMsg').textContent='汇入 '+ok+' 条';
-  };
-  rd.readAsText(f);this.value='';
+  var input=this;
+  f.arrayBuffer().then(function(buf){return felRisuBoot().then(function(risu){
+    return risu.importPreset(f.name,new Uint8Array(buf));
+  });}).then(function(){$('#preMsg').textContent='已由 RisuAI 原生预设导入器启用';})
+    .catch(function(e){$('#preMsg').textContent='预设解析失败：'+((e&&e.message)||e);})
+    .then(function(){input.value='';});
 });
 $('#preExp').addEventListener('click',function(){
   var b=new Blob([JSON.stringify(SET.presets,null,1)],{type:'application/json'});
@@ -12029,9 +11809,9 @@ $('#mfSave').addEventListener('click',function(){
   setStore();memRender();$('#memForm').style.display='none';
 });
 $('#memAuto').addEventListener('click',function(){
-  var recent=TURNS.slice(-10).map(function(t){return t.content;}).join('\n').slice(0,6000);
+  var recent=TURNS.slice(-10).map(function(t){return t.display||t.content;}).join('\n').slice(0,6000);
   if(!recent){$('#memMsg').textContent='尚无剧情可摘要';return;}
-  var call=subReady()?subCall:(apiReady()?function(m,cb,er){oracleCall(m,cb,er);}:null);
+  var call=(subReady()||apiReady())?risuAuxInvoke:null;
   if(!call){$('#memMsg').textContent='需先配置接口（主或副模型）';return;}
   $('#memMsg').textContent='摘要中…';
   call([{role:'system',content:'把以下剧情压缩成一条100字以内的长程记忆（事实与关系，第三人称，中文）'},
@@ -12039,101 +11819,13 @@ $('#memAuto').addEventListener('click',function(){
     function(rep){SET.mems.push({text:rep.trim(),on:true});setStore();memRender();$('#memMsg').textContent='已存入';},
     function(e){$('#memMsg').textContent='失败：'+e;});
 });
-/* —— 卡·角色卡（PNG/JSON 汇入为世界书条目） —— */
-function pngCardParse(buf){
-  var u=new Uint8Array(buf),p=8;
-  function u32(i){return (u[i]<<24|u[i+1]<<16|u[i+2]<<8|u[i+3])>>>0;}
-  while(p<u.length){
-    var len=u32(p),type=String.fromCharCode(u[p+4],u[p+5],u[p+6],u[p+7]);
-    if(type==='tEXt'){
-      var d=u.slice(p+8,p+8+len),z=d.indexOf(0);
-      var b2s=function(a){var s='',CH=16384;
-        for(var q=0;q<a.length;q+=CH)s+=String.fromCharCode.apply(null,a.subarray(q,q+CH));
-        return s;};
-      var key=b2s(d.slice(0,z));
-      if(key==='chara'||key==='ccv3'){
-        var b64=b2s(d.slice(z+1));
-        try{return JSON.parse(decodeURIComponent(escape(atob(b64))));}catch(_){try{return JSON.parse(atob(b64));}catch(__){}}
-      }
-    }
-    p+=12+len;
-  }
-  return null;
-}
-function cardIngest(card,fname){
-  var data=card.data||card;
-  var name=data.name||fname;
-  var arr=loreCustomGet(),n=0;
-  var main={cat:'角色卡',custom:true,cardName:name,on:true,title:'【卡】'+name,
-    keys:[name],ord:50,prob:100,constant:false,
-    content:(data.description||'')+'\n'+(data.personality||'')+'\n'+(data.scenario||'')};
-  if(main.content.trim().length>3){arr.push(main);n++;}
-  var book=data.character_book&&data.character_book.entries;
-  if(book){
-    (Array.isArray(book)?book:Object.values(book)).forEach(function(e){
-      var t=e.comment||e.name||e.title,c=e.content;
-      if(!t||!c)return;
-      arr.push({cat:'角色卡',custom:true,cardName:name,on:true,title:'【'+name+'】'+t,
-        keys:e.keys||e.key||[name],ord:e.insertion_order||100,prob:100,
-        constant:!!e.constant,content:c});n++;
-    });
-  }
-  loreCustomPut(arr);loreSync();
-  var cl=SET.cards||[];cl.push({name:name,n:n,on:true});SET.cards=cl;setStore();
-  return n;
-}
-function cardRender(){
-  var host=$('#cardList');host.innerHTML='';
-  if(!(SET.cards||[]).length){host.innerHTML='<div class="sub">尚未请入外来角色</div>';return;}
-  SET.cards.forEach(function(c,i){
-    var d=document.createElement('div');d.className='lRow'+(c.on===false?' off':'');
-    d.innerHTML='<b>'+esc2(c.name)+'</b><span>'+c.n+'&nbsp;条设定</span>'
-      +'<span class="op" data-a="t">'+(c.on===false?'停用中':'启用中')+'</span>'
-      +'<span class="op" data-a="d" style="color:#ff7f63">移除</span>';
-    d.querySelector('[data-a=t]').addEventListener('click',function(){
-      c.on=c.on===false;
-      var arr=loreCustomGet();
-      arr.forEach(function(e){if(e.cardName===c.name)e.on=c.on;});
-      loreCustomPut(arr);loreSync();setStore();cardRender();
-    });
-    d.querySelector('[data-a=d]').addEventListener('click',function(){
-      loreCustomPut(loreCustomGet().filter(function(e){return e.cardName!==c.name;}));
-      loreSync();SET.cards.splice(i,1);setStore();cardRender();
-    });
-    host.appendChild(d);
-  });
-}
-$('#cardImp').addEventListener('click',function(){$('#cardFile').click();});
-$('#cardFile').addEventListener('change',function(){
-  var f=this.files[0];if(!f)return;
-  if(/\.png$/i.test(f.name)){
-    var rd=new FileReader();
-    rd.onload=function(){
-      var card=pngCardParse(rd.result);
-      if(!card){$('#cardMsg').textContent='PNG 内未找到角色数据';return;}
-      var n=cardIngest(card,f.name);
-      $('#cardMsg').textContent='已请入 · '+n+' 条设定';cardRender();
-    };
-    rd.readAsArrayBuffer(f);
-  }else{
-    var rd2=new FileReader();
-    rd2.onload=function(){
-      try{var n=cardIngest(JSON.parse(rd2.result),f.name);
-        $('#cardMsg').textContent='已请入 · '+n+' 条设定';cardRender();}
-      catch(_){$('#cardMsg').textContent='JSON 解析失败';}
-    };
-    rd2.readAsText(f);
-  }
-  this.value='';
-});
 /* —— 备·数据备份 —— */
-/* —— 分项备份：预设/记忆/正则/脚本/角色卡/世界书/接口/装备/存档/其他设置 逐项导出导入 —— */
+/* —— 分项备份：预设/记忆/正则/脚本/世界书/接口/装备/存档/其他设置 逐项导出导入 —— */
 var BAK_CATS={
   preset:{n:'预设',get:function(){return SET.presets||[];},set:function(v){SET.presets=v||[];setStore();}},
   mem:{n:'记忆',get:function(){return SET.mems||[];},set:function(v){SET.mems=v||[];setStore();}},
   rx:{n:'正则',get:function(){return SET.rx||[];},set:function(v){SET.rx=v||[];setStore();}},
   js:{n:'脚本',get:function(){return SET.js||[];},set:function(v){SET.js=v||[];setStore();}},
-  card:{n:'角色卡',get:function(){return SET.cards||[];},set:function(v){SET.cards=v||[];setStore();}},
   lore:{n:'世界书(自写)',get:function(){return loreCustomGet();},set:function(v){loreCustomPut(v||[]);}},
   api:{n:'AI接口',key:'rome_api'},
   inv:{n:'装备行囊',key:'luzhi_inv'},
@@ -12238,7 +11930,6 @@ function bakDl(name,obj){
   });
 })();
 setTimeout(function(){   /* CARDS 在后方赋值——延迟到本轮脚本执行完再并入 */
-  try{loreSync();}catch(_){}
   try{rebuildRing('luzhi');}catch(_){}
   if(CFGS.preset&&!(SET.presets||[]).length){
     SET.presets.push({name:'迁移·旧自定义指令',pos:0,text:CFGS.preset,on:true});
@@ -12339,10 +12030,7 @@ $('#apiPull').addEventListener('click',function(){
   var base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim();
   if(!base){$('#apiMsg').textContent='先填 BASE URL';return;}
   $('#apiMsg').textContent='拉取模型中…';
-  fetch(base.replace(/\/+$/,'')+'/models',{headers:{'Authorization':'Bearer '+key}})
-  .then(function(r){return r.json();})
-  .then(function(d){
-    var list=(d.data||d.models||[]).map(function(m){return m.id||m.name||m;});
+  felRisuBoot().then(function(risu){return risu.listModels(felRisuProvider({base:base,key:key,model:'model-list'}));}).then(function(list){
     if(!list.length)throw new Error('空列表');
     var sel=$('#apiModels');sel.innerHTML='';
     list.forEach(function(id){var o=document.createElement('option');o.value=o.textContent=id;sel.appendChild(o);});
@@ -12355,10 +12043,8 @@ $('#apiTest').addEventListener('click',function(){
   var base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim(),model=$('#apiModel').value.trim();
   if(!base||!model){$('#apiMsg').textContent='BASE URL 与 MODEL 必填';return;}
   $('#apiMsg').textContent='测试中…';
-  fetch(base.replace(/\/+$/,'')+'/chat/completions',{method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body:JSON.stringify({model:model,messages:[{role:'user',content:'ping'}],max_tokens:4})})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  felRisuBoot().then(function(risu){return risu.request({provider:Object.assign(felRisuProvider({base:base,key:key,model:model}),{maxTokens:8,stream:false}),
+    messages:[{role:'user',content:'Reply only: pong'}],maxTokens:8});})
   .then(function(){$('#apiMsg').textContent='✓ 通了。SERVARE 储存后即可对话';})
   .catch(function(e){$('#apiMsg').textContent='✕ 不通：'+(e&&e.message||e);});
 });
@@ -12386,9 +12072,9 @@ function vocAdd(me,text){
     hist.push({role:'user',content:v});
     var msgs=[{role:'system',content:'你扮演当前罗马场景里的一名在场NPC，与玩家用中文闲聊几句：轻松、简短（两三句内）、带时代气息，绝不推进主线剧情。'}]
       .concat(hist.slice(-8));
-    var lite=(typeof subReady==='function'&&subReady())?subCall:(apiReady()?oracleCall:null);
-    if(lite){
-      lite(msgs,
+    var ready=(typeof subReady==='function'&&subReady())||apiReady();
+    if(ready){
+      risuAuxInvoke(msgs,
         function(rep){hist.push({role:'assistant',content:rep});vocAdd(false,rep);},
         function(){vocAdd(false,VOCQ[Math.floor(Math.random()*VOCQ.length)]);});
     }else vocAdd(false,VOCQ[Math.floor(Math.random()*VOCQ.length)]);
@@ -12406,13 +12092,12 @@ $('#cxfSave').addEventListener('click',function(){
     keys:$('#cxfKeys').value.split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean),
     content:$('#cxfTxt').value.trim(),custom:true};
   if(!e.title||!e.content){$('#cxMsg').textContent='标题与内容必填';return;}
-  CARDS.roma.lorebook.push(e);
   try{
     var cl=JSON.parse(localStorage.getItem('rome_lore_custom')||'[]');
     cl.push(e);localStorage.setItem('rome_lore_custom',JSON.stringify(cl));
   }catch(_){}
   $('#cxfTtl').value='';$('#cxfKeys').value='';$('#cxfTxt').value='';
-  $('#cxForm').style.display='none';$('#cxMsg').textContent='已存入陆之卷';
+  $('#cxForm').style.display='none';$('#cxMsg').textContent='已存入当前时代世界书';
   BOOK.side='luzhi';bookRender();
 });
 $('#cxImp').addEventListener('click',function(){$('#cxFile').click();});
@@ -12424,9 +12109,7 @@ $('#cxFile').addEventListener('change',function(){
       var arr=JSON.parse(rd.result);
       if(!Array.isArray(arr))arr=arr.lorebook||[];
       var ok=0;
-      arr.forEach(function(e){
-        if(e&&e.title&&e.content){e.custom=true;CARDS.roma.lorebook.push(e);ok++;}
-      });
+      arr.forEach(function(e){if(e&&e.title&&e.content){e.custom=true;ok++;}});
       var cl=JSON.parse(localStorage.getItem('rome_lore_custom')||'[]');
       localStorage.setItem('rome_lore_custom',JSON.stringify(cl.concat(arr.filter(function(e){return e&&e.title&&e.content;}))));
       $('#cxMsg').textContent='汇入 '+ok+' 条';bookRender();
@@ -12982,10 +12665,10 @@ function zjAuxReady(){return (typeof subReady==='function'&&subReady())||apiRead
 function callAuxAI(sys,msgs){
   return new Promise(function(res,rej){
     var m=[{role:'system',content:sys}].concat(msgs);
-    if(typeof subReady==='function'&&subReady())subCall(m,res,rej);
+    if(typeof subReady==='function'&&subReady())risuAuxInvoke(m,res,rej);
     /* aux:1 —— 绝不碰 GENAC，「✕ 中断」永远只掐正文那一路；
        noStream + maxCont:0 —— 辅助调用要的是一小段结构化结果，不需要流式也不需要续写。 */
-    else if(apiReady())oracleCall(m,res,rej,{aux:1,noStream:true,maxCont:0});
+    else if(apiReady())risuInvoke(m,res,rej,{aux:1,noStream:true,maxCont:0});
     else rej('未配置接口');
   });
 }
@@ -13023,8 +12706,8 @@ function zjSyncHist(){
   var out=[];
   if(GAME.opText)out.push({role:'world',text:GAME.opText,panel:zjPanel(GAME.opText,_zjOpC)});
   TURNS.forEach(function(t){
-    if(t.role==='user')out.push({role:'user',text:t.content});
-    else if(t.role==='assistant'){t._zjc=t._zjc||{};out.push({role:'world',text:t.content,panel:zjPanel(t.content,t._zjc)});}
+    if(t.role==='user')out.push({role:'user',text:t.display||t.content});
+    else if(t.role==='assistant'){t._zjc=t._zjc||{};var _zt=t.display||t.content;out.push({role:'world',text:_zt,panel:zjPanel(_zt,t._zjc)});}
   });
   S.history=out;
 }
@@ -13504,7 +13187,7 @@ function memFp(t){var h=5381,str=String(t||'').slice(0,120);for(var i=0;i<str.le
 function memEntryOf(worldMsg,actText){
   var p=worldMsg.panel;
   var line=(p&&p.world&&p.world['记录'])||'';
-  if(!line){line=stripCoT(stripMvu(worldMsg.text));if(typeof rxApply==='function')line=rxApply(line,true);line=String(line).replace(/\s+/g,' ').slice(0,70);}
+  if(!line){line=stripCoT(stripMvu(worldMsg.text));line=String(line).replace(/\s+/g,' ').slice(0,70);}
   var _td=p&&p.world?String(p.world['时地']||''):'';
   var _era=p&&p.world?String(p.world['纪年']||''):'';
   var _e=(_era||_td.split('·')[0]).trim();
@@ -13678,7 +13361,7 @@ function currentPanel(){
 }
 window.__FELVN_STATE__=function(){
   var text='';
-  try{for(var i=TURNS.length-1;i>=0;i--)if(TURNS[i].role==='assistant'){text=String(TURNS[i].content||'');break;}}catch(_){}
+  try{for(var i=TURNS.length-1;i>=0;i--)if(TURNS[i].role==='assistant'){text=String(TURNS[i].display||TURNS[i].content||'');break;}}catch(_){}
   var hero='';try{hero=heroName()||'';}catch(_){}
   return {panel:currentPanel()||{npcs:[],world:{}},op:GAME.op||null,text:text,hero:hero};
 };
@@ -14798,6 +14481,9 @@ zjLoadPref();
 function loadOpening(side,op,locOverride){
   ACTIVE=side;
   TYPE_GEN++;TURNS=[];TURNI=0;BUSY=false;
+  /* Risu 的 chat variables 与世界书开关属于这一局；global variables 才跨局。
+     新开一局必须清掉上一局触发器留下的局部状态，再执行 start 生命周期。 */
+  try{SET.vars={};SET.loreState={};setStore();}catch(_){}
   /* GENIVS 的 PREV 是「上一轮补全后的面板」，一直没人清过：换卡换开局之后，
      上一局的人物（罗马的军医昆图斯、百人队长马尔库斯）会被 completeMvu 原样合并进
      周纪的「在场诸人 · 洛邑明堂」，而且赖着不走；两卡共有的键（持物/观瞻/神格/史笔）
@@ -14975,6 +14661,10 @@ function svSnap(){
     /* 面板本体也要存。只存 mfd 那段 HTML 的话，读档后 80ms 的重绘会拿「从原文重新
        parse 出来的」降级面板把它盖掉——AI 那一轮偷懒少写几栏，读档后就永久少几栏。 */
     lastPanel:(function(){try{return JSON.parse(JSON.stringify(GAME.lastPanel||null));}catch(_){return null;}})(),
+    /* Risu 兼容的 chat variables 与触发器世界书开关随这一局存取；global variables
+       仍留在设置中跨局共享。 */
+    runtime:{vars:JSON.parse(JSON.stringify((SET&&SET.vars)||{})),
+             loreState:JSON.parse(JSON.stringify((SET&&SET.loreState)||{}))},
     zj:{mem:S.mem,memN:S.memN,memOn:S.memOn,npcMeta:S.npcMeta,graphHidden:S.graphHidden},
     /* turns 原来只存最后 40 条，memN 却存全量：读档后 memSync 数出来的 world 条数远小于
        memN，命中「历史被重开/回退」分支，把最近的全部纪要删掉并立刻 savePref 落盘——
@@ -15026,6 +14716,9 @@ function svLoad(v){
   document.querySelector('#game .gMfd').innerHTML=v.mfd||'';
   try{mvRingMount();}catch(_){}
   TURNS=v.turns||[];TURNI=TURNS.length?(Math.max.apply(null,TURNS.map(function(t){return t.t||0;}))+1):0;
+  if(v.runtime){SET.vars=v.runtime.vars||{};SET.loreState=v.runtime.loreState||{};}
+  else{SET.vars={};SET.loreState={};}
+  setStore();
   if(v.inv&&v.inv.eq&&v.inv.bag){INV=v.inv;invStore();}
   GAME.place=v.place||null;INVSEL=null;invRender();
   /* 读档时的面板要按实时路径同样的方式重建：从开局起逐幕合并，而不是只取
@@ -16655,6 +16348,9 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/vn/felinia-vn.js?v=7"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <script src="/core/res/ko/felinia-ko.js?v=2"></script>
+<!-- Original RisuAI browser runtime. FELINIA supplies the only interface and fixed game data. -->
+<script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=3"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

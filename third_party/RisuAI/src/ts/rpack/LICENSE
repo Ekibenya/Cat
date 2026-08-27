@@ -1,0 +1,6 @@
+
+# License
+
+Rpack.js is dual-licensed under the MIT License and AGPL-3.0 License.
+- If you are using Rpack.js in other applications rather than Risuai, or you are trying to embed Risuai inside your own application, you must follow the AGPL-3.0 License.
+- If you are using Rpack.js only within Risuai, you may use it under the MIT License.

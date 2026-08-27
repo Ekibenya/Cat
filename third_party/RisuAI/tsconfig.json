@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* Language & Environment */
+    "target": "es2023",
+    "module": "es2022",
+    "useDefineForClassFields": true,
+
+    /* Bundler Mode - Vite handles the actual build */
+    "noEmit": false,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
+    /* Module Resolution */
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+
+    /* JavaScript Support */
+    "allowJs": true,
+    "checkJs": false,
+
+    /* Type Checking */
+    "strict": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Debugging */
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "public/sw.js"],
+  "exclude": ["src/**/web/*.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

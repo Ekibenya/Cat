@@ -179,7 +179,7 @@
       }
     }catch(_){}
 
-    /* ② 六条条目装进世界书：对局时 loreFor() 按关键词检索得到 */
+    /* ② 六条条目装进当前时代的 Risu 原生世界书，按关键词触发 */
     try{
       var C=CARDS&&CARDS.luzhi;if(!C)return;
       C.lorebook=C.lorebook||[];
@@ -199,8 +199,10 @@
 
     function call(msgs,opt,ok,bad){
       try{
-        oracleCall(msgs,function(t){ok(String(t||''));},
-                   function(m){bad(m||'请求失败');},opt||{});
+        opt=opt||{};
+        opt.aux=1;opt.noStream=true;
+        risuInvoke(msgs,function(t){ok(String(t||''));},
+                   function(m){bad(m||'请求失败');},opt);
       }catch(e){bad((e&&e.message)||'请求发不出去');}
     }
 
