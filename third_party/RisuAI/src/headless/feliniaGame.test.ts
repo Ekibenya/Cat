@@ -6,6 +6,7 @@ import {
   buildFeliniaPlanningPrompt,
   compileFeliniaDefinition,
   extractFeliniaCognition,
+  findFeliniaTemporalViolations,
   findRepeatedFeliniaDialogue,
   mergeFeliniaNativeCharacterFields,
   normalizeFeliniaCognition,
@@ -35,11 +36,53 @@ describe('FELINIA fixed Risu runtime data', () => {
       + definition.eras.reduce((total, era) => total + (era.lorebook?.length || 0), 0)
       + definition.npcs.reduce((total, npc) => total + (npc.lorebook?.length || 0), 0);
     expect(content.lorebook).toHaveLength(4448);
-    expect(definition.base.lorebook).toHaveLength(57);
+    expect(definition.base.lorebook).toHaveLength(56);
     expect(definition.base.lorebook?.every((entry: any) => entry.lay === 'core' || entry.lay === 'style')).toBe(true);
     expect(definition.base.recursiveScanning).toBe(false);
-    expect(assignedLore).toBe(2909);
+    expect(assignedLore).toBe(2908);
     expect(definition.base.lorebook?.some((entry) => String(entry.title).includes('一九〇〇年的创伤'))).toBe(false);
+    expect(definition.base.lorebook?.some((entry) => String(entry.title).includes('世界书总目'))).toBe(false);
+  });
+
+  it('applies one structural isolation firewall to all 41 eras, not a Rome special case', () => {
+    const { content, eras } = fixture();
+    const definition = compileFeliniaDefinition(content, eras);
+    const sourceYears = new Map(eras.map((era: any) => [era.i, era.y]));
+    const runtimeCore = definition.base.lorebook?.filter((entry: any) => entry.lay === 'core') || [];
+    const runtimeCoreText = JSON.stringify(runtimeCore);
+
+    expect(definition.eras.map((era) => era.index)).toEqual(eras.map((era: any) => era.i));
+    expect(definition.eras.every((era) => era.lorebook?.every((entry: any) => entry.era === era.index))).toBe(true);
+    expect(definition.npcs.every((npc) => npc.lorebook?.every((entry: any) => entry.era === npc.eraIndex))).toBe(true);
+    expect(definition.npcs.every((npc) => sourceYears.has(npc.eraIndex))).toBe(true);
+    expect(runtimeCoreText).not.toContain('电报键');
+    expect(runtimeCoreText).not.toContain('法国猫娘可在殖民军');
+    expect(runtimeCoreText).not.toContain('任何医院、军队、灾害系统');
+
+    for (const era of definition.eras) {
+      const year = Number(era.year);
+      expect(Number.isFinite(year)).toBe(true);
+      expect(findFeliniaTemporalViolations(era.system_prompt || '', year)).toEqual([]);
+      expect(era.scenario).toContain(`当前纪年是${eras.find((source: any) => source.i === era.index).ys}`);
+      expect(era.scenario).not.toContain('这是一部从初民写到近代的世界史');
+    }
+    const earliestSystem = definition.eras[0].system_prompt || '';
+    expect(earliestSystem).not.toContain('新大陆');
+    expect(earliestSystem).not.toContain('十九世纪');
+    expect(earliestSystem).not.toContain('军饷与公民权');
+    expect(earliestSystem).not.toContain('殖民');
+    expect(earliestSystem).not.toContain('女医想分量脉');
+    expect(earliestSystem).not.toContain('账房想谁这个月又没交');
+    expect(earliestSystem).toContain('玩家选的那一年没有的东西，不许出现');
+  });
+
+  it('rejects explicit future dates and unmistakable later technology at every boundary', () => {
+    expect(findFeliniaTemporalViolations('天津在一九〇〇年出了事。', 50)).not.toEqual([]);
+    expect(findFeliniaTemporalViolations('电报机正在响。', 1700)).toContain('电报（1837年后）');
+    expect(findFeliniaTemporalViolations('铁路上的火车驶过。', 1875)).toEqual([]);
+    expect(findFeliniaTemporalViolations('一九〇〇年的北京危机。', 1905)).toEqual([]);
+    expect(findFeliniaTemporalViolations('玩家选的那一年没有的东西不许出现。', -10000)).toEqual([]);
+    expect(findFeliniaTemporalViolations('她在这里生活了五十年。', -10000)).toEqual([]);
   });
 
   it('projects world and character archives to the selected year without deleting the source', () => {

@@ -7940,13 +7940,13 @@ function condereOp(line,y,nm,cn){
 function condereSys(line,q){
   var G=CARDS[line]||{};
   return [MEOW_RULE,
-    heroRebind(felStripLegacyMeowRule(G.system_prompt||'')),
+    heroRebind(felStripLegacyMeowRule(ACTIVE==='luzhi'?feliniaGlobalRules(G.system_prompt||''):(G.system_prompt||''))),
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
     povBind(),                         /* 正史开局扮演别人时的视点绑定（铸局走 heroSheet） */
     ((heroIsCard()||cardHeroless())&&!povHero()?('【玩家角色档案】'+(G.description||''))
                  :('【卡中原主角档案·仅供了解此世的笔调与背景，本局不适用于主角】'+heroDesc(G.description||''))),
     '【叙事者】'+heroRebind(G.personality||''),
-    '【场景】'+heroRebind(G.scenario||''),
+    '【场景】'+heroRebind(ACTIVE==='luzhi'?feliniaEraContext():(G.scenario||'')),
     '【每回自查】'+heroRebind(felStripLegacyMeowRule(G.post_history_instructions||'')),
     heroTail(),
     MEOW_RULE
@@ -10006,20 +10006,47 @@ function feYearSigned(){
   return null;
 }
 function feYearLabel(y){return y<0?('前'+(-y)+'年'):(y+'年');}
+/* Cat 的公共系统字段原来包含横跨新大陆与十九世纪的通史提示。
+   相关事实已经分属各自时代卡，公共层不再把它们泄露给早期角色。 */
+function feliniaGlobalRules(text){
+  return String(text||'').split('\n').filter(function(line){
+    return !/日本与部分东南亚岛国.*十九世纪|新大陆.*欧洲人到来/.test(line);
+  }).join('\n')
+    .replace('她跑得快、爬得上去、夜里看得见，这几样既能换来军饷与公民权，也能换来征用与职业隔离。',
+      '她跑得快、爬得上去、夜里看得见，这些能力既能换来当时真实存在的报酬与身份，也能换来征用与隔离。')
+    .replace('她们能救援、协作，也能压迫、殖民、背叛、参战，也会遭受同样的事。',
+      '她们能救援、协作，也能压迫、背叛、参战，也会遭受同样的事。')
+    .replace(/心声的词要从这个人的职掌里出来——[\s\S]*?账房想谁这个月又没交。/,
+      '心声的词要从这个人在本时代真实担任的职掌、手里的器物和眼前的麻烦里出来。')
+    .replace('钱可以说具体数目，但不许结总账、不许报余额、不许写「还差多少」。',
+      '可以说本时代已经使用的具体数目，但不许在正文里结算、报余额或计算“还差多少”。');
+}
+/* 普通回合只发当前唯一激活的时代卡。过去可知，但未来卡的人物、
+   地点、制度和事件名称不进请求。 */
+function feliniaEraContext(){
+  var ei=_eraNow(),e=null;
+  try{for(var i=0;i<(FE.eras||[]).length;i++)if(FE.eras[i].i===ei){e=FE.eras[i];break;}}catch(_){}
+  if(!e)return '当前时代资料未就绪；不得从其他时代补入任何事实。';
+  return ['【时代隔离·当前唯一激活卡】',
+    '纪年：'+(e.ys||e.y||''),'场景：'+(e.t||''),'地区：'+(e.reg||''),
+    '本时代已存在的制度：'+((e.inst||[]).join('、')),
+    e.s||'',e.nm||'',
+    '只有时代 '+e.i+' 的卡、人物与世界书可用。其他四十个时代未激活，不得引用、暗示或预言。']
+    .filter(Boolean).join('\n');
+}
 /* 卡自带年表时的纪年闸门：只讲到此刻为止，往后的一个字不发。
-   两头各留八条——整张表一次全发，光这一段就顶掉别处的预算。 */
+   只留最近八条已发生的事；把未来事件列成“禁止清单”依然是泄露。 */
 function eraGateCard(tl){
   var y=feYearSigned();if(y===null)return '';
-  var done=[],todo=[],i;
-  for(i=0;i<tl.length;i++)(tl[i].y<=y?done:todo).push(feYearLabel(tl[i].y)+'　'+tl[i].k);
+  var done=[],i;
+  for(i=0;i<tl.length;i++)if(tl[i].y<=y)done.push(feYearLabel(tl[i].y)+'　'+tl[i].k);
   if(done.length>8)done=done.slice(done.length-8);
-  if(todo.length>8)todo=todo.slice(0,8);
   var L=['【纪年闸门·此刻是'+feYearLabel(y)+'·与铁则并列的最高优先级】'];
   L.push('本局此刻是'+feYearLabel(y)+'。还没到年份的事，这个世界里就还不存在：'
         +'不许写出来，不许暗示，不许让谁「隐约觉得」，'
         +'也不许当成早就有的规矩混进器物、称呼、口头禅或者当地的说法里。');
   if(done.length)L.push('· 已经发生，可以当既定事实用：\n　'+done.join('\n　'));
-  if(todo.length)L.push('· 还没发生，这一回合一个字都不许写：\n　'+todo.join('\n　'));
+  L.push('· 未来时代的事件清单已从请求中完全删除；不得自行补全、猜测、预言或暗示。');
   L.push('· 后世才成熟的词一个都不许用：制度的名目、医学的名目、心理的名目、传播的名目，'
         +'凡是这一年的人说不出口的，就绕开，不要用「某种装置」这类词蒙过去。');
   return L.join('\n');
@@ -16880,7 +16907,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=27"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=30"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

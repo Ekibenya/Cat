@@ -232,6 +232,7 @@ interface FeliniaRuntimeMeta {
   kind: 'era' | 'npc';
   key: string;
   eraIndex: number;
+  eraYear?: number;
   baseLoreCount?: number;
   baseRegexCount?: number;
   baseTriggerCount?: number;
@@ -318,11 +319,16 @@ function parseChineseNumber(source: string): number | null {
 }
 
 function containsExplicitFutureDate(text: string, currentYear: number): boolean {
-  const yearPattern = /(\u516c\u5143\u524d|\u524d)?([\d〇零○一二两三四五六七八九十百千万]{1,8})\u5e74/g;
+  const yearPattern = /(\u516c\u5143\u524d|\u516c\u5143|\u524d)?([\d〇零○一二两三四五六七八九十百千万]{1,8})\u5e74/g;
   for (const match of text.matchAll(yearPattern)) {
+    /* Without a BC/AD prefix, accept only an unmistakable written year such as
+     * 1900 or 一九〇〇. Unit forms like 一年/五十年 are commonly durations or
+     * phrases such as "那一年" and must not erase an otherwise valid rule. */
+    if (!match[1] && !/^\d{2,5}$/.test(match[2])
+      && !/^[〇零○一二两三四五六七八九]{2,5}$/.test(match[2])) continue;
     const parsed = parseChineseNumber(match[2]);
     if (parsed == null) continue;
-    const year = match[1] ? -parsed : parsed;
+    const year = match[1] === '\u516c\u5143\u524d' || match[1] === '\u524d' ? -parsed : parsed;
     if (year > currentYear) return true;
   }
   const centuryPattern = /(\u516c\u5143\u524d|\u524d)?([\d〇零○一二两三四五六七八九十百]{1,5})\u4e16\u7eaa/g;
@@ -349,6 +355,127 @@ function projectLoreContentToYear(content: string | undefined, currentYear: numb
     .map((line) => projectLineToYear(line, currentYear))
     .filter(Boolean)
     .join('\n');
+}
+
+/* The source's eight "core" entries are authorial rules, but several of them
+ * illustrate those rules with telegraphs, hospitals, colonial armies and other
+ * later institutions. A small model does not reliably keep an example separate
+ * from story facts. Keep the rules, while replacing the transhistorical examples
+ * in the playable projection. The embedded source/UI remains byte-for-byte intact. */
+const FELINIA_RUNTIME_CORE: Record<string, string> = {
+  '〔通则〕身体': `· 身高中位约一四〇厘米，体重中位约四〇公斤。
+· 猫耳与尾巴承担感官与情绪表达，尾根神经丰富。
+· 手是人类手形，可使用本时代已经存在的精细工具；手背有毛，掌面有肉垫。
+· 脚是猫科式脚掌与肉垫，不是人类脚；鞋、踏板与长时间站立的安排须顺应身体。
+· 身体掉毛，换毛期尤其明显。
+· 正面攻击力与抗击打很弱，速度不等于力气大。
+· 跑得远快于人类；能攀爬、翻越、夜视良好、天生会游，平衡与反应很高。
+· 夜视不是在全黑中看见；天生会游不等于不会失温或溺水。`,
+  '〔通则〕血与卫生': `· 猫娘的血只能在猫娘之间使用，不能与人类血液混用。
+· 本时代任何救治伤病的安排，都必须把两类身体分开处理。
+· 不能使用为人类身体制作的便溺设施，须用低位、干燥、吸附性的颗粒料。
+· 对部分只在人类身体中流行的热病发病率较低，但也有另一套呼吸、肠胃、血液、肾脏尿路与心肌负担。
+· 不要概括成“猫娘身体弱”或“猫娘不生病”。`,
+  '〔通则〕窝群与生育': `· 人类男性与猫娘所生的后代只能是猫娘。
+· 一生只生一窝，一窝可有多名女儿；姊妹、母女、同伴与共同照护构成窝群。
+· 妊娠约九十至九十五日，十至十二岁进入青春期，三十五岁以后已相当于人类老年。
+· 寿命约为同地同阶层人类的一半；幼女存活、婚育与照护的具体结果只按当前时代与地点。
+· 有固定发情期，建立长期情感依附时更看重对方是否善待自己。`,
+  '〔通则〕军务原则': `· 猫娘擅长先到、先看、先扰动；人类擅长推进、承受、占据与维持。
+· 不应把猫娘投入长时间正面肉搏。
+· 指挥与传令必须跟得上她提供的信息；指挥迟缓只会制造孤立与失联。
+· 需要较高的自主权、明确任务边界与快速撤离权；纪律形式只能使用本时代真实存在的安排。
+· 军务贡献会如何换成报酬、身份或权利，只按当前时代卡书写。`,
+  '〔通则〕服装': `· 因毛发与散热需要通风、裸露面积较大的服装；周围人如何解释，只按当前地点与时代。
+· 不能使用硬质束腰体系；长期束腰会伤害呼吸、脊柱、尾根与平衡。
+· 裹脚在技术上不成立，因为她的脚是猫脚与肉垫。
+· 压耳的穿戴会造成持续疼痛与感官受限；本地服饰必须依本时代真实裁法适配耳尾。
+· 好的裁法把压力分散在肩颈、背腰与裙裤侧缝，不把人做成舞台奇装。`,
+  '〔通则〕情绪与尾语': `· 情绪强烈时，耳朵、尾巴、姿态和声音会把反应直接写在身体上。
+· 开心时尾巴摇动，恐惧时贴紧或僵直，愤怒时快速摆动；惊吓、疼痛与疾病会产生反例。
+· 别人容易读懂，也更容易操纵、刺激或误判。
+· 可以通过训练控制或伪装尾巴动作，但会形成额外负担；训练方式必须属于当前时代。
+· 未经同意触碰尾巴属于身体侵犯。`,
+  '〔通则〕同类沟通': `· 能用耳、尾、姿态、气味和短促声调跨语言理解同类，这不是心灵感应。
+· 这项能力允许跨语言与跨地域互助，但没有消除当前时代真实存在的地域、身份、信仰与利益冲突。
+· 能读懂对方的恐惧，不等于愿意服从同一立场。
+· 能比人类更准确理解猫的耳位、尾部、瞳孔与情绪，但不能与猫进行抽象语言对话。
+· 猫娘群体普遍反感人类养猫。`,
+  '〔通则〕这个世界不是那样的 · 八条常错': `· 不要把猫娘统一写成善良、受害或进步；她们能救援、协作，也能压迫、背叛、参战并遭受同样的事。
+· 猫娘不是少数族群：人口与该地人类女性相当，约占总人口三分之一。
+· 不使用人类式面容分界给猫娘分类；地域与身份只通过当前时代已存在的语言、衣饰、信仰、礼仪和姓名显现。
+· 地理与人口分布只读当前时代卡，不得从其他时代推回来。
+· 身体差异不会自动写出政治答案；要写谁有权给这些能力定价。
+· 不要发明精巧的制度、换算、装置或债务体系。
+· 不要在正文里做算术，不报余额、不结总账。
+· 不要给情绪起名字；写当场看得见的动作、器物与距离。`,
+};
+
+function runtimeCommonLore(entry: FeliniaLoreEntry & { lay?: string }): FeliniaLoreEntry | null {
+  const title = String(entry.title || entry.comment || '');
+  if (/母条目.*世界书总目/.test(title)) return null;
+  if (entry.lay === 'core' && FELINIA_RUNTIME_CORE[title]) {
+    return { ...entry, content: FELINIA_RUNTIME_CORE[title] };
+  }
+  if (entry.lay === 'style') {
+    return {
+      ...entry,
+      content: `【仅学写法，绝非本局事实】下文出现的人物、地点、制度、器物与历史不得继承到正文；只学句法、节奏、换行、语气和镜头。\n${entry.content || ''}`,
+    };
+  }
+  return entry;
+}
+
+function runtimeSystemPrompt(source: string | undefined, currentYear: number): string {
+  void currentYear;
+  return String(source || '')
+    .split('\n')
+    .filter((line) => !/日本与部分东南亚岛国.*十九世纪|新大陆.*欧洲人到来/.test(line))
+    .join('\n')
+    .replace('她跑得快、爬得上去、夜里看得见，这几样既能换来军饷与公民权，也能换来征用与职业隔离。',
+      '她跑得快、爬得上去、夜里看得见，这些能力既能换来当时真实存在的报酬与身份，也能换来征用与隔离。')
+    .replace('她们能救援、协作，也能压迫、殖民、背叛、参战，也会遭受同样的事。',
+      '她们能救援、协作，也能压迫、背叛、参战，也会遭受同样的事。')
+    .replace(/心声的词要从这个人的职掌里出来——[\s\S]*?账房想谁这个月又没交。/,
+      '心声的词要从这个人在本时代真实担任的职掌、手里的器物和眼前的麻烦里出来。')
+    .replace('钱可以说具体数目，但不许结总账、不许报余额、不许写「还差多少」。',
+      '可以说本时代已经使用的具体数目，但不许在正文里结算、报余额或计算“还差多少”。');
+}
+
+const FELINIA_TECH_DATES: Array<[RegExp, number, string]> = [
+  [/活字印刷|印刷机/g, 1040, '活字印刷'],
+  [/火枪|枪机/g, 1300, '火枪'],
+  [/望远镜/g, 1608, '望远镜'],
+  [/蒸汽机/g, 1712, '蒸汽机'],
+  [/工厂|机械化/g, 1760, '工厂'],
+  [/铁路|火车|蒸汽机车/g, 1804, '铁路'],
+  [/电报/g, 1837, '电报'],
+  [/摄影|照相机|照片/g, 1839, '摄影'],
+  [/电话/g, 1876, '电话'],
+  [/电灯|留声机/g, 1877, '电灯'],
+  [/汽车/g, 1886, '汽车'],
+  [/电影|无线电/g, 1895, '电影'],
+  [/飞机/g, 1903, '飞机'],
+  [/塑料/g, 1907, '塑料'],
+  [/坦克/g, 1916, '坦克'],
+  [/电视/g, 1927, '电视'],
+  [/抗生素/g, 1928, '抗生素'],
+  [/计算机/g, 1945, '计算机'],
+  [/互联网|网络直播/g, 1969, '互联网'],
+  [/手机|智能手机/g, 1973, '手机'],
+];
+
+export function findFeliniaTemporalViolations(text: string, currentYear: number): string[] {
+  const violations = new Set<string>();
+  const source = String(text || '');
+  for (const sentence of source.match(/[^。！？；\n]+[。！？；]?/g) || []) {
+    if (containsExplicitFutureDate(sentence, currentYear)) violations.add(sentence.trim().slice(0, 80));
+  }
+  for (const [pattern, firstYear, label] of FELINIA_TECH_DATES) {
+    pattern.lastIndex = 0;
+    if (currentYear < firstYear && pattern.test(source)) violations.add(`${label}（${firstYear}年后）`);
+  }
+  return [...violations];
 }
 
 function sharedEraWorldLines(
@@ -478,16 +605,21 @@ export function compileFeliniaDefinition(
    * keyword activate modern history in antiquity. Only actual engine/style rules
    * are shared. The full source stays embedded for the FELINIA UI and editors. */
   const commonLore = allLore.filter((entry) => entry.era == null
-    && (entry.lay === 'core' || entry.lay === 'style'));
+    && (entry.lay === 'core' || entry.lay === 'style'))
+    .map((entry) => runtimeCommonLore(entry))
+    .filter((entry): entry is FeliniaLoreEntry & { era?: number; lay?: string; cat?: string } => !!entry);
   const base: FeliniaCharacterContent = {
     name: fixedContent.name || 'FELINIA',
     description: fixedContent.description,
     personality: fixedContent.personality,
-    scenario: fixedContent.scenario,
+    /* The source scenario describes the whole forty-one-era work and names
+     * later institutions. The active era supplies the only playable scenario. */
+    scenario: '',
     first_mes: fixedContent.first_mes,
     mes_example: fixedContent.mes_example,
     creator_notes: fixedContent.creator_notes,
-    system_prompt: fixedContent.system_prompt,
+    /* Time-sensitive rules are projected separately for every era below. */
+    system_prompt: '',
     post_history_instructions: fixedContent.post_history_instructions,
     alternate_greetings: fixedContent.alternate_greetings,
     tags: fixedContent.tags,
@@ -533,6 +665,7 @@ export function compileFeliniaDefinition(
       label: [era.ys, era.t].filter(Boolean).join(' · '),
       name: `FELINIA · ${[era.ys, era.t].filter(Boolean).join(' · ')}`,
       description: [era.s, era.nm].filter(Boolean).join('\n'),
+      system_prompt: runtimeSystemPrompt(fixedContent.system_prompt, currentYear),
       scenario: [
         era.ys ? `当前时代：${era.ys}` : '',
         era.t ? `时代场景：${era.t}` : '',
@@ -712,10 +845,16 @@ export async function installFeliniaGame(definition: FeliniaGameDefinition) {
   rt.database.setDatabase(emptyDatabase() as Database);
   const eras = [...definition.eras].sort((a, b) => a.index - b.index).map((era) => {
     const content = mergeContent(definition.base, era);
-    return createCharacter(content, { kind: 'era', key: `era:${era.index}`, eraIndex: era.index });
+    const year = Number(era.year);
+    return createCharacter(content, {
+      kind: 'era', key: `era:${era.index}`, eraIndex: era.index,
+      eraYear: Number.isFinite(year) ? year : undefined,
+    });
   });
+  const eraYears = new Map(definition.eras.map((era) => [era.index, Number(era.year)]));
   const npcs = definition.npcs.map((npc) => createCharacter(npc, {
     kind: 'npc', key: npc.key, eraIndex: npc.eraIndex,
+    eraYear: Number.isFinite(eraYears.get(npc.eraIndex)) ? eraYears.get(npc.eraIndex) : undefined,
   }));
   const db = rt.database.getDatabase();
   db.characters = [...eras, ...npcs];
@@ -1237,24 +1376,36 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
       generated.data = extracted.text;
       const candidate: Candidate = { message: clone(generated), cognition: extracted.cognition };
       chosenCognition = extracted.cognition;
-      if (!fallbackCandidate || proseCharacters(generated.data) > proseCharacters(fallbackCandidate.message.data)) {
+      const temporalViolations = runtimeMeta?.eraYear == null
+        ? [] : findFeliniaTemporalViolations(generated.data, runtimeMeta.eraYear);
+      /* An out-of-era draft is never a fallback candidate. Returning a longer
+       * contaminated draft after the retry would silently reopen the exact leak
+       * this firewall is meant to close. */
+      if (!temporalViolations.length
+        && (!fallbackCandidate || proseCharacters(generated.data) > proseCharacters(fallbackCandidate.message.data))) {
         fallbackCandidate = candidate;
       }
       const repeated = findRepeatedFeliniaDialogue(generated.data, previousAssistantTexts);
-      if (!repeated.length && (!bestCandidate || proseCharacters(generated.data) > proseCharacters(bestCandidate.message.data))) {
+      if (!temporalViolations.length && !repeated.length
+        && (!bestCandidate || proseCharacters(generated.data) > proseCharacters(bestCandidate.message.data))) {
         bestCandidate = candidate;
       }
       const tooShort = !!minChars && proseCharacters(generated.data) < minChars;
-      if (!repeated.length && !tooShort) break;
+      if (!temporalViolations.length && !repeated.length && !tooShort) break;
       if (attempt === maxRetries) {
         const recovered = bestCandidate || fallbackCandidate;
         if (recovered) {
           currentChat.message[currentChat.message.length - 1] = clone(recovered.message);
           chosenCognition = recovered.cognition;
+        } else if (temporalViolations.length) {
+          currentChat.message = currentChat.message.slice(0, startLength);
+          throw new Error(`生成内容越过当前时代边界：${temporalViolations.slice(0, 3).join('、')}`);
         }
         break;
       }
-      retryInstruction = repeated.length
+      retryInstruction = temporalViolations.length
+        ? `【时代越界纠正】刚才草稿出现了当前纪年以后才存在的内容：${temporalViolations.slice(0, 5).join('、')}。该草稿已作废。未来资料没有进入本局，不得猜测、预言、暗示或换同义词重新写入；只使用当前时代卡、当前地点、已触发世界书和过去已经发生的事实，从本回开头重写。`
+        : repeated.length
         ? `【对白复读纠正】刚才草稿复用了最近三回已经说过的台词：${repeated.map((line) => `「${line}」`).join('、')}。该草稿作废。保持人物全部设定与当前场景，从本回开头重写；这些句子及同义的万能推脱都不得再次出现。根据眼前对象、动作和利害写出新的回应，也可以用沉默、追问、改口或具体行动代替。`
         : `【篇幅纠正】刚才草稿的正文不足 ${minChars} 字，已经作废。保持同一场景从头重写；状态栏不计入字数，正文达到 ${minChars} 字后才能结束。用事件、反应、对话和具体动作扩展，不要总结或赶结局。`;
     }
