@@ -691,7 +691,7 @@ export async function globalFetch(url: string, arg: GlobalFetchArgs = {}): Promi
             return { ok: false, headers: {}, status: 400, data: webLocalNetworkBlockedMessage };
         }
 
-        if (knownHostes.includes(urlHost) && !isTauri && !isNodeServer) {
+        if (knownHostes.includes(urlHost) && !isTauri && !isNodeServer && !forcePlainFetch) {
             return { ok: false, headers: {}, status: 400, data: 'You are trying local request on web version. This is not allowed due to browser security policy. Use the desktop version instead, or use a tunneling service like ngrok and set the CORS to allow all.' };
         }
 

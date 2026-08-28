@@ -84,7 +84,7 @@ function l(e, t) {
 	};
 }
 function u(e, t) {
-	let n = e.lorebook || [], r = n.filter((e) => e.era == null), i = {
+	let n = e.lorebook || [], r = n.filter((e) => e.era == null), a = {
 		name: e.name || "FELINIA",
 		description: e.description,
 		personality: e.personality,
@@ -106,10 +106,10 @@ function u(e, t) {
 		loreTokenBudget: e.loreTokenBudget,
 		recursiveScanning: e.recursiveScanning,
 		fullWordMatching: e.fullWordMatching
-	}, a = [], o = [];
+	}, o = [], s = [];
 	for (let e of t) {
-		let t = n.filter((t) => t.era === e.i && t.lay !== "figures");
-		a.push({
+		let t = new Set((e.figs || []).map((e) => e.n)), r = n.filter((t) => t.era === e.i && t.lay !== "figures");
+		o.push({
 			index: e.i,
 			year: e.y,
 			label: [e.ys, e.t].filter(Boolean).join(" · "),
@@ -122,45 +122,52 @@ function u(e, t) {
 				e.inst || "",
 				e.reg || ""
 			].filter(Boolean).join("\n"),
-			lorebook: t,
+			lorebook: r,
 			defaultVariables: {
 				felinia_era: e.i,
 				felinia_year: e.y ?? "",
 				felinia_era_label: e.ys ?? ""
 			}
-		}), (e.figs || []).forEach((t, r) => {
-			let i = n.filter((n) => n.era === e.i && n.lay === "figures" && (n.cat === `人 · ${t.n}` || String(n.title || "").startsWith(`${t.n} ·`))), a = `era:${e.i}:npc:${r}:${t.n}`;
-			o.push({
-				key: a,
+		}), (e.figs || []).forEach((r, a) => {
+			let o = n.filter((t) => t.era === e.i && t.lay === "figures" && (t.cat === `人 · ${r.n}` || String(t.title || "").startsWith(`${r.n} ·`))).map((n) => {
+				if (!/第五项\s*·\s*关系|关系/.test(String(n.title || ""))) return n;
+				let o = i(n.keys).filter((e) => e !== r.n && t.has(e));
+				return {
+					...n,
+					keys: o.length ? o : [`__FELINIA_RELATION_${e.i}_${a}__`]
+				};
+			}), c = `era:${e.i}:npc:${a}:${r.n}`;
+			s.push({
+				key: c,
 				eraIndex: e.i,
-				species: t.sp,
-				title: t.ti,
-				name: t.n,
-				description: [t.ti, t.d].filter(Boolean).join("\n"),
-				personality: i.map((e) => e.content || "").filter(Boolean).join("\n\n"),
-				mes_example: (t.q || []).join("\n"),
-				quotes: t.q,
-				lorebook: i,
+				species: r.sp,
+				title: r.ti,
+				name: r.n,
+				description: [r.ti, r.d].filter(Boolean).join("\n"),
+				personality: o.map((e) => e.content || "").filter(Boolean).join("\n\n"),
+				mes_example: (r.q || []).join("\n"),
+				quotes: r.q,
+				lorebook: o,
 				tags: [
 					"FELINIA",
 					`era:${e.i}`,
-					t.sp || "",
-					t.ti || ""
+					r.sp || "",
+					r.ti || ""
 				].filter(Boolean),
 				defaultVariables: {
-					felinia_npc_key: a,
+					felinia_npc_key: c,
 					felinia_era: e.i,
-					felinia_species: t.sp || "",
-					felinia_title: t.ti || "",
-					felinia_sprite: t.v || ""
+					felinia_species: r.sp || "",
+					felinia_title: r.ti || "",
+					felinia_sprite: r.v || ""
 				}
 			});
 		});
 	}
 	return {
-		base: i,
-		eras: a,
-		npcs: o
+		base: a,
+		eras: o,
+		npcs: s
 	};
 }
 function d(e, t) {
@@ -202,8 +209,8 @@ function d(e, t) {
 		firstMsgIndex: -1,
 		removedQuotes: !1,
 		loreSettings: {
-			tokenBudget: e.loreTokenBudget ?? 9e3,
-			scanDepth: e.scanDepth ?? 8,
+			tokenBudget: e.loreTokenBudget ?? 800,
+			scanDepth: e.scanDepth ?? 5,
 			recursiveScanning: e.recursiveScanning ?? !0,
 			fullWordMatching: e.fullWordMatching ?? !1
 		},
@@ -232,12 +239,12 @@ function f(e) {
 }
 async function p() {
 	return t ||= Promise.all([
-		import("./database.svelte-BILtDHEt.js"),
-		import("./index.svelte-BE14p_UG.js"),
-		import("./scripts-BKuXHPeN.js"),
-		import("./stores.svelte-BjS6ivxJ.js"),
-		import("./translator-Dtoe3kqo.js"),
-		import("./globalApi.svelte-BiPwOSIh.js")
+		import("./database.svelte-DctrpHam.js"),
+		import("./index.svelte-CVb78WN3.js"),
+		import("./scripts-DShjZtgB.js"),
+		import("./stores.svelte-CVK98ggU.js"),
+		import("./translator-CPX9Jd4u.js"),
+		import("./globalApi.svelte-IzWguRbT.js")
 	]).then(([e, t, n, r, i, a]) => ({
 		database: e,
 		process: t,
@@ -253,6 +260,7 @@ function m() {
 		language: "en",
 		useStreaming: !0,
 		usePlainFetch: !0,
+		strictOpenAICompatible: !0,
 		inlayErrorResponse: !0,
 		botPresets: [],
 		botPresetsId: 0
@@ -307,18 +315,20 @@ async function y(e) {
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	r.supaMemory = e.enabled && e.mode !== "off", n.hypaV3 = r.supaMemory, n.hypav2 = !1, n.hypaMemory = !1, e.apiKey !== void 0 && (n.supaMemoryKey = e.apiKey), t.database.setCurrentCharacter(r);
 }
-async function b(e, t, n, r) {
-	if (!e || r.provider === "off") return e;
-	let i = await p(), a = i.database.getDatabase();
-	return a.translatorType = r.provider === "deeplx" ? "deeplX" : r.provider, a.deeplOptions = {
-		key: r.deeplKey || "",
-		freeApi: r.deeplFree ?? !0
-	}, a.deeplXOptions = {
-		url: r.deeplxUrl || "http://localhost:1188",
-		token: r.deeplxToken || ""
-	}, i.translator.runTranslator(e, !0, t, n);
+async function b(e) {
+	let t = (await p()).database.getDatabase();
+	t.translatorType = e.provider === "deeplx" ? "deeplX" : e.provider, t.deeplOptions = {
+		key: e.deeplKey || "",
+		freeApi: e.deeplFree ?? !0
+	}, t.deeplXOptions = {
+		url: e.deeplxUrl || "http://localhost:1188",
+		token: e.deeplxToken || ""
+	}, t.feliniaFinalPromptTranslation = e.provider !== "off";
 }
-async function x(e, t) {
+async function x(e, t, n, r) {
+	return !e || r.provider === "off" ? e : (await b(r), (await p()).translator.runTranslator(e, !0, t, n));
+}
+async function S(e, t) {
 	let n = await p(), r = n.database.getDatabase(), i = r.characters.findIndex((t) => t.type !== "group" && f(t)?.kind === "npc" && f(t)?.key === e);
 	if (i < 0) throw Error(`FELINIA character ${e} is not installed`);
 	let a = r.characters[i];
@@ -327,7 +337,7 @@ async function x(e, t) {
 		...t
 	}, n.database.setCharacterByIndex(i, a);
 }
-async function S(e, t) {
+async function C(e, t) {
 	let n = await p();
 	await n.database.importPreset({
 		name: e,
@@ -336,18 +346,18 @@ async function S(e, t) {
 	let r = n.database.getDatabase();
 	r.botPresets.length && (r.botPresetsId = r.botPresets.length - 1, n.database.changeToPreset(r.botPresetsId, !1));
 }
-function C(t) {
+function w(t) {
 	return t === "responses" ? e.OpenAIResponseAPI : t === "anthropic" ? e.Anthropic : t === "gemini" ? e.GoogleCloud : t === "mistral" ? e.Mistral : t === "ollama" ? e.Ollama : e.OpenAICompatible;
 }
-async function w(e) {
+async function T(e) {
 	let t = (await p()).database.getDatabase();
-	t.aiModel = "reverse_proxy", t.proxyRequestModel = "custom", t.customProxyRequestModel = e.model, t.forceReplaceUrl = e.base, t.proxyKey = e.key || "", t.customAPIFormat = C(e.format), t.temperature = Math.round((e.temperature ?? .9) * 100), t.top_p = e.topP ?? 1, t.maxResponse = e.maxTokens ?? 4096, t.maxContext = e.contextTokens ?? 65536, t.useStreaming = e.stream ?? !0, t.autofillRequestUrl = e.autofillRequestUrl ?? !0, t.usePlainFetch = !0, t.inlayErrorResponse = !0;
+	t.aiModel = "reverse_proxy", t.proxyRequestModel = "custom", t.customProxyRequestModel = e.model, t.forceReplaceUrl = e.base, t.proxyKey = e.key || "", t.customAPIFormat = w(e.format), t.temperature = e.temperature == null ? -1e3 : Math.round(e.temperature * 100), t.top_p = e.topP == null ? -1e3 : e.topP, t.reasoningEffort = e.reasoningEffort ?? -1, t.maxResponse = e.maxTokens ?? 4096, t.maxContext = e.contextTokens ?? 65536, t.useStreaming = e.stream ?? !0, t.autofillRequestUrl = e.autofillRequestUrl ?? !0, t.usePlainFetch = !0, t.strictOpenAICompatible = e.format === "openai" || !e.format, t.inlayErrorResponse = !0;
 }
-function T(e, t) {
+function E(e, t) {
 	let n = [...e.message.slice(t)].reverse().find((e) => e.role === "char" && /```risuerror\b/i.test(e.data || ""));
 	return n ? (e.message = e.message.slice(0, t), String(n.data || "").replace(/^```risuerror\s*/i, "").replace(/```\s*$/i, "").trim()) : "";
 }
-function E(e) {
+function D(e) {
 	return {
 		role: e.role === "assistant" || e.role === "char" ? "char" : "user",
 		data: String(e.content || ""),
@@ -356,12 +366,12 @@ function E(e) {
 		time: e.time ?? Date.now()
 	};
 }
-async function D(e) {
+async function O(e) {
 	let t = await p(), n = t.database.getCurrentCharacter();
 	if (!n || n.type === "group") throw Error("No FELINIA era is active");
-	n.chats[n.chatPage].message = e.filter((e) => e.role !== "system").map(E), t.database.setCurrentCharacter(n);
+	n.chats[n.chatPage].message = e.filter((e) => e.role !== "system").map(D), t.database.setCurrentCharacter(n);
 }
-async function O() {
+async function k() {
 	let e = (await p()).database.getCurrentCharacter();
 	return !e || e.type === "group" ? [] : e.chats[e.chatPage].message.map((e) => ({
 		role: e.role === "char" ? "assistant" : "user",
@@ -371,9 +381,9 @@ async function O() {
 		time: e.time
 	}));
 }
-async function k(e = {}) {
+async function A(e = {}) {
 	let t = await p();
-	e.provider && await w(e.provider);
+	e.provider && await T(e.provider);
 	let r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	let i = r.chats[r.chatPage], a = i.message.length;
@@ -387,26 +397,26 @@ async function k(e = {}) {
 		if (!await t.process.sendChat(-1, {
 			signal: e.signal,
 			preview: e.preview
-		})) throw Error(T(i, a) || "生成请求失败");
+		})) throw Error(E(i, a) || "生成请求失败");
 		if (e.preview) return {
 			text: JSON.stringify(t.process.previewFormated),
 			prompt: n(t.process.previewFormated),
-			history: await O()
+			history: await k()
 		};
 		let r = t.database.getCurrentChat()?.message.at(-1);
 		if (!r || r.role !== "char" || !String(r.data || "").trim()) throw Error("接口没有返回可显示的正文");
 		return e.onDelta?.(r.data), {
 			text: r.data,
-			history: await O()
+			history: await k()
 		};
 	} finally {
 		s && clearInterval(s), t.process.doingChat.set(!1);
 	}
 }
-async function A(e) {
+async function j(e) {
 	let t = await p();
-	e.provider && await w(e.provider);
-	let n = await import("./request-CQOPA_9t.js"), r = t.database.getCurrentCharacter();
+	e.provider && await T(e.provider);
+	let n = await import("./request-COsRz1Eo.js"), r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	let i = await n.requestChatData({
 		formated: e.messages,
@@ -433,7 +443,7 @@ async function A(e) {
 	}
 	return i.type === "multiline" ? { text: i.result.join("\n") } : { text: i.result };
 }
-async function j(e) {
+async function M(e) {
 	let t = await p(), n = `${e.base.replace(/\/$/, "").replace(/\/(chat\/completions|responses)$/i, "")}/models`, r = await t.globalApi.globalFetch(n, {
 		method: "GET",
 		headers: e.key ? { Authorization: `Bearer ${e.key}` } : {},
@@ -442,24 +452,24 @@ async function j(e) {
 	if (!r.ok) throw Error(typeof r.data == "string" ? r.data : `HTTP ${r.status}`);
 	return (Array.isArray(r.data?.data) ? r.data.data : Array.isArray(r.data?.models) ? r.data.models : []).map((e) => String(e?.id || e?.name || "")).filter(Boolean);
 }
-async function M(e) {
+async function N(e) {
 	let t = await p(), n = t.database.getCurrentCharacter();
 	return n ? t.scripts.processScript(n, e, "editdisplay") : e;
 }
-async function N() {
+async function P() {
 	return (await p()).database.getDatabase({ snapshot: !0 });
 }
-async function P(e) {
+async function F(e) {
 	let t = await p();
 	t.database.setDatabase(e);
 	let n = e.characters.findIndex((e) => e.type !== "group" && f(e)?.kind === "era");
 	t.stores.selectedCharID.set(n);
 }
-async function F() {
+async function I() {
 	let e = await p();
 	e.database.setDatabase(m()), e.stores.selectedCharID.set(-1);
 }
-var I = Object.freeze({
+var L = Object.freeze({
 	version: "2026.8.250",
 	upstreamCommit: "e565563a288ebe4c65b6099a1645ba477d1c84b4",
 	install: h,
@@ -468,19 +478,20 @@ var I = Object.freeze({
 	activateEra: _,
 	setSessionContent: v,
 	configureMemory: y,
-	translate: b,
-	setNpcState: x,
-	importPreset: S,
-	configureProvider: w,
-	setHistory: D,
-	getHistory: O,
-	generate: k,
-	request: A,
-	listModels: j,
-	processDisplay: M,
-	snapshot: N,
-	restore: P,
-	reset: F
+	configureTranslation: b,
+	translate: x,
+	setNpcState: S,
+	importPreset: C,
+	configureProvider: T,
+	setHistory: O,
+	getHistory: k,
+	generate: A,
+	request: j,
+	listModels: M,
+	processDisplay: N,
+	snapshot: P,
+	restore: F,
+	reset: I
 });
 //#endregion
-export { I as FeliniaRisu, _ as activateFeliniaEra, u as compileFeliniaDefinition, y as configureFeliniaMemory, w as configureFeliniaProvider, k as generateFeliniaTurn, O as getFeliniaHistory, S as importRisuPreset, g as installFeliniaContent, h as installFeliniaGame, j as listFeliniaModels, M as processFeliniaDisplay, A as requestFeliniaAux, F as resetFeliniaRisu, P as restoreFeliniaRisu, D as setFeliniaHistory, x as setFeliniaNpcState, v as setFeliniaSessionContent, N as snapshotFeliniaRisu, b as translateFelinia };
+export { L as FeliniaRisu, _ as activateFeliniaEra, u as compileFeliniaDefinition, y as configureFeliniaMemory, T as configureFeliniaProvider, b as configureFeliniaTranslation, A as generateFeliniaTurn, k as getFeliniaHistory, C as importRisuPreset, g as installFeliniaContent, h as installFeliniaGame, M as listFeliniaModels, N as processFeliniaDisplay, j as requestFeliniaAux, I as resetFeliniaRisu, F as restoreFeliniaRisu, O as setFeliniaHistory, S as setFeliniaNpcState, v as setFeliniaSessionContent, P as snapshotFeliniaRisu, x as translateFelinia };

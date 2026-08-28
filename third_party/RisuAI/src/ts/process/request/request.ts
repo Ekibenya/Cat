@@ -20,6 +20,22 @@ import { requestClaude } from './anthropic';
 import { requestGoogleCloudVertex } from './google';
 import { requestOpenAI, requestOpenAILegacyInstruct, requestOpenAIResponseAPI } from "./openAI/requests";
 import { applyAdditionalParameters, applyParameters, getAdditionalParameters, type ModelModeExtended } from './shared';
+import { translateFinalPromptMessages } from './finalPromptTranslation';
+
+let finalPromptTranslationDepth = 0
+
+async function applyFinalPromptTranslation(messages:OpenAIChat[]):Promise<OpenAIChat[]> {
+    const db = getDatabase()
+    if(!db.feliniaFinalPromptTranslation || finalPromptTranslationDepth > 0) return messages
+    finalPromptTranslationDepth++
+    try{
+        const { runTranslator } = await import('../../translator/translator')
+        return await translateFinalPromptMessages(messages, (text) => runTranslator(text, true, 'auto', 'ko'))
+    }
+    finally{
+        finalPromptTranslationDepth--
+    }
+}
 
 export type ToolCall = {
     name: string;
@@ -485,6 +501,7 @@ export async function requestChatDataMain(arg:requestDataArgument, model:ModelMo
     const format = targ.modelInfo.format
 
     targ.formated = reformater(targ.formated, targ.modelInfo)
+    targ.formated = await applyFinalPromptTranslation(targ.formated)
 
     switch(format){
         case LLMFormat.OpenAICompatible:

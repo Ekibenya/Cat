@@ -35,4 +35,12 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(definition.npcs.every((entry) => validEraIndexes.has(entry.eraIndex))).toBe(true);
     expect(definition.npcs.every((entry) => entry.key.startsWith(`era:${entry.eraIndex}:npc:`))).toBe(true);
   });
+
+  it('activates relationship lore only when a related character name is present', () => {
+    const { content, eras } = fixture();
+    const definition = compileFeliniaDefinition(content, eras);
+    const lilith = definition.npcs.find((entry) => entry.eraIndex === 1 && entry.name === '莉莉丝');
+    const relation = lilith?.lorebook?.find((entry) => String(entry.title).includes('第五项 · 关系'));
+    expect(relation?.keys).toEqual(['该隐', '潘多拉', '伏羲']);
+  });
 });

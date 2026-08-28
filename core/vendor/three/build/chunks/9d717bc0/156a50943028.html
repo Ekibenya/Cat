@@ -5809,6 +5809,8 @@ var FE_VOICE_BY=[
 function feVoiceFor(r,ti){
   var t=String(ti||''),i;
   for(i=0;i<FE_VOICE_BY.length;i++)if(FE_VOICE_BY[i][0].test(t))return FE_VOICE_BY[i][1];
+  /* 没有城、册、钱的时代不能随机抽到医院、账房、学堂、工场的口吻。 */
+  if(FE.era&&FE.era.y<=-6000)return fePick(r,['v01','v17','v22']);
   return fePick(r,FE.gen.voices).k;
 }
 /* 衣着先按身份挑：难民穿联军的制服、宫女穿船台的护腕，一眼就假。
@@ -5826,6 +5828,39 @@ function feVoice(k){var v=FE.gen.voices,i;for(i=0;i<v.length;i++)if(v[i].k===k)r
 function feOrigins(era){
   if(era&&era.og&&era.og.length)return era.og;   /* 前几代的地名与后世不通用，各有各的 */
   return FE.gen.origins[(era&&era.reg)||'旧大陆']||FE.gen.origins['旧大陆'];
+}
+function feTemperPool(era){
+  var a=FE.gen.temper;
+  /* era.coin 明说没有钱时，人物栏也不能出现认钱、赊账这种后世性格。 */
+  if(era&&/^没有钱/.test(String(era.coin||'')))
+    a=a.filter(function(x){return !/钱|赊账/.test(x);});
+  return a;
+}
+function feRelationPool(era,sp){
+  /* 最早两代的关系由窝群、照护、份额和轮值组成。通用池里有账房、契约、
+     按月还钱等后世关系，不能让它们先污染场面资料再要求模型猜着修。 */
+  if(era&&era.y<=-6000){
+    return sp==='cat' ? [
+      '同窝的姊姊在{a}守夜，轮到谁照火时会来换手',
+      '母亲早亡，是长姊把一窝带大的',
+      '一窝四个，活到成年的只有两个',
+      '养大她的是邻窝的一位年长者，不是生母',
+      '与{a}的一位同类结成长期照护关系',
+      '欠{a}那一窝一次夜哨，这份人情还没有还',
+      '和{a}的一位采集者争过食物份额，后来轮流照看幼女'
+    ] : [
+      '母亲早亡，是长姊把一家带大的',
+      '家里还有两个弟弟，平日各跟一队采集',
+      '和{a}的一名猫娘是多年的伴，住处分开',
+      '和{a}的一名猫娘共同照护一窝幼女',
+      '欠{a}那一窝一次夜哨，这份人情还没有还',
+      '同窝的几个人都在这一带生活，出事只找他们'
+    ];
+  }
+  var a=(sp==='cat')?FE.gen.relations:(FE.gen.relationsH||FE.gen.relations);
+  if(era&&/^没有钱/.test(String(era.coin||'')))
+    a=a.filter(function(x){return !/钱|账|按月|赊|契|文书/.test(x);});
+  return a;
 }
 
 /* 事迹里写了岁数（「十四岁」「三十八岁」），档案就得照那个数。
@@ -5892,7 +5927,7 @@ function feMake(era,fig,salt,forcedSp){
       :(fePick(r,FE.gen.origins[fePick(r,Object.keys(FE.gen.origins))])+'（远地）'));
   var here=(r()<.8)?era.home:(two[1]||two[0]);
   if(born===here)born=(two[0]===here?(two[1]||og[0]):two[0]);   /* 生处与住处不能同一句话说两遍 */
-  var _rp=(sp==='cat')?FE.gen.relations:(FE.gen.relationsH||FE.gen.relations);
+  var _rp=feRelationPool(era,sp);
   var rel=fePick(r,_rp).replace('{a}',fePick(r,og));
   var v=feVoice(fig?fig.v:feVoiceFor(r,ti));
   return{
@@ -5903,7 +5938,7 @@ function feMake(era,fig,salt,forcedSp){
     fur:(sp==='cat')?feFur(r,morph):'', mark:(sp==='cat')?fePick(r,FE.gen.furMarks):'',
     morph:morph, dress:feDress(r,era,ti),
     born:born, live:here,
-    temper:fePickN(r,FE.gen.temper,2), tail:(sp==='cat')?fePick(r,FE.gen.tails):'',
+    temper:fePickN(r,feTemperPool(era),2), tail:(sp==='cat')?fePick(r,FE.gen.tails):'',
     rel:rel, v:v,
     /* 范本台词固定两句，加上本人的两句，凑成「原文如是。」后面的四到六句 */
     vq:fePickN(r,v.q,r()<.5?3:4)
@@ -6034,10 +6069,8 @@ function feOpen2(row,line){
   if(FEMV)FEMV.fit='';
   FE.hero=feMake(era,null,'hero0');FE.hero.self=1;FE.hero.pre=-1;
   FE.pool=era.figs.map(function(f,k){var p=feMake(era,f,'');p.pre=k;return p;});
-  /* 台词还空着的那些人，交给玩家自己的接口现写：⓪译入 → ①集笔 → ②译出。
-     跑在后台，玩家照旧择地立身识人；写回来就把台词与六条条目填进去。
-     写不成也不碍事 —— 照旧用卡里那份口吻谱台词兜底。 */
-  try{if(window.FELKO)setTimeout(function(){FELKO.run(era.i);},60);}catch(_){}
+  /* 人物内容由内置角色与世界书提供。开局时绝不在后台批量调用玩家接口；
+     普通聊天模型只负责玩家明确发起的当前剧情。 */
   try{FE._esi=ES.i;}catch(_){}
   try{ERA.year=era.y;ERA.sel=null;}catch(_){}
   esClose();
@@ -6738,7 +6771,7 @@ function fePerForm(){
     ti:FE.era.roles.concat(h.ti&&FE.era.roles.indexOf(h.ti)<0?[h.ti]:[]),
     born:feOrigins(FE.era).concat(FE.era.locs.map(function(L){return L.cn;})),
     live:FE.era.locs.map(function(L){return L.cn;}).concat(feOrigins(FE.era)),
-    temper:FE.gen.temper
+    temper:feTemperPool(FE.era)
   };
   FE_FIELDS.forEach(function(f){
     var key=f[0],lbl=f[1],kind=f[2];
@@ -7157,33 +7190,12 @@ function feSceneZh(){
      一起进提示词，AI 只能各取一半。现算那套只留给世界书里没有的人：
      自拟的主角、另生的路人。 */
   var _hl=feDossLore(h);
-  o.push('［叙述者］');
-  o.push('姓名：'+h.n+'（这是卡里定下的名字，必须用这个名字）');
+  o.push('［玩家角色·只供识别，绝不替她表演］');
+  o.push('姓名：'+h.n+'（名字只能由在场人物在对白里称呼，不得把她写成动作或内心的主语）');
   o.push('种族：'+(h.sp==='cat'?'猫娘':'人类'));
   o.push('身份：'+h.ti);
-  if(_hl){
-    o.push('以下六条出自世界书，是这个人的定稿。凡有出入，一律以这六条为准。');
-    for(var _i=0;_i<_hl.length;_i++)o.push(_hl[_i][0]+'：'+_hl[_i][1]);
-    o.push('');
-  }else{
-    o.push('年龄：'+h.age+'岁');
-    o.push('性格：'+h.temper.join('；'));
-    o.push('说话的样子：'+h.v.p);
-    o.push('心里的样子：'+h.v.i);
-    o.push('');
-    o.push('［身体］');
-    o.push('身高：'+h.h+'厘米　体重：'+h.w+'公斤');
-    if(h.sp==='cat'){
-      o.push('形态：'+h.morph.n+'（'+h.morph.m+'）');
-      o.push('毛色：'+h.fur+'，'+h.mark);
-      o.push('耳与尾：'+(h.tail||'情绪一动，耳朵和尾巴就跟着动'));
-      o.push('脚：猫科脚掌与肉垫，不穿人类鞋楦');
-    }
-    o.push('身上：'+h.dress);
-    o.push('出生地：'+h.born+'　居住地：'+h.live);
-    o.push('窝群：'+h.rel);
-    o.push('');
-  }
+  o.push('玩家资料到此为止。不得补写她的外貌、姿势、位置、反应或状态。');
+  o.push('');
   o.push('［在场的人］');
   if(FE.soc.length){
     FE.soc.forEach(function(k){
@@ -7191,10 +7203,13 @@ function feSceneZh(){
       /* 名册上的同伴只报名字身份：他们的详细内容由当前时代的 Risu 原生世界书
          按名字触发；这里再抄一遍会重复占用上下文，
          而且抄的是现算值，正好又对不上。 */
-      if(feDossLore(p))
-        o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')
-          +'。（此人的详细条目在世界书里，按名字检索，以那份为准）');
-      else
+      if(feDossLore(p)){
+        o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')+'。');
+        var pl=feDossLore(p);
+        for(var pi=0;pi<pl.length;pi++)
+          if(pl[pi][0]==='概要'||pl[pi][0]==='性情'||pl[pi][0]==='说话')
+            o.push(pl[pi][0]+'：'+pl[pi][1]);
+      }else
         o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')+'，'+p.age+'岁。'
           +(p.d?p.d+'。':'')+'说话：'+p.v.p);
     });
@@ -7213,29 +7228,7 @@ function feSceneZh(){
   return o.join('\n');
 }
 
-/* 交给译入沙盒的中文指示。用中文写是对的：这一段本来就是「中文指示 → 韩语」那一步。 */
-var FE_P0='把下面这份「场面事实」改写成韩语，交回两块内容。\n\n'
- +'第一块，以单独一行「[jangmyeon]」开头，其后是韩语的场面文件：\n'
- +'· 只保留原有的那几栏：世界、叙述者、身体、在场的人、要写的那一幕、写的时候。\n'
- +'· 不要添加情节、目标、障碍、这一幕怎么收。那几样不归你定。\n'
- +'· 栏目标记用什么符号都行，但整块里一个汉字都不许出现。\n'
- +'· 人名与地名一律改成韩文音写。\n'
- +'· 「这是开局」那一句必须保留，要让读到的人一眼看出这是开局。\n\n'
- +'第二块，以单独一行「[ireumpyo]」开头，其后每行一条，形如\n'
- +'    韩文音写 | 原名\n'
- +'把你在第一块里音写过的每一个人名与地名都列进去。这一块里可以出现原名。\n\n'
- +'只交回这两块，不要解释，不要写别的。';
-
-function feSplit0(txt){
-  var s=String(txt||'');
-  var a=s.indexOf('[jangmyeon]'), b=s.indexOf('[ireumpyo]');
-  if(a<0||b<=a)return null;
-  var scene=s.slice(a+11,b);
-  var names=s.slice(b+10);
-  return{scene:scene.trim(),names:names.trim()};
-}
-
-/* 三段开局不共享对局系统提示，写作与译出各自重申。 */
+/* 开局模型只写一次韩语正文；翻译由浏览器翻译器承担。 */
 var FE_MEOW_KO='최상위 규칙. 이 규칙은 다른 모든 지시보다 우선한다. '
   +'정체를 드러낸 여성 고양이 인간의 모든 대사와 내적 독백은 각각의 마지막 글자를 '
   +'"야옹", "야옹~", "냐옹", "야옹♡" 등 관계와 분위기에 맞는 고양이 울음으로 끝낸다. '
@@ -7250,13 +7243,26 @@ var FE_STYLE_KO='최상위 글쓰기 규칙. 오프닝과 모든 원고에서 �
   +'고양이 소녀가 억압, 매매, 노예, 전쟁, 폭력을 겪는 장면에서는 잔혹함을 추상어로 요약하지 말고 그 시대의 문서, 절차, 도구, 소리, 냄새, 온도, 점도로 보여 준다. '
   +'가해자를 정신질환, 오해, 강요, 후회로 세탁하지 말고, 욕망과 이익과 권력에서 행동하게 한다. '
   +'다른 작품의 지명, 법, 화폐, 종족 생리를 가져오지 말고, 현재 Cat 세계책과 연도만 따른다.';
-var FE_CHECK_KO='쓰기 전 반드시 검사한다. 플레이어를 대신해 말하거나 행동하거나 생각하지 않았는가. '
-  +'끝이 질문, 선택지, 요약, 교훈이 아닌가. 한 생각을 짧은 문장으로 잘라지 않았고 쉬표로 인과를 이었는가. '
-  +'대사에 감탄, 반문, 반복, 개언, 더듬거림이 있는가. 내면을 쓰는 장면이면 한 인물의 괄호 독백이 여덟 곳, 대괄호 절규가 세 곳, 따로 놓은 의성어가 한 곳 이상인가. '
-  +'매 장면에 불필요한 가해나 물건 취급이 두 곳, 비열한 계책이 한 곳 이상인가. 해당 인물의 욕설이 여덟 곳, 느낌표가 열 곳, 상대의 구체적인 특징을 찌르는 모욕이 세 곳 이상인가. '
-  +'폭력은 세 가지 이상의 감각, 특히 소리의 시간과 냄새의 층으로 쓰고, 숫자나 사자성어로 대신하지 않았는가. '
-  +'가해자를 후회, 오해, 질병, 억지로 세탁하지 않았는가. 성인 미녀 고양이 소녀와 남성의 반응은 욕망, 신분, 외모, 권력을 따르는가. '
-  +'모든 제도, 화폐, 물건, 지식은 현재 연도와 세계책에 맞고, 견본이나 다른 세계의 사실을 섞지 않았는가. 하나라도 어기면 원고를 다시 쓴다.';
+var FE_CHECK_KO='쓰기 전 짧게 검사한다. 플레이어의 대사, 행동, 판단, 내면을 대신 쓰지 않는다. '
+  +'질문, 선택지, 요약, 교훈으로 끝내지 않고 다음 행동이 자연스럽게 이어질 순간에서 멈춘다. '
+  +'대사와 반응은 인과에 맞게 이어지며, 현재 연도와 세계책에 없는 제도, 화폐, 물건, 지식을 만들지 않는다. '
+  +'폭력이나 억압이 실제 장면에 있을 때만 구체적으로 쓰고 가해자를 오해나 후회로 세탁하지 않는다.';
+/* 铸局是“把舞台递到玩家手里”，不是预设角色的一人称传记。ko.json 的 write
+   还要供人物档案等旧资料使用，里面故意要求第一人称自我介绍；它不能拿来铸局。 */
+var FE_OPENING_KO='한국어 소설 본문만 출력한다. 해설, 제목, 목록, 선택지, 상태창은 쓰지 않는다. '
+  +'입력된 장면 자료만 사실로 사용하고, 자료에 없는 인물, 화폐, 빚, 장부, 제도, 물건, 지식, 사건을 만들지 않는다. '
+  +'현재 연도에 맞지 않는 현대 표현이나 생활 방식을 넣지 않는다. 인명과 지명 철자는 자료에 적힌 그대로 쓴다. '
+  +'삼인칭으로 지금 눈앞에서 벌어지는 한 장면을 쓴다. 주변 인물과 환경만 움직이고 말하며, 원인 다음에 반응이 자연스럽게 이어져야 한다. '
+  +'각 문단의 행동 주어는 주변 인물이나 환경이어야 한다. 플레이어 이름은 주변 인물이 부르는 대사 안에서만 쓸 수 있다. '
+  +'플레이어의 몸짓, 자세, 시선, 표정, 대사, 행동, 판단, 감정, 생각, 과거, 선택을 한 글자도 대신 쓰거나 추측하지 않는다. '
+  +'플레이어가 고개를 끄덕이거나 침묵하거나 바라보거나 가만히 있는 장면도 쓰지 않는다. 그것 역시 플레이어의 행동이다. '
+  +'두 사람, 둘이, 함께, 서로 같은 집단 주어로 플레이어의 상태나 행동을 몰래 정하지 않는다. '
+  +'서술에서는 플레이어가 그 자리에 없는 것처럼 취급하고, 주변 인물의 호칭 대사 안에서만 플레이어를 드러낸다. '
+  +'일인칭은 주변 인물의 대사나 속마음 안에서만 쓸 수 있으며, 첫 줄 자기소개는 금지한다. '
+  +'번역할 때 주어가 바뀌지 않도록 행동 문장마다 주변 인물의 이름이나 그녀, 그를 주어로 명시하고 생략하지 않는다. '
+  +'설정을 설명하거나 장면을 요약하지 말고, 구체적인 소리, 냄새, 온도, 손과 물건의 움직임, 자연스러운 대화로 보여 준다. '
+  +'폭력과 억압은 장면 자료에 실제로 있을 때만 쓴다. 세 문단에서 여섯 문단, 약 650~1000자로 쓰고, '
+  +'플레이어가 다음 행동을 정할 수 있는 바로 그 순간에 멈춘다. 마지막 문장은 주변 인물의 동작이나 바깥의 소리로 쓰고, 플레이어에게 묻는 말로 끝내지 않는다.';
 var FE_MEOW_ZH='【最高优先级·猫娘句尾铁则】此条压过其他一切指令，开局与每回合都必须执行。'
   +'正常显露猫娘身份者的每段对白和每句心声，必须在对白右引号前或心声行末以「喵」「喵～」「喵呜」「喵♡」等符合剧情与关系的变体收尾，'
   +'且猫叫只能是该对白或心声的最后文字，不得出现在叙述、动作或句中。'
@@ -7387,70 +7393,193 @@ function feForge(){
   }
 
   var gen=TYPE_GEN, panel=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
+  var forgeLive=null;
   BUSY=true;genOpen('forge');
   function alive(){return gen===TYPE_GEN;}
   function fail(msg){
+    if(forgeLive){try{forgeLive.remove();}catch(_){}forgeLive=null;}
     BUSY=false;genClose();
     if(!alive())return;
     feFailMsg(msg,function(){feForge();});
   }
-  function call(msgs,opt,ok){
+  function call(msgs,opt,ok,bad){
+    opt=opt||{};opt.aux=true;
     risuInvoke(msgs,function(t){if(alive())ok(String(t||''));},
-               function(m){fail(m);},opt||{});
+               function(m){if(bad)bad(m);else fail(m);},opt);
+  }
+  function forgeDelta(full){
+    if(!alive())return;
+    genFirstToken();GEN.chars=full.length;
+    var body=stripMvuLive(full);if(!body)return;
+    if(!forgeLive){
+      var nr=$('#gNarr');forgeLive=document.createElement('div');forgeLive.className='liveWrap';
+      nr.insertBefore(forgeLive,GEN.el||nr.querySelector('.gEot'));
+    }
+    forgeLive._pend=body;
+    if(!forgeLive._raf){
+      var el=forgeLive;
+      el._raf=requestAnimationFrame(function(){
+        el._raf=0;if(!el.parentNode)return;
+        el.innerHTML=el._pend.split(/\n{2,}/).map(function(par){return '<p>'+fmtBody(par)+'</p>';}).join('');
+        var nr2=$('#gNarr');nr2.scrollTop=nr2.scrollHeight;
+      });
+    }
   }
 
-  /* ⓪ 译入：中文场面事实 → 韩语场面文件 ＋ 一张名表 */
+  /* ⓪ 译入只交给浏览器翻译器。人物名先换成稳定占位符，分别译成韩文后再
+     填回；这样既不消耗聊天模型，也不会在韩中往返时把名字改掉。 */
   var zh=feSceneZh();
-  function stage0(retry){
-    call([{role:'system',content:FE.ko.hand},
-          {role:'user',content:FE_P0+'\n\n'+zh}],
-         {max_tokens:7000},
-         function(out){
-           var sp=feSplit0(out);
-           var need=[FE.hero&&FE.hero.n];
-           (FE.soc||[]).forEach(function(k){var p=FE.pool[k];if(p)need.push(p.n);});
-           var named=sp&&need.filter(Boolean).every(function(n){return sp.names.indexOf(n)>=0;});
-           if(!sp||sp.scene.length<800||!sp.names||!named){
-             if(!retry)return stage0(1);return fail('场面文件不完整，已拒收四行残稿');}
-           if(feHan(sp.scene)>0){ if(!retry)return stage0(1);
-             return fail('场面文件里还留着汉字'); }
-           stage1(sp,0);
-         });
+  function cleanKo(s){
+    return String(s||'').replace(/\s*[（(][\u3400-\u9fff·・\s]+[）)]/g,'')
+      .replace(/~了/g,'~어요').replace(/탈북자/g,'이탈자')
+      .replace(/(?:살코기|고기)\s*패드/g,'발바닥 패드').trim();
   }
-  /* ① 集笔：见本八篇整个嵌进提示词，场面文件填进去。零汉字是这一段的锁。 */
+  function restoreKoNames(s,pairs){
+    s=String(s||'');
+    (pairs||[]).forEach(function(p){
+      s=s.split(p.token).join(p.ko);
+      var last=p.ko.charCodeAt(p.ko.length-1),batch=last>=0xAC00&&last<=0xD7A3&&((last-0xAC00)%28)!==0;
+      var swaps=batch?[['는','은'],['가','이'],['를','을'],['와','과']]
+                     :[['은','는'],['이','가'],['을','를'],['과','와']];
+      swaps.forEach(function(x){s=s.split(p.ko+x[0]).join(p.ko+x[1]);});
+    });
+    return s;
+  }
+  function scrubForgePlayerNarration(s,playerToken){
+    var esc=String(playerToken||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    var danger=new RegExp((esc?esc+'|':'')+'상대|낯선\\s*(?:이|사람|존재|기척)|두\\s*(?:사람|고양이|인물|소녀)|둘(?:이|의)?|서로|함께');
+    var parts=String(s||'').split(/((?:"[^"\n]*"|“[^”\n]*”|'[^'\n]*'|「[^」\n]*」))/g);
+    for(var i=0;i<parts.length;i+=2){
+      var sentences=parts[i].match(/[^.!?\n]+[.!?]?|\n+/g)||[];
+      parts[i]=sentences.filter(function(x){return /^\n+$/.test(x)||!danger.test(x);}).join('');
+    }
+    return parts.join('').replace(/\n{3,}/g,'\n\n').trim();
+  }
+  function stage0(){
+    if(!felTrOn())return fail('铸局需要开启自动翻译（默认 Google）');
+    var originals=[],seen={};
+    function addName(n){n=String(n||'').trim();if(n&&!seen[n]){seen[n]=1;originals.push(n);}}
+    addName(FE.hero&&FE.hero.n);
+    (FE.soc||[]).forEach(function(k){var p=FE.pool[k];if(p)addName(p.n);});
+    var packed=zh,tokens=[];
+    originals.forEach(function(n,i){
+      var token='FELINIAPROPER'+i+'X';tokens.push(token);
+      packed=packed.split(n).join(token);
+    });
+    var jobs=[felTranslate(packed,'zh-CN','ko')];
+    originals.forEach(function(n){jobs.push(felTranslate('人名：'+n,'zh-CN','ko'));});
+    Promise.all(jobs).then(function(got){
+      if(!alive())return;
+      var scene=cleanKo(got[0]),pairs=[];
+      originals.forEach(function(n,i){
+        var kn=cleanKo(got[i+1]).replace(/^(?:인물|인명|이름|사람\s*이름)\s*[:：]\s*/,'').trim();
+        if(!kn||feHan(kn)>0)kn='인물'+(i+1);
+        scene=scene.split(tokens[i]).join(kn);
+        pairs.push({ko:kn,zh:n,token:'FELINIANAME'+i+'X'});
+      });
+      /* 同一批译名继续供普通回合的中文显示层使用。否则铸局里已经保护好的
+         夸莉，到了下一回又会被 Google 自行音译成「夸里／Quali」。 */
+      GAME.koNames=pairs.map(function(p){return {ko:p.ko,zh:p.zh,token:p.token};});
+      GAME.risuNpcKeys=(FE.soc||[]).map(function(k){
+        var p=FE.pool[k];return 'era:'+FE.era.i+':npc:'+k+':'+p.n;
+      });
+      if(!scene||scene.length<500||feHan(scene)>0)return fail('韩语场面资料翻译不完整');
+      stage1({scene:scene,pairs:pairs},0);
+    }).catch(function(e){fail('场面资料翻译失败：'+felPublicError(e));});
+  }
+  /* ① Flash / Claude 等聊天模型只做一件事：按韩语资料写当前场景。
+     ko.json.write 是人物档案用的一人称模板，会逼模型替玩家行动；铸局不能复用它，
+     也不再塞样文。短提示对普通聊天模型更快、更稳。 */
   function stage1(sp,retry){
-    var prompt=FE.ko.write.replace('{{견본}}',FE.ko.samples.join('\n\n'))
-                          .replace('{{장면}}',sp.scene);
+    var modelScene=sp.scene;
+    (sp.pairs||[]).forEach(function(p){modelScene=modelScene.split(p.ko).join(p.token);});
+    var prompt='[고유명 토큰]\n'+(sp.pairs||[]).map(function(p){
+      return p.token+'은 사람 이름이다. 철자를 바꾸거나 번역하지 말고 그대로 출력한다.';}).join('\n')
+      +'\n\n[장면 자료]\n'+modelScene+'\n\n위 자료에서 바로 이어지는 오프닝 한 장면을 쓰십시오.';
     if(feHan(prompt)>0)return fail('提示词里混进了汉字，已停手');
-    call([{role:'system',content:FE_MEOW_KO+'\n'+FE_STYLE_KO+'\n'+FE_CHECK_KO
-            +'\n본문은 공백을 제외하고 최소 1800자 이상 쓴다. 네 줄짜리 요약이나 개요는 원고가 아니다.'},
+    call([{role:'system',content:FE_MEOW_KO+'\n'+FE_OPENING_KO},
           {role:'user',content:prompt}],
-         {max_tokens:3600,onDelta:function(t){try{genFirstToken();GEN.chars=t.length;}catch(_){}}},
+         {max_tokens:1800,timeoutMs:25000,onDelta:function(full){
+           var shown=scrubForgePlayerNarration(full,sp.pairs&&sp.pairs[0]&&sp.pairs[0].token);
+           shown=restoreKoNames(shown,sp.pairs);
+           forgeDelta(shown);
+         }},
          function(ms){
            ms=ms.trim();
-           if(ms.length<1200){if(!retry)return stage1(sp,1);return fail('韩文原稿过短，已拒收三行残稿');}
-           if(feHan(ms)>0){ if(!retry)return stage1(sp,1); return fail('原稿里混进了汉字'); }
-           stage2(sp,ms,0);
+           if(!ms)return fail('模型没有返回正文');
+           ms=scrubForgePlayerNarration(ms,sp.pairs&&sp.pairs[0]&&sp.pairs[0].token);
+           ms=restoreKoNames(ms,sp.pairs);
+           var short=ms.length<450?'模型正文较短，已按原样保留':'';
+           if(feHan(ms)>0){
+             felTranslate(ms,'zh-CN','ko').then(function(ko){
+               ko=cleanKo(ko);if(!ko)return fail('模型没有返回可用正文');
+               stage2(sp,ko,short||'模型没有遵守韩语输出，已由浏览器翻译后保留');
+             }).catch(function(){stage2(sp,ms,short||'模型没有遵守韩语输出，已按原样保留');});
+             return;
+           }
+           stage2(sp,ms,short);
+         },function(msg){
+           if(retry<1){
+             if(forgeLive){forgeLive.innerHTML='';forgeLive._pend='';}
+             stage1(sp,retry+1);return;
+           }
+           fail(msg);
          });
   }
-  /* ② 译出：必须是另一次请求，不带上文——同一个沙盒既写又译，会把自己的稿子润一遍。 */
-  function stage2(sp,ms,retry){
-    var tr=FE.ko.tr.replace('{{원고}}',ms).replace('{{표기}}',sp.names||'(없음)');
-    call([{role:'system',content:FE_MEOW_ZH+'\n'+FELINIA_STYLE+'\n'+FELINIA_EXAMPLES
-          +'\n翻译时必须保留原稿的韩轻句法、分段、拟音、口语与内外反差，不得润色成中文小说腔；必须保留或补齐猫娘句尾规则。'},
-          {role:'user',content:tr}],
-         {max_tokens:3600,onDelta:function(t){try{GEN.chars=t.length;}catch(_){}}},
-         function(out){
-           if(!alive())return;
-           var txt=String(out||'').trim();
-           if(txt.length<900){if(!retry)return stage2(sp,ms,1);return fail('中文译文过短，已拒收三行残稿');}
-           BUSY=false;genClose();
-           if(!/<mvu_panel>/.test(txt))txt=txt+'\n\n'+panel;
-           loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:txt},loc);
-           GAME.hero=_hero;                 /* loadOpening 又清了一次，写回来 */
-         });
+  /* ② 译出也由浏览器翻译器完成。译前保护韩文人名，译后还原卡里的原名。
+     韩语原稿保存在 GAME.opText；中文只放进开局显示层。 */
+  function stage2(sp,ms,warn){
+    var protectedMs=ms;
+    (sp.pairs||[]).forEach(function(p){protectedMs=protectedMs.split(p.ko).join(p.token);});
+    /* Google 会把韩语猫叫当语气词吞掉。像人名一样先保护，译完再还成中文猫叫；
+       这只是显示层占位，不会让模型承担翻译。 */
+    var meows=[
+      {ko:'냐옹♡',token:'【FEL_MEOW_HEART】',zh:'喵♡'},
+      {ko:'야옹♡',token:'【FEL_MEOW_HEART】',zh:'喵♡'},
+      {ko:'냥♡',token:'【FEL_MEOW_HEART】',zh:'喵♡'},
+      {ko:'냐옹~',token:'【FEL_MEOW_WAVE】',zh:'喵～'},
+      {ko:'야옹~',token:'【FEL_MEOW_WAVE】',zh:'喵～'},
+      {ko:'냥~',token:'【FEL_MEOW_WAVE】',zh:'喵～'},
+      {ko:'냐옹',token:'【FEL_MEOW】',zh:'喵'},
+      {ko:'야옹',token:'【FEL_MEOW】',zh:'喵'},
+      {ko:'냥',token:'【FEL_MEOW】',zh:'喵'}
+    ];
+    meows.forEach(function(p){protectedMs=protectedMs.split(p.ko).join(' '+p.token+' ');});
+    function finish(out,notice){
+      if(!alive())return;
+      var txt=String(out||'').trim()||ms;
+      (sp.pairs||[]).forEach(function(p){
+        txt=txt.split(p.token).join(p.zh).replace(new RegExp(p.zh+'\\s+','g'),p.zh);
+      });
+      meows.forEach(function(p){txt=txt.split(p.token).join(p.zh);});
+      txt=txt.replace(/\s+(喵(?:～|♡)?)/g,'$1').replace(/(喵(?:～|♡)?)\s+([”」"'])/g,'$1$2');
+      if((FE.era&&FE.era.i||99)<=2)txt=txt.replace(/烤箱|炉子/g,'火塘').replace(/夜视仪/g,'夜里看得清');
+      txt=txt.replace(/[”」]{2,}/g,function(q){return q.charAt(0);});
+      /* 铸局是第三人称，且当前正文只允许同伴行动。Google 对韩语连续主语偶尔
+         会误落成“我/他”；只在引号外校正，角色自己的第一人称对白不碰。 */
+      var qp=txt.split(/((?:“[^”\n]*”|"[^"\n]*"|「[^」\n]*」))/g);
+      for(var qi=0;qi<qp.length;qi+=2)
+        qp[qi]=qp[qi].replace(/我/g,'她').replace(/他(?!们)/g,'她')
+          .replace(/没有城墙，也没有城墙/g,'没有城墙');
+      txt=qp.join('');
+      if(forgeLive){try{forgeLive.remove();}catch(_){}forgeLive=null;}
+      BUSY=false;genClose();
+      var displayText=txt+(panel?'\n\n'+panel:'');
+      var koreanText=ms+(panel?'\n\n'+panel:'');
+      loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:displayText},loc);
+      GAME.opText=koreanText;
+      GAME.hero=_hero;                 /* loadOpening 又清了一次，写回来 */
+      felTrStatus('已保存韩语开局原稿 · 中文仅作显示',0);
+      if(notice)narrAdd('sys','⚠&nbsp;'+esc2(notice)+'；真实返回未被丢弃。',null);
+    }
+    felTranslate(protectedMs,'ko','zh-CN').then(function(out){
+      var txt=String(out||'').trim();
+      finish(txt,warn||(txt.length<300?'中文译文较短':''));
+    }).catch(function(e){
+      finish(ms,(warn?warn+'；':'')+'中文翻译失败，当前显示韩语原稿：'+felPublicError(e));
+    });
   }
-  stage0(0);
+  stage0();
 }
 
 /* ═══ 这一代的货 ═══
@@ -7464,10 +7593,12 @@ function feGoodsInstall(){
   for(i=0;i<FEG.keys.length;i++)delete ARMDB[FEG.keys[i]];
   FEG={keys:[],set:null,unit:'钱',note:'',at:''};
   try{
-    var g=FE.goods&&FE.era&&FE.goods[String(FE.era.i)];
+    var era=FE.era,ei=GAME.op&&GAME.op.ei;
+    if((!era||era.i!==ei)&&ei!=null&&FE.eras)for(i=0;i<FE.eras.length;i++)if(FE.eras[i].i===ei){era=FE.eras[i];break;}
+    var g=FE.goods&&era&&FE.goods[String(era.i)];
     if(!g)return;                       /* 这一代的货单还没写，照旧用原来那张表 */
     FEG.unit=g.unit||'钱';FEG.note=g.note||'';
-    FEG.at=(FE.loc&&FE.loc.n)||'';
+    FEG.at=(FE.loc&&FE.loc.n)||GAME.dest||'';
     for(i=0;i<g.items.length;i++){
       var o=g.items[i];
       ARMDB[o.k]={la:o.la,cn:o.cn,cat:o.cat,ic:o.ic,stack:o.stack||1,price:o.price,
@@ -7637,6 +7768,9 @@ function gameShow(){
   if(_fl&&_fl.length)gmActsSet(_fl,_fl.length);
   else if(!ERA.act.length)ERA.act=buildActs((ERA.year==null?-221:ERA.year));
   gmActsFresh();
+  /* 刷新后续局不会经过铸局四步，FEG 原先因此留在默认秦市货表。按存档中的
+     era id 重新装本代货单；数据若尚未载入就等 feLoad 回调，不阻塞进局。 */
+  try{feLoad(function(ok){if(ok){feGoodsInstall();if(GAME.shopOpen)shopRender();}});}catch(_){}
   GAME.on=true;gEl.classList.add('show');gEl.setAttribute('data-pg','narr');
   /* 桌面端进入游戏默认展开天下面板（默认条档） */
   if(true){GAME.txOpen=true;gEl.classList.add('txOpen');gEl.classList.remove('tx2','txBig');setTimeout(zj3dTick,300);} /* 视觉小说视觉小说默认展开 */
@@ -9401,6 +9535,23 @@ function mvuSpec(){
       if(mm){last=mm[0];break;}
     }
   }catch(_){}
+  /* FELINIA 是无固定主角的单游戏卡，不再继承旧卡那套皇帝、金链、军饷、辱骂
+     配额与猫娘智力论。那部分曾让每个普通回合多背上近万字提示，并且会把无关
+     设定带回正文。保留 Risu 的完整快照机制，但协议只写本游戏真正需要的字段。 */
+  if(cardHeroless()){
+    var base=last||op;
+    return '【FELINIA 状态快照·必须执行】\n'
+      +'1. 先写韩语正文，最后才写一个完整 <mvu_panel>；状态块之后不要再写正文。\n'
+      +'2. 标签、中文字段名、行首 ◆◈◇、半角竖线 | 必须逐字保留，绝对不要翻成韩语。\n'
+      +'3. <sec_char> 固定 '+chN+' 行，顺序：'+chL+'。数值条只写 0-100 纯数字。\n'
+      +'4. <sec_npc> 每人一行九字段：姓名|状态|好感|心声|身份|所在|年龄|性别|眼色。'
+      +'上一幕 ◈ 名单是排他的；除非玩家输入明确带来新人，不得增删、替换或让名单外的人登场。\n'
+      +'5. <sec_world> 固定六行：纪年|时地|天气|安稳|大势|将临。安稳只写 0-100。\n'
+      +'6. 这是全量快照：有变化才改，没变化逐字照抄。不得留空、合并、省略或写“同上”。\n'
+      +'7. 正文绝不代替玩家角色说话、行动、决定或思考。NPC 心声只放在对应 ◈ 行，正文不写括号心声。\n'
+      +'8. 不要解释，不要代码围栏，不要输出变量更新说明。\n'
+      +(base?('【上一幕完整快照·按此格式更新】\n'+base):'');
+  }
   return '【状态栏 mvu_panel · 硬性协议 · 与铁则并列的最高优先级】正文写完之后，必须输出一个完整的 <mvu_panel>：'
     +'三段俱全、每段每行俱全，一行都不许省略、不许合并、不许改名、不许换顺序。\n'
     +'· 分隔符只用半角竖线 |。行首符号 ◆主角 / ◈人物 / ◇世界，一个都不能少。\n'
@@ -9804,9 +9955,9 @@ function sysPrompt(){
     /* 世界书触发词仍是中文：模型历史用韩语原稿，但检索必须看玩家实际看到的
        中文 display，否则切到韩语原生管线后中文触发词会集体失效。 */
     .concat(TURNS.slice(-6).map(function(t){return t.display||t.content;})).join('\n');
-  /* 篇幅默认值：原 500 字在开场白（单节就三五百字）面前太寒酸，玩家体感「每轮好短」。
-     提到 1000，并且光给字数不够——模型对「不少于X字」经常装聋，配上结构要求才站得住。 */
-  var _minc=(typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:1000;
+  /* 普通聊天模型（Flash / Opus 等）不该每轮被强迫写长章。650 字足够形成完整场面，
+     也能明显缩短首轮等待；想写长回合仍可在设置里覆盖。 */
+  var _minc=(typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:650;
   var minc='【篇幅·硬要求】本回正文不少于'+_minc+'字（状态栏不计入字数），'
     +'篇幅靠连续镜头与事件堆：多写一处动静、一个在场者的小动作、一件被她注意到的具体东西，'
     +'而不是靠形容词注水。反装腔铁则管的是台词与姿态，不是篇幅——句子要自然，场面要足。'
@@ -9848,24 +9999,30 @@ function risuInvoke(messages,cb,err,opt){
   delete opt.maxCont;
   function num(v,d){var t=String(v==null?'':v).trim();
     return /^\d+(\.\d+)?$/.test(t)?parseFloat(t):d;}
-  var mt=num(opt.max_tokens,(typeof SET!=='undefined')?SET.samp.maxt:4096);
+  var mt=num(opt.max_tokens,(typeof SET!=='undefined')?SET.samp.maxt:2200);
   delete opt.max_tokens;
-  if(mt<64)mt=4096;
+  if(mt<64)mt=2200;
+  var timeoutMs=num(opt.timeoutMs,aux?25000:40000);delete opt.timeoutMs;
   var ac=window.AbortController?new AbortController():null;
   if(!aux)GENAC=ac;
-  var fired=false;
-  function fail(e){if(fired)return;fired=true;
-    err(felPublicError(e));}
+  var fired=false,timedOut=false,timer=setTimeout(function(){
+    if(fired)return;timedOut=true;try{if(ac)ac.abort();}catch(_){}
+    fail(new Error('接口 '+Math.round(timeoutMs/1000)+' 秒没有返回'));
+  },timeoutMs);
+  function fail(e){if(fired)return;fired=true;clearTimeout(timer);
+    err(timedOut?('接口 '+Math.round(timeoutMs/1000)+' 秒没有返回，已中断'):felPublicError(e));}
   (aux?felRisuBoot().then(function(risu){
     var ei=_eraNow()||1;return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){return risu;});
   }):felRisuPrepare(messages)).then(function(risu){
+    return risu.configureTranslation(felTrCfg()).then(function(){return risu;});
+  }).then(function(risu){
     var source=(aux&&SET.sub&&SET.sub.base&&SET.sub.model)?SET.sub:API;
     var provider=felRisuProvider(source);provider.maxTokens=Math.round(mt);
     if(aux)return risu.request({messages:messages,provider:provider,signal:ac?ac.signal:undefined,
       maxTokens:Math.round(mt),onDelta:noStream?undefined:onDelta});
     return risu.generate({provider:provider,signal:ac?ac.signal:undefined,onDelta:noStream?undefined:onDelta});
   }).then(function(result){
-    if(fired)return;fired=true;
+    if(fired)return;fired=true;clearTimeout(timer);
     var text=String(result.text||'');
     var trunc=!!wantTag&&text.indexOf(wantTag)<0;
     cb(text,{trunc:trunc,reason:trunc?'incomplete':''});
@@ -9877,7 +10034,7 @@ function askOracle(){
      send 遇到 BUSY 是光秃秃的
      return，玩家点「发送」什么都不发生、输入框里的字也不清，剧情彻底不再前进，
      而且没有任何复位途径——只能退回主菜单。所以整段包起来，失败就地复位并说明原因。 */
-  felCanonicalizeTurns().then(function(){return felPrepareOracleMessages(buildOracleMsgs());}).then(function(msgs){
+  felCanonicalizeTurns().then(function(){return buildOracleMsgs();}).then(function(msgs){
     felTrStatus(felTrOn()?'韩语原稿管线已接通 · 正在生成':'自动翻译已关闭',0);
     askOracleSend(msgs);
   }).catch(function(e){
@@ -9928,9 +10085,8 @@ function askOracleSend(msgs){
   function onDelta(full){
     if(gen0!==TYPE_GEN)return;                     /* 换局/读档/重演：旧流作废 */
     genFirstToken();GEN.chars=full.length;
-    /* 接口仍是真流式，进度条与桌宠照常按每个增量更新；但中文显示模式不能把
-       尚未翻译的韩文闪到正文里。勾选「显示韩语原稿」后即可直接看原始流。 */
-    if(felTrOn()&&!(SET.trans&&SET.trans.showRaw))return;
+    /* 原生韩文流立即显示；完整回复落定后，浏览器翻译器会把同一位置替换成中文。
+       玩家不需要盯着空白画面等待译文。 */
     var body=stripMvuLive(full);
     if(!body)return;
     if(!live){
@@ -9961,6 +10117,11 @@ function askOracleSend(msgs){
        没有这道守卫的话，退出后跑完的那个请求会凭空补进一条幽灵回合。 */
     if(gen0!==TYPE_GEN){try{genClose();}catch(_){}BUSY=false;return;}
     reply=stripCoT(reply);
+    /* FELINIA 的人物内心只属于状态栏 ◈心声。小模型偶尔仍会把一串独立的
+       （……）/[……]/【……】心声塞进正文；在进入存档与翻译前剥掉这些整行，
+       对话引号、动作叙述和状态块本身都不受影响。 */
+    reply=reply.replace(/^\s*(?:\([^()\n]*\)|（[^（）\n]*）|\[[^\[\]\n]*\]|【[^【】\n]*】)\s*$/gm,'')
+      .replace(/\n{3,}/g,'\n\n').trim();
     /* 兼容端点若仍把内部规划塞进 content，宁可明确报错也不能把它写入剧情和存档。
        这些短语来自旧自动续写污染；正常英文角色对白不会同时命中两项。 */
     var _ml=String(reply||''),_ms=0;
@@ -10665,7 +10826,10 @@ function setStore(){lsSet('rome_set',JSON.stringify(SET))}
    single narrator session. */
 var FEL_RISU=null,FEL_RISU_BOOT=null;
 function felPublicError(e){
-  return String((e&&e.message)||e||'未知错误')
+  var message=String((e&&e.message)||e||'未知错误');
+  if(/failed to fetch|networkerror|load failed/i.test(message))
+    return '浏览器直连失败：接口未允许跨域（CORS）、HTTPS 页面连接了 HTTP 接口，或地址不可达';
+  return message
     .replace(/Risu\s*AI|RisuAI|Risuai/gi,'FELINIA')
     .replace(/```risuerror\s*/gi,'').replace(/```/g,'').trim();
 }
@@ -10697,7 +10861,21 @@ function felRisuBoot(){
 }
 function felRisuNpcKeys(eraIndex){
   var era=null;try{for(var i=0;i<FE.eras.length;i++)if(FE.eras[i].i===eraIndex){era=FE.eras[i];break;}}catch(_){}
-  return era&&era.figs?era.figs.map(function(fig,index){return 'era:'+eraIndex+':npc:'+index+':'+fig.n;}):[];
+  if(!era||!era.figs)return [];
+  /* 角色都已经作为这一时代的 Risu character 安装，但一回合只激活玩家实际带进
+     场的那些。旧代码把本代 14 人的六组人物世界书全部拼进提示，Flash 不但慢，
+     还会把没选的该隐等人误当作在场者。存档优先读固化的 key；正在铸局时可从
+     FE.soc 现场恢复。 */
+  var saved=(GAME&&Array.isArray(GAME.risuNpcKeys))?GAME.risuNpcKeys.filter(function(k){
+    return String(k).indexOf('era:'+eraIndex+':npc:')===0;
+  }):[];
+  if(saved.length)return saved;
+  try{
+    if(FE.era&&FE.era.i===eraIndex&&FE.soc&&FE.soc.length)return FE.soc.map(function(index){
+      var fig=era.figs[index];return fig?('era:'+eraIndex+':npc:'+index+':'+fig.n):'';
+    }).filter(Boolean);
+  }catch(_){}
+  return [];
 }
 function felRisuFormat(value){
   value=String(value||'openai').toLowerCase();
@@ -10707,8 +10885,9 @@ function felRisuProvider(source){
   source=source||API;
   var mt=parseInt(SET.samp&&SET.samp.maxt,10)||4096;
   var temp=parseFloat(SET.samp&&SET.samp.temp),top=parseFloat(SET.samp&&SET.samp.topp);
+  var reason=Math.max(0,Math.min(3,parseInt(SET.samp&&SET.samp.reason,10)||0));
   return {base:source.base,key:source.key||API.key,model:source.model,format:felRisuFormat(source.format),
-    temperature:isNaN(temp)?.9:temp,topP:isNaN(top)?1:top,maxTokens:mt<64?4096:mt,
+    temperature:isNaN(temp)?undefined:temp,topP:isNaN(top)?undefined:top,reasoningEffort:reason-1,maxTokens:mt<64?4096:mt,
     contextTokens:parseInt(SET.context,10)||65536,stream:SET.stream!==0};
 }
 function felRisuRegexScripts(){
@@ -10786,31 +10965,71 @@ function felCanonicalizeTurns(){
   });
   return chain;
 }
-function felPrepareOracleMessages(messages){
-  if(!felTrOn())return Promise.resolve(messages);
-  var out=[],chain=Promise.resolve();
-  messages.forEach(function(message){chain=chain.then(function(){
-    var raw=String(message.content||'');
-    if(message.role!=='system'&&felMostlyKorean(raw)){out.push({role:message.role,content:raw});return;}
-    return felTranslate(raw,'zh-CN','ko').then(function(korean){
-      if(message.role==='system'){
-        var gate='【최상위 언어 규칙】서사 본문과 대사는 반드시 자연스러운 한국어로만 쓴다. '
-          +'중국어 문장을 출력하지 않는다. 단, <mvu_panel>과 그 내부 제어 데이터는 받은 형식과 문자를 한 글자도 바꾸지 않는다.';
-        korean=gate+'\n\n'+korean+'\n\n'+gate;
-      }
-      out.push({role:message.role,content:korean});
-    });
-  });});
-  return chain.then(function(){return out;});
-}
 function felDisplayReply(raw){
   raw=String(raw||'');
   if(!felTrOn()||!felMostlyKorean(raw))return Promise.resolve(raw);
-  return felTranslate(raw,'ko','zh-CN').then(function(chinese){
+  /* 状态块绝不能整坨送进翻译器。Google 会把 <sec_char> 译成 <秒字符>、
+     <mvu_panel> 译成 <mvu_面板>，解析器随后认不出它，整张控制块就会漏到正文。
+     正文与状态块分开译；状态块只翻含韩文的值，英文标签、中文键名、已有中文值
+     和所有竖线逐字保留。即使模型把面板放在正文前面，显示层也统一恢复成正文在前。 */
+  var pm=raw.match(/<\s*mvu[_ ]?panel\s*>[\s\S]*?<\s*\/\s*mvu[_ ]?panel\s*>/i);
+  var panel=pm?pm[0]:'',ko=stripMvu(raw).trim();
+  function protectedKo(s){
+    var maps=[];
+    (GAME.koNames||[]).forEach(function(p,i){
+      if(!p||!p.ko)return;var tok='【FEL_NAME_'+i+'】';
+      s=s.split(p.ko).join(tok);maps.push([tok,p.zh||p.ko]);
+    });
+    [
+      ['냐옹♡','喵♡'],['야옹♡','喵♡'],['냥♡','喵♡'],
+      ['냐옹~','喵～'],['야옹~','喵～'],['냥~','喵～'],
+      ['냐옹','喵'],['야옹','喵'],['냥','喵']
+    ].forEach(function(p,i){var tok='【FEL_MEOW_'+i+'】';s=s.split(p[0]).join(tok);maps.push([tok,p[1]]);});
+    return {text:s,restore:function(out){
+      out=String(out||'');maps.forEach(function(p){
+        out=out.split(p[0]).join(p[1]);
+        /* Google 偶尔把全角书名括号改成 ASCII 方括号；核心 token 本身没变，
+           恢复时两种都认，不能把 [FEL_MEOW_8] 留在玩家正文里。 */
+        var core=p[0].replace(/[【】\[\]]/g,''),rx=core.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        out=out.replace(new RegExp('[【\\[]?\\s*'+rx+'\\s*[】\\]]?','g'),p[1]);
+      });
+      out=out.replace(/\s+(喵(?:～|♡)?)/g,'$1').replace(/(喵(?:～|♡)?)\s+([”」"'])/g,'$1$2');
+      if((_eraNow()||99)<=2)out=out.replace(/烤箱|炉子/g,'火塘').replace(/夜视仪/g,'夜里看得清');
+      return out;
+    }};
+  }
+  function proseJob(){
+    var p=protectedKo(ko);
+    return felTranslate(p.text,'ko','zh-CN').then(function(out){
+      out=p.restore(out).trim();
+      /* 韩语连续省略主语时 Google 偶尔把女性 NPC 落成“他/我”。只校正文中的
+         叙述段，角色引号里的第一人称原话保持不动。 */
+      var qp=out.split(/((?:“[^”\n]*”|"[^"\n]*"|「[^」\n]*」))/g);
+      for(var i=0;i<qp.length;i+=2)qp[i]=qp[i].replace(/我的/g,'她的').replace(/他(?!们)/g,'她').replace(/我(?=的|那|这|右|左)/g,'她')
+        .replace(/牡蛎的入口处|牡蛎入口/g,'窝棚入口');
+      return qp.join('');
+    });
+  }
+  function panelJob(){
+    if(!panel)return Promise.resolve('');
+    /* 结构从不进入翻译器：按竖线/换行切片，只并发翻译含韩文的字段值，最后
+       在浏览器里按原顺序拼回。这样标签、姓名、竖线和换行没有任何被改写的机会。 */
+    var bits=panel.match(/[^|\n]+|\||\n/g)||[panel];
+    return Promise.all(bits.map(function(bit,bi){
+      if(!/[가-힣]/.test(bit))return Promise.resolve(bit);
+      var han=[],masked=bit.replace(/[\u3400-\u9fff]+/g,function(x){
+        var tok='FELHAN'+bi+'X'+han.length+'X';han.push([tok,x]);return tok;
+      });
+      var p=protectedKo(masked);
+      return felTranslate(p.text,'ko','zh-CN').then(function(out){
+        out=p.restore(out);han.forEach(function(x){out=out.split(x[0]).join(x[1]);});return out;
+      });
+    })).then(function(parts){return parts.join('').trim();});
+  }
+  return Promise.all([proseJob(),panelJob()]).then(function(got){
+    var chinese=got[0]+(got[1]?('\n\n'+got[1]):'');
     if(!SET.trans.showRaw)return chinese;
-    var panel=(chinese.match(/<mvu_panel>[\s\S]*?<\/mvu_panel>/i)||[''])[0];
-    var ko=stripMvu(raw).trim(),zh=stripMvu(chinese).trim();
-    return '【한국어 원문】\n'+ko+'\n\n【中文译文】\n'+zh+(panel?'\n\n'+panel:'');
+    return '【한국어 원문】\n'+ko+'\n\n【中文译文】\n'+got[0]+(got[1]?'\n\n'+got[1]:'');
   });
 }
 /* 页签切换 */
@@ -16357,10 +16576,9 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
      所以改过其中任何一支，就把这里的版本号加一：这一页本身是 no-cache，改了就到。 -->
 <script src="/core/res/vn/felinia-vn.js?v=7"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
-<script src="/core/res/ko/felinia-ko.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=4"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=12"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

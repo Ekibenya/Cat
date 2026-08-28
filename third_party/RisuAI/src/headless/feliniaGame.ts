@@ -119,6 +119,8 @@ export interface FeliniaProvider {
   format?: 'openai' | 'responses' | 'anthropic' | 'gemini' | 'mistral' | 'ollama';
   temperature?: number;
   topP?: number;
+  /** -1=minimal/off, 0=low, 1=medium, 2=high (Risu's native scale). */
+  reasoningEffort?: number;
   maxTokens?: number;
   contextTokens?: number;
   stream?: boolean;
@@ -324,6 +326,7 @@ export function compileFeliniaDefinition(
   const eras: FeliniaEraDefinition[] = [];
   const npcs: FeliniaNpcDefinition[] = [];
   for (const era of eraSource) {
+    const eraCharacterNames = new Set((era.figs || []).map((figure) => figure.n));
     const eraLore = allLore.filter((entry) => entry.era === era.i && entry.lay !== 'figures');
     eras.push({
       index: era.i,
@@ -343,7 +346,16 @@ export function compileFeliniaDefinition(
     });
     (era.figs || []).forEach((figure, figureIndex) => {
       const figureLore = allLore.filter((entry) => entry.era === era.i && entry.lay === 'figures'
-        && (entry.cat === `人 · ${figure.n}` || String(entry.title || '').startsWith(`${figure.n} ·`)));
+        && (entry.cat === `人 · ${figure.n}` || String(entry.title || '').startsWith(`${figure.n} ·`)))
+        .map((entry) => {
+          /* 人物关系条目只应在另一个关系人的名字真正出现时触发。原资料还把
+           * 「欠债、同伙、怕生」这类泛词当触发词；Flash 看到一句“不愿欠人情”
+           * 就会注入该隐等未在场人物，随后擅自让他们进门。角色和关系内容一字
+           * 不删，只把触发条件收紧为本时代的真实人名。 */
+          if (!/第五项\s*·\s*关系|关系/.test(String(entry.title || ''))) return entry;
+          const relationNames = list(entry.keys).filter((key) => key !== figure.n && eraCharacterNames.has(key));
+          return { ...entry, keys: relationNames.length ? relationNames : [`__FELINIA_RELATION_${era.i}_${figureIndex}__`] };
+        });
       const key = `era:${era.i}:npc:${figureIndex}:${figure.n}`;
       npcs.push({
         key,
@@ -413,8 +425,11 @@ function createCharacter(content: FeliniaCharacterContent, meta: FeliniaRuntimeM
     firstMsgIndex: -1,
     removedQuotes: false,
     loreSettings: {
-      tokenBudget: content.loreTokenBudget ?? 9000,
-      scanDepth: content.scanDepth ?? 8,
+      /* Keep Risu's native defaults. The earlier adapter silently expanded these to
+       * 9000 / 8, which injected almost twenty thousand extra characters per turn
+       * and made ordinary Flash models slow and prone to unrelated lore jumps. */
+      tokenBudget: content.loreTokenBudget ?? 800,
+      scanDepth: content.scanDepth ?? 5,
       recursiveScanning: content.recursiveScanning ?? true,
       fullWordMatching: content.fullWordMatching ?? false,
     },
@@ -461,6 +476,7 @@ function emptyDatabase(): Partial<Database> {
     language: 'en',
     useStreaming: true,
     usePlainFetch: true,
+    strictOpenAICompatible: true,
     inlayErrorResponse: true,
     botPresets: [],
     botPresetsId: 0,
@@ -551,6 +567,15 @@ export async function configureFeliniaMemory(options: FeliniaMemoryOptions) {
   rt.database.setCurrentCharacter(current);
 }
 
+export async function configureFeliniaTranslation(options: FeliniaTranslationOptions) {
+  const rt = await runtime();
+  const db = rt.database.getDatabase();
+  db.translatorType = options.provider === 'deeplx' ? 'deeplX' : options.provider;
+  db.deeplOptions = { key: options.deeplKey || '', freeApi: options.deeplFree ?? true };
+  db.deeplXOptions = { url: options.deeplxUrl || 'http://localhost:1188', token: options.deeplxToken || '' };
+  db.feliniaFinalPromptTranslation = options.provider !== 'off';
+}
+
 export async function translateFelinia(
   text: string,
   from: string,
@@ -558,11 +583,8 @@ export async function translateFelinia(
   options: FeliniaTranslationOptions,
 ) {
   if (!text || options.provider === 'off') return text;
+  await configureFeliniaTranslation(options);
   const rt = await runtime();
-  const db = rt.database.getDatabase();
-  db.translatorType = options.provider === 'deeplx' ? 'deeplX' : options.provider;
-  db.deeplOptions = { key: options.deeplKey || '', freeApi: options.deeplFree ?? true };
-  db.deeplXOptions = { url: options.deeplxUrl || 'http://localhost:1188', token: options.deeplxToken || '' };
   return rt.translator.runTranslator(text, true, from, to);
 }
 
@@ -603,8 +625,11 @@ export async function configureFeliniaProvider(provider: FeliniaProvider) {
   db.forceReplaceUrl = provider.base;
   db.proxyKey = provider.key || '';
   db.customAPIFormat = format(provider.format);
-  db.temperature = Math.round((provider.temperature ?? 0.9) * 100);
-  db.top_p = provider.topP ?? 1;
+  // Empty fields in FELINIA mean "use the endpoint default". -1000 is Risu's
+  // existing sentinel for omitting a sampling parameter from the request.
+  db.temperature = provider.temperature == null ? -1000 : Math.round(provider.temperature * 100);
+  db.top_p = provider.topP == null ? -1000 : provider.topP;
+  db.reasoningEffort = provider.reasoningEffort ?? -1;
   db.maxResponse = provider.maxTokens ?? 4096;
   db.maxContext = provider.contextTokens ?? 65536;
   db.useStreaming = provider.stream ?? true;
@@ -612,6 +637,10 @@ export async function configureFeliniaProvider(provider: FeliniaProvider) {
   // FELINIA is a static browser game and deliberately ships no proxy server.
   // Route requests straight to the endpoint configured by the player.
   db.usePlainFetch = true;
+  // Custom browser endpoints (including Gemini CLI bridges) often implement only
+  // the common OpenAI chat-completions subset. Keep Risu's prompt engine while
+  // using a deliberately conservative transport payload.
+  db.strictOpenAICompatible = provider.format === 'openai' || !provider.format;
   db.inlayErrorResponse = true;
 }
 
@@ -782,6 +811,7 @@ export const FeliniaRisu = Object.freeze({
   activateEra: activateFeliniaEra,
   setSessionContent: setFeliniaSessionContent,
   configureMemory: configureFeliniaMemory,
+  configureTranslation: configureFeliniaTranslation,
   translate: translateFelinia,
   setNpcState: setFeliniaNpcState,
   importPreset: importRisuPreset,

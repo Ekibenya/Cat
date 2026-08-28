@@ -934,6 +934,10 @@ export interface Database{
     useChatSticker:boolean,
     useAdditionalAssetsPreview:boolean,
     usePlainFetch:boolean
+    /** Keep custom OpenAI-compatible browser requests limited to widely supported fields. */
+    strictOpenAICompatible?:boolean
+    /** Translate the fully assembled prompt for the fixed browser game. */
+    feliniaFinalPromptTranslation?:boolean
     hypaMemory:boolean
     hypav2:boolean
     memoryAlgorithmType:string // To enable new memory module/algorithms 

@@ -18,6 +18,7 @@ import { getNodetextToSentence, sleep } from "../util"
 import { processScriptFull } from "../process/scripts"
 import localforage from "localforage"
 import sendSound from '../../etc/send.mp3'
+import { splitGoogleTranslationText } from './googleChunks'
 
 let cache={
     origin: [''],
@@ -31,6 +32,20 @@ export const LLMCacheStorage = localforage.createInstance({
 })
 
 let waitTrans = 0
+const googleTranslationCache = new Map<string, string>()
+
+async function mapConcurrent<T, R>(items:T[], limit:number, worker:(item:T) => Promise<R>):Promise<R[]> {
+    const results = new Array<R>(items.length)
+    let cursor = 0
+    const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while(cursor < items.length){
+            const index = cursor++
+            results[index] = await worker(items[index])
+        }
+    })
+    await Promise.all(runners)
+    return results
+}
 
 export function getCurrentTranslatorPreset(): TranslatorPreset {
     return getCurrentTranslatorPresetFromState(getDatabase())
@@ -73,12 +88,12 @@ export async function runTranslator(text:string, reverse:boolean, from:string,ta
             || texts[i].startsWith('{{raw')
             || texts[i].startsWith('{{video')
             || texts[i].startsWith('{{audio')
-            && texts[i].endsWith('}}')
-            || texts[i].length === 0){
+            && texts[i].endsWith('}}')){
             chunks.push([texts[i], false])
             chunks.push(["", true])
         }
         else{
+            if(chunks[chunks.length-1][0]) chunks[chunks.length-1][0] += '\n'
             chunks[chunks.length-1][0] += texts[i]
         }
     }
@@ -212,7 +227,17 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
     }
 
 
-    const url = `https://${arg.host}/translate_a/single?client=gtx&dt=t&sl=${db.translatorInputLanguage}&tl=${arg.to}&q=` + encodeURIComponent(text)
+    const googleChunks = splitGoogleTranslationText(text)
+    if(googleChunks.length > 1){
+        const translated = await mapConcurrent(googleChunks, 4, (chunk) => translateMain(chunk, arg))
+        return translated.join('')
+    }
+
+    const googleCacheKey = `${arg.from}\u0000${arg.to}\u0000${text}`
+    const cachedGoogle = googleTranslationCache.get(googleCacheKey)
+    if(cachedGoogle !== undefined) return cachedGoogle
+
+    const url = `https://${arg.host}/translate_a/single?client=gtx&dt=t&sl=${arg.from}&tl=${arg.to}&q=` + encodeURIComponent(text)
 
 
 
@@ -221,6 +246,11 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
         method: "GET",
 
     })
+
+    if(!f.ok){
+        const detail = (await f.text()).slice(0, 240)
+        throw new Error(`Google Translate HTTP ${f.status}${detail ? `: ${detail}` : ''}`)
+    }
 
     const res = await f.json()
 
@@ -237,6 +267,10 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
     }
 
     const result = (res[0].map((s) => s[0]).filter(Boolean).join('') as string).replace(/\* ([^*]+)\*/g, '*$1*').replace(/\*([^*]+) \*/g, '*$1*');
+    googleTranslationCache.set(googleCacheKey, result)
+    if(googleTranslationCache.size > 256){
+        googleTranslationCache.delete(googleTranslationCache.keys().next().value)
+    }
     return result
 }
 

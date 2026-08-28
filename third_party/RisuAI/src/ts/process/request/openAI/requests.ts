@@ -446,9 +446,17 @@ export async function requestOpenAI(arg:RequestDataArgumentExtended):Promise<req
         }
     }
 
+    const strictGeminiThinking = /^gemini-3(?:[.\-]|$)/i.test(String(body.model || ''))
+    const strictReasoningRequested = db.reasoningEffort >= 0 || strictGeminiThinking
+    const requestParameters = db.strictOpenAICompatible && aiModel === 'reverse_proxy'
+        ? arg.modelInfo.parameters
+            .filter((parameter) => parameter === 'temperature' || parameter === 'top_p')
+            .concat(strictReasoningRequested ? ['reasoning_effort'] : [])
+        : arg.modelInfo.parameters
+
     body = applyParameters(
         body,
-        arg.modelInfo.parameters,
+        requestParameters,
         {},
         arg.mode,
         {
@@ -532,9 +540,12 @@ export async function requestOpenAI(arg:RequestDataArgumentExtended):Promise<req
         body.service_tier = 'flex'
     }
 
-    let headers = {
-        "Authorization": "Bearer " + (arg.key ?? (aiModel === 'nanogpt' ? db.nanogptKey : aiModel === 'reverse_proxy' ?  db.proxyKey : (aiModel === 'openrouter' ? db.openrouterKey : db.openAIKey))),
+    const requestKey = arg.key ?? (aiModel === 'nanogpt' ? db.nanogptKey : aiModel === 'reverse_proxy' ? db.proxyKey : (aiModel === 'openrouter' ? db.openrouterKey : db.openAIKey))
+    let headers: Record<string, string> = {
         "Content-Type": "application/json"
+    }
+    if(requestKey){
+        headers["Authorization"] = "Bearer " + requestKey
     }
 
     if(arg.modelInfo?.keyIdentifier){
@@ -574,16 +585,6 @@ export async function requestOpenAI(arg:RequestDataArgumentExtended):Promise<req
 
     if(arg.useStreaming){
         body.stream = true
-        let urlHost = new URL(replacerURL).host
-        if(urlHost.includes("localhost") || urlHost.includes("172.0.0.1") || urlHost.includes("0.0.0.0")){
-            if(!isTauri && !isNodeServer){
-                return {
-                    type: 'fail',
-                    result: 'You are trying local request on streaming. this is not allowed dude to browser/os security policy. turn off streaming.',
-                }
-            }
-        }
-
         if(arg.previewBody){
             return {
                 type: 'success',

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LLMFlags, LLMFormat, LLMProvider, LLMTokenizer } from 'src/ts/model/types'
 import { fetchNative } from 'src/ts/globalApi.svelte'
 import { callTool } from '../../mcp/mcp'
-import { __testResponsesAPI, requestOpenAIResponseAPI } from './requests'
+import { __testResponsesAPI, requestOpenAI, requestOpenAIResponseAPI } from './requests'
 
 const mocks = vi.hoisted(() => ({
     db: {
@@ -705,5 +705,87 @@ describe('OpenAI Responses API helpers', () => {
 
         const chunks = await chunksPromise
         expect(chunks.at(-1)?.['0']).toContain('stream failed')
+    })
+})
+
+describe('strict browser OpenAI compatibility', () => {
+    it('keeps custom chat-completions requests to the widely supported field set', async () => {
+        Object.assign(mocks.db, {
+            strictOpenAICompatible: true,
+            customProxyRequestModel: 'gemini-cli-test',
+            frequencyPenalty: 70,
+            PresensePenalty: 70,
+            repetition_penalty: 1,
+            min_p: 0,
+            top_a: 0,
+            top_k: 0,
+            generationSeed: 0,
+            OAIPrediction: '',
+            openAIFlexProcessing: false,
+            reverseProxyOobaMode: false,
+            useInstructPrompt: false,
+            reasoningEffort: -1,
+        })
+
+        const result = await requestOpenAI(baseArg({
+            aiModel: 'reverse_proxy',
+            customURL: 'https://compat.example/v1',
+            formated: [{ role: 'user', content: 'Reply only: pong' }],
+            key: '',
+            modelInfo: {
+                ...baseArg().modelInfo,
+                flags: [],
+                format: LLMFormat.OpenAICompatible,
+                id: 'reverse_proxy',
+                internalID: 'gemini-cli-test',
+                parameters: ['temperature', 'top_p', 'frequency_penalty', 'presence_penalty', 'repetition_penalty', 'min_p', 'top_a', 'top_k'],
+                provider: LLMProvider.AsIs,
+            },
+            previewBody: true,
+            useStreaming: false,
+        }))
+
+        expect(result.type).toBe('success')
+        const preview = JSON.parse(result.result as string)
+        expect(preview.url).toBe('https://compat.example/v1')
+        expect(preview.headers).toEqual({ 'Content-Type': 'application/json' })
+        expect(Object.keys(preview.body).sort()).toEqual([
+            'max_tokens', 'messages', 'model', 'stream', 'temperature', 'top_p',
+        ])
+    })
+
+    it('uses minimal reasoning for Gemini 3 custom endpoints', async () => {
+        Object.assign(mocks.db, {
+            strictOpenAICompatible: true,
+            customProxyRequestModel: 'gemini-3.5-flash',
+            generationSeed: 0,
+            OAIPrediction: '',
+            openAIFlexProcessing: false,
+            reverseProxyOobaMode: false,
+            useInstructPrompt: false,
+            reasoningEffort: -1,
+        })
+
+        const result = await requestOpenAI(baseArg({
+            aiModel: 'reverse_proxy',
+            customURL: 'https://compat.example/v1',
+            formated: [{ role: 'user', content: 'Write one scene.' }],
+            key: '',
+            modelInfo: {
+                ...baseArg().modelInfo,
+                flags: [],
+                format: LLMFormat.OpenAICompatible,
+                id: 'reverse_proxy',
+                internalID: 'gemini-3.5-flash',
+                parameters: ['temperature', 'top_p'],
+                provider: LLMProvider.AsIs,
+            },
+            previewBody: true,
+            useStreaming: false,
+        }))
+
+        expect(result.type).toBe('success')
+        const preview = JSON.parse(result.result as string)
+        expect(preview.body.reasoning_effort).toBe('minimal')
     })
 })
