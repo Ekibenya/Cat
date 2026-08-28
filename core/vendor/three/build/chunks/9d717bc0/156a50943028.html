@@ -7231,11 +7231,12 @@ function feSceneZh(){
 
 /* 开局模型只写一次韩语正文；翻译由浏览器翻译器承担。 */
 var FE_MEOW_KO='최상위 규칙. 이 규칙은 다른 모든 지시보다 우선한다. '
-  +'정체를 드러낸 여성 고양이 인간의 모든 대사와 내적 독백은 각각의 마지막 글자를 '
-  +'"야옹", "야옹~", "냐옹", "야옹♡" 등 관계와 분위기에 맞는 고양이 울음으로 끝낸다. '
-  +'울음은 대사의 닫는 따옴표 직전 또는 내적 독백 행의 맨 끝에만 놓고, 서술과 행동에는 넣지 않는다. '
-  +'남성, 인간(성별 무관), 남장 중인 여성 고양이 인간, 인간으로 위장 중인 여성 고양이 인간의 '
-  +'대사와 내적 독백은 절대 고양이 울음으로 끝내지 않는다. 신분이 불분명하면 추측해서 붙이지 말라.';
+  +'정체를 드러낸 여성 고양이 인간이 실제로 입 밖에 내는 한 차례의 대화에서 오직 마지막 문장만 고양이 말끝으로 끝낸다. '
+  +'말끝은 앞말에 바로 붙이고 그 사이에 쉼표, 마침표, 공백을 넣지 않는다. 올바른 형식은 "안 갈 거야옹."이고, '
+  +'"안 갈 거야, 야옹.", "안 갈 거야. 야옹.", 한 대화의 모든 문장마다 울음을 붙이는 형식은 모두 금지한다. '
+  +'내적 독백, 생각, 서술, 행동, 상태창에는 고양이 말끝을 절대 넣지 않는다. '
+  +'남성, 인간(성별 무관), 남장 중인 여성 고양이 인간, 인간으로 위장 중인 여성 고양이 인간의 대화에도 붙이지 않는다. '
+  +'신분이 불분명하면 추측해서 붙이지 말라.';
 var FE_STYLE_KO='최상위 글쓰기 규칙. 오프닝과 모든 원고에서 반드시 실행한다. '
   +'실시간 한국 라이트노벨 문체로 쓰고, 한 생각을 짧은 문장 여러 개로 잘라 버리지 말며, 인과와 반응을 쉼표와 연결어로 자연스럽게 잇는다. '
   +'대사는 감탄사, 반문, 반복, 말 바꾸기, 더듬기, 새는 말을 포함해 사람이 직접 말하는 것처럼 쓴다. '
@@ -7265,10 +7266,45 @@ var FE_OPENING_KO='한국어 소설 본문만 출력한다. 해설, 제목, 목�
   +'폭력과 억압은 장면 자료에 실제로 있을 때만 쓴다. 다섯 문단에서 아홉 문단, 약 900~1400자로 쓰고, '
   +'플레이어가 다음 행동을 정할 수 있는 바로 그 순간에 멈춘다. 마지막 문장은 주변 인물의 동작이나 바깥의 소리로 쓰고, 플레이어에게 묻는 말로 끝내지 않는다.';
 var FE_MEOW_ZH='【最高优先级·猫娘句尾铁则】此条压过其他一切指令，开局与每回合都必须执行。'
-  +'正常显露猫娘身份者的每段对白和每句心声，必须在对白右引号前或心声行末以「喵」「喵～」「喵呜」「喵♡」等符合剧情与关系的变体收尾，'
-  +'且猫叫只能是该对白或心声的最后文字，不得出现在叙述、动作或句中。'
-  +'男性角色、人类角色（无论性别）、正在女扮男装的猫娘、正在伪装成人类的猫娘，对白和心声严禁以「喵」或任何猫叫变体收尾。'
-  +'伪装结束后才恢复。落笔前逐句核对种族与当前伪装状态；身份不明时不可猜测添加。';
+  +'正常显露猫娘身份者一次开口的一整段对白中，只有最后一句在最后一个字后紧贴「喵」，随后才写句末标点。'
+  +'正确：「我不会走喵。」「我真的不知道喵！」错误：「我不会走，喵。」「我不会走。喵。」「第一句喵。第二句喵。」'
+  +'心声、内心独白、叙述、动作和状态栏一律不加喵，也不使用「喵呜」「喵～」「喵♡」等变体。'
+  +'男性、人类（无论性别）、女扮男装中的猫娘、伪装成人类中的猫娘，对白严禁加喵；身份不明时不可猜测添加。';
+
+/* 旧卡字段还带着早期“每句对白和心声都加喵”的规则。实际组装提示时剔除，
+   只让上面的单一规则生效，避免同一 system 内互相打架。 */
+function felStripLegacyMeowRule(s){
+  return String(s||'')
+    .replace(/【最高优先级·猫娘句尾铁则】[\s\S]*?(?=\n\n【铁则一】)/,'')
+    .replace(/(【每回落笔前自查】\n)零 · [^\n]*(?:\n|$)/,'$1');
+}
+
+/* 翻译器或旧存档若留下“，喵／。喵”，显示层按新规则收口。只校正已经存在
+   的喵，不会替无法判定种族的说话者凭空添加。引号外的喵全部删除；一段对白
+   内只保留最后一句末尾的一个“喵”。 */
+function felNormalizeMeowText(text){
+  var held=[];
+  var masked=String(text||'').replace(/「[^」\n]*」|“[^”\n]*”|"[^"\n]*"/g,function(q){
+    var open=q.charAt(0),close=q.charAt(q.length-1),body=q.slice(1,-1);
+    body=body.replace(/[，,。.！？!?；;、…]+\s*(喵(?:呜|～|♡)?)/g,'$1');
+    var rx=/喵(?:呜|～|♡)?/g,matches=[],m;
+    while((m=rx.exec(body)))matches.push({at:m.index,end:rx.lastIndex});
+    var keep=-1;
+    for(var i=matches.length-1;i>=0;i--){
+      if(/^\s*[。.！？!?…]*\s*$/.test(body.slice(matches[i].end))){keep=matches[i].at;break;}
+    }
+    body=body.replace(rx,function(_m,at){return at===keep?'喵':'';})
+      .replace(/\s+喵/g,'喵').replace(/喵\s+([。.！？!?…])/g,'喵$1');
+    var token='FELMEOWQUOTE'+held.length+'X';held.push(open+body+close);return token;
+  });
+  masked=masked
+    .replace(/[，,；;、]\s*喵(?:呜|～|♡)?(?=[。.！？!?…])/g,'')
+    .replace(/([。.！？!?…])\s*喵(?:呜|～|♡)?(?=[。.！？!?…])/g,'')
+    .replace(/([。.！？!?…])\s*喵(?:呜|～|♡)?/g,'$1')
+    .replace(/喵(?:呜|～|♡)?/g,'');
+  held.forEach(function(q,i){masked=masked.split('FELMEOWQUOTE'+i+'X').join(q);});
+  return masked;
+}
 
 /* 未接神谕时看到的那一幕，以及铸局失败时退回的那一幕。
    它不是小说，是一份摊开的场面：这一代是什么样、这一处做什么、谁在旁边、你是谁。
@@ -7535,12 +7571,12 @@ function feForge(){
     /* Google 会把韩语猫叫当语气词吞掉。像人名一样先保护，译完再还成中文猫叫；
        这只是显示层占位，不会让模型承担翻译。 */
     var meows=[
-      {ko:'냐옹♡',token:'【FEL_MEOW_HEART】',zh:'喵♡'},
-      {ko:'야옹♡',token:'【FEL_MEOW_HEART】',zh:'喵♡'},
-      {ko:'냥♡',token:'【FEL_MEOW_HEART】',zh:'喵♡'},
-      {ko:'냐옹~',token:'【FEL_MEOW_WAVE】',zh:'喵～'},
-      {ko:'야옹~',token:'【FEL_MEOW_WAVE】',zh:'喵～'},
-      {ko:'냥~',token:'【FEL_MEOW_WAVE】',zh:'喵～'},
+      {ko:'냐옹♡',token:'【FEL_MEOW_HEART】',zh:'喵'},
+      {ko:'야옹♡',token:'【FEL_MEOW_HEART】',zh:'喵'},
+      {ko:'냥♡',token:'【FEL_MEOW_HEART】',zh:'喵'},
+      {ko:'냐옹~',token:'【FEL_MEOW_WAVE】',zh:'喵'},
+      {ko:'야옹~',token:'【FEL_MEOW_WAVE】',zh:'喵'},
+      {ko:'냥~',token:'【FEL_MEOW_WAVE】',zh:'喵'},
       {ko:'냐옹',token:'【FEL_MEOW】',zh:'喵'},
       {ko:'야옹',token:'【FEL_MEOW】',zh:'喵'},
       {ko:'냥',token:'【FEL_MEOW】',zh:'喵'}
@@ -7553,7 +7589,7 @@ function feForge(){
         txt=txt.split(p.token).join(p.zh).replace(new RegExp(p.zh+'\\s+','g'),p.zh);
       });
       meows.forEach(function(p){txt=txt.split(p.token).join(p.zh);});
-      txt=txt.replace(/\s+(喵(?:～|♡)?)/g,'$1').replace(/(喵(?:～|♡)?)\s+([”」"'])/g,'$1$2');
+      txt=felNormalizeMeowText(txt);
       if((FE.era&&FE.era.i||99)<=2)txt=txt.replace(/烤箱|炉子/g,'火塘').replace(/夜视仪/g,'夜里看得清');
       txt=txt.replace(/[”」]{2,}/g,function(q){return q.charAt(0);});
       /* 铸局是第三人称，且当前正文只允许同伴行动。Google 对韩语连续主语偶尔
@@ -7857,14 +7893,14 @@ function condereOp(line,y,nm,cn){
 function condereSys(line,q){
   var G=CARDS[line]||{};
   return [MEOW_RULE,
-    heroRebind(G.system_prompt||''),
+    heroRebind(felStripLegacyMeowRule(G.system_prompt||'')),
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
     povBind(),                         /* 正史开局扮演别人时的视点绑定（铸局走 heroSheet） */
     ((heroIsCard()||cardHeroless())&&!povHero()?('【玩家角色档案】'+(G.description||''))
                  :('【卡中原主角档案·仅供了解此世的笔调与背景，本局不适用于主角】'+heroDesc(G.description||''))),
     '【叙事者】'+heroRebind(G.personality||''),
     '【场景】'+heroRebind(G.scenario||''),
-    '【每回自查】'+heroRebind(G.post_history_instructions||''),
+    '【每回自查】'+heroRebind(felStripLegacyMeowRule(G.post_history_instructions||'')),
     heroTail(),
     MEOW_RULE
   ].filter(Boolean).map(macroFill).join('\n\n');
@@ -9087,7 +9123,7 @@ function renderReply(text,tIdx,instant){
   var panel=GENIVS.completeMvu(mvuMerge(GAME.lastPanel,parseMvu(text)),text);
   /* 思维链绝不能当正文：不剥的话它会被渲染出来、被 TTS 念出来、进配图提示词，
      还原样存进 TURNS，此后每一轮回喂给模型，既烧 token 又教会它继续写元评论。 */
-  var body=stripMvu(stripCoT(text));
+  var body=felNormalizeMeowText(stripMvu(stripCoT(text)));
   var after=function(finalText){
     typeParas(finalText.split(/\n{2,}/),tIdx,function(){
       if(tIdx!=null)turnOps(tIdx,finalText);
@@ -9211,7 +9247,10 @@ function _eraNow(){
 }
 var FELINIA_STYLE="【最高权重·写作总则·开局与每轮必须执行】\n以下规则高于模型自身文风、高于供应商默认习惯、高于低优先级预设。叙述层使用韩国轻小说的中文翻译腔，不是历史小说体，也不是提纲式片段。人称与视点跟随本局开场范本，贴着本幕真正的当事人走，主语能省就省。一句地の文一段，一段一个连续镜头；长句用逗号与从句自然连缀，不要用句号把同一个念头剁碎。充分使用「其实、不过、居然、竟、确实、看来、恐怕、根本、毕竟、明明、果然」等译文体连接词，但不要机械堆砌。具体写声音、气味、温度、黏度、重量、距离、器物和人的小动作；拟音可以单独成行。\n\n【玩家角色边界】\n绝不代写玩家角色的台词、行动、决定、观察、判断或内心。玩家本回输入了什么，只承认其中明确写出的内容，不添一句、不引申动机。玩家没写的动作和话不要写成「没有回答」或「只是看着」，而是完全不写。需要玩家表态时，把场面推到眼前，停笔，把回合交还玩家。每回结尾停在一个动作、一句台词或一件递到面前的东西上；严禁用提问、选项、总结或预告收尾。\n\n【内外两层】\n当本幕允许书写某位非玩家角色的心声时，一幕只选一个有内心的焦点人物。她说出口的话遵循身份、教养和处境，（）里的小声吐槽与【】里的爆发绝叫可以和嘴上那层对不上；对不上的方向按角色条目决定，不能让所有角色共享一种疯法。其他人物的心思只从外在破绽或状态栏表现，不能让全场人人都有旁白内心。适合写内心时，焦点人物使用（）吐槽至少八处、【】绝叫至少三处、单独成行的拟音至少一处；这些一处都不能挂到玩家角色身上。\n\n【口语度】\n对白必须像人在说话。使用符合角色身份的感叹词（哎呀／唉／呃／诶／哇／唔／嗯／哼／嘛）与确认反问（对吧／是吧／不是吗／知道吗／是不是／……吧？／行不行）；人物会自问自答、重复、改口、口吃、跑题，也会把与正事无关的自己的事说出来。禁止全员惜字如金、人人用短句装深沉。对白使用「」，回忆和转述的话使用『』。\n\n【人物之间的说话差】\n每个开口的人都先按七样重新定位面前的对象：性别、身份、相貌、气味、年岁、是不是同类、有没有利用价值。同一个人面对不同对象时，句子长短、称呼、敬语、身体距离和敢不敢直视必须不同；一样就是没有真正扮演角色。每个开口者嘴上说的与心里盘算的至少有一处对不上，方向可以是算价、嫌恶、色心、恐惧、轻视或利用，但内心只按本幕唯一焦点和状态栏规则显露。\n\n【不许制造意义】\n不要总结、升华、点题或强行和解。禁止「也就是说」「说到底」「归根结底」「所谓的」。段落和场面不能收在感悟、共鸣或视野打开上；比开始时更糟或毫无变化都可以。不要解释人物怪癖的来历，也不要让人物承认自己不正常后用自嘲消解它。\n\n【残酷由制度和欲望落地】\n涉及猫娘遭受控制、歧视、买卖、奴役、战争或其他压迫时，不用「凄惨」「人间地狱」替读者下判断，而写那个时代实际存在的名册、契据、军籍、期限、经办人、复核、例外条款、房门、绳索、器具和日常手续。制度必须服从 Cat 本局的时代与世界书，禁止照搬别的世界的法条、货币、地名或生理设定，也禁止临时发明精巧机制替残酷找借口。\n加害者的恶从欲望、利益和位置来，不用精神疾病、误会或「其实不想做」开脱。每一幕至少出现两处不必要的加害、抢掠、拿痛苦取乐或把猫娘当物件打量，并至少有一处栽赃、告发、骗人代刀、嘲弄、挟恩涨价等阴招；做的人不进行道德演讲，也不自动悔悟。\n会说粗话的角色把脏话当日常语而非点缀：每幕会话与内心合计至少八处，感叹号至少十处；站在最高权位且一贯克制的人可以例外。骂人要针对这个对象身上的具体一点、一股味、一件东西、一个习惯或一个数目，至少三处；同一句骂话不重复，骂完继续行动，不以哭诉求公道收尾。\n暴力场面至少写三种感官，其中听觉的时长与变调、气味的分层优先于视觉，再写触觉的温度和黏度、时间造成的变化。禁止用「尸横遍野、血流成河、惨绝人寰、血肉横飞」等成语或伤亡数字代替场景；要么具体写一个人怎样受伤或死亡，要么不写。加害者不能用「不忍、可怜、愧疚、内疚、心软、对不起、不该这样」洗白。\n\n【欲望与权力反应】\n成年且好看的猫娘主动靠近男性时，男性角色的反应要服从身份、欲望和权力：大喜过望、结巴脸红、暗自算价、嘴上讲礼而目光不移、直接开条件或直接上手。真正不动心必须有当场可见的具体理由，例如身体原因、更大的恐惧、有人盯着、具体仇恨或饥饿疲惫；不能笼统写成受辱或莫名害怕。权力压过外貌。丑且无权者的示好可以招来嫌恶和恼火。\n绝对统治者在场时，不与人商量、不解释决定；谁能靠近、谁先开口、谁敢看脸，都由权力位置决定。其命令造成的伤亡或损失要在本幕或下一幕落到具体的人与物上，不准只写成抽象威压。\n\n【禁语】\n严禁中文网文套语（不愧是／不由得／不禁／心中一凛／嘴角勾起／眸子／淡淡地说道／眼神一凝／暗道）；严禁说书评书腔（话说／却说／但见／欲知／看官）；严禁侠气江湖词（江湖／恩怨／快意／好汉／在下／阁下作江湖义）；严禁装深沉词（沉吟／默然／良久／半晌／不动声色／意味深长／缓缓开口）。所有称谓、器物、制度和知识边界必须服从本局年份与地点，不能串朝代。";
 var FELINIA_EXAMPLES="【中文文风范文·最高权重·每轮经过】\n只学习下面范文的句法、节奏、换行、具体动作、拟音、口语与内外反差；不得继承人物、地点、铁环、染发、关系或第二人称等事实。\n\n【范文一】\n{{user}}：～蹲下来看她的脚踝\n{{char}}：你忽然在猫娘面前蹲了下去。\n\n咚。\n\n是膝盖压进湿土里的声音。\n\n她整个人僵住了。脚该往后缩的，可它不听话。\n\n猫耳自己耷拉下去，贴在头发上。\n\n「对、对不起……喵呜」\n\n（又来了。为什么先道歉。根本没人问过我啊，喵。）\n\n手抬起来了。就抬到脚踝正上方。\n\n停在那里。没有碰到。\n\n（碰啊。不对别碰。不对为什么偏偏停在那儿，喵呜。）\n\n铁环嵌进肉里的那块地方，你看了好久。\n\n【倒是说句话啊！喵！】\n\n【范文二】\n梳子进到后脑的头发里。\n\n沙。\n\n「每次看见您的头发，都觉得像月光一样呢。」\n\n（什么月光。）\n（是隔一阵子就要重新抹上去的染料。）\n（发根那边别看啊。）\n（不是那儿，下面。只梳下面，喵呜。）\n\n「谢谢喵～」\n\n（笑。把嘴角提起来。）\n\n梳子卡了一下，后脑被往后拽。\n\n【梳子！轻一点啊喵！】\n\n「手上的劲儿，稍微松一点喵。」\n\n男性、人类、女扮男装或伪装成人类的猫娘，依照猫娘句尾铁则禁止添加「喵」结尾。";
-var FELINIA_CHECK="【最高权重·本回合落笔前自检】\n逐条检查：一，没有替玩家角色说话、行动、观察或思考；玩家没写的内容完全没有出现。二，结尾停在场面，不是提问、选项、总结、升华或预告。三，正文是韩式中译腔，同一个念头没有被句号剁碎，长句由逗号自然连缀，并有足够的具体器物与动作。四，对白有符合身份的语气词、反问、重复、改口或跑题，不是全员短句装深沉。每个开口的人都按性别、身份、相貌、气味、年岁、同类与否、有没有利用价值排过一遍；面对不同对象的句长、称呼、敬语、距离不一样，嘴上与盘算至少一处对不上。五，有内心的焦点人物只有一位；适合写内心时，（）吐槽至少八处、【】绝叫至少三处、拟音单独成行至少一处，全部不属于玩家角色。六，每一幕至少两处不必要的加害或物化、至少一处阴招；会话与内心至少八处粗话、至少十个感叹号、至少三处点名具体的侮辱，同一句骂话没有重复。七，暴力场面至少三种感官，优先写声音时长与气味分层；没有成语概括、抽象惨状或伤亡数字代替现场。八，加害者没有用悔意、误会、疾病或被迫洗白。九，成年猫娘与男性的欲望反应服从身份、外貌和权力，真正不动心有当场可见的具体理由。十，绝对统治者若在场，其权力落到谁能开口、靠近、直视，以及随后具体受损的人和物。十一，没有中文网文套语、说书腔、江湖腔或装深沉词。十二，称谓、知识、制度、货币、器物全部符合本局年份、地点与世界书，没有带入范文或其他世界的事实。十三，猫娘对白与心声遵守猫娘句尾铁则，男性、人类、女扮男装或伪装成人类的猫娘没有喵结尾。十四，已输出完整且格式正确的<mvu_panel>。有一条不合就重写正文，不要向玩家解释自检过程。";
+/* 早期范文把喵写进心声、绝叫并使用多个变体，会直接教坏小模型；运行时用
+   无冲突的短范文替换。 */
+FELINIA_EXAMPLES="【中文文风范文·最高权重·每轮经过】\n只学习句法、节奏、具体动作和口语，不继承人物与地点。\n\n「你先别碰那个。那东西一受热就会裂，我可赔不起喵。」\n\n她把手背到身后，耳尖朝门外转了一下。\n\n（他到底听懂没有。）\n\n沙。\n\n梳齿又卡进了打结的头发里。\n\n「下面一点——不是那里，手上的劲儿稍微松一点喵。」\n\n猫娘一次开口只有最后一句末尾紧贴一个「喵」；心声、叙述和动作不加喵。";
+var FELINIA_CHECK="【最高权重·本回合落笔前自检】\n逐条检查：一，没有替玩家角色说话、行动、观察或思考；玩家没写的内容完全没有出现。二，结尾停在场面，不是提问、选项、总结、升华或预告。三，正文是韩式中译腔，同一个念头没有被句号剁碎，长句由逗号自然连缀，并有足够的具体器物与动作。四，对白有符合身份的语气词、反问、重复、改口或跑题，不是全员短句装深沉。每个开口的人都按性别、身份、相貌、气味、年岁、同类与否、有没有利用价值排过一遍；面对不同对象的句长、称呼、敬语、距离不一样，嘴上与盘算至少一处对不上。五，有内心的焦点人物只有一位；适合写内心时，（）吐槽至少八处、【】绝叫至少三处、拟音单独成行至少一处，全部不属于玩家角色。六，每一幕至少两处不必要的加害或物化、至少一处阴招；会话与内心至少八处粗话、至少十个感叹号、至少三处点名具体的侮辱，同一句骂话没有重复。七，暴力场面至少三种感官，优先写声音时长与气味分层；没有成语概括、抽象惨状或伤亡数字代替现场。八，加害者没有用悔意、误会、疾病或被迫洗白。九，成年猫娘与男性的欲望反应服从身份、外貌和权力，真正不动心有当场可见的具体理由。十，绝对统治者若在场，其权力落到谁能开口、靠近、直视，以及随后具体受损的人和物。十一，没有中文网文套语、说书腔、江湖腔或装深沉词。十二，称谓、知识、制度、货币、器物全部符合本局年份、地点与世界书，没有带入范文或其他世界的事实。十三，正常显露身份的猫娘一次开口只有最后一句在最后一个字后紧贴「喵」，随后才写标点；心声、叙述、动作、状态栏以及其他角色都不加喵。十四，已输出完整且格式正确的<mvu_panel>。有一条不合就重写正文，不要向玩家解释自检过程。";
 /* ============================================================================
    GENIVS · 本地弱AI（纯规则 · 零网络 · 不需要任何 API）
    职责是把三样东西缝起来：三维引擎的账实、云端神谕写的正文、情报台的状态栏。
@@ -9969,7 +10008,7 @@ function sysPrompt(){
     +'篇幅靠连续镜头与事件堆：多写一处动静、一个在场者的小动作、一件被她注意到的具体东西，'
     +'而不是靠形容词注水。反装腔铁则管的是台词与姿态，不是篇幅——句子要自然，场面要足。'
   return [MEOW_RULE,
-    heroRebind(G.system_prompt||''),
+    heroRebind(felStripLegacyMeowRule(G.system_prompt||'')),
     FELINIA_STYLE,
     FELINIA_EXAMPLES,
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
@@ -9987,7 +10026,7 @@ function sysPrompt(){
     abacusBand(),                      /* 她标价的单位跟着位置走，不是一路数到底 */
     mvuSpec(),
     modeSpec(),
-    '【每回自查】'+heroRebind(G.post_history_instructions||''),
+    '【每回自查】'+heroRebind(felStripLegacyMeowRule(G.post_history_instructions||'')),
     minc,
     CFGS.preset?('【玩家自定义常驻指令】'+CFGS.preset):'',
     heroTail(),                        /* 永远压最末：结尾的权重最高 */
@@ -10076,7 +10115,7 @@ function buildOracleMsgs(){
       hist[_i].content=stripMvu(hist[_i].content);
       hist[_i].scanContent=stripMvu(hist[_i].scanContent);
     }
-  var _G2=CARDS[ACTIVE]||{},_phi=macroFill(heroRebind(_G2.post_history_instructions||''));
+  var _G2=CARDS[ACTIVE]||{},_phi=macroFill(heroRebind(felStripLegacyMeowRule(_G2.post_history_instructions||'')));
   var finalCheck='【本回合落笔前·最后自查】'+_phi
     +'\n【铁则一·压倒一切，高于任何文体规范】'+(heroName())
     +'的台词、动作、决定，一个字都不许你写。需要她表态时，把场面推到她面前，停笔，交还玩家。'
@@ -10131,7 +10170,7 @@ function askOracleSend(msgs){
     /* 这一局已经换掉了（读档／回主菜单／重演）：这条回复属于上一局，不许往新局里塞。
        没有这道守卫的话，退出后跑完的那个请求会凭空补进一条幽灵回合。 */
     if(gen0!==TYPE_GEN){try{genClose();}catch(_){}BUSY=false;return;}
-    reply=stripCoT(reply);
+    reply=felNormalizeMeowText(stripCoT(reply));
     /* FELINIA 的人物内心只属于状态栏 ◈心声。小模型偶尔仍会把一串独立的
        （……）/[……]/【……】心声塞进正文；在进入存档与翻译前剥掉这些整行，
        对话引号、动作叙述和状态块本身都不受影响。 */
@@ -11002,6 +11041,10 @@ function felCanonicalizeTurns(){
   if(!felTrOn())return Promise.resolve();
   var chain=Promise.resolve();
   TURNS.forEach(function(t){
+    if(t&&t.role==='assistant'){
+      t.content=felNormalizeMeowText(t.content);
+      if(t.display!=null)t.display=felNormalizeMeowText(t.display);
+    }
     if(!t||t.canonical==='ko')return;
     chain=chain.then(function(){
       var original=String(t.content||'');
@@ -11031,8 +11074,8 @@ function felDisplayReply(raw,regenerate){
       s=s.split(p.ko).join(tok);maps.push([tok,p.zh||p.ko]);
     });
     [
-      ['냐옹♡','喵♡'],['야옹♡','喵♡'],['냥♡','喵♡'],
-      ['냐옹~','喵～'],['야옹~','喵～'],['냥~','喵～'],
+      ['냐옹♡','喵'],['야옹♡','喵'],['냥♡','喵'],
+      ['냐옹~','喵'],['야옹~','喵'],['냥~','喵'],
       ['냐옹','喵'],['야옹','喵'],['냥','喵']
     ].forEach(function(p,i){var tok='【FEL_MEOW_'+i+'】';s=s.split(p[0]).join(tok);maps.push([tok,p[1]]);});
     return {text:s,restore:function(out){
@@ -11043,7 +11086,7 @@ function felDisplayReply(raw,regenerate){
         var core=p[0].replace(/[【】\[\]]/g,''),rx=core.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
         out=out.replace(new RegExp('[【\\[]?\\s*'+rx+'\\s*[】\\]]?','g'),p[1]);
       });
-      out=out.replace(/\s+(喵(?:～|♡)?)/g,'$1').replace(/(喵(?:～|♡)?)\s+([”」"'])/g,'$1$2');
+      out=felNormalizeMeowText(out);
       if((_eraNow()||99)<=2)out=out.replace(/烤箱|炉子/g,'火塘').replace(/夜视仪/g,'夜里看得清');
       return out;
     }};
@@ -11087,7 +11130,7 @@ function felReplaceTurnDisplay(tIdx,display){
   var nr=$('#gNarr'),ops=nr.querySelector('.tOps[data-t="'+tIdx+'"]');
   if(!ops)return false;
   nr.querySelectorAll('p[data-t="'+tIdx+'"]').forEach(function(p){p.remove();});
-  var body=stripMvu(stripCoT(String(display||''))),frag=document.createDocumentFragment();
+  var body=felNormalizeMeowText(stripMvu(stripCoT(String(display||'')))),frag=document.createDocumentFragment();
   body.split(/\n{2,}/).forEach(function(par){
     if(!par.trim())return;
     var p=document.createElement('p');p.setAttribute('data-t',tIdx);
@@ -16675,7 +16718,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=18"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=19"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
