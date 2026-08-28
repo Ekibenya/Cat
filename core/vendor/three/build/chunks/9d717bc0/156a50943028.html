@@ -7197,21 +7197,23 @@ function feSceneZh(){
   o.push('［玩家角色·只供识别，绝不替她表演］');
   o.push('姓名：'+h.n+'（名字只能由在场人物在对白里称呼，不得把她写成动作或内心的主语）');
   o.push('种族：'+(h.sp==='cat'?'猫娘':'人类'));
-  o.push('身份：'+h.ti);
+  /* 名册人物的 ti 与 d 都是整个人生结束后才得到的称号／一句话传记。
+     玩家若选了名册人物，只给模型当年的姓名和种族；自拟人物的身份则是玩家
+     当场选定的既成事实，可以照常使用。 */
+  if(!_hl)o.push('身份：'+h.ti);
   o.push('玩家资料到此为止。不得补写她的外貌、姿势、位置、反应或状态。');
   o.push('');
   o.push('［在场的人］');
   if(FE.soc.length){
     FE.soc.forEach(function(k){
       var p=FE.pool[k];
-      /* 名册上的同伴只报名字身份：他们的详细内容由当前时代的 Risu 原生世界书
-         按名字触发；这里再抄一遍会重复占用上下文，
-         而且抄的是现算值，正好又对不上。 */
+      /* 概要与来历是整个人生回顾，会写到当前年之后的死亡、战争和称号。
+         开局提示只复制当下可用的外貌、性情与说话方式；原档案仍留在界面。 */
       if(feDossLore(p)){
-        o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')+'。');
+        o.push(p.n+'——'+(p.sp==='cat'?'猫娘':'人类')+'。');
         var pl=feDossLore(p);
         for(var pi=0;pi<pl.length;pi++)
-          if(pl[pi][0]==='概要'||pl[pi][0]==='性情'||pl[pi][0]==='说话')
+          if(pl[pi][0]==='外貌'||pl[pi][0]==='性情'||pl[pi][0]==='说话的样子'||pl[pi][0]==='说话')
             o.push(pl[pi][0]+'：'+pl[pi][1]);
       }else
         o.push(p.n+'——'+p.ti+'，'+(p.sp==='cat'?'猫娘':'人类')+'，'+p.age+'岁。'
@@ -7221,6 +7223,7 @@ function feSceneZh(){
   o.push('');
   o.push('［要写的那一幕］');
   o.push('这是开局。');
+  o.push('时间知识边界：只可使用'+e.yl+'及以前已经发生的历史；此后的事件、结局、制度、地点称呼与人物命运均尚未发生，不得预言、暗示或据此行动。');
   o.push('时刻与地点：'+(L?(L.cn+'（'+L.n+'）。'+L.d+'。'):'由这一代与这个身份自然推出。'));
   if(sit)o.push('此刻：'+sit);
   o.push('');
@@ -7334,9 +7337,9 @@ function feDraftText(){
   var _dl=feDossLore(h);
   o.push('——你——');
   if(_dl){
-    o.push('你是「'+h.n+'」，'+h.ti+'。');
+    o.push('你是「'+h.n+'」。');
     for(var _i=0;_i<_dl.length;_i++)
-      if(_dl[_i][0]==='概要'||_dl[_i][0]==='外貌')o.push(_dl[_i][1]);
+      if(_dl[_i][0]==='外貌')o.push(_dl[_i][1]);
   }else{
     o.push('你是「'+h.n+'」，'+h.ti+'，'+h.age+'岁。'
       +(h.sp==='cat'?(h.morph.n+'，毛色'+h.fur+'，'+h.mark+'。身高'+h.h+'厘米，体重'+h.w+'公斤。'):''));
@@ -7350,7 +7353,7 @@ function feDraftText(){
     FE.soc.forEach(function(k){
       var p=FE.pool[k];
       if(feDossLore(p))
-        o.push(p.n+'　'+p.ti+(p.sp==='cat'?'　猫娘':(/人类/.test(p.ti)?'':'　人类'))+'。');
+        o.push(p.n+(p.sp==='cat'?'　猫娘':'　人类')+'。');
       else
         o.push(p.n+'　'+p.ti+(p.sp==='cat'?'　猫娘':(/人类/.test(p.ti)?'':'　人类'))+'　'+p.age+'岁。'
           +(p.d?p.d+'。':'')+(p.q[0]?('她的口头：'+p.q[0]):''));
@@ -10139,6 +10142,23 @@ function risuInvoke(messages,cb,err,opt){
     cb(text,{trunc:trunc,reason:trunc?'incomplete':'',cognition:result.cognition||null});
   }).catch(fail);
 }
+/* 普通回合失败时，玩家最后一条输入仍完整留在 TURNS 里。把重试放在报错
+   当场，不要求重新输入，也不借用只会删除“上一条成功回复”的重演逻辑。 */
+function oracleRetryNotice(label,msg){
+  var p=narrAdd('sys','⚠&nbsp;'+esc2(label)+'：'+esc2(msg)
+    +'<span style="display:flex;justify-content:center">'
+    +'<span class="eBtn oracleAgain" style="margin-top:12px;font-size:11px;'
+    +'padding:10px 34px 9px;border-color:rgba(154,116,42,.6)">'
+    +'↻&nbsp;&nbsp;重新生成本回</span></span>',null);
+  try{
+    p.querySelector('.oracleAgain').addEventListener('click',function(){
+      if(BUSY)return;
+      try{p.remove();}catch(_){}
+      askOracle();
+    });
+  }catch(_){}
+  return p;
+}
 function askOracle(){
   BUSY=true;genOpen('gen');
   /* 组装阶段（FELINIA 状态整理与原生提示词编译）一旦抛错，BUSY 就永久停在 true：
@@ -10152,7 +10172,7 @@ function askOracle(){
     BUSY=false;try{genClose();}catch(_){}
     var em=felPublicError(e);
     felTrStatus('翻译／组装失败：'+em,1);
-    narrAdd('sys','⚠&nbsp;组装神谕请求失败：'+esc2(em)+'&nbsp;——&nbsp;本回未发出',null);
+    oracleRetryNotice('本回请求尚未发出',em);
   });
 }
 function buildOracleMsgs(){
@@ -10245,7 +10265,7 @@ function askOracleSend(msgs){
       .forEach(function(r){if(r.test(_ml))_ms++;});
     if(_ms>=2){
       genClose();BUSY=false;
-      narrAdd('sys','⚠&nbsp;接口返回了内部推理草稿，已拦截且没有写入剧情。请直接重演本回。',null);
+      oracleRetryNotice('接口返回了内部推理草稿，已拦截且没有写入剧情','可直接重新生成本回');
       return;
     }
     felDisplayReply(reply).then(function(display){
@@ -10274,7 +10294,7 @@ function askOracleSend(msgs){
     genClose();BUSY=false;
     if(live){try{live.remove();}catch(_){}live=null;}
     if(gen0!==TYPE_GEN)return;
-    narrAdd('sys','⚠&nbsp;神谕断连：'+esc2(msg)+'&nbsp;——&nbsp;检查&nbsp;ORACVLVM&nbsp;配置',null);
+    oracleRetryNotice('神谕断连',msg);
   },{onDelta:onDelta,onPhase:function(phase){GEN.phase=phase;},wantTag:'</mvu_panel>'});
 }
 /* ── CONSILIVM · 浅字提示 ──────────────────────────────────────────────
@@ -16860,7 +16880,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=26"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=27"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

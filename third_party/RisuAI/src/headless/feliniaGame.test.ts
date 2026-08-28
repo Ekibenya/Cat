@@ -10,6 +10,7 @@ import {
   mergeFeliniaNativeCharacterFields,
   normalizeFeliniaCognition,
   parseFeliniaPlanningResponse,
+  recoverFeliniaPlanning,
   risuMessage,
   stripFeliniaReasoning,
 } from './feliniaGame';
@@ -37,8 +38,40 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(definition.base.lorebook).toHaveLength(57);
     expect(definition.base.lorebook?.every((entry: any) => entry.lay === 'core' || entry.lay === 'style')).toBe(true);
     expect(definition.base.recursiveScanning).toBe(false);
-    expect(assignedLore).toBe(4171);
+    expect(assignedLore).toBe(2909);
     expect(definition.base.lorebook?.some((entry) => String(entry.title).includes('一九〇〇年的创伤'))).toBe(false);
+  });
+
+  it('projects world and character archives to the selected year without deleting the source', () => {
+    const { content, eras } = fixture();
+    const definition = compileFeliniaDefinition(content, eras);
+    const rome = definition.eras.find((entry) => entry.index === 8);
+    const romeLore = JSON.stringify(rome?.lorebook || []);
+    expect(romeLore).toContain('解放文书');
+    expect(romeLore).not.toContain('一九〇〇年');
+    expect(romeLore).not.toContain('罗马大火');
+    expect(rome?.lorebook?.some((entry) => String(entry.title).endsWith('在场的人'))).toBe(false);
+
+    const nero = definition.npcs.find((entry) => entry.eraIndex === 8 && entry.name === '尼禄');
+    expect(nero?.description).toBe('物种：人类');
+    expect(nero?.personality).toContain('通身白色');
+    expect(nero?.personality).toContain('被骗了好几次');
+    expect(nero?.personality).not.toContain('罗马大火');
+    expect(nero?.personality).not.toContain('自杀');
+    expect(nero?.lorebook?.map((entry) => entry.title)).toEqual([
+      '尼禄 · 第二项 · 外貌',
+      '尼禄 · 第四项 · 性情',
+      '尼禄 · 第五项 · 关系',
+      '尼禄 · 第六项 · 说话的样子',
+    ]);
+    const acte = definition.npcs.find((entry) => entry.eraIndex === 8 && entry.name === '阿克特');
+    expect(JSON.stringify(acte)).not.toContain('尼禄死后');
+    const tiNhinan = definition.npcs.find((entry) => entry.eraIndex === 19 && entry.name.includes('希南'));
+    expect(JSON.stringify(tiNhinan)).not.toContain('二十世纪');
+
+    const year1905 = definition.eras.find((entry) => entry.index === 40);
+    expect(JSON.stringify(year1905?.lorebook || [])).toContain('一九〇〇年');
+    expect(JSON.stringify(content.lorebook)).toContain('尼禄死后');
   });
 
   it('partitions every NPC into exactly one of the 41 eras', () => {
@@ -59,7 +92,7 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(relation?.keys).toEqual(['该隐', '潘多拉', '伏羲']);
   });
 
-  it('keeps every character entry but does not turn raw quote snippets into native examples', () => {
+  it('keeps current character traits but does not turn archives or raw quotes into native examples', () => {
     const { content, eras } = fixture();
     const definition = compileFeliniaDefinition(content, eras);
     const pan = definition.npcs.find((entry) => entry.name === '潘金莲');
@@ -70,7 +103,9 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(pan?.personality).toContain('她话很少');
     expect(pan?.personality).toContain('她说出口的话极少');
     expect(pan?.personality).not.toContain('那个要求打折并索要赔偿的女顾客');
-    expect(pan?.lorebook).toHaveLength(6);
+    expect(pan?.lorebook).toHaveLength(4);
+    expect(pan?.lorebook?.some((entry) => String(entry.title).includes('第一项'))).toBe(false);
+    expect(pan?.lorebook?.some((entry) => String(entry.title).includes('第三项'))).toBe(false);
   });
 
   it('merges active NPC native fields once without contaminating Risu exampleMessage', () => {
@@ -140,6 +175,8 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(prose).toContain('已经完成');
     expect(prose).toContain('严格依照该计划回应玩家最后一句');
     expect(prose).toContain('不得输出 <felinia_state>');
+    expect(recoverFeliniaPlanning({ v: 1, threads: ['旧账'] }, '我推开仓门').beat)
+      .toContain('我推开仓门');
   });
 
   it('keeps canonical Korean separate from the display-language lore scan alias', () => {

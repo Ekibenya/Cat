@@ -277,6 +277,98 @@ function isRelationshipEntry(entry: Pick<FeliniaLoreEntry, 'title' | 'comment'>)
   return /第五项\s*·\s*关系|关系/.test(String(entry.title || entry.comment || ''));
 }
 
+function isArchivedLifeSummary(entry: Pick<FeliniaLoreEntry, 'title' | 'comment'>): boolean {
+  return /第一项\s*·\s*概要|第三项\s*·\s*来历/.test(String(entry.title || entry.comment || ''));
+}
+
+function isArchivedRoster(entry: Pick<FeliniaLoreEntry, 'title' | 'comment'>): boolean {
+  return /〕在场的人$|〕在场的小人物$/.test(String(entry.title || entry.comment || ''));
+}
+
+const CHINESE_NUMBER_DIGITS: Record<string, number> = {
+  '〇': 0, '零': 0, '○': 0,
+  '一': 1, '二': 2, '两': 2, '三': 3, '四': 4,
+  '五': 5, '六': 6, '七': 7, '八': 8, '九': 9,
+};
+
+function parseChineseNumber(source: string): number | null {
+  if (/^\d+$/.test(source)) return Number(source);
+  if (/^[〇零○一二两三四五六七八九]+$/.test(source)) {
+    return Number([...source].map((character) => CHINESE_NUMBER_DIGITS[character]).join(''));
+  }
+  const units: Record<string, number> = { '十': 10, '百': 100, '千': 1000 };
+  let total = 0;
+  let section = 0;
+  let number = 0;
+  for (const character of source) {
+    if (character in CHINESE_NUMBER_DIGITS) {
+      number = CHINESE_NUMBER_DIGITS[character];
+    } else if (character in units) {
+      section += (number || 1) * units[character];
+      number = 0;
+    } else if (character === '万') {
+      total += (section + number || 1) * 10000;
+      section = 0;
+      number = 0;
+    } else {
+      return null;
+    }
+  }
+  return total + section + number;
+}
+
+function containsExplicitFutureDate(text: string, currentYear: number): boolean {
+  const yearPattern = /(\u516c\u5143\u524d|\u524d)?([\d〇零○一二两三四五六七八九十百千万]{1,8})\u5e74/g;
+  for (const match of text.matchAll(yearPattern)) {
+    const parsed = parseChineseNumber(match[2]);
+    if (parsed == null) continue;
+    const year = match[1] ? -parsed : parsed;
+    if (year > currentYear) return true;
+  }
+  const centuryPattern = /(\u516c\u5143\u524d|\u524d)?([\d〇零○一二两三四五六七八九十百]{1,5})\u4e16\u7eaa/g;
+  for (const match of text.matchAll(centuryPattern)) {
+    const parsed = parseChineseNumber(match[2]);
+    if (parsed == null || parsed < 1) continue;
+    const firstYear = match[1] ? -(parsed * 100) : ((parsed - 1) * 100) + 1;
+    if (firstYear > currentYear) return true;
+  }
+  return false;
+}
+
+function projectLineToYear(line: string, currentYear: number): string {
+  const sentences = line.match(/[^\u3002\uff01\uff1f\uff1b]+[\u3002\uff01\uff1f\uff1b]?/g) || [line];
+  const kept = sentences.filter((sentence) => !containsExplicitFutureDate(sentence, currentYear)
+    && !/\u540e\u4e16|\u540e\u6765/.test(sentence));
+  if (!kept.length) return '';
+  const projected = kept.join('').trim();
+  return /^\s*\u00b7/.test(line) && !/^\s*\u00b7/.test(projected) ? `\u00b7 ${projected}` : projected;
+}
+
+function projectLoreContentToYear(content: string | undefined, currentYear: number): string {
+  return String(content || '').split('\n')
+    .map((line) => projectLineToYear(line, currentYear))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function sharedEraWorldLines(
+  entries: Array<FeliniaLoreEntry & { era?: number; lay?: string }>,
+  eraCount: number,
+): Set<string> {
+  const erasByLine = new Map<string, Set<number>>();
+  for (const entry of entries) {
+    if (entry.era == null || entry.lay === 'figures') continue;
+    for (const line of new Set(String(entry.content || '').split('\n').map((value) => value.trim()).filter(Boolean))) {
+      const eras = erasByLine.get(line) || new Set<number>();
+      eras.add(entry.era);
+      erasByLine.set(line, eras);
+    }
+  }
+  return new Set([...erasByLine.entries()]
+    .filter(([, eras]) => eras.size === eraCount)
+    .map(([line]) => line));
+}
+
 let runtimePromise: Promise<Runtime> | null = null;
 
 function clone<T>(value: T): T {
@@ -379,6 +471,7 @@ export function compileFeliniaDefinition(
   eraSource: FeliniaLegacyEra[],
 ): FeliniaGameDefinition {
   const allLore = fixedContent.lorebook || [];
+  const repeatedWorldLines = sharedEraWorldLines(allLore, eraSource.length);
   /* Entries without an era are not automatically timeless. The source contains
    * 277 research/world entries about specific later periods (including Tianjin
    * and 1900) with no era number; installing those on all 41 cards lets a common
@@ -412,8 +505,28 @@ export function compileFeliniaDefinition(
   const eras: FeliniaEraDefinition[] = [];
   const npcs: FeliniaNpcDefinition[] = [];
   for (const era of eraSource) {
+    const currentYear = Number(era.y ?? 0);
     const eraCharacterNames = new Set((era.figs || []).map((figure) => figure.n));
-    const eraLore = allLore.filter((entry) => entry.era === era.i && entry.lay !== 'figures');
+    /* Each of the 41 era cards contains a short era-specific head followed by
+     * the same 160-line transhistorical template. That template mentions later
+     * institutions even on the prehistoric card. Timeless engine/style rules
+     * already live in base lore, so an era card keeps only its own lines.
+     * Roster biographies are lifetime summaries and remain archived in the
+     * source/UI; they are never sent as current-year knowledge. */
+    const eraLore = allLore.filter((entry) => entry.era === era.i
+      && entry.lay !== 'figures' && !isArchivedRoster(entry))
+      .flatMap((entry) => {
+        const uniqueContent = String(entry.content || '').split('\n')
+          .filter((line) => !repeatedWorldLines.has(line.trim()))
+          .join('\n');
+        const content = projectLoreContentToYear(uniqueContent, currentYear);
+        return content ? [{ ...entry, content }] : [];
+      });
+    const temporalBoundary = [
+      `【时间知识边界】当前纪年是${era.ys || era.y || '本时代'}。`,
+      '可以知道并谈论当前纪年以前已经发生的历史；当前纪年以后的事件、结局、制度、地点称呼与人物命运一律尚未发生。',
+      '资料若以整个人生回顾的口吻写到“后来”“后世”“死后”或最终结局，那只是封存档案，不是角色当下拥有的知识；不得预言、暗示或据此行动。',
+    ].join('\n');
     eras.push({
       index: era.i,
       year: era.y,
@@ -426,12 +539,13 @@ export function compileFeliniaDefinition(
         era.s || '',
         era.inst || '',
         era.reg || '',
+        temporalBoundary,
       ].filter(Boolean).join('\n'),
       lorebook: eraLore,
       defaultVariables: { felinia_era: era.i, felinia_year: era.y ?? '', felinia_era_label: era.ys ?? '' },
     });
     (era.figs || []).forEach((figure, figureIndex) => {
-      const figureLore = allLore.filter((entry) => entry.era === era.i && entry.lay === 'figures'
+      const sourceFigureLore = allLore.filter((entry) => entry.era === era.i && entry.lay === 'figures'
         && (entry.cat === `人 · ${figure.n}` || String(entry.title || '').startsWith(`${figure.n} ·`)))
         .map((entry) => {
           /* 人物关系条目只应在另一个关系人的名字真正出现时触发。原资料还把
@@ -442,16 +556,28 @@ export function compileFeliniaDefinition(
           const relationNames = list(entry.keys).filter((key) => key !== figure.n && eraCharacterNames.has(key));
           return { ...entry, keys: relationNames.length ? relationNames : [`__FELINIA_RELATION_${era.i}_${figureIndex}__`] };
         });
+      /* First/third items and figure.d are retrospective whole-life records.
+       * They routinely disclose deaths and deeds decades after the selected
+       * year. Preserve them in the embedded source, but build the playable
+       * current snapshot from appearance, temperament, relationships and voice. */
+      const figureLore = sourceFigureLore.filter((entry) => !isArchivedLifeSummary(entry))
+        .flatMap((entry) => {
+          const content = projectLoreContentToYear(entry.content, currentYear);
+          return content ? [{ ...entry, content }] : [];
+        });
       const key = `era:${era.i}:npc:${figureIndex}:${figure.n}`;
+      const species = figure.sp === 'cat' ? '猫娘' : figure.sp === 'human' ? '人类' : (figure.sp || '');
       npcs.push({
         key,
         eraIndex: era.i,
         species: figure.sp,
         title: figure.ti,
         name: figure.n,
-        description: [figure.ti, figure.d].filter(Boolean).join('\n'),
-        /* 第一至第四项及第六项构成这个已激活角色的常驻本体，只放一次。
+        description: species ? `物种：${species}` : '',
+        /* 第二、第四与第六项构成这个已激活角色的当前本体，只放一次。
          * 第五项关系仍留在原生 lorebook，等另一个关系人的名字出现才触发。
+         * 第一项概要、第三项来历及名单短简介是完整人生档案，不能在当年
+         * 尚未发生时送进模型；原始资料仍完整保留在游戏内容与编辑界面。
          * figure.q 是资料索引里的摘句，不是 {{user}}/{{char}} 对话；把它塞进
          * Risu exampleMessage 会被解析成上一段 assistant 示例的续文，弱模型便
          * 会逐回照抄，因此只保存在 quotes 元数据中。 */
@@ -623,8 +749,8 @@ export async function activateFeliniaEra(eraIndex: number, npcKeys: string[] = [
     const found = db.characters.find((entry) => entry.type !== 'group' && meta(entry)?.kind === 'npc' && meta(entry)?.key === key) as character | undefined;
     if (!found) continue;
     activeNpcs.push(found);
-    /* 非关系的五项人物资料已经作为 native personality 常驻，只让第五项关系
-     * 继续走 Risu 的关键词扫描，避免同一份人物资料每回合注入两遍。 */
+    /* 外貌、性情与说话方式已经作为 native personality 常驻，只让第五项关系
+     * 继续走原生关键词扫描，避免同一份人物资料每回合注入两遍。 */
     era.globalLore.push(...clone(found.globalLore.filter((entry) =>
       /第五项\s*·\s*关系|关系/.test(String(entry.comment || ''))
     )));
@@ -894,6 +1020,20 @@ ${JSON.stringify(plan)}
 严格依照该计划回应玩家最后一句并写正文。计划是事实与推进约束，不是玩家可见内容：不得复述、解释或展示 JSON，不得输出 <felinia_state>、分析、步骤或思维过程。完成既定正文与 <mvu_panel> 后立即结束。`;
 }
 
+/** Planning improves continuity but must never be a hard availability gate.
+ * Small/compatible models often wrap JSON, truncate it, or answer with prose.
+ * Reuse the prior compact state and anchor the beat to the latest player turn
+ * so the visible generation can still proceed without exposing any reasoning. */
+export function recoverFeliniaPlanning(previous: unknown, latestUserText: string): FeliniaCognition {
+  const prior = normalizeFeliniaCognition(previous) || { v: 1 as const };
+  const latest = cognitionText(latestUserText, 150);
+  return {
+    ...prior,
+    v: 1,
+    beat: latest ? `直接承接并回应玩家本轮输入：${latest}` : (prior.beat || '承接当前场面并推进一个具体变化'),
+  };
+}
+
 export function parseFeliniaPlanningResponse(text: string): FeliniaCognition | null {
   const clean = stripFeliniaReasoning(String(text || '')).replace(/```(?:json)?|```/gi, '').trim();
   const direct = normalizeFeliniaCognition(clean);
@@ -1022,13 +1162,20 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
       name: message.name,
     })),
   ];
-  const planningResponse = await requestFeliniaAux({
-    messages: planningMessages,
-    signal: options.signal,
-    maxTokens: 700,
-  });
-  const plannedCognition = parseFeliniaPlanningResponse(planningResponse.text);
-  if (!plannedCognition) throw new Error('隐藏推演没有返回有效剧情计划，本回正文未生成');
+  const latestUserText = [...currentChat.message].reverse()
+    .find((message) => message.role !== 'char')?.data || '';
+  let plannedCognition: FeliniaCognition | null = null;
+  try {
+    const planningResponse = await requestFeliniaAux({
+      messages: planningMessages,
+      signal: options.signal,
+      maxTokens: 700,
+    });
+    plannedCognition = parseFeliniaPlanningResponse(planningResponse.text);
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
+  }
+  if (!plannedCognition) plannedCognition = recoverFeliniaPlanning(options.cognition, latestUserText);
   options.onPhase?.('writing');
   const cognitionPrompt = buildFeliniaCognitionPrompt(plannedCognition);
   const generationSystemPrompt = palaceRecall.text
