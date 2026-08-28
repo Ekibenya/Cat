@@ -2965,7 +2965,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>单轮上限&nbsp;tokens</span><input class="aIn" id="apMaxT" placeholder="默认 3200" style="width:80px"></div>
       <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="默认 900" style="width:80px"></div>
       <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span class="on">关</span><span>低</span><span>中</span><span>高</span></span></div>
-      <div class="sub" style="margin-top:16px">韩语原生写作&nbsp;·&nbsp;中文只作显示层：玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。状态栏与控制标签永不翻译。</div>
+      <div class="sub" style="margin-top:16px">可选的韩语原生写作&nbsp;·&nbsp;默认关闭：选择任一翻译器后，玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。韩语范文、案例句、状态栏保护与原稿存档均完整保留。</div>
       <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"><option value="browser">浏览器本地翻译（推荐）</option><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务（需安装）</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
       <div class="sRow" id="trDeepLXInstallRow"><span>DeepLX&nbsp;本地服务</span><span style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap"><span class="eBtn" id="trDeepLXInstall" style="margin-top:0;padding:7px 16px 6px;letter-spacing:.18em">一键安装</span><span class="sub" style="margin:0">自动匹配&nbsp;macOS／Windows，安装后启动&nbsp;1188</span></span></div>
       <div class="sRow"><span>翻译方向</span><span class="sub" style="margin:0">玩家&nbsp;中文→韩语&nbsp;·&nbsp;正文&nbsp;韩语→中文</span></div>
@@ -7492,8 +7492,39 @@ function feForge(){
     }
     return parts.join('').replace(/\n{3,}/g,'\n\n').trim();
   }
+  /* 默认中文模式不经过任何翻译步骤：同一套时代卡、人物世界书、文风规范和
+     范文照常由叙事核心组装，只把模型输出语言改成中文。韩语模式及其素材完整保留。 */
+  function stageChinese(retry){
+    var prompt='【场面资料】\n'+zh+'\n\n从这份资料直接续写开局的一幕。';
+    var openingRule='只输出中文小说正文，不要标题、说明、列表、选择项或状态栏。'
+      +'只把场面资料中写明的内容当作事实，不得另造人物、货币、债务、制度、器物、知识或事件。'
+      +'使用第三人称，只让周围人物和环境行动、说话；绝不替玩家角色补写动作、姿势、视线、表情、台词、判断、情感、想法、过去或选择。'
+      +'玩家姓名只能出现在周围人物的称呼和对白中。写五至九个自然段，约九百至一千四百字，停在玩家可以接手行动的瞬间。';
+    call([{role:'system',content:FE_MEOW_ZH+'\n'+FELINIA_STYLE+'\n\n'+FELINIA_EXAMPLES+'\n\n'+openingRule},
+          {role:'user',content:prompt,scanContent:zh}],
+      {max_tokens:2600,timeoutMs:30000,onDelta:function(full){
+        forgeDelta(felNormalizeMeowText(stripMvuLive(stripCoT(String(full||'')))));
+      }},function(ms){
+        ms=felNormalizeMeowText(stripMvu(stripCoT(String(ms||'')))).trim();
+        if(!ms)return fail('模型没有返回正文');
+        if(forgeLive){try{forgeLive.remove();}catch(_){}forgeLive=null;}
+        BUSY=false;genClose();
+        var chineseText=ms+(panel?('\n\n'+panel):'');
+        var npcKeys=(FE.soc||[]).map(function(k){
+          var p=FE.pool[k];return p?('era:'+FE.era.i+':npc:'+k+':'+p.n):'';
+        }).filter(Boolean);
+        loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:chineseText},loc);
+        GAME.opText=chineseText;GAME.hero=_hero;GAME.risuNpcKeys=npcKeys;
+        felTrStatus('中文开局已保存 · 自动翻译未启用',0);
+      },function(msg){
+        if(retry<1){
+          if(forgeLive){forgeLive.innerHTML='';forgeLive._pend='';}
+          stageChinese(retry+1);return;
+        }
+        fail(msg);
+      });
+  }
   function stage0(){
-    if(!felTrOn())return fail('铸局需要开启自动翻译（默认 Google）');
     var originals=[],seen={};
     function addName(n){n=String(n||'').trim();if(n&&!seen[n]){seen[n]=1;originals.push(n);}}
     addName(FE.hero&&FE.hero.n);
@@ -7616,7 +7647,7 @@ function feForge(){
       finish(ms,(warn?warn+'；':'')+'中文翻译失败，当前显示韩语原稿：'+felPublicError(e));
     });
   }
-  stage0();
+  if(felTrOn())stage0();else stageChinese(0);
 }
 
 /* ═══ 这一代的货 ═══
@@ -9595,8 +9626,11 @@ function mvuSpec(){
   if(cardHeroless()){
     var base=last||op;
     return '【FELINIA 状态快照·必须执行】\n'
-      +'1. 先写韩语正文，最后才写一个完整 <mvu_panel>；状态块之后不要再写正文。\n'
-      +'2. 标签、中文字段名、行首 ◆◈◇、半角竖线 | 必须逐字保留，绝对不要翻成韩语。\n'
+      +(felTrOn()
+        ?'1. 先写韩语正文，最后才写一个完整 <mvu_panel>；状态块之后不要再写正文。\n'
+          +'2. 标签、中文字段名、行首 ◆◈◇、半角竖线 | 必须逐字保留，绝对不要翻成韩语。\n'
+        :'1. 先写中文正文，最后才写一个完整 <mvu_panel>；状态块之后不要再写正文。\n'
+          +'2. 标签、中文字段名、行首 ◆◈◇、半角竖线 | 必须逐字保留。\n')
       +'3. <sec_char> 固定 '+chN+' 行，顺序：'+chL+'。数值条只写 0-100 纯数字。\n'
       +'4. <sec_npc> 每人一行九字段：姓名|状态|好感|心声|身份|所在|年龄|性别|眼色。'
       +'上一幕 ◈ 名单是排他的；除非玩家输入明确带来新人，不得增删、替换或让名单外的人登场。\n'
@@ -10096,7 +10130,8 @@ function askOracle(){
 }
 function buildOracleMsgs(){
   var hist=TURNS.slice().map(function(t){
-    var c=t.content,scan=t.display==null?t.content:t.display;
+    var c=(!felTrOn()&&t.role==='assistant'&&t.display!=null)?t.display:t.content;
+    var scan=t.display==null?t.content:t.display;
     /* 思维链不能回喂：它会教模型继续写元评论，还白白吃掉上下文。 */
     if(t.role==='assistant'){c=stripCoT(c);scan=stripCoT(scan);}
     return{role:t.role,content:c,scanContent:scan};
@@ -10129,8 +10164,9 @@ function buildOracleMsgs(){
   /* 开局那一幕从来没进过 TURNS（loadOpening 一上来就 TURNS=[]），
      模型此前完全不知道自己要接的是哪一场戏、哪一年、谁在场——只能按卡里那段
      一百多字的通用【场景】自己编一个开头，每局都编同一个。这就是「剧情一直循环」。 */
-  if(GAME.opText)msgs.push({role:'assistant',content:GAME.opText,
-    scanContent:(GAME.op&&GAME.op.text)||GAME.opText});
+  var openingHistory=felTrOn()?GAME.opText:((GAME.op&&GAME.op.text)||GAME.opText);
+  if(openingHistory)msgs.push({role:'assistant',content:openingHistory,
+    scanContent:(GAME.op&&GAME.op.text)||openingHistory});
   msgs=msgs.concat(hist);
   return msgs;
 }
@@ -10192,7 +10228,7 @@ function askOracleSend(msgs){
     }).then(function(display){
       genClose();BUSY=false;felTrStatus(felTrOn()?'已保存韩语原稿 · 中文仅作显示':'自动翻译已关闭',0);
       var idx=TURNI++;
-      TURNS.push({role:'assistant',content:reply,display:display,canonical:felTrOn()?'ko':'',t:idx});
+      TURNS.push({role:'assistant',content:reply,display:display,canonical:felTrOn()?'ko':'zh',t:idx});
       try{GENIVS.absorb(display,idx);}catch(_){}     /* 本地中文状态推演看显示层；模型历史仍读原稿 */
       renderReply(display,idx,streamed);            /* 已流式出过字：跳过打字机，直接落定 */
       if(meta&&meta.trunc)narrAdd('sys',
@@ -10839,7 +10875,7 @@ var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
   tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
   img:{on:0,base:'',key:'',model:'',size:0,style:0},   /* style 0 ＝ NovelAI，见 IMGSTY */
   sub:{format:'openai',base:'',key:'',model:''},
-  trans:{provider:'browser',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1},
+  trans:{provider:'off',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1,chineseDefaultV1:1},
   semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
   vars:{},gvars:{},
   samp:{temp:'',topp:'',maxt:'',minc:'',reason:0},
@@ -10857,7 +10893,7 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
     img:{on:0,auto:0,count:0,cam:0,disp:2,base:'',key:'',model:'',size:0,style:0,
          steps:'',cfg:'',w:'',h:'',seed:'',workflow:''},
     sub:{format:'openai',base:'',key:'',model:''},
-    trans:{provider:'browser',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1},
+    trans:{provider:'off',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1,chineseDefaultV1:0},
     semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
     vars:{},gvars:{},
     samp:{temp:'',topp:'',maxt:'',minc:'',reason:0}};
@@ -10874,12 +10910,12 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
   if(!SET.loreState||typeof SET.loreState!=='object')SET.loreState={};
 })();
 function setStore(){lsSet('rome_set',JSON.stringify(SET))}
-/* First native-translation release: existing zero-config Google users move to
-   the browser-local provider once. Unsupported devices transparently retain
-   Google as the runtime fallback, so this migration cannot remove translation. */
-if(!SET.trans.nativeDefaultV1){
-  SET.trans.nativeDefaultV1=1;
-  if(!SET.trans.provider||SET.trans.provider==='google')SET.trans.provider='browser';
+/* Chinese-first release: translation, Korean examples and Korean originals all
+   remain available, but every existing browser starts this release with the
+   optional Korean pipeline disabled once. Later manual choices are preserved. */
+if(!SET.trans.chineseDefaultV1){
+  SET.trans.chineseDefaultV1=1;
+  SET.trans.provider='off';
   setStore();
 }
 /* FELINIA is a fixed game hosted by its embedded narrative runtime. The runtime
@@ -10966,7 +11002,8 @@ function felRisuPrepare(messages,options){
       else history.push({role:message.role,content:String(message.content||''),
         scanContent:message.scanContent==null?undefined:String(message.scanContent),name:message.name});
     });
-    var first=(options&&options.firstMessage!==undefined)?options.firstMessage:(GAME.opText||'');
+    var first=(options&&options.firstMessage!==undefined)?options.firstMessage:
+      (felTrOn()?(GAME.opText||''):(((GAME.op&&GAME.op.text)||GAME.opText)||''));
     return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){
       return risu.setSessionContent({systemPrompt:system,firstMessage:first,
         localLore:loreCustomGet().filter(function(e){return e&&e.on!==false;}),
@@ -11038,7 +11075,18 @@ addEventListener('felinia-native-translation-status',function(event){
    韩→中 and 中→韩 separately; after both caches exist it becomes a no-op. */
 addEventListener('pointerdown',felNativeTranslationWarm,{capture:true});
 function felCanonicalizeTurns(){
-  if(!felTrOn())return Promise.resolve();
+  if(!felTrOn()){
+    /* 关闭翻译时不改写旧存档的 content：韩语原稿必须继续留给“重译”和
+       “显示原稿”。组装模型历史时另行选用中文 display。 */
+    TURNS.forEach(function(t){
+      if(!t)return;
+      if(t.role==='assistant'){
+        t.content=felNormalizeMeowText(t.content);
+        if(t.display!=null)t.display=felNormalizeMeowText(t.display);
+      }
+    });
+    return Promise.resolve();
+  }
   var chain=Promise.resolve();
   TURNS.forEach(function(t){
     if(t&&t.role==='assistant'){
@@ -12026,7 +12074,7 @@ function apPaneLoad(){
   $('#apMaxT').value=SET.samp.maxt;$('#apMinC').value=SET.samp.minc;
   setSeg('#sgReason',SET.samp.reason||0);
   var tr=SET.trans||{};
-  $('#trProvider').value=tr.provider||'browser';$('#trShowRaw').checked=!!tr.showRaw;
+  $('#trProvider').value=tr.provider||'off';$('#trShowRaw').checked=!!tr.showRaw;
   $('#trDeepLKey').value=tr.deeplKey||'';$('#trDeepLXUrl').value=tr.deeplxUrl||'http://localhost:1188';
   $('#trDeepLXToken').value=tr.deeplxToken||'';trPaneSync();
   var sm=SET.semantic||{};
@@ -12034,7 +12082,7 @@ function apPaneLoad(){
   $('#semBudget').value=sm.budget||3000;$('#semGpu').checked=sm.gpu!==0;semPaneSync();
 }
 function trPaneSync(){
-  var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'browser';
+  var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'off';
   var dl=$('#trDeepLKey'),dx=$('#trDeepLXUrl'),dt=$('#trDeepLXToken'),di=$('#trDeepLXInstallRow');
   if(dl)dl.closest('.sRow').style.display=p==='deepl'?'':'none';
   if(di)di.style.display=p==='deeplx'?'':'none';
