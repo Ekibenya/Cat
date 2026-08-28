@@ -1854,6 +1854,8 @@ export interface ChatFolder{
 export interface Message{
     role: 'user'|'char'
     data: string
+    /** Optional alternate text used only for lorebook keyword matching. */
+    scanData?: string
     saying?: string
     chatId?:string
     time?: number

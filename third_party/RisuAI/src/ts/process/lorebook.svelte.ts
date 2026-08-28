@@ -119,18 +119,19 @@ export async function loadLoreBookV3Prompt(){
             prompt:string
             data:string
         }[] = sliced.map((msg, i) => {
+            const scanData = msg.scanData ?? msg.data
             if(msg.role === 'user'){
                 return {
                     source: `message ${i} by user`,
-                    prompt: `\x01{{${DBState.db.username}}}:` + msg.data + '\x01',
-                    data: msg.data
+                    prompt: `\x01{{${DBState.db.username}}}:` + scanData + '\x01',
+                    data: scanData
                 }
             }
             else{
                 return {
                     source: `message ${i} by char`,
-                    prompt: `\x01{{${msg.name ?? (msg.saying ? findCharacterbyId(msg.saying)?.name : null) ?? char.name}}}:` + msg.data + '\x01',
-                    data: msg.data
+                    prompt: `\x01{{${msg.name ?? (msg.saying ? findCharacterbyId(msg.saying)?.name : null) ?? char.name}}}:` + scanData + '\x01',
+                    data: scanData
                 }
             }
         }).concat(

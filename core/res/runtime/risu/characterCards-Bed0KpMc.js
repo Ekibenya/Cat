@@ -22803,22 +22803,22 @@ async function Bf(e) {
 					break;
 				}
 				case "internal:risuai": {
-					let { RisuAccessClient: t } = await import("./risuaccess-Dn28-_MO.js");
+					let { RisuAccessClient: t } = await import("./risuaccess-Dnd_cnVY.js");
 					Lf[e] = new t();
 					break;
 				}
 				case "internal:aiaccess": {
-					let { AIAccessClient: t } = await import("./aiaccess-BuN5nz1v.js");
+					let { AIAccessClient: t } = await import("./aiaccess-Q7HQXRxz.js");
 					Lf[e] = new t();
 					break;
 				}
 				case "internal:googlesearch": {
-					let { GoogleSearchClient: t } = await import("./googlesearchclient-BpjGoO72.js");
+					let { GoogleSearchClient: t } = await import("./googlesearchclient-CVNvr-7S.js");
 					Lf[e] = new t();
 					break;
 				}
 				case "internal:graphmem": {
-					let { GraphMemClient: t } = await import("./graphmem-DDBp6XqV.js");
+					let { GraphMemClient: t } = await import("./graphmem-3ecESDc-.js");
 					Lf[e] = new t();
 					break;
 				}
@@ -37846,7 +37846,7 @@ async function ab(e) {
 	if (!Q().feliniaFinalPromptTranslation || ib > 0) return e;
 	ib++;
 	try {
-		let { runTranslator: t } = await import("./translator-CPX9Jd4u.js");
+		let { runTranslator: t } = await import("./translator-CswI0bzX.js");
 		return await rb(e, (e) => t(e, !0, "auto", "ko"));
 	} finally {
 		ib--;
@@ -38800,7 +38800,7 @@ async function Ib(e, t) {
 		});
 		return o.ok ? o.data.data : "ERR::DeepLX API Error" + await o.data;
 	}
-	if (n.translatorType == "bergamot") return Ob ||= (await import("./bergamotTranslator-Cc2zF-UJ.js")).bergamotTranslate, Ob(e, t.from, t.to, !1);
+	if (n.translatorType == "bergamot") return Ob ||= (await import("./bergamotTranslator-DkIrJAgT.js")).bergamotTranslate, Ob(e, t.from, t.to, !1);
 	if (n.useExperimentalGoogleTranslator && (Hu || Uu || userScriptFetch)) try {
 		let n = navigator.userAgent, r = await QH(`https://translate.google.com/m?tl=${t.to}&sl=${t.from}&q=${encodeURIComponent(e)}`, {
 			headers: {
@@ -38862,7 +38862,7 @@ async function Bb(e, t, n = "", r, i = !1) {
 	}
 	if (o.translatorType == "bergamot" && o.htmlTranslation) {
 		let t = o.aiModel.startsWith("novellist") ? "ja" : "en", i = o.translator || "en";
-		return Ob ||= (await import("./bergamotTranslator-Cc2zF-UJ.js")).bergamotTranslate, Yb(await Ob(e, t, i, !0), n, a, r);
+		return Ob ||= (await import("./bergamotTranslator-DkIrJAgT.js")).bergamotTranslate, Yb(await Ob(e, t, i, !0), n, a, r);
 	}
 	let s = new DOMParser().parseFromString(e, "text/html");
 	console.log(e);
@@ -44342,14 +44342,17 @@ async function fC() {
 			t.length > 0 && i.push(t);
 		}
 		n.keys = i;
-		let a = r.map((e, n) => e.role === "user" ? {
-			source: `message ${n} by user`,
-			prompt: `\x01{{${Z.db.username}}}:` + e.data + "",
-			data: e.data
-		} : {
-			source: `message ${n} by char`,
-			prompt: `\x01{{${e.name ?? (e.saying ? xW(e.saying)?.name : null) ?? t.name}}}:` + e.data + "",
-			data: e.data
+		let a = r.map((e, n) => {
+			let r = e.scanData ?? e.data;
+			return e.role === "user" ? {
+				source: `message ${n} by user`,
+				prompt: `\x01{{${Z.db.username}}}:` + r + "",
+				data: r
+			} : {
+				source: `message ${n} by char`,
+				prompt: `\x01{{${e.name ?? (e.saying ? xW(e.saying)?.name : null) ?? t.name}}}:` + r + "",
+				data: r
+			};
 		}).concat(n.dontSearchWhenRecursive ? [] : p.map((e) => ({
 			source: "lorebook " + e.source,
 			prompt: e.prompt,
@@ -79169,7 +79172,7 @@ var dH = class {
 				msg: ""
 			}), localStorage.setItem("accountst", "able"), localStorage.setItem("fallbackRisuToken", JSON.stringify(e.account)), this.isAccount = !0, !0;
 			if (await iG("to overwrite your data, type \"RISUAI\"") !== "RISUAI") return localStorage.setItem("dosync", "avoid"), !1;
-			let { collectColdStorageBackupPayloads: a, replaceColdStoragePayloadResources: o, setAccountColdStorageItem: s } = await import("./coldstorage.svelte-YiSAp-cz.js"), c = await a(e), l = c.missingKeys.length + c.invalidKeys.length;
+			let { collectColdStorageBackupPayloads: a, replaceColdStoragePayloadResources: o, setAccountColdStorageItem: s } = await import("./coldstorage.svelte-p8syFJBz.js"), c = await a(e), l = c.missingKeys.length + c.invalidKeys.length;
 			if (l > 0) return $(`Failed to migrate ${l} cold storage item(s) to account sync because they are missing or invalid.`), !1;
 			let u = {};
 			try {

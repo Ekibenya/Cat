@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { compileFeliniaDefinition } from './feliniaGame';
+import {
+  compileFeliniaDefinition,
+  mergeFeliniaNativeCharacterFields,
+  risuMessage,
+} from './feliniaGame';
 
 function fixture() {
   const repository = resolve(process.cwd(), '../..');
@@ -42,5 +46,28 @@ describe('FELINIA fixed Risu runtime data', () => {
     const lilith = definition.npcs.find((entry) => entry.eraIndex === 1 && entry.name === '莉莉丝');
     const relation = lilith?.lorebook?.find((entry) => String(entry.title).includes('第五项 · 关系'));
     expect(relation?.keys).toEqual(['该隐', '潘多拉', '伏羲']);
+  });
+
+  it('merges active NPC native fields without polluting the era-only baseline', () => {
+    const base = {
+      desc: 'ERA_DESC', personality: 'ERA_PERSONALITY', scenario: 'ERA_SCENARIO', exampleMessage: 'ERA_EXAMPLE',
+    };
+    const merged = mergeFeliniaNativeCharacterFields(base, [{
+      name: '莉莉丝', desc: 'NPC_DESC', personality: 'NPC_PERSONALITY', exampleMessage: 'NPC_EXAMPLE',
+    }]);
+    expect(merged.desc).toContain('NPC_DESC');
+    expect(merged.personality).toContain('NPC_PERSONALITY');
+    expect(merged.personality).toContain('NPC_EXAMPLE');
+    expect(merged.exampleMessage).toContain('NPC_EXAMPLE');
+    expect(base.desc).toBe('ERA_DESC');
+    expect(mergeFeliniaNativeCharacterFields(base, [])).toEqual(base);
+  });
+
+  it('keeps canonical Korean separate from the display-language lore scan alias', () => {
+    const message = risuMessage({
+      role: 'user', content: '부두의 바람을 살핀다.', scanContent: '港口的风很冷。',
+    });
+    expect(message.data).toBe('부두의 바람을 살핀다.');
+    expect(message.scanData).toBe('港口的风很冷。');
   });
 });

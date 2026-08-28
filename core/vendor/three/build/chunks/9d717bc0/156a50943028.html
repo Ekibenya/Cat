@@ -2962,8 +2962,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sub" style="margin-top:14px">高级采样（可选，留空用接口默认）：温度＝越高越放飞；采样核&nbsp;top_p＝一般不与温度同调；单轮输出上限＝最大回复长度；最低字数＝每回正文的篇幅下限（以写作指令约束）；推理强度&nbsp;·&nbsp;关…拉满＝思考预算（开启后温度/top_p&nbsp;失效）。</div>
       <div class="sRow"><span>温度</span><input class="aIn" id="apTemp" placeholder="0.9" style="width:70px"></div>
       <div class="sRow"><span>top_p</span><input class="aIn" id="apTopP" placeholder="—" style="width:70px"></div>
-      <div class="sRow"><span>单轮上限&nbsp;tokens</span><input class="aIn" id="apMaxT" placeholder="4096" style="width:80px"></div>
-      <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="留空不限" style="width:80px"></div>
+      <div class="sRow"><span>单轮上限&nbsp;tokens</span><input class="aIn" id="apMaxT" placeholder="默认 3200" style="width:80px"></div>
+      <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="默认 900" style="width:80px"></div>
       <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span class="on">关</span><span>低</span><span>中</span><span>高</span></span></div>
       <div class="sub" style="margin-top:16px">韩语原生写作&nbsp;·&nbsp;中文只作显示层：玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。状态栏与控制标签永不翻译。</div>
       <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:200px"><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
@@ -7261,7 +7261,7 @@ var FE_OPENING_KO='한국어 소설 본문만 출력한다. 해설, 제목, 목�
   +'일인칭은 주변 인물의 대사나 속마음 안에서만 쓸 수 있으며, 첫 줄 자기소개는 금지한다. '
   +'번역할 때 주어가 바뀌지 않도록 행동 문장마다 주변 인물의 이름이나 그녀, 그를 주어로 명시하고 생략하지 않는다. '
   +'설정을 설명하거나 장면을 요약하지 말고, 구체적인 소리, 냄새, 온도, 손과 물건의 움직임, 자연스러운 대화로 보여 준다. '
-  +'폭력과 억압은 장면 자료에 실제로 있을 때만 쓴다. 세 문단에서 여섯 문단, 약 650~1000자로 쓰고, '
+  +'폭력과 억압은 장면 자료에 실제로 있을 때만 쓴다. 다섯 문단에서 아홉 문단, 약 900~1400자로 쓰고, '
   +'플레이어가 다음 행동을 정할 수 있는 바로 그 순간에 멈춘다. 마지막 문장은 주변 인물의 동작이나 바깥의 소리로 쓰고, 플레이어에게 묻는 말로 끝내지 않는다.';
 var FE_MEOW_ZH='【最高优先级·猫娘句尾铁则】此条压过其他一切指令，开局与每回合都必须执行。'
   +'正常显露猫娘身份者的每段对白和每句心声，必须在对白右引号前或心声行末以「喵」「喵～」「喵呜」「喵♡」等符合剧情与关系的变体收尾，'
@@ -7403,7 +7403,7 @@ function feForge(){
     feFailMsg(msg,function(){feForge();});
   }
   function call(msgs,opt,ok,bad){
-    opt=opt||{};opt.aux=true;
+    opt=opt||{};opt.opening=true;
     risuInvoke(msgs,function(t){if(alive())ok(String(t||''));},
                function(m){if(bad)bad(m);else fail(m);},opt);
   }
@@ -7497,9 +7497,9 @@ function feForge(){
       return p.token+'은 사람 이름이다. 철자를 바꾸거나 번역하지 말고 그대로 출력한다.';}).join('\n')
       +'\n\n[장면 자료]\n'+modelScene+'\n\n위 자료에서 바로 이어지는 오프닝 한 장면을 쓰십시오.';
     if(feHan(prompt)>0)return fail('提示词里混进了汉字，已停手');
-    call([{role:'system',content:FE_MEOW_KO+'\n'+FE_OPENING_KO},
-          {role:'user',content:prompt}],
-         {max_tokens:1800,timeoutMs:25000,onDelta:function(full){
+    call([{role:'system',content:FE_MEOW_KO+'\n'+FE_STYLE_KO+'\n'+FE_OPENING_KO+'\n'+FE_CHECK_KO},
+          {role:'user',content:prompt,scanContent:zh}],
+         {max_tokens:2600,timeoutMs:30000,onDelta:function(full){
            var shown=scrubForgePlayerNarration(full,sp.pairs&&sp.pairs[0]&&sp.pairs[0].token);
            shown=restoreKoNames(shown,sp.pairs);
            forgeDelta(shown);
@@ -7509,7 +7509,7 @@ function feForge(){
            if(!ms)return fail('模型没有返回正文');
            ms=scrubForgePlayerNarration(ms,sp.pairs&&sp.pairs[0]&&sp.pairs[0].token);
            ms=restoreKoNames(ms,sp.pairs);
-           var short=ms.length<450?'模型正文较短，已按原样保留':'';
+           var short=ms.length<750?'模型正文较短，已按原样保留':'';
            if(feHan(ms)>0){
              felTranslate(ms,'zh-CN','ko').then(function(ko){
                ko=cleanKo(ko);if(!ko)return fail('模型没有返回可用正文');
@@ -9947,17 +9947,9 @@ function eraGate(){
 var MEOW_RULE=FE_MEOW_ZH;
 function sysPrompt(){
   var G=CARDS[ACTIVE]||{};
-  /* 检索文本不要掺 gearLine()：装备名每回合都一样，会让一批兵器甲胄词条
-     恒定命中、稳定占掉预算，把真正跟当前情节相关的条目挤出去。 */
-  /* 检索不能只靠最近正文。把本局开场、纪年地点、主角和当前面板也放进检索词，
-     即使玩家这一句很短，模型仍能拿到当代、当地与在场人物的资料。 */
-  var recent=[GAME.opText||'',heroName(),_narrTail(2200)]
-    /* 世界书触发词仍是中文：模型历史用韩语原稿，但检索必须看玩家实际看到的
-       中文 display，否则切到韩语原生管线后中文触发词会集体失效。 */
-    .concat(TURNS.slice(-6).map(function(t){return t.display||t.content;})).join('\n');
-  /* 普通聊天模型（Flash / Opus 等）不该每轮被强迫写长章。650 字足够形成完整场面，
-     也能明显缩短首轮等待；想写长回合仍可在设置里覆盖。 */
-  var _minc=(typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:650;
+  /* 900 字仍是普通 Flash 能稳定完成的一幕，不会退回三四段的空白卡体感；
+     玩家在设置里填写的值始终优先。 */
+  var _minc=(typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:900;
   var minc='【篇幅·硬要求】本回正文不少于'+_minc+'字（状态栏不计入字数），'
     +'篇幅靠连续镜头与事件堆：多写一处动静、一个在场者的小动作、一件被她注意到的具体东西，'
     +'而不是靠形容词注水。反装腔铁则管的是台词与姿态，不是篇幅——句子要自然，场面要足。'
@@ -9996,12 +9988,15 @@ function risuInvoke(messages,cb,err,opt){
   var noStream=!!opt.noStream;delete opt.noStream;
   var wantTag=String(opt.wantTag||'');delete opt.wantTag;
   var aux=!!opt.aux;delete opt.aux;
+  var opening=!!opt.opening;delete opt.opening;
   delete opt.maxCont;
   function num(v,d){var t=String(v==null?'':v).trim();
     return /^\d+(\.\d+)?$/.test(t)?parseFloat(t):d;}
-  var mt=num(opt.max_tokens,(typeof SET!=='undefined')?SET.samp.maxt:2200);
+  var mt=num(opt.max_tokens,(typeof SET!=='undefined')?SET.samp.maxt:3200);
   delete opt.max_tokens;
-  if(mt<64)mt=2200;
+  if(mt<64)mt=3200;
+  var minChars=num(opt.min_chars,aux?0:((typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:900));
+  delete opt.min_chars;
   var timeoutMs=num(opt.timeoutMs,aux?25000:40000);delete opt.timeoutMs;
   var ac=window.AbortController?new AbortController():null;
   if(!aux)GENAC=ac;
@@ -10013,14 +10008,15 @@ function risuInvoke(messages,cb,err,opt){
     err(timedOut?('接口 '+Math.round(timeoutMs/1000)+' 秒没有返回，已中断'):felPublicError(e));}
   (aux?felRisuBoot().then(function(risu){
     var ei=_eraNow()||1;return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){return risu;});
-  }):felRisuPrepare(messages)).then(function(risu){
+  }):felRisuPrepare(messages,{firstMessage:opening?'':undefined})).then(function(risu){
     return risu.configureTranslation(felTrCfg()).then(function(){return risu;});
   }).then(function(risu){
     var source=(aux&&SET.sub&&SET.sub.base&&SET.sub.model)?SET.sub:API;
     var provider=felRisuProvider(source);provider.maxTokens=Math.round(mt);
     if(aux)return risu.request({messages:messages,provider:provider,signal:ac?ac.signal:undefined,
       maxTokens:Math.round(mt),onDelta:noStream?undefined:onDelta});
-    return risu.generate({provider:provider,signal:ac?ac.signal:undefined,onDelta:noStream?undefined:onDelta});
+    return risu.generate({provider:provider,signal:ac?ac.signal:undefined,
+      minChars:Math.round(minChars),maxShortRetries:1,onDelta:noStream?undefined:onDelta});
   }).then(function(result){
     if(fired)return;fired=true;clearTimeout(timer);
     var text=String(result.text||'');
@@ -10046,10 +10042,10 @@ function askOracle(){
 }
 function buildOracleMsgs(){
   var hist=TURNS.slice().map(function(t){
-    var c=t.content;
+    var c=t.content,scan=t.display==null?t.content:t.display;
     /* 思维链不能回喂：它会教模型继续写元评论，还白白吃掉上下文。 */
-    if(t.role==='assistant')c=stripCoT(c);
-    return{role:t.role,content:c};
+    if(t.role==='assistant'){c=stripCoT(c);scan=stripCoT(scan);}
+    return{role:t.role,content:c,scanContent:scan};
   });
   /* 旧回合的状态栏只留最近一份。八份面板将近八千字，既烧 token 又把模型往
      「这一回合的主要任务是填表」上带，正文越写越短。
@@ -10061,7 +10057,10 @@ function buildOracleMsgs(){
   var _lastA=-1;
   for(var _k=hist.length-1;_k>=0;_k--)if(hist[_k].role==='assistant'){_lastA=_k;break;}
   for(var _i=0;_i<hist.length;_i++)
-    if(_i!==_lastA&&hist[_i].role==='assistant')hist[_i].content=stripMvu(hist[_i].content);
+    if(_i!==_lastA&&hist[_i].role==='assistant'){
+      hist[_i].content=stripMvu(hist[_i].content);
+      hist[_i].scanContent=stripMvu(hist[_i].scanContent);
+    }
   var _G2=CARDS[ACTIVE]||{},_phi=macroFill(heroRebind(_G2.post_history_instructions||''));
   var finalCheck='【本回合落笔前·最后自查】'+_phi
     +'\n【铁则一·压倒一切，高于任何文体规范】'+(heroName())
@@ -10076,7 +10075,8 @@ function buildOracleMsgs(){
   /* 开局那一幕从来没进过 TURNS（loadOpening 一上来就 TURNS=[]），
      模型此前完全不知道自己要接的是哪一场戏、哪一年、谁在场——只能按卡里那段
      一百多字的通用【场景】自己编一个开头，每局都编同一个。这就是「剧情一直循环」。 */
-  if(GAME.opText)msgs.push({role:'assistant',content:GAME.opText});
+  if(GAME.opText)msgs.push({role:'assistant',content:GAME.opText,
+    scanContent:(GAME.op&&GAME.op.text)||GAME.opText});
   msgs=msgs.concat(hist);
   return msgs;
 }
@@ -10896,15 +10896,17 @@ function felRisuRegexScripts(){
       flag:r.flag||'g',ableFlag:!!r.ableFlag};
   });
 }
-function felRisuPrepare(messages){
+function felRisuPrepare(messages,options){
   return felRisuBoot().then(function(risu){
     var ei=_eraNow()||1,system='',history=[];
     (messages||[]).forEach(function(message){
       if(message.role==='system'&&!system)system=String(message.content||'');
-      else history.push({role:message.role,content:String(message.content||''),name:message.name});
+      else history.push({role:message.role,content:String(message.content||''),
+        scanContent:message.scanContent==null?undefined:String(message.scanContent),name:message.name});
     });
+    var first=(options&&options.firstMessage!==undefined)?options.firstMessage:(GAME.opText||'');
     return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){
-      return risu.setSessionContent({systemPrompt:system,firstMessage:GAME.opText||'',
+      return risu.setSessionContent({systemPrompt:system,firstMessage:first,
         localLore:loreCustomGet().filter(function(e){return e&&e.on!==false;}),
         regexScripts:felRisuRegexScripts(),
         defaultVariables:Object.assign({},SET.gvars||{},SET.vars||{})});
@@ -16578,7 +16580,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=12"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=15"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

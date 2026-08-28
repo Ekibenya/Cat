@@ -130,6 +130,8 @@ export interface FeliniaProvider {
 export interface FeliniaTurn {
   role: TurnRole;
   content: string;
+  /** Display-language text used only by Risu's lorebook scanner. */
+  scanContent?: string;
   name?: string;
   chatId?: string;
   time?: number;
@@ -139,6 +141,9 @@ export interface FeliniaGenerateOptions {
   provider?: FeliniaProvider;
   signal?: AbortSignal;
   preview?: boolean;
+  /** Minimum prose characters, excluding control blocks. A short first draft is regenerated once. */
+  minChars?: number;
+  maxShortRetries?: number;
   onDelta?: (text: string) => void;
 }
 
@@ -194,7 +199,31 @@ interface FeliniaRuntimeMeta {
   baseLoreCount?: number;
   baseRegexCount?: number;
   baseTriggerCount?: number;
+  baseDesc?: string;
+  basePersonality?: string;
+  baseScenario?: string;
+  baseExampleMessage?: string;
   activeNpcKeys?: string[];
+}
+
+type FeliniaNativeFields = Pick<character, 'desc' | 'personality' | 'scenario' | 'exampleMessage'>;
+
+export function mergeFeliniaNativeCharacterFields(
+  base: FeliniaNativeFields,
+  activeNpcs: Array<Pick<character, 'name' | 'desc' | 'personality' | 'exampleMessage'>>,
+): FeliniaNativeFields {
+  const merged = { ...base };
+  for (const npc of activeNpcs) {
+    merged.desc = [merged.desc, `【当前在场角色 · ${npc.name}】\n${npc.desc || ''}`].filter(Boolean).join('\n\n');
+    merged.personality = [
+      merged.personality,
+      `【${npc.name} · 性格与行为】\n${npc.personality || ''}`,
+      npc.exampleMessage ? `【${npc.name} · 说话样例】\n${npc.exampleMessage}` : '',
+    ].filter(Boolean).join('\n\n');
+    merged.scenario = [merged.scenario, `当前在场人物：${npc.name}`].filter(Boolean).join('\n');
+    merged.exampleMessage = [merged.exampleMessage, `【${npc.name} · 说话样例】\n${npc.exampleMessage || ''}`].filter(Boolean).join('\n\n');
+  }
+  return merged;
 }
 
 let runtimePromise: Promise<Runtime> | null = null;
@@ -392,6 +421,10 @@ function createCharacter(content: FeliniaCharacterContent, meta: FeliniaRuntimeM
     baseLoreCount: globalLore.length,
     baseRegexCount: regex.length,
     baseTriggerCount: triggers.length,
+    baseDesc: content.description || '',
+    basePersonality: content.personality || '',
+    baseScenario: content.scenario || '',
+    baseExampleMessage: content.mes_example || '',
     activeNpcKeys: [],
   };
   return {
@@ -516,6 +549,10 @@ export async function activateFeliniaEra(eraIndex: number, npcKeys: string[] = [
   era.globalLore = era.globalLore.slice(0, eraMeta.baseLoreCount);
   era.customscript = era.customscript.slice(0, eraMeta.baseRegexCount);
   era.triggerscript = era.triggerscript.slice(0, eraMeta.baseTriggerCount);
+  era.desc = eraMeta.baseDesc ?? era.desc;
+  era.personality = eraMeta.basePersonality ?? era.personality;
+  era.scenario = eraMeta.baseScenario ?? era.scenario;
+  era.exampleMessage = eraMeta.baseExampleMessage ?? era.exampleMessage;
   const activeNpcs: character[] = [];
   for (const key of [...new Set(npcKeys)]) {
     const found = db.characters.find((entry) => entry.type !== 'group' && meta(entry)?.kind === 'npc' && meta(entry)?.key === key) as character | undefined;
@@ -525,6 +562,16 @@ export async function activateFeliniaEra(eraIndex: number, npcKeys: string[] = [
     era.customscript.push(...clone(found.customscript));
     era.triggerscript.push(...clone(found.triggerscript));
   }
+  /* An activated preset NPC is a real Risu character, not merely a bag of
+   * triggerable lore. Merge its native character fields into the active era
+   * character so description, personality and speaking examples survive even
+   * when no keyword lore fires on the current turn. */
+  Object.assign(era, mergeFeliniaNativeCharacterFields({
+    desc: era.desc,
+    personality: era.personality,
+    scenario: era.scenario,
+    exampleMessage: era.exampleMessage,
+  }, activeNpcs));
   eraMeta.activeNpcKeys = activeNpcs.map((entry) => meta(entry)!.key);
   era.extentions!.felinia = eraMeta;
   rt.stores.selectedCharID.set(eraPosition);
@@ -657,10 +704,18 @@ function generationError(chat: Chat, startLength: number): string {
     .trim();
 }
 
-function risuMessage(turn: FeliniaTurn): Message {
+function proseCharacters(text: string): number {
+  return String(text || '')
+    .replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/gi, '')
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .trim().length;
+}
+
+export function risuMessage(turn: FeliniaTurn): Message {
   return {
     role: turn.role === 'assistant' || turn.role === 'char' ? 'char' : 'user',
     data: String(turn.content || ''),
+    scanData: turn.scanContent == null ? undefined : String(turn.scanContent),
     name: turn.name,
     chatId: turn.chatId,
     time: turn.time ?? Date.now(),
@@ -695,6 +750,9 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
   if (!current || current.type === 'group') throw new Error('No FELINIA era is active');
   const currentChat = current.chats[current.chatPage];
   const startLength = currentChat.message.length;
+  const originalSystemPrompt = current.systemPrompt;
+  const minChars = Math.max(0, Math.round(options.minChars || 0));
+  const maxShortRetries = Math.max(0, Math.min(1, Math.round(options.maxShortRetries ?? 1)));
   // The original visual client releases this store after awaiting sendChat.
   // The headless host owns that lifecycle now, including recovery after errors.
   rt.process.doingChat.set(false);
@@ -709,11 +767,38 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
     }, 50);
   }
   try {
-    const ok = await rt.process.sendChat(-1, {
-      signal: options.signal,
-      preview: options.preview,
-    });
-    if (!ok) throw new Error(generationError(currentChat, startLength) || '生成请求失败');
+    let bestMessage: Message | undefined;
+    for (let attempt = 0; attempt <= maxShortRetries; attempt++) {
+      if (attempt > 0) {
+        currentChat.message = currentChat.message.slice(0, startLength);
+        current.systemPrompt = `${originalSystemPrompt}\n\n최종 분량 교정. 직전 초안은 ${minChars}자 미만이라 폐기되었다. 같은 장면을 처음부터 다시 쓰되, 상태창을 제외한 한국어 소설 본문이 반드시 ${minChars}자 이상이 된 뒤에만 끝낸다. 요약하거나 결말을 서두르지 말고 사건, 반응, 대화와 구체적인 동작을 늘린다.`;
+        rt.database.setCurrentCharacter(current);
+        previous = currentChat.message.at(-1)?.data || '';
+      }
+      rt.process.doingChat.set(false);
+      const ok = await rt.process.sendChat(-1, {
+        signal: options.signal,
+        preview: options.preview,
+      });
+      if (!ok) {
+        const message = generationError(currentChat, startLength) || '生成请求失败';
+        if (!bestMessage) throw new Error(message);
+        currentChat.message.push(clone(bestMessage));
+        break;
+      }
+      if (options.preview) break;
+      const generated = currentChat.message.at(-1);
+      if (!generated || generated.role !== 'char') continue;
+      if (!bestMessage || proseCharacters(generated.data) > proseCharacters(bestMessage.data)) {
+        bestMessage = clone(generated);
+      }
+      if (!minChars || proseCharacters(generated.data) >= minChars || attempt === maxShortRetries) {
+        if (bestMessage && generated.data !== bestMessage.data) {
+          currentChat.message[currentChat.message.length - 1] = clone(bestMessage);
+        }
+        break;
+      }
+    }
     if (options.preview) return {
       text: JSON.stringify(rt.process.previewFormated),
       prompt: clone(rt.process.previewFormated),
@@ -726,6 +811,8 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
     options.onDelta?.(message.data);
     return { text: message.data, history: await getFeliniaHistory() };
   } finally {
+    current.systemPrompt = originalSystemPrompt;
+    rt.database.setCurrentCharacter(current);
     if (timer) clearInterval(timer);
     rt.process.doingChat.set(false);
   }
