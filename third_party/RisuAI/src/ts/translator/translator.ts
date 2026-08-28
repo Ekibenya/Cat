@@ -144,7 +144,7 @@ export async function translate(text:string, reverse:boolean) {
     return runTranslator(text, reverse, db.translator,db.aiModel.startsWith('novellist') ? 'ja' : 'en')
 }
 
-export async function runTranslator(text:string, reverse:boolean, from:string,target:string, exarg?:{translatorNote?:string}) {
+export async function runTranslator(text:string, reverse:boolean, from:string,target:string, exarg?:{translatorNote?:string, regenerate?:boolean}) {
     const arg = {
 
         from: reverse ? from : target,
@@ -153,7 +153,8 @@ export async function runTranslator(text:string, reverse:boolean, from:string,ta
 
         host: 'translate.googleapis.com',
 
-        translatorNote: exarg?.translatorNote
+        translatorNote: exarg?.translatorNote,
+        regenerate: exarg?.regenerate
     }
     const texts = text.split('\n')
     let chunks:[string,boolean][] = [['', true]]
@@ -208,7 +209,7 @@ export async function runTranslator(text:string, reverse:boolean, from:string,ta
 
 }
 
-async function translateMain(text:string, arg:{from:string, to:string, host:string, translatorNote?:string}){
+async function translateMain(text:string, arg:{from:string, to:string, host:string, translatorNote?:string, regenerate?:boolean}){
     let db = getDatabase()
     if(db.translatorType === 'browser'){
         try{
@@ -222,7 +223,7 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
     }
     if(db.translatorType === 'llm'){
         const tr = arg.to || 'en'
-        return translateLLM(text, {to: tr, from: arg.from, translatorNote: arg.translatorNote})
+        return translateLLM(text, {to: tr, from: arg.from, translatorNote: arg.translatorNote, regenerate:arg.regenerate})
     }
     if(db.translatorType === 'deepl'){
         const body = {
@@ -320,7 +321,7 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
 
     const googleCacheKey = `${arg.from}\u0000${arg.to}\u0000${text}`
     const cachedGoogle = googleTranslationCache.get(googleCacheKey)
-    if(cachedGoogle !== undefined) return cachedGoogle
+    if(!arg.regenerate && cachedGoogle !== undefined) return cachedGoogle
 
     const url = `https://${arg.host}/translate_a/single?client=gtx&dt=t&sl=${arg.from}&tl=${arg.to}&q=` + encodeURIComponent(text)
 

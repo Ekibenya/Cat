@@ -22803,22 +22803,22 @@ async function Bf(e) {
 					break;
 				}
 				case "internal:risuai": {
-					let { RisuAccessClient: t } = await import("./risuaccess-Mui7ZOLU.js");
+					let { RisuAccessClient: t } = await import("./risuaccess-DRpWOjYk.js");
 					Lf[e] = new t();
 					break;
 				}
 				case "internal:aiaccess": {
-					let { AIAccessClient: t } = await import("./aiaccess-FJhDktqR.js");
+					let { AIAccessClient: t } = await import("./aiaccess-CNHKIycT.js");
 					Lf[e] = new t();
 					break;
 				}
 				case "internal:googlesearch": {
-					let { GoogleSearchClient: t } = await import("./googlesearchclient-BH6p_m4X.js");
+					let { GoogleSearchClient: t } = await import("./googlesearchclient-BnDqc426.js");
 					Lf[e] = new t();
 					break;
 				}
 				case "internal:graphmem": {
-					let { GraphMemClient: t } = await import("./graphmem-Du-Cj7OK.js");
+					let { GraphMemClient: t } = await import("./graphmem-D8Ss3uBj.js");
 					Lf[e] = new t();
 					break;
 				}
@@ -37846,7 +37846,7 @@ async function ab(e) {
 	if (!Q().feliniaFinalPromptTranslation || ib > 0) return e;
 	ib++;
 	try {
-		let { runTranslator: t } = await import("./translator-BvM21ju2.js");
+		let { runTranslator: t } = await import("./translator-I7W3Gsuy.js");
 		return await rb(e, (e) => t(e, !0, "auto", "ko"));
 	} finally {
 		ib--;
@@ -38787,7 +38787,8 @@ async function Bb(e, t, n, r, i) {
 		from: t ? n : r,
 		to: t ? r : n,
 		host: "translate.googleapis.com",
-		translatorNote: i?.translatorNote
+		translatorNote: i?.translatorNote,
+		regenerate: i?.regenerate
 	}, o = e.split("\n"), s = [["", !0]];
 	for (let e = 0; e < o.length; e++) o[e].startsWith("{{img") || o[e].startsWith("{{raw") || o[e].startsWith("{{video") || o[e].startsWith("{{audio") && o[e].endsWith("}}") ? (s.push([o[e], !1]), s.push(["", !0])) : (s[s.length - 1][0] && (s[s.length - 1][0] += "\n"), s[s.length - 1][0] += o[e]);
 	let c = [];
@@ -38813,7 +38814,8 @@ async function Vb(e, t) {
 	if (n.translatorType === "llm") return qb(e, {
 		to: t.to || "en",
 		from: t.from,
-		translatorNote: t.translatorNote
+		translatorNote: t.translatorNote,
+		regenerate: t.regenerate
 	});
 	if (n.translatorType === "deepl") {
 		let r = {
@@ -38849,7 +38851,7 @@ async function Vb(e, t) {
 		});
 		return o.ok ? o.data.data : "ERR::DeepLX API Error" + await o.data;
 	}
-	if (n.translatorType == "bergamot") return Ob ||= (await import("./bergamotTranslator-Cs30Xsrn.js")).bergamotTranslate, Ob(e, t.from, t.to, !1);
+	if (n.translatorType == "bergamot") return Ob ||= (await import("./bergamotTranslator-CgYLSNSN.js")).bergamotTranslate, Ob(e, t.from, t.to, !1);
 	if (n.useExperimentalGoogleTranslator && (Hu || Uu || userScriptFetch)) try {
 		let n = navigator.userAgent, r = await rU(`https://translate.google.com/m?tl=${t.to}&sl=${t.from}&q=${encodeURIComponent(e)}`, {
 			headers: {
@@ -38863,7 +38865,7 @@ async function Vb(e, t) {
 	let r = Eb(e);
 	if (r.length > 1) return (await Lb(r, 4, (e) => Vb(e, t))).join("");
 	let i = `${t.from}\u0000${t.to}\u0000${e}`, a = Ib.get(i);
-	if (a !== void 0) return a;
+	if (!t.regenerate && a !== void 0) return a;
 	let o = `https://${t.host}/translate_a/single?client=gtx&dt=t&sl=${t.from}&tl=${t.to}&q=` + encodeURIComponent(e), s = await fetch(o, { method: "GET" });
 	if (!s.ok) {
 		let e = (await s.text()).slice(0, 240);
@@ -38911,7 +38913,7 @@ async function Gb(e, t, n = "", r, i = !1) {
 	}
 	if (o.translatorType == "bergamot" && o.htmlTranslation) {
 		let t = o.aiModel.startsWith("novellist") ? "ja" : "en", i = o.translator || "en";
-		return Ob ||= (await import("./bergamotTranslator-Cs30Xsrn.js")).bergamotTranslate, ex(await Ob(e, t, i, !0), n, a, r);
+		return Ob ||= (await import("./bergamotTranslator-CgYLSNSN.js")).bergamotTranslate, ex(await Ob(e, t, i, !0), n, a, r);
 	}
 	let s = new DOMParser().parseFromString(e, "text/html");
 	console.log(e);
@@ -79221,7 +79223,7 @@ var gH = class {
 				msg: ""
 			}), localStorage.setItem("accountst", "able"), localStorage.setItem("fallbackRisuToken", JSON.stringify(e.account)), this.isAccount = !0, !0;
 			if (await lG("to overwrite your data, type \"RISUAI\"") !== "RISUAI") return localStorage.setItem("dosync", "avoid"), !1;
-			let { collectColdStorageBackupPayloads: a, replaceColdStoragePayloadResources: o, setAccountColdStorageItem: s } = await import("./coldstorage.svelte-Cp4cAFWR.js"), c = await a(e), l = c.missingKeys.length + c.invalidKeys.length;
+			let { collectColdStorageBackupPayloads: a, replaceColdStoragePayloadResources: o, setAccountColdStorageItem: s } = await import("./coldstorage.svelte-Cxea8LCx.js"), c = await a(e), l = c.missingKeys.length + c.invalidKeys.length;
 			if (l > 0) return $(`Failed to migrate ${l} cold storage item(s) to account sync because they are missing or invalid.`), !1;
 			let u = {};
 			try {

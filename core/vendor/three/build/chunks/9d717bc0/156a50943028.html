@@ -2966,7 +2966,8 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="默认 900" style="width:80px"></div>
       <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span class="on">关</span><span>低</span><span>中</span><span>高</span></span></div>
       <div class="sub" style="margin-top:16px">韩语原生写作&nbsp;·&nbsp;中文只作显示层：玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。状态栏与控制标签永不翻译。</div>
-      <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:200px"><option value="browser">浏览器本地翻译（推荐）</option><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
+      <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"><option value="browser">浏览器本地翻译（推荐）</option><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务（需安装）</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
+      <div class="sRow" id="trDeepLXInstallRow"><span>DeepLX&nbsp;本地服务</span><span style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap"><span class="eBtn" id="trDeepLXInstall" style="margin-top:0;padding:7px 16px 6px;letter-spacing:.18em">一键安装</span><span class="sub" style="margin:0">自动匹配&nbsp;macOS／Windows，安装后启动&nbsp;1188</span></span></div>
       <div class="sRow"><span>翻译方向</span><span class="sub" style="margin:0">玩家&nbsp;中文→韩语&nbsp;·&nbsp;正文&nbsp;韩语→中文</span></div>
       <div class="sRow"><span>显示韩语原稿</span><input type="checkbox" id="trShowRaw"></div>
       <div class="sRow"><span>DeepL&nbsp;KEY</span><input class="aIn" id="trDeepLKey" type="password" placeholder="仅选择 DeepL 时需要" style="width:220px"></div>
@@ -9034,15 +9035,29 @@ function turnOps(tIdx,rawText){
   d.style.cssText='display:flex;gap:16px;font-size:9px;letter-spacing:.22em;margin:-6px 0 14px';
   d.innerHTML='<span class="op" data-op="tts" style="cursor:pointer;color:var(--gold)">诵此回</span>'
     +'<span class="op" data-op="draw" style="cursor:pointer;color:var(--gold)">✦ 绘此回</span>'
+    +'<span class="op" data-op="translate" title="使用当前翻译器重新翻译本回" style="cursor:pointer;color:var(--gold)">↺ 重译</span>'
     +'<span class="op" data-op="redo" style="cursor:pointer;color:var(--gold)">↻ 重演</span>'
     +'<span class="op" data-op="back" style="cursor:pointer;color:var(--gold)">⤺ 回退</span>';
   nr.insertBefore(d,nr.querySelector('.gEot'));
+}
+/* 老存档的正文 HTML 里没有重译钮。读档时就地补齐，只改操作栏，不碰正文。 */
+function ensureTurnTranslateOps(root){
+  (root||$('#gNarr')).querySelectorAll('.tOps[data-t]').forEach(function(bar){
+    if(bar.querySelector('[data-op="translate"]'))return;
+    var op=document.createElement('span');op.className='op';op.setAttribute('data-op','translate');
+    op.title='使用当前翻译器重新翻译本回';op.style.cssText='cursor:pointer;color:var(--gold)';op.textContent='↺ 重译';
+    var redo=bar.querySelector('[data-op="redo"]');bar.insertBefore(op,redo||null);
+  });
 }
 /* 委托绑定：存档经 innerHTML 序列化后按钮依然可用 */
 $('#gNarr').addEventListener('click',function(e){
   var op=e.target.closest&&e.target.closest('[data-op]');if(!op)return;
   var a=op.getAttribute('data-op');
   if(a==='draw')drawScene();
+  else if(a==='translate'){
+    var _th=op.closest('[data-t]'),_tt=_th?+_th.getAttribute('data-t'):-1;
+    felRetranslateTurn(_tt,op);
+  }
   else if(a==='redo'){
     /* 这个钮一律转发给顶栏的 gRedo，而 gRedo 只认 TURNS 的最后一条：
        玩家往上滚、点第 3 回的「重演」，被删掉重写的是第 10 回，第 3 回原封不动。
@@ -10945,18 +10960,19 @@ function felTrStatus(text,bad){
   var el=$('#trStatus');if(!el)return;
   el.textContent=text||'';el.style.color=bad?'#a74432':'';
 }
-function felTrCfg(){
+function felTrCfg(regenerate){
   var t=SET.trans||{};
   return {provider:t.provider||'off',
     deeplKey:t.deeplKey||'',deeplFree:t.deeplFree!==0,
-    deeplxUrl:t.deeplxUrl||'http://localhost:1188',deeplxToken:t.deeplxToken||''};
+    deeplxUrl:t.deeplxUrl||'http://localhost:1188',deeplxToken:t.deeplxToken||'',
+    regenerate:!!regenerate};
 }
-function felTranslate(text,source,target){
+function felTranslate(text,source,target,regenerate){
   if(!felTrOn()||!text)return Promise.resolve(text);
   return felRisuBoot().then(function(risu){
     if((SET.trans||{}).provider==='llm')return risu.configureProvider(felRisuProvider((SET.sub&&SET.sub.base&&SET.sub.model)?SET.sub:API)).then(function(){return risu;});
     return risu;
-  }).then(function(risu){return risu.translate(String(text),source,target,felTrCfg());});
+  }).then(function(risu){return risu.translate(String(text),source,target,felTrCfg(regenerate));});
 }
 var FEL_NATIVE_WARM={kozh:0,zhko:0};
 function felNativeTranslationWarm(){
@@ -10999,7 +11015,7 @@ function felCanonicalizeTurns(){
   });
   return chain;
 }
-function felDisplayReply(raw){
+function felDisplayReply(raw,regenerate){
   raw=String(raw||'');
   if(!felTrOn()||!felMostlyKorean(raw))return Promise.resolve(raw);
   /* 状态块绝不能整坨送进翻译器。Google 会把 <sec_char> 译成 <秒字符>、
@@ -11034,7 +11050,7 @@ function felDisplayReply(raw){
   }
   function proseJob(){
     var p=protectedKo(ko);
-    return felTranslate(p.text,'ko','zh-CN').then(function(out){
+    return felTranslate(p.text,'ko','zh-CN',regenerate).then(function(out){
       out=p.restore(out).trim();
       /* 韩语连续省略主语时 Google 偶尔把女性 NPC 落成“他/我”。只校正文中的
          叙述段，角色引号里的第一人称原话保持不动。 */
@@ -11055,7 +11071,7 @@ function felDisplayReply(raw){
         var tok='FELHAN'+bi+'X'+han.length+'X';han.push([tok,x]);return tok;
       });
       var p=protectedKo(masked);
-      return felTranslate(p.text,'ko','zh-CN').then(function(out){
+      return felTranslate(p.text,'ko','zh-CN',regenerate).then(function(out){
         out=p.restore(out);han.forEach(function(x){out=out.split(x[0]).join(x[1]);});return out;
       });
     })).then(function(parts){return parts.join('').trim();});
@@ -11064,6 +11080,43 @@ function felDisplayReply(raw){
     var chinese=got[0]+(got[1]?('\n\n'+got[1]):'');
     if(!SET.trans.showRaw)return chinese;
     return '【한국어 원문】\n'+ko+'\n\n【中文译文】\n'+got[0]+(got[1]?'\n\n'+got[1]:'');
+  });
+}
+/* 只重做中文显示层：content 中的韩语原稿、模型历史、状态和剧情一字不动。 */
+function felReplaceTurnDisplay(tIdx,display){
+  var nr=$('#gNarr'),ops=nr.querySelector('.tOps[data-t="'+tIdx+'"]');
+  if(!ops)return false;
+  nr.querySelectorAll('p[data-t="'+tIdx+'"]').forEach(function(p){p.remove();});
+  var body=stripMvu(stripCoT(String(display||''))),frag=document.createDocumentFragment();
+  body.split(/\n{2,}/).forEach(function(par){
+    if(!par.trim())return;
+    var p=document.createElement('p');p.setAttribute('data-t',tIdx);
+    if(/^【/.test(par.trim()))p.className='sys';
+    p.innerHTML=fmtBody(par);frag.appendChild(p);
+  });
+  nr.insertBefore(frag,ops);return true;
+}
+function felRetranslateTurn(tIdx,button){
+  if(button&&button.dataset.busy)return;
+  var turn=null;
+  for(var i=0;i<TURNS.length;i++)if(TURNS[i].role==='assistant'&&+TURNS[i].t===+tIdx){turn=TURNS[i];break;}
+  if(!turn){felTrStatus('找不到这一回的韩语原稿',1);return;}
+  var oldLabel=button?button.textContent:'↺ 重译';
+  if(button){button.dataset.busy='1';button.textContent='翻译中…';button.style.pointerEvents='none';}
+  felDisplayReply(turn.content,true).then(function(display){
+    return FEL_RISU&&FEL_RISU.processDisplay?FEL_RISU.processDisplay(display):display;
+  }).then(function(display){
+    turn.display=display;turn.canonical=felTrOn()?'ko':'';
+    ensureTurnTranslateOps($('#gNarr'));felReplaceTurnDisplay(tIdx,display);
+    try{autoSave(1);}catch(_){}
+    felTrStatus(felTrOn()?'已用当前翻译器重新翻译 · 韩语原稿未改':'已恢复显示韩语原稿',0);
+    if(button){button.textContent='✓ 已重译';setTimeout(function(){button.textContent=oldLabel;},1600);}
+  }).catch(function(err){
+    felTrStatus('重新翻译失败，旧译文与韩语原稿均已保留：'+((err&&err.message)||err),1);
+    if(button)button.textContent='重译失败';
+  }).finally(function(){
+    if(button){delete button.dataset.busy;button.style.pointerEvents='';
+      if(button.textContent==='重译失败')setTimeout(function(){button.textContent=oldLabel;},2200);}
   });
 }
 /* 页签切换 */
@@ -11939,12 +11992,13 @@ function apPaneLoad(){
 }
 function trPaneSync(){
   var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'browser';
-  var dl=$('#trDeepLKey'),dx=$('#trDeepLXUrl'),dt=$('#trDeepLXToken');
+  var dl=$('#trDeepLKey'),dx=$('#trDeepLXUrl'),dt=$('#trDeepLXToken'),di=$('#trDeepLXInstallRow');
   if(dl)dl.closest('.sRow').style.display=p==='deepl'?'':'none';
+  if(di)di.style.display=p==='deeplx'?'':'none';
   if(dx)dx.closest('.sRow').style.display=p==='deeplx'?'':'none';
   if(dt)dt.closest('.sRow').style.display=p==='deeplx'?'':'none';
   var note={browser:'浏览器本地翻译 · 首次下载韩中语言包 · 不支持时自动使用 Google',google:'Google 快速翻译 · 无需密钥 · 结果缓存于本浏览器',deepl:'DeepL API · 使用玩家自己的密钥',
-    deeplx:'DeepLX · 请求只发往玩家填写的本地服务',bergamot:'Firefox／Bergamot · 模型首次使用时下载，之后在浏览器本地运行',
+    deeplx:'DeepLX · 未安装时点上方“一键安装” · 安装并启动后请求只发往本机',bergamot:'Firefox／Bergamot · 模型首次使用时下载，之后在浏览器本地运行',
     llm:'使用副模型（若已配置）或主模型完成翻译',off:'已关闭 · 模型与界面直接使用同一种语言'}[p];
   felTrStatus(note,0);
 }
@@ -11954,6 +12008,14 @@ function semPaneSync(){
   var gpu=$('#semGpu');if(gpu)gpu.closest('.sRow').style.display=(mode==='bge-ko'||mode==='hybrid')?'':'none';
 }
 $('#trProvider').addEventListener('change',function(){SET.trans.provider=this.value;setStore();trPaneSync();if(this.value==='browser')felNativeTranslationWarm();});
+$('#trDeepLXInstall').addEventListener('click',function(){
+  var ua=(navigator.userAgent||'')+' '+(navigator.platform||''),file='';
+  if(/Windows/i.test(ua))file='/core/res/install/FELINIA-DeepLX-Windows.cmd';
+  else if(/Macintosh|MacIntel|Mac OS X/i.test(ua))file='/core/res/install/FELINIA-DeepLX-macOS.zip';
+  else {felTrStatus('当前一键安装支持 macOS 与 Windows；其他系统请填写已有 DeepLX 服务地址',1);return;}
+  var a=document.createElement('a');a.href=file;a.download=file.split('/').pop();document.body.appendChild(a);a.click();a.remove();
+  felTrStatus('安装文件已下载 · 打开它一次即可安装并启动本地翻译服务',0);
+});
 $('#trShowRaw').addEventListener('change',function(){SET.trans.showRaw=this.checked?1:0;setStore();});
 [['trDeepLKey','deeplKey'],['trDeepLXUrl','deeplxUrl'],['trDeepLXToken','deeplxToken']].forEach(function(pair){
   $('#'+pair[0]).addEventListener('input',function(){SET.trans[pair[1]]=this.value.trim();setStore();});
@@ -14976,6 +15038,7 @@ function svLoad(v){
   ERA.act=buildActs(ERA.year);ERA.sel=null;
   gLocSet(v.loc||'');
   $('#gNarr').innerHTML=v.html||'';
+  ensureTurnTranslateOps($('#gNarr'));
   document.querySelector('#game .gMfd').innerHTML=v.mfd||'';
   try{mvRingMount();}catch(_){}
   TURNS=v.turns||[];TURNI=TURNS.length?(Math.max.apply(null,TURNS.map(function(t){return t.t||0;}))+1):0;
@@ -16612,7 +16675,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=16"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=17"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

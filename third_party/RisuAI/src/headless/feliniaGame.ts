@@ -175,6 +175,7 @@ export interface FeliniaTranslationOptions {
   deeplFree?: boolean;
   deeplxUrl?: string;
   deeplxToken?: string;
+  regenerate?: boolean;
 }
 
 export interface FeliniaMemoryOptions {
@@ -632,7 +633,7 @@ export async function translateFelinia(
   if (!text || options.provider === 'off') return text;
   await configureFeliniaTranslation(options);
   const rt = await runtime();
-  return rt.translator.runTranslator(text, true, from, to);
+  return rt.translator.runTranslator(text, true, from, to, { regenerate: options.regenerate });
 }
 
 export async function setFeliniaNpcState(key: string, state: Record<string, string | number | boolean>) {
