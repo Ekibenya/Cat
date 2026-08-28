@@ -3,11 +3,13 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildFeliniaCognitionPrompt,
+  buildFeliniaPlanningPrompt,
   compileFeliniaDefinition,
   extractFeliniaCognition,
   findRepeatedFeliniaDialogue,
   mergeFeliniaNativeCharacterFields,
   normalizeFeliniaCognition,
+  parseFeliniaPlanningResponse,
   risuMessage,
   stripFeliniaReasoning,
 } from './feliniaGame';
@@ -22,7 +24,7 @@ function fixture() {
 }
 
 describe('FELINIA fixed Risu runtime data', () => {
-  it('compiles all eras, preset characters and lore exactly once', () => {
+  it('compiles every era and character without installing unscoped historical research globally', () => {
     const { content, eras } = fixture();
     const definition = compileFeliniaDefinition(content, eras);
     expect(definition.eras).toHaveLength(41);
@@ -31,8 +33,12 @@ describe('FELINIA fixed Risu runtime data', () => {
     const assignedLore = (definition.base.lorebook?.length || 0)
       + definition.eras.reduce((total, era) => total + (era.lorebook?.length || 0), 0)
       + definition.npcs.reduce((total, npc) => total + (npc.lorebook?.length || 0), 0);
-    expect(assignedLore).toBe(content.lorebook.length);
-    expect(assignedLore).toBe(4448);
+    expect(content.lorebook).toHaveLength(4448);
+    expect(definition.base.lorebook).toHaveLength(57);
+    expect(definition.base.lorebook?.every((entry: any) => entry.lay === 'core' || entry.lay === 'style')).toBe(true);
+    expect(definition.base.recursiveScanning).toBe(false);
+    expect(assignedLore).toBe(4171);
+    expect(definition.base.lorebook?.some((entry) => String(entry.title).includes('一九〇〇年的创伤'))).toBe(false);
   });
 
   it('partitions every NPC into exactly one of the 41 eras', () => {
@@ -123,12 +129,17 @@ describe('FELINIA fixed Risu runtime data', () => {
       .toEqual({ v: 1, beat: 'b 推进 /b' });
   });
 
-  it('instructs Flash to emit prose first and keeps prior state compact', () => {
-    const prompt = buildFeliniaCognitionPrompt({ v: 1, focus: '莉莉丝', threads: ['门外来客'] });
-    expect(prompt).toContain('先立即输出玩家可见的中文小说正文');
-    expect(prompt).toContain('<felinia_state>');
-    expect(prompt).toContain('上一回隐藏状态');
-    expect(prompt).toContain('莉莉丝');
+  it('separates hidden planning from visible prose and accepts fenced planner JSON', () => {
+    const planning = buildFeliniaPlanningPrompt({ v: 1, focus: '莉莉丝', threads: ['门外来客'] });
+    expect(planning).toContain('不写小说正文');
+    expect(planning).toContain('只输出一个有效 JSON');
+    expect(planning).toContain('莉莉丝');
+    const parsed = parseFeliniaPlanningResponse('```json\n{"v":1,"beat":"回应玩家敲门","focus":"莉莉丝"}\n```');
+    expect(parsed?.beat).toBe('回应玩家敲门');
+    const prose = buildFeliniaCognitionPrompt(parsed);
+    expect(prose).toContain('已经完成');
+    expect(prose).toContain('严格依照该计划回应玩家最后一句');
+    expect(prose).toContain('不得输出 <felinia_state>');
   });
 
   it('keeps canonical Korean separate from the display-language lore scan alias', () => {

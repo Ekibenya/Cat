@@ -502,6 +502,8 @@ html.lux #esBrand b{color:#4a4237}
 #game .gNarr>*{max-width:750px;margin-left:auto;margin-right:auto}
 #game .gNarr .q{color:var(--gold-hi)}
 #game .gNarr .sys{font-size:12px;letter-spacing:.32em;color:var(--mut)}
+#game .gNarr .heart{font-size:1.04em;line-height:2;color:#352d24;font-weight:600;letter-spacing:.035em}
+html.lux #game .gNarr .heart{color:#33281f}
 #game .gNarr .me{color:#3a4b5a}
 #game .gEot{text-align:center;font-size:10px;letter-spacing:.4em;color:#ada999;margin:28px 0 8px}
 /* 输入区浮于正文之上（Ghost 式）：正文滚到底下透出，阅读面拉满；渐隐底幕保字可读 */
@@ -7807,7 +7809,7 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=117;
+var BUILD=118;
 var GAME={on:false,mapOpen:false,armOpen:false,place:null,dest:null,cognition:null};
 var gEl=$('#game');
 function felNewMemoryId(){
@@ -8025,7 +8027,7 @@ function gameEnter(lineOverride){
         /* 粘性滚动：玩家贴着底才跟进；往上翻了就别打扰人家看前文，翻回来自动恢复跟随 */
         var n2=$('#gNarr');var _stk=n2.scrollHeight-n2.scrollTop-n2.clientHeight<90;
         el.innerHTML=el._pend.split(/\n{2,}/).map(function(par){
-          return /^【/.test(par.trim())?('<p class="sys">'+fmtBody(par)+'</p>'):('<p>'+fmtBody(par)+'</p>');
+          return '<p'+(felNarrClass(par)?(' class="'+felNarrClass(par)+'"'):'')+'>'+fmtBody(par)+'</p>';
         }).join('');
         if(_stk)n2.scrollTop=n2.scrollHeight;
       });
@@ -8055,7 +8057,7 @@ function gameEnter(lineOverride){
       if(fGen!==TYPE_GEN)return;
       feFailMsg(msg,function(){gameEnter(lineOverride);});
     },
-    {max_tokens:3200,onDelta:fDelta}       /* 开场长文需要更大篇幅 */
+    {max_tokens:3200,onDelta:fDelta,onPhase:function(phase){GEN.phase=phase;}} /* 开场长文需要更大篇幅 */
   );
 }
 function gameExit(){
@@ -9077,6 +9079,9 @@ function fmtBody(par){
     .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
     .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」');
 }
+/* Model prose wrapped in 【】 is FELINIA's inner-voice/narrative convention, not
+   a tiny pale system notice. Actual notices call narrAdd('sys', ...) explicitly. */
+function felNarrClass(par){return /^【/.test(String(par||'').trim())?'heart':'';}
 var TYPE_GEN=0;   /* 代际令牌：换开局/读档/重演时旧打字链立刻失效 */
 /* 视觉小说全屏时底下那只对话框在另一个文件里（felinia-vn.js），
    它要按玩家自己调的字速打字，也要知道这一回是不是还在流——
@@ -9091,7 +9096,7 @@ function typeParas(paras,tIdx,done,instant){
   var par=paras.shift(),html=fmtBody(par);
   /* instant 必须一路传下去：漏传的话只有第一段是即时的，从第二段起又回落成
      13ms/字重打一遍——流式明明已经出完字了，玩家还要再等十几秒看它重放。 */
-  if(/^【/.test(par.trim())){narrAdd('sys',html,tIdx);typeParas(paras,tIdx,done,instant);return;}
+  if(felNarrClass(par)){narrAdd('heart',html,tIdx);typeParas(paras,tIdx,done,instant);return;}
   if(!speed||REDUCED){narrAdd(null,html,tIdx);typeParas(paras,tIdx,done,instant);return;}
   var p=narrAdd(null,'',tIdx),tmp=document.createElement('div');tmp.innerHTML=html;
   var txt=tmp.textContent,i=0,sc=0,nr=$('#gNarr');
@@ -9187,7 +9192,7 @@ function renderReply(text,tIdx,instant){
 /* ── 生成等待·启发式进度条（Ghost 移植）───────────────────────────
    接口吐第一个字之前不给任何进度信号，故以【本机最近 8 轮首字耗时中位数】为预估，
    进度按指数渐近爬升、封顶 94%，真正出字才冲满——绝不虚报 100%。 */
-var GEN={t0:0,est:0,active:false,mode:'',chars:0,el:null,fill:null,txt:null,tmr:null,
+var GEN={t0:0,est:0,active:false,mode:'',phase:'',chars:0,el:null,fill:null,txt:null,tmr:null,
   samples:(function(){try{var a=JSON.parse(localStorage.getItem('rome_ttft_v1')||'[]');
     return Array.isArray(a)?a.slice(-8):[];}catch(e){return [];}})()};
 var GENAC=null;                                    /* 本轮请求的 AbortController，供「中断」用 */
@@ -9202,14 +9207,16 @@ function genBlocks(pct){var n=Math.round(Math.max(0,Math.min(100,pct))/10),o='';
   for(var i=0;i<10;i++)o+=(i<n?'\u2593':'\u2591');return o;}
 function genLabel(){
   var el=Date.now()-GEN.t0,sec=(el/1000).toFixed(el<10000?1:0),bar=genBlocks(genPct());
+  if(GEN.phase==='planning')return 'ORACVLVM · '+(GEN.mode==='forge'?'铸局推演':'推演人物与局势')+'…… '+bar+' '+sec+'s';
   if(GEN.mode==='forge')return 'ORACVLVM · 铸局中…… '+bar+' '+sec+'s';
+  if(GEN.phase==='writing'&&!GEN.chars)return 'ORACVLVM · 推演完成 · 等待落笔…… '+bar+' '+sec+'s';
   if(GEN.chars>0)return 'ORACVLVM · 神谕落笔…… '+bar+' '+GEN.chars+' 字';
   if(GEN.est&&el>GEN.est*1.6)return 'ORACVLVM · 建立链路…… '+bar+' '+sec+'s · 回线拥堵';
   return 'ORACVLVM · 建立链路…… '+bar+' '+(GEN.est?(Math.round(genPct())+'%'):(sec+'s'));
 }
 function genOpen(mode){
   genClose(true);
-  GEN.active=true;GEN.mode=mode||'gen';GEN.t0=Date.now();GEN.est=ttftMedian();GEN.chars=0;
+  GEN.active=true;GEN.mode=mode||'gen';GEN.phase='planning';GEN.t0=Date.now();GEN.est=ttftMedian();GEN.chars=0;
   var nr=$('#gNarr'),d=document.createElement('div');
   d.className='genBar';
   d.innerHTML='<div class="gbTrack"><i id="genFill"></i><span id="genTxt"></span></div>'
@@ -9237,7 +9244,7 @@ function genFirstToken(){                          /* 首字抵达：记一次 T
     try{localStorage.setItem('rome_ttft_v1',JSON.stringify(GEN.samples));}catch(_){}}
 }
 function genClose(){
-  GEN.active=false;GEN._ttft=0;GEN.chars=0;
+  GEN.active=false;GEN._ttft=0;GEN.phase='';GEN.chars=0;
   if(GEN.tmr){clearTimeout(GEN.tmr);GEN.tmr=null;}
   if(GEN.el){try{GEN.el.remove();}catch(_){}GEN.el=null;GEN.fill=null;GEN.txt=null;}
 }
@@ -10090,6 +10097,7 @@ function sysPrompt(){
 function risuInvoke(messages,cb,err,opt){
   opt=opt||{};
   var onDelta=opt.onDelta;delete opt.onDelta;
+  var onPhase=opt.onPhase;delete opt.onPhase;
   var noStream=!!opt.noStream;delete opt.noStream;
   var wantTag=String(opt.wantTag||'');delete opt.wantTag;
   var aux=!!opt.aux;delete opt.aux;
@@ -10122,7 +10130,7 @@ function risuInvoke(messages,cb,err,opt){
       maxTokens:Math.round(mt),onDelta:noStream?undefined:onDelta});
     return risu.generate({provider:provider,signal:ac?ac.signal:undefined,
       minChars:Math.round(minChars),maxShortRetries:1,cognition:GAME.cognition,
-      onDelta:noStream?undefined:onDelta});
+      onPhase:onPhase,onDelta:noStream?undefined:onDelta});
   }).then(function(result){
     if(fired)return;fired=true;clearTimeout(timer);
     var text=String(result.text||'');
@@ -10213,7 +10221,7 @@ function askOracleSend(msgs){
         if(!el.parentNode)return;                    /* 已收尾移除：这一帧直接丢弃 */
         var nr2=$('#gNarr');var _stk=nr2.scrollHeight-nr2.scrollTop-nr2.clientHeight<90;
         el.innerHTML=el._pend.split(/\n{2,}/).map(function(par){
-          return /^【/.test(par.trim())?('<p class="sys">'+fmtBody(par)+'</p>'):('<p>'+fmtBody(par)+'</p>');
+          return '<p'+(felNarrClass(par)?(' class="'+felNarrClass(par)+'"'):'')+'>'+fmtBody(par)+'</p>';
         }).join('');
         if(_stk)nr2.scrollTop=nr2.scrollHeight;
       });
@@ -10267,7 +10275,7 @@ function askOracleSend(msgs){
     if(live){try{live.remove();}catch(_){}live=null;}
     if(gen0!==TYPE_GEN)return;
     narrAdd('sys','⚠&nbsp;神谕断连：'+esc2(msg)+'&nbsp;——&nbsp;检查&nbsp;ORACVLVM&nbsp;配置',null);
-  },{onDelta:onDelta,wantTag:'</mvu_panel>'});
+  },{onDelta:onDelta,onPhase:function(phase){GEN.phase=phase;},wantTag:'</mvu_panel>'});
 }
 /* ── CONSILIVM · 浅字提示 ──────────────────────────────────────────────
    参谋不是一种「输入模式」——你不该为了看看能怎么办而先切个页签、再打一行字。
@@ -11227,7 +11235,7 @@ function felReplaceTurnDisplay(tIdx,display){
   body.split(/\n{2,}/).forEach(function(par){
     if(!par.trim())return;
     var p=document.createElement('p');p.setAttribute('data-t',tIdx);
-    if(/^【/.test(par.trim()))p.className='sys';
+    if(felNarrClass(par))p.className='heart';
     p.innerHTML=fmtBody(par);frag.appendChild(p);
   });
   nr.insertBefore(frag,ops);return true;
@@ -15002,7 +15010,7 @@ function loadOpening(side,op,locOverride){
   var nr=$('#gNarr');nr.innerHTML='';
   body.split(/\n{2,}/).forEach(function(par){
     var p=document.createElement('p');
-    if(/^【/.test(par.trim()))p.className='sys';
+    if(felNarrClass(par))p.className='heart';
     var htm=esc2(par).replace(/\n/g,'<br>')
       .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
       .replace(/「([^」]*)」/g,'「<span class="q">$1</span>」');
@@ -16852,7 +16860,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=25"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=26"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
