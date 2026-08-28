@@ -165,7 +165,7 @@ export async function hypaMemoryV3(
 
         throw new Error(`${logPrefix} ${errorMessage}`);
     } finally {
-        if (settings.summarizationModel !== "subModel") {
+        if (settings.summarizationModel !== "subModel" && settings.summarizationModel !== "feliniaVerbatim") {
             try {
                 await unloadEngine();
             } catch { }
@@ -1685,6 +1685,21 @@ export async function summarize(oaiMessages: OpenAIChat[], isResummarize: boolea
     const strMessages = oaiMessages
         .map((chat) => `${chat.role}: ${sanitizeSummaryContent(chat.content)}`)
         .join("\n");
+
+    /* FELINIA keeps Risu's native HypaV3 indexing and selection as an
+       independent fallback, but memory filing itself must not spend a chat API
+       request. Store the exact visible turns locally; the model-facing control
+       panel and provider reasoning are state/private channels, not memories. */
+    if (settings.summarizationModel === "feliniaVerbatim") {
+        const verbatim = strMessages
+            .replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/gi, "")
+            .replace(/<\s*(think|thoughts?|analysis|reasoning)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+            .replace(/<\s*(think|thoughts?|analysis|reasoning)\b[^>]*>[\s\S]*$/gi, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+        if (!verbatim) throw new Error("Empty verbatim memory");
+        return verbatim;
+    }
 
     const summarizationPrompt = isResummarize
         ? (settings.reSummarizationPrompt.trim() === "" ? "Re-summarize this summaries." : settings.reSummarizationPrompt)

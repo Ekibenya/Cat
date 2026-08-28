@@ -1,4 +1,4 @@
-import { Bi as e, ji as t, zi as n } from "./characterCards-dKf7CNbB.js";
+import { Hi as e, Vi as t, ji as n } from "./characterCards-B-JmSHKq.js";
 import { t as r } from "./internalmcp-BEm-hL3W.js";
 //#region src/ts/process/mcp/graphmem.ts
 var i = class extends r {
@@ -68,10 +68,10 @@ var i = class extends r {
 			}];
 		}
 	}
-	async handleWriteMemory(t) {
-		let { name: r, summary: i, connections: a = [] } = t, o = [];
+	async handleWriteMemory(n) {
+		let { name: r, summary: i, connections: a = [] } = n, o = [];
 		try {
-			o = JSON.parse(n("graphmem_graph"));
+			o = JSON.parse(t("graphmem_graph"));
 		} catch {}
 		return o.push({
 			name: r,
@@ -85,7 +85,7 @@ var i = class extends r {
 	async handleReadMemory(e) {
 		let { query: r, search_depth: i = 2 } = e, a = [];
 		try {
-			a = JSON.parse(n("graphmem_graph"));
+			a = JSON.parse(t("graphmem_graph"));
 		} catch {}
 		if (!Array.isArray(r) || r.length === 0) return [{
 			type: "text",
@@ -95,7 +95,7 @@ var i = class extends r {
 			type: "text",
 			text: "No memory entries found in the graph database."
 		}];
-		let o = new t();
+		let o = new n();
 		await o.embedDocuments(a.map((e) => e.name));
 		let s = [];
 		for (let e = 0; e < r.length; e++) {

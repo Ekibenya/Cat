@@ -267,7 +267,7 @@ var t = class extends e {
 		}
 	}
 	async readFileAsPDF(e, t) {
-		let { convertPdfToImages: n } = await import("./pdf-9kgFZuZc.js"), r = await n(await e.arrayBuffer(), {
+		let { convertPdfToImages: n } = await import("./pdf-Iq0k3cr2.js"), r = await n(await e.arrayBuffer(), {
 			scale: 1.5,
 			format: "jpeg",
 			quality: .8

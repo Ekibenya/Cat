@@ -1101,24 +1101,50 @@ export async function sendChat(chatProcessIndex = -1,arg:{
         }
         else if(DBState.db.hypaV3){
             console.log("Current chat's hypaV3 Data: ", currentChat.hypaV3Data)
-            const sp = await hypaMemoryV3(chats, currentTokens, maxContextTokens, currentChat, nowChatroom, tokenizer)
-            if(sp.error){
-                // Save new summary
-                if (sp.memory) {
-                    currentChat.hypaV3Data = sp.memory
-                    DBState.db.characters[selectedChar].chats[selectedChat].hypaV3Data = currentChat.hypaV3Data
-                }
-                console.log(sp)
-                throwError(sp.error)
-                return false
+            const feliniaMeta = (currentChar.extentions?.felinia || null) as null | {
+                palaceRecallActive?: boolean
             }
-            chats = sp.chats
-            currentTokens = sp.currentTokens
-            currentChat.hypaV3Data = sp.memory ?? currentChat.hypaV3Data
-            DBState.db.characters[selectedChar].chats[selectedChat].hypaV3Data = currentChat.hypaV3Data
-    
-            currentChat = DBState.db.characters[selectedChar].chats[selectedChat];
-            console.log("[Expected to be updated] chat's HypaV3Data: ", currentChat.hypaV3Data)
+            try{
+                const sp = await hypaMemoryV3(chats, currentTokens, maxContextTokens, currentChat, nowChatroom, tokenizer)
+                if(sp.error){
+                    // Save new summary even when retrieval itself reports a recoverable error.
+                    if (sp.memory) {
+                        currentChat.hypaV3Data = sp.memory
+                        DBState.db.characters[selectedChar].chats[selectedChat].hypaV3Data = currentChat.hypaV3Data
+                    }
+                    console.log(sp)
+                    if(!feliniaMeta){
+                        throwError(sp.error)
+                        return false
+                    }
+                    console.warn('[FELINIA memory] Risu fallback failed; continuing without it', sp.error)
+                }
+                else{
+                    let nextChats = sp.chats
+                    let nextTokens = sp.currentTokens
+                    /* Palace recall is the primary prompt. HypaV3 still completed above and
+                       persists its summaries, but its overlapping prompt is withheld for this
+                       turn. When palace recall is empty this branch is skipped and HypaV3 is
+                       injected unchanged as the fallback. */
+                    if(feliniaMeta?.palaceRecallActive){
+                        const nativeMemories = nextChats.filter(v => v.memo === 'supaMemory' || v.memo === 'hypaMemory')
+                        for(const memory of nativeMemories){
+                            nextTokens -= await tokenizer.tokenizeChat(memory)
+                        }
+                        nextChats = nextChats.filter(v => v.memo !== 'supaMemory' && v.memo !== 'hypaMemory')
+                    }
+                    chats = nextChats
+                    currentTokens = nextTokens
+                    currentChat.hypaV3Data = sp.memory ?? currentChat.hypaV3Data
+                    DBState.db.characters[selectedChar].chats[selectedChat].hypaV3Data = currentChat.hypaV3Data
+
+                    currentChat = DBState.db.characters[selectedChar].chats[selectedChat];
+                    console.log("[Expected to be updated] chat's HypaV3Data: ", currentChat.hypaV3Data)
+                }
+            }catch(error){
+                if(!feliniaMeta)throw error
+                console.warn('[FELINIA memory] Risu fallback crashed; continuing without it', error)
+            }
         }
         else{
             const sp = await supaMemory(chats, currentTokens, maxContextTokens, currentChat, nowChatroom, tokenizer, {

@@ -2,10 +2,14 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  buildFeliniaCognitionPrompt,
   compileFeliniaDefinition,
+  extractFeliniaCognition,
   findRepeatedFeliniaDialogue,
   mergeFeliniaNativeCharacterFields,
+  normalizeFeliniaCognition,
   risuMessage,
+  stripFeliniaReasoning,
 } from './feliniaGame';
 
 function fixture() {
@@ -86,6 +90,45 @@ describe('FELINIA fixed Risu runtime data', () => {
     ];
     expect(findRepeatedFeliniaDialogue('「不知道喵！」\n\n她把钱推回去。', previous)).toEqual(['不知道喵']);
     expect(findRepeatedFeliniaDialogue('「我先去问问掌柜喵。」', previous)).toEqual([]);
+  });
+
+  it('removes completed and streaming reasoning before display or history', () => {
+    expect(stripFeliniaReasoning('<Thoughts>先分析人物动机</Thoughts>\n真正正文')).toBe('真正正文');
+    expect(stripFeliniaReasoning('<think>尚未闭合的流式推理')).toBe('');
+    expect(stripFeliniaReasoning('```analysis\n内部规划\n```\n可见正文')).toBe('可见正文');
+    expect(stripFeliniaReasoning('可见正文\n<felinia_state>{"v":1,"beat":"推进"}</felinia_state>')).toBe('可见正文');
+    expect(stripFeliniaReasoning('可见正文\n<felinia_state>{"v":1')).toBe('可见正文');
+    expect(risuMessage({
+      role: 'assistant', content: '<reasoning>不能显示</reasoning>\n角色回复',
+    }).data).toBe('角色回复');
+  });
+
+  it('extracts only compact save-safe dramatic state and never exposes it', () => {
+    const result = extractFeliniaCognition(
+      '正文先出现。\n<felinia_state>{"v":1,"beat":"门外脚步逼近","focus":"潘金莲","characters":[{"name":"潘金莲","knows":"门外有人","wants":"保住账本","next":"熄灯查看"}],"threads":["门外来客"],"avoid":["不知道喵"]}</felinia_state>',
+    );
+    expect(result.text).toBe('正文先出现。');
+    expect(result.cognition?.focus).toBe('潘金莲');
+    expect(result.cognition?.characters?.[0].next).toBe('熄灯查看');
+    expect(result.cognition?.avoid).toEqual(['不知道喵']);
+    expect(JSON.stringify(result.cognition)).not.toContain('<');
+  });
+
+  it('keeps the preceding state when a small model omits or corrupts the state tag', () => {
+    const previous = { v: 1, beat: '旧线索仍未解决', threads: ['失踪的账簿'] };
+    expect(extractFeliniaCognition('只有正文', previous).cognition?.threads).toEqual(['失踪的账簿']);
+    expect(extractFeliniaCognition('正文<felinia_state>{坏 JSON}</felinia_state>', previous).cognition?.beat)
+      .toBe('旧线索仍未解决');
+    expect(normalizeFeliniaCognition({ v: 9, beat: '<b>推进</b>', unknown: 'DROP' }))
+      .toEqual({ v: 1, beat: 'b 推进 /b' });
+  });
+
+  it('instructs Flash to emit prose first and keeps prior state compact', () => {
+    const prompt = buildFeliniaCognitionPrompt({ v: 1, focus: '莉莉丝', threads: ['门外来客'] });
+    expect(prompt).toContain('先立即输出玩家可见的中文小说正文');
+    expect(prompt).toContain('<felinia_state>');
+    expect(prompt).toContain('上一回隐藏状态');
+    expect(prompt).toContain('莉莉丝');
   });
 
   it('keeps canonical Korean separate from the display-language lore scan alias', () => {

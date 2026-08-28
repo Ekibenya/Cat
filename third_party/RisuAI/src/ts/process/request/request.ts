@@ -273,11 +273,16 @@ export async function requestChatData(arg:requestDataArgument, model:ModelModeEx
                         displayData: JSON.stringify(arg.formated)
                     })
         
-                    const got = JSON.parse(d.displayData)
-                    if(!got || !Array.isArray(got)){
-                        throw new Error('Invalid return')
+                    /* A character with no request triggers returns null by design.
+                     * Treat that as an unchanged request instead of logging a
+                     * TypeError on every main and auxiliary generation. */
+                    if (d?.displayData) {
+                        const got = JSON.parse(d.displayData)
+                        if(!got || !Array.isArray(got)){
+                            throw new Error('Invalid return')
+                        }
+                        arg.formated = got
                     }
-                    arg.formated = got
                     console.log('Trigger time', performance.now() - perf)
                 }
             }

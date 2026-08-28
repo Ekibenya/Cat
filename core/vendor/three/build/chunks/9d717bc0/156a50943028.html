@@ -2974,13 +2974,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>DeepLX&nbsp;URL</span><input class="aIn" id="trDeepLXUrl" placeholder="http://localhost:1188" style="width:240px"></div>
       <div class="sRow"><span>DeepLX&nbsp;TOKEN</span><input class="aIn" id="trDeepLXToken" type="password" placeholder="可留空" style="width:200px"></div>
       <div class="sub" id="trStatus">翻译缓存保存在本浏览器；韩语原稿随存档保存。</div>
-      <div class="sub" style="margin-top:16px">韩语长程记忆&nbsp;·&nbsp;按&nbsp;Hypa／Hanurai&nbsp;方式，用最近四条韩语原稿检索更早的韩语剧情；不会读取中文显示层，也不会重复塞入最近历史。</div>
+      <div class="sub" style="margin-top:16px">双层本地长程记忆&nbsp;·&nbsp;原文宫殿检索为主，原生语义记忆同时更新并在宫殿无结果时兜底；两套默认都在浏览器内运行，不调用玩家的正文模型。</div>
       <div class="sRow"><span>语义记忆</span><input type="checkbox" id="semOn"></div>
-      <div class="sRow"><span>检索方式</span><select id="semMode" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:220px"><option value="hybrid">韩语 BGE 混合（推荐）</option><option value="bge-ko">韩语 BGE 精确（等待模型）</option><option value="api">玩家接口 Embeddings</option><option value="lexical">本地词义检索（最快）</option></select></div>
+      <div class="sRow"><span>检索方式</span><select id="semMode" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:220px"><option value="hybrid">多语言本地混合（推荐）</option><option value="bge-ko">本地向量精确</option><option value="api">玩家接口 Embeddings</option><option value="lexical">本地词义检索（最快）</option></select></div>
       <div class="sRow"><span>Embeddings&nbsp;模型</span><input class="aIn" id="semModel" placeholder="text-embedding-3-small" style="width:220px"></div>
       <div class="sRow"><span>记忆注入预算</span><input class="aIn" id="semBudget" inputmode="numeric" placeholder="3000" style="width:80px"></div>
       <div class="sRow"><span>优先使用显卡</span><input type="checkbox" id="semGpu"></div>
-      <div class="sub" id="semStatus">模型只在启用时按需下载并由浏览器缓存；失败会自动退回本地检索，不阻断游戏。</div>
+      <div class="sub" id="semStatus">两套记忆按存档隔离；本地模型按需下载并由浏览器缓存，任一记忆失败都不会阻断正常回复。</div>
     </div>
     <div class="cfgPane" id="cp_preset" style="display:none">
       <div class="sub">支持&nbsp;SillyTavern&nbsp;聊天补全预设&nbsp;JSON（读取&nbsp;prompts，自动跳过占位条目），也可直接粘贴纯文本提示词。启用后每一轮都会按原顺序注入系统提示：位于对话历史之前的条目前置，之后的（如&nbsp;jailbreak）末位注入。预设存于本浏览器，刷新不丢。</div>
@@ -7442,7 +7442,7 @@ function feForge(){
   }
   function call(msgs,opt,ok,bad){
     opt=opt||{};opt.opening=true;
-    risuInvoke(msgs,function(t){if(alive())ok(String(t||''));},
+    risuInvoke(msgs,function(t,meta){if(alive())ok(String(t||''),meta||{});},
                function(m){if(bad)bad(m);else fail(m);},opt);
   }
   function forgeDelta(full){
@@ -7505,7 +7505,7 @@ function feForge(){
           {role:'user',content:prompt,scanContent:zh}],
       {max_tokens:2600,timeoutMs:30000,onDelta:function(full){
         forgeDelta(felNormalizeMeowText(stripMvuLive(stripCoT(String(full||'')))));
-      }},function(ms){
+      }},function(ms,meta){
         ms=felNormalizeMeowText(stripMvu(stripCoT(String(ms||'')))).trim();
         if(!ms)return fail('模型没有返回正文');
         if(forgeLive){try{forgeLive.remove();}catch(_){}forgeLive=null;}
@@ -7514,7 +7514,8 @@ function feForge(){
         var npcKeys=(FE.soc||[]).map(function(k){
           var p=FE.pool[k];return p?('era:'+FE.era.i+':npc:'+k+':'+p.n):'';
         }).filter(Boolean);
-        loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:chineseText},loc);
+        loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:chineseText,
+          cognition:(meta&&meta.cognition)||null},loc);
         GAME.opText=chineseText;GAME.hero=_hero;GAME.risuNpcKeys=npcKeys;
         felTrStatus('中文开局已保存 · 自动翻译未启用',0);
       },function(msg){
@@ -7573,7 +7574,7 @@ function feForge(){
            shown=restoreKoNames(shown,sp.pairs);
            forgeDelta(shown);
          }},
-         function(ms){
+         function(ms,meta){
            ms=ms.trim();
            if(!ms)return fail('模型没有返回正文');
            ms=scrubForgePlayerNarration(ms,sp.pairs&&sp.pairs[0]&&sp.pairs[0].token);
@@ -7582,11 +7583,11 @@ function feForge(){
            if(feHan(ms)>0){
              felTranslate(ms,'zh-CN','ko').then(function(ko){
                ko=cleanKo(ko);if(!ko)return fail('模型没有返回可用正文');
-               stage2(sp,ko,short||'模型没有遵守韩语输出，已由浏览器翻译后保留');
-             }).catch(function(){stage2(sp,ms,short||'模型没有遵守韩语输出，已按原样保留');});
+               stage2(sp,ko,short||'模型没有遵守韩语输出，已由浏览器翻译后保留',meta);
+             }).catch(function(){stage2(sp,ms,short||'模型没有遵守韩语输出，已按原样保留',meta);});
              return;
            }
-           stage2(sp,ms,short);
+           stage2(sp,ms,short,meta);
          },function(msg){
            if(retry<1){
              if(forgeLive){forgeLive.innerHTML='';forgeLive._pend='';}
@@ -7597,7 +7598,7 @@ function feForge(){
   }
   /* ② 译出也由浏览器翻译器完成。译前保护韩文人名，译后还原卡里的原名。
      韩语原稿保存在 GAME.opText；中文只放进开局显示层。 */
-  function stage2(sp,ms,warn){
+  function stage2(sp,ms,warn,meta){
     var protectedMs=ms;
     (sp.pairs||[]).forEach(function(p){protectedMs=protectedMs.split(p.ko).join(p.token);});
     /* Google 会把韩语猫叫当语气词吞掉。像人名一样先保护，译完再还成中文猫叫；
@@ -7635,7 +7636,8 @@ function feForge(){
       BUSY=false;genClose();
       var displayText=txt+(panel?'\n\n'+panel:'');
       var koreanText=ms+(panel?'\n\n'+panel:'');
-      loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:displayText},loc);
+      loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:displayText,
+        cognition:(meta&&meta.cognition)||null},loc);
       GAME.opText=koreanText;
       GAME.hero=_hero;                 /* loadOpening 又清了一次，写回来 */
       felTrStatus('已保存韩语开局原稿 · 中文仅作显示',0);
@@ -7805,9 +7807,17 @@ $('#miOrac').addEventListener('pointerup',function(e){e.stopPropagation();apiOpe
 $('#miArch').addEventListener('pointerup',function(e){e.stopPropagation();svOpen();});
 
 /* ================= game stage: Ghost layout in ROME dress ================ */
-var BUILD=114;
-var GAME={on:false,mapOpen:false,armOpen:false,place:null,dest:null};
+var BUILD=117;
+var GAME={on:false,mapOpen:false,armOpen:false,place:null,dest:null,cognition:null};
 var gEl=$('#game');
+function felNewMemoryId(){
+  try{if(crypto&&crypto.randomUUID)return crypto.randomUUID();}catch(_){}
+  return 'fel-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+}
+function felMemoryId(){
+  if(!GAME.memoryId)GAME.memoryId=felNewMemoryId();
+  return GAME.memoryId;
+}
 function buildActs(y){
   var rad=Math.PI/180,out=[];
   if(y>=1800){                       /* 飞机时代：现代总表全量挂牌 */
@@ -8025,7 +8035,7 @@ function gameEnter(lineOverride){
     [{role:'system',content:FELINIA_STYLE+'\n\n'+FELINIA_HEART+'\n\n'+FELINIA_RISU_EXAMPLES+'\n\n'
        +condereSys(line,yl+' '+cn+' '+nm)+'\n\n'+FELINIA_CHECK},
      {role:'user',content:condereAsk(line,y,nm,cn)}],
-    function(reply){
+    function(reply,meta){
       BUSY=false;genClose();
       if(fLive){try{fLive.remove();}catch(_){}fLive=null;}
       /* 铸局途中换了局／读了档／退出：这份迟到的稿子若照落，会把当前这一局
@@ -8036,7 +8046,8 @@ function gameEnter(lineOverride){
         var mv=(String(draft.text).match(/<mvu_panel>[\s\S]*<\/mvu_panel>/)||[''])[0];
         txt=txt+'\n\n'+mv;
       }
-      loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:txt},loc);
+      loadOpening(line,{id:'custom',year:y,era:yl,ei:feEraI(),scene:cn,text:txt,
+        cognition:(meta&&meta.cognition)||null},loc);
     },
     function(msg){
       BUSY=false;genClose();
@@ -10110,12 +10121,14 @@ function risuInvoke(messages,cb,err,opt){
     if(aux)return risu.request({messages:messages,provider:provider,signal:ac?ac.signal:undefined,
       maxTokens:Math.round(mt),onDelta:noStream?undefined:onDelta});
     return risu.generate({provider:provider,signal:ac?ac.signal:undefined,
-      minChars:Math.round(minChars),maxShortRetries:1,onDelta:noStream?undefined:onDelta});
+      minChars:Math.round(minChars),maxShortRetries:1,cognition:GAME.cognition,
+      onDelta:noStream?undefined:onDelta});
   }).then(function(result){
     if(fired)return;fired=true;clearTimeout(timer);
     var text=String(result.text||'');
     var trunc=!!wantTag&&text.indexOf(wantTag)<0;
-    cb(text,{trunc:trunc,reason:trunc?'incomplete':''});
+    if(!aux&&result.cognition!==undefined)GAME.cognition=result.cognition||null;
+    cb(text,{trunc:trunc,reason:trunc?'incomplete':'',cognition:result.cognition||null});
   }).catch(fail);
 }
 function askOracle(){
@@ -10140,7 +10153,7 @@ function buildOracleMsgs(){
     var scan=t.display==null?t.content:t.display;
     /* 思维链不能回喂：它会教模型继续写元评论，还白白吃掉上下文。 */
     if(t.role==='assistant'){c=stripCoT(c);scan=stripCoT(scan);}
-    return{role:t.role,content:c,scanContent:scan};
+    return{role:t.role,content:c,scanContent:scan,memoryIndex:t.t};
   });
   /* 旧回合的状态栏只留最近一份。八份面板将近八千字，既烧 token 又把模型往
      「这一回合的主要任务是填表」上带，正文越写越短。
@@ -10213,11 +10226,9 @@ function askOracleSend(msgs){
        没有这道守卫的话，退出后跑完的那个请求会凭空补进一条幽灵回合。 */
     if(gen0!==TYPE_GEN){try{genClose();}catch(_){}BUSY=false;return;}
     reply=felNormalizeMeowText(stripCoT(reply));
-    /* FELINIA 的人物内心只属于状态栏 ◈心声。小模型偶尔仍会把一串独立的
-       （……）/[……]/【……】心声塞进正文；在进入存档与翻译前剥掉这些整行，
-       对话引号、动作叙述和状态块本身都不受影响。 */
-    reply=reply.replace(/^\s*(?:\([^()\n]*\)|（[^（）\n]*）|\[[^\[\]\n]*\]|【[^【】\n]*】)\s*$/gm,'')
-      .replace(/\n{3,}/g,'\n\n').trim();
+    /* 角色的（）吐槽与【】绝叫是 FELINIA 正文文风的一部分，必须保留。
+       真正的内部规划只认专用隐藏标签，由 stripCoT 在流式、显示、历史三处剥离。 */
+    reply=reply.replace(/\n{3,}/g,'\n\n').trim();
     /* 兼容端点若仍把内部规划塞进 content，宁可明确报错也不能把它写入剧情和存档。
        这些短语来自旧自动续写污染；正常英文角色对白不会同时命中两项。 */
     var _ml=String(reply||''),_ms=0;
@@ -10234,7 +10245,8 @@ function askOracleSend(msgs){
     }).then(function(display){
       genClose();BUSY=false;felTrStatus(felTrOn()?'已保存韩语原稿 · 中文仅作显示':'自动翻译已关闭',0);
       var idx=TURNI++;
-      TURNS.push({role:'assistant',content:reply,display:display,canonical:felTrOn()?'ko':'zh',t:idx});
+      TURNS.push({role:'assistant',content:reply,display:display,canonical:felTrOn()?'ko':'zh',
+        cognition:(meta&&meta.cognition)||GAME.cognition||null,t:idx});
       try{GENIVS.absorb(display,idx);}catch(_){}     /* 本地中文状态推演看显示层；模型历史仍读原稿 */
       renderReply(display,idx,streamed);            /* 已流式出过字：跳过打字机，直接落定 */
       if(meta&&meta.trunc)narrAdd('sys',
@@ -10245,7 +10257,8 @@ function askOracleSend(msgs){
       genClose();BUSY=false;felTrStatus('译文失败，已保留韩语原稿：'+((e&&e.message)||e),1);
       var idx=TURNI++;
       var rawDisplay=reply;
-      TURNS.push({role:'assistant',content:reply,display:rawDisplay,canonical:'ko',t:idx});
+      TURNS.push({role:'assistant',content:reply,display:rawDisplay,canonical:'ko',
+        cognition:(meta&&meta.cognition)||GAME.cognition||null,t:idx});
       renderReply(rawDisplay,idx,streamed);
       narrAdd('sys','⚠&nbsp;中文译文失败，韩语原稿已完整保存：'+esc2((e&&e.message)||e),null);
     });
@@ -10575,6 +10588,13 @@ function touchy(){
     gIn.placeholder=suggPh();
     try{gIn.focus();gIn.setSelectionRange(gIn.value.length,gIn.value.length);}catch(_){}
   });
+  /* 重演与回溯必须让隐藏角色状态跟着正文一起退，不能让已丢弃剧情继续影响下一拍。 */
+  function restoreCognition(){
+    GAME.cognition=(GAME.op&&GAME.op.cognition)||null;
+    for(var ci=TURNS.length-1;ci>=0;ci--){
+      if(TURNS[ci].role==='assistant'&&TURNS[ci].cognition){GAME.cognition=TURNS[ci].cognition;break;}
+    }
+  }
   /* 重新演绎：丢掉最后一条神谕回复重取 */
   $('#gRedo').addEventListener('click',function(){
     if(BUSY)return;TYPE_GEN++;
@@ -10584,6 +10604,7 @@ function touchy(){
       document.querySelectorAll('#gNarr [data-t="'+last.t+'"]').forEach(function(n){n.remove();});
       TURNS.pop();
     }
+    restoreCognition();
     /* 面板要跟着一起退回上一幕，否则情报台还挂着刚被丢弃那一回的状态 */
     GAME.lastPanel=null;
     for(var _li=TURNS.length-1;_li>=0;_li--){
@@ -10611,6 +10632,7 @@ function touchy(){
       var t=TURNS.pop();drop+=(t.role==='user')?2:1;
       document.querySelectorAll('#gNarr [data-t="'+t.t+'"]').forEach(function(n){n.remove();});
     }
+    restoreCognition();
     /* 面板必须跟着一起退，否则情报台还挂着刚被丢弃那一轮的状态；
        编年长卷也要靠 memSync 截回去（回退检测在 memSync 里）。 */
     GAME.lastPanel=null;
@@ -11021,7 +11043,8 @@ function felRisuPrepare(messages,options){
     (messages||[]).forEach(function(message){
       if(message.role==='system'&&!system)system=String(message.content||'');
       else history.push({role:message.role,content:String(message.content||''),
-        scanContent:message.scanContent==null?undefined:String(message.scanContent),name:message.name});
+        scanContent:message.scanContent==null?undefined:String(message.scanContent),name:message.name,
+        memoryIndex:Number.isFinite(message.memoryIndex)?message.memoryIndex:undefined});
     });
     var first=(options&&options.firstMessage!==undefined)?options.firstMessage:
       (felTrOn()?(GAME.opText||''):(((GAME.op&&GAME.op.text)||GAME.opText)||''));
@@ -11031,7 +11054,8 @@ function felRisuPrepare(messages,options){
         regexScripts:felRisuRegexScripts(),
         defaultVariables:Object.assign({},SET.gvars||{},SET.vars||{})});
     }).then(function(){var sm=SET.semantic||{};return risu.configureMemory({enabled:sm.on!==0,
-        mode:sm.mode||'hybrid',apiKey:API.key||''});
+        mode:sm.mode||'hybrid',apiKey:(sm.mode==='api'?(API.key||''):undefined),
+        sessionId:felMemoryId(),budgetChars:sm.budget||3000,topK:sm.topK||8,gpu:sm.gpu!==0});
     }).then(function(){return risu.setHistory(history);}).then(function(){return risu;});
   });
 }
@@ -12259,6 +12283,8 @@ $('#memAuto').addEventListener('click',function(){
 var BAK_CATS={
   preset:{n:'预设',get:function(){return SET.presets||[];},set:function(v){SET.presets=v||[];setStore();}},
   mem:{n:'记忆',get:function(){return SET.mems||[];},set:function(v){SET.mems=v||[];setStore();}},
+  palace:{n:'宫殿记忆库',asyncGet:function(){return felRisuBoot().then(function(r){return r.exportPalace();});},
+    asyncSet:function(v){return felRisuBoot().then(function(r){return r.importPalace(v||{});});}},
   rx:{n:'正则',get:function(){return SET.rx||[];},set:function(v){SET.rx=v||[];setStore();}},
   js:{n:'脚本',get:function(){return SET.js||[];},set:function(v){SET.js=v||[];setStore();}},
   lore:{n:'世界书(自写)',get:function(){return loreCustomGet();},set:function(v){loreCustomPut(v||[]);}},
@@ -12282,6 +12308,7 @@ var BAK_CATS={
 };
 function bakCatData(k){
   var c=BAK_CATS[k];
+  if(c.asyncGet)return c.asyncGet();
   if(c.get)return c.get();
   if(c.key)return localStorage.getItem(c.key)||'';
   if(c.multi){var o={};for(var i=0;i<localStorage.length;i++){var kk=localStorage.key(i);
@@ -12289,6 +12316,7 @@ function bakCatData(k){
 }
 function bakCatPut(k,data){
   var c=BAK_CATS[k];
+  if(c.asyncSet)return c.asyncSet(data);
   if(c.set){c.set(data);return;}
   if(c.key){try{localStorage.setItem(c.key,typeof data==='string'?data:JSON.stringify(data));}catch(_){}return;}
   if(c.multi&&data&&typeof data==='object')Object.keys(data).forEach(function(kk){
@@ -12311,14 +12339,20 @@ function bakDl(name,obj){
   rows.addEventListener('click',function(e){
     var ex=e.target.getAttribute&&e.target.getAttribute('data-bex');
     var im=e.target.getAttribute&&e.target.getAttribute('data-bim');
-    if(ex){bakDl('roma_'+ex+'.json',{__app:'ROMA',__type:'bak-item',cat:ex,data:bakCatData(ex)});
-      $('#bakMsg').textContent='已导出：'+BAK_CATS[ex].n;}
+    if(ex){$('#bakMsg').textContent='正在导出：'+BAK_CATS[ex].n;
+      Promise.resolve(bakCatData(ex)).then(function(data){
+        bakDl('roma_'+ex+'.json',{__app:'ROMA',__type:'bak-item',cat:ex,data:data});
+        $('#bakMsg').textContent='已导出：'+BAK_CATS[ex].n;
+      },function(err){$('#bakMsg').textContent='导出失败：'+((err&&err.message)||err);});}
     if(im){pend=im;$('#bakFile').click();}
   });
   $('#bakExp').addEventListener('click',function(){
-    var all={};Object.keys(BAK_CATS).forEach(function(k){all[k]=bakCatData(k);});
-    bakDl('roma_backup.json',{__app:'ROMA',__type:'bak-all',data:all});
-    $('#bakMsg').textContent='已导出全部（'+Object.keys(BAK_CATS).length+' 项）';
+    var ks=Object.keys(BAK_CATS);$('#bakMsg').textContent='正在汇集全部资料…';
+    Promise.all(ks.map(function(k){return Promise.resolve(bakCatData(k));})).then(function(values){
+      var all={};ks.forEach(function(k,i){all[k]=values[i];});
+      bakDl('roma_backup.json',{__app:'ROMA',__type:'bak-all',data:all});
+      $('#bakMsg').textContent='已导出全部（'+ks.length+' 项）';
+    },function(err){$('#bakMsg').textContent='全量导出失败：'+((err&&err.message)||err);});
   });
   $('#bakImp').addEventListener('click',function(){pend=null;$('#bakFile').click();});
   $('#bakFile').addEventListener('change',function(){
@@ -12329,11 +12363,14 @@ function bakDl(name,obj){
         var j=JSON.parse(rd.result);
         if(j&&j.__type==='bak-item'&&BAK_CATS[j.cat]){
           if(pend&&pend!==j.cat){$('#bakMsg').textContent='档案是「'+BAK_CATS[j.cat].n+'」，与所选项不符——已按档案内容导入';}
-          bakCatPut(j.cat,j.data);
-          $('#bakMsg').textContent='已导入：'+BAK_CATS[j.cat].n+' · 刷新页面生效';
+          (function(cat){Promise.resolve(bakCatPut(cat,j.data)).then(function(){
+            $('#bakMsg').textContent='已导入：'+BAK_CATS[cat].n+' · 刷新页面生效';
+          },function(err){$('#bakMsg').textContent='导入失败：'+((err&&err.message)||err);});})(j.cat);
         }else if(j&&j.__type==='bak-all'&&j.data){
-          Object.keys(j.data).forEach(function(k){if(BAK_CATS[k])bakCatPut(k,j.data[k]);});
-          $('#bakMsg').textContent='已导入全量备份 · 刷新页面生效';
+          var ik=Object.keys(j.data).filter(function(k){return !!BAK_CATS[k];});
+          Promise.all(ik.map(function(k){return Promise.resolve(bakCatPut(k,j.data[k]));})).then(function(){
+            $('#bakMsg').textContent='已导入全量备份 · 刷新页面生效';
+          },function(err){$('#bakMsg').textContent='全量导入失败：'+((err&&err.message)||err);});
         }else if(j&&typeof j==='object'){ /* 旧版全量档（rome_* 键值表）兼容 */
           var n=0;Object.keys(j).forEach(function(k){if(k.indexOf('rome_')===0){localStorage.setItem(k,j[k]);n++;}});
           $('#bakMsg').textContent=n?('已导入旧版备份 '+n+' 项 · 刷新页面生效'):'不是本游戏的备份档';
@@ -12360,8 +12397,13 @@ function bakDl(name,obj){
       return;
     }
     keys.forEach(function(k){try{localStorage.removeItem(k);}catch(_){}});
-    $('#bakMsg').textContent='已清除 '+keys.length+' 项 · 正在刷新…';
-    setTimeout(function(){location.reload();},600);
+    $('#bakMsg').textContent='已清除 '+keys.length+' 项 · 正在清理本地记忆库…';
+    var finish=function(){$('#bakMsg').textContent='全部资料已清除 · 正在刷新…';
+      setTimeout(function(){location.reload();},600);};
+    try{
+      if(window.FEL_RISU&&FEL_RISU.clearPalace)Promise.resolve(FEL_RISU.clearPalace()).then(finish,finish);
+      else{try{indexedDB.deleteDatabase('feliniaPalace');}catch(_){}finish();}
+    }catch(_){finish();}
   });
 })();
 setTimeout(function(){   /* CARDS 在后方赋值——延迟到本轮脚本执行完再并入 */
@@ -12810,11 +12852,11 @@ function stripMvu(text){
   t=t.replace(/(^|\n)[ \t]*```[a-z]*[ \t]*$/i,'$1');
   return t.trim();
 }
-/* 流式期间还要多吃一条「打到一半、尚未闭合的 <think>」，否则推理模型的思维链
-   会先被逐字打在叙事栏里再消失，玩家看到的是模型的内部草稿。 */
+/* 流式期间还要吃掉所有尚未闭合的推理块。Risu 的 Responses 管线使用
+   <Thoughts>，其他兼容端点还会发 <think>/<analysis>/<reasoning>；只认一种标签
+   就会在正文到达前把内部草稿逐字打进叙事栏。 */
 function stripMvuLive(text){
-  var t=stripCoT(String(text==null?'':text));      /* 先吃掉已经闭合的思维链 */
-  t=t.replace(/<\s*think[^>]*>[\s\S]*$/i,'');     /* 再吃掉打到一半、还没闭合的那一个 */
+  var t=stripCoT(String(text==null?'':text));
   return stripMvu(t);
 }
 /* 视觉小说那只对话框念的是同一段正文，洗法就该是同一套。
@@ -13097,8 +13139,15 @@ var S={history:[],memNpc:null,_npcMetaBusy:null,memEdit:null,secG:true,secA:true
 function esc(s){return esc2(s);}
 function stripCoT(t){
   return String(t||'')
-    .replace(/<(think|analysis|reasoning)>[\s\S]*?<\/\1>/gi,'')
-    .replace(/```(?:analysis|reasoning|think)\s*[\s\S]*?```/gi,'');
+    .replace(/<\s*felinia_state\b[^>]*>[\s\S]*?<\s*\/\s*felinia_state\s*>/gi,'')
+    .replace(/<\s*(think|thoughts?|analysis|reasoning)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,'')
+    .replace(/```(?:analysis|reasoning|think|thoughts?)\b[^\n]*\n[\s\S]*?```/gi,'')
+    /* 流式中闭合标记尚未到达时，从开头一直隐藏到当前尾部。最终回复若缺少
+       闭合标记也同样宁可丢弃内部草稿，不让它进入剧情、翻译或存档。 */
+    .replace(/<\s*felinia_state\b[^>]*>[\s\S]*$/gi,'')
+    .replace(/<\s*(think|thoughts?|analysis|reasoning)\b[^>]*>[\s\S]*$/gi,'')
+    .replace(/```(?:analysis|reasoning|think|thoughts?)\b[^\n]*\n[\s\S]*$/gi,'')
+    .trim();
 }
 function reducedMotion(){try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
 function currentOpening(){return GAME.op||null;}
@@ -14924,6 +14973,7 @@ zjLoadPref();
 function loadOpening(side,op,locOverride){
   ACTIVE=side;
   TYPE_GEN++;TURNS=[];TURNI=0;BUSY=false;
+  GAME.memoryId=felNewMemoryId();             /* 每一局一座独立宫殿，绝不串档 */
   /* Risu 的 chat variables 与世界书开关属于这一局；global variables 才跨局。
      新开一局必须清掉上一局触发器留下的局部状态，再执行 start 生命周期。 */
   try{SET.vars={};SET.loreState={};setStore();}catch(_){}
@@ -14932,7 +14982,7 @@ function loadOpening(side,op,locOverride){
      周纪的「在场诸人 · 洛邑明堂」，而且赖着不走；两卡共有的键（持物/观瞻/神格/史笔）
      若本回 AI 漏写，也会从上一局继承过来。 */
   try{GENIVS.reset();}catch(_){}
-  GAME.op=op;GAME.opText=op.text;
+  GAME.op=op;GAME.opText=op.text;GAME.cognition=(op&&op.cognition)||null;
   /* 新局＝新的人。上一局的行囊留在身上，掖庭的猫娘会背着蹶张弩进来。 */
   try{invPreset(op);}catch(_){}
   GAME.hero=null;                       /* 正史开局一律是卡里的本尊；自定义开局随后再写回 */
@@ -15098,9 +15148,11 @@ function svSnap(){
     })(),
     mfd:document.querySelector('#game .gMfd').innerHTML,
     inv:JSON.parse(JSON.stringify(INV)),place:GAME.place,
+    memoryId:felMemoryId(),                    /* 两套本地记忆共用同一存档隔离键 */
     ts:Date.now(),                                     /* when 是本地化字符串排不了序，另存真时间戳 */
     op:GAME.op,opText:GAME.opText,dest3d:GAME.dest3d,   /* 开局锚点：不存则读档后 AI 与三维都不知本局年代场景 */
     hero:GAME.hero||null,               /* 自定义开局的本局主角；不存则读档后又变回卡里的本尊 */
+    cognition:(function(){try{return JSON.parse(JSON.stringify(GAME.cognition||null));}catch(_){return null;}})(),
     /* 面板本体也要存。只存 mfd 那段 HTML 的话，读档后 80ms 的重绘会拿「从原文重新
        parse 出来的」降级面板把它盖掉——AI 那一轮偷懒少写几栏，读档后就永久少几栏。 */
     lastPanel:(function(){try{return JSON.parse(JSON.stringify(GAME.lastPanel||null));}catch(_){return null;}})(),
@@ -15153,6 +15205,8 @@ function svLoad(v){
   TYPE_GEN++;BUSY=false;
   try{GENIVS.reset();}catch(_){}      /* 换局＝换底：先把上一局的 carry-forward 清干净 */
   ACTIVE=v.active||'luzhi';ERA.year=(v.year==null?1206:v.year);
+  GAME.memoryId=v.memoryId||felNewMemoryId();  /* 老档从本次读入开始建立独立宫殿 */
+  GAME.cognition=v.cognition||null;
   ERA.act=buildActs(ERA.year);ERA.sel=null;
   gLocSet(v.loc||'');
   $('#gNarr').innerHTML=v.html||'';
@@ -15160,6 +15214,11 @@ function svLoad(v){
   document.querySelector('#game .gMfd').innerHTML=v.mfd||'';
   try{mvRingMount();}catch(_){}
   TURNS=v.turns||[];TURNI=TURNS.length?(Math.max.apply(null,TURNS.map(function(t){return t.t||0;}))+1):0;
+  if(!GAME.cognition){
+    for(var _ci=TURNS.length-1;_ci>=0;_ci--){
+      if(TURNS[_ci].role==='assistant'&&TURNS[_ci].cognition){GAME.cognition=TURNS[_ci].cognition;break;}
+    }
+  }
   if(v.runtime){SET.vars=v.runtime.vars||{};SET.loreState=v.runtime.loreState||{};}
   else{SET.vars={};SET.loreState={};}
   setStore();
@@ -16793,7 +16852,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=21"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=25"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
