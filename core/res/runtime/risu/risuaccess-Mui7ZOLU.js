@@ -1,14 +1,14 @@
-import { Fi as e, Lt as t, g as n, k as r, y as i, zi as a } from "./characterCards-Bed0KpMc.js";
+import { Li as e, Lt as t, Vi as n, g as r, k as i, y as a } from "./characterCards-CThRJ6_5.js";
 import { t as o } from "./internalmcp-BEm-hL3W.js";
 //#region src/ts/process/mcp/risuaccess/utils.ts
 function s(e) {
-	return e ? t.db.characters.find((t) => t.chaId === e || t.name === e) : r();
+	return e ? t.db.characters.find((t) => t.chaId === e || t.name === e) : i();
 }
 //#endregion
 //#region src/ts/process/mcp/risuaccess/characters.ts
 var c = class extends e {
 	promptAccess(e, t) {
-		return n(a.mcpAccessPrompt.replace("{{tool}}", e).replace("{{action}}", t));
+		return r(n.mcpAccessPrompt.replace("{{tool}}", e).replace("{{action}}", t));
 	}
 	getTools() {
 		return [
@@ -386,14 +386,14 @@ var c = class extends e {
 			text: "Error: The id pointed to a group chat, not a character."
 		}];
 		t > 100 && (t = 100), t < 1 && (t = 1), n < 0 && (n = 0);
-		let a = r.globalLore.slice(n, n + t).map((e) => ({
+		let i = r.globalLore.slice(n, n + t).map((e) => ({
 			alwaysActive: e.alwaysActive,
 			keys: e.key,
-			name: e.comment || "Unnamed " + i(5515, e.content)
+			name: e.comment || "Unnamed " + a(5515, e.content)
 		}));
 		return [{
 			type: "text",
-			text: JSON.stringify(a)
+			text: JSON.stringify(i)
 		}];
 	}
 	async getCharacterLorebook(e, t) {
@@ -407,22 +407,22 @@ var c = class extends e {
 			text: "Error: The id pointed to a group chat, not a character."
 		}];
 		let r = n.globalLore.filter((e) => {
-			let n = e.comment || "Unnamed " + i(5515, e.content);
+			let n = e.comment || "Unnamed " + a(5515, e.content);
 			return t.includes(n);
 		});
 		if (r.length === 0) return [{
 			type: "text",
 			text: `Error: Lorebook entries with names "${t.join(", ")}" not found.`
 		}];
-		let a = r.map((e) => ({
+		let i = r.map((e) => ({
 			alwaysActive: e.alwaysActive,
 			content: e.content,
 			keys: e.key,
-			name: e.comment || "Unnamed " + i(5515, e.content)
+			name: e.comment || "Unnamed " + a(5515, e.content)
 		}));
 		return [{
 			type: "text",
-			text: JSON.stringify(a)
+			text: JSON.stringify(i)
 		}];
 	}
 	async setCharacterInfo(e, t) {
@@ -459,7 +459,7 @@ var c = class extends e {
 			text: `Successfully updated character ${n.name || n.chaId}`
 		}];
 	}
-	async setCharacterLorebook(e, t, n, r, a, o) {
+	async setCharacterLorebook(e, t, n, r, i, o) {
 		let c = s(e);
 		if (!c) return [{
 			type: "text",
@@ -473,12 +473,12 @@ var c = class extends e {
 			type: "text",
 			text: "Access denied by user."
 		}];
-		let l = c.globalLore.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.content)) === t);
+		let l = c.globalLore.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.content)) === t);
 		if (l === -1) {
 			let e = {
 				key: o ? "" : r?.join(",") || "",
 				content: n || "",
-				comment: a || t,
+				comment: i || t,
 				alwaysActive: o || !1,
 				secondkey: "",
 				selective: !1,
@@ -487,11 +487,11 @@ var c = class extends e {
 			};
 			return c.globalLore.push(e), [{
 				type: "text",
-				text: `Successfully added lorebook entry "${a || t}" to character ${c.name || c.chaId}`
+				text: `Successfully added lorebook entry "${i || t}" to character ${c.name || c.chaId}`
 			}];
 		}
 		let u = c.globalLore[l];
-		return n !== void 0 && (u.content = n), r !== void 0 && (u.key = o ? "" : r.join(",")), a !== void 0 && (u.comment = a), o !== void 0 && (u.alwaysActive = o, o && (u.key = "")), [{
+		return n !== void 0 && (u.content = n), r !== void 0 && (u.key = o ? "" : r.join(",")), i !== void 0 && (u.comment = i), o !== void 0 && (u.alwaysActive = o, o && (u.key = "")), [{
 			type: "text",
 			text: `Successfully updated lorebook entry "${t}" for character ${c.name || c.chaId}`
 		}];
@@ -510,7 +510,7 @@ var c = class extends e {
 			type: "text",
 			text: "Access denied by user."
 		}];
-		let r = n.globalLore.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.content)) === t);
+		let r = n.globalLore.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.content)) === t);
 		return r === -1 ? [{
 			type: "text",
 			text: `Error: Lorebook entry with name "${t}" not found.`
@@ -530,7 +530,7 @@ var c = class extends e {
 			text: "Error: The id pointed to a group chat, not a character."
 		}];
 		let n = (t.customscript || []).map((e) => ({
-			comment: e.comment || "Unnamed " + i(5515, e.in + e.out),
+			comment: e.comment || "Unnamed " + a(5515, e.in + e.out),
 			in: e.in,
 			out: e.out,
 			type: e.type,
@@ -542,7 +542,7 @@ var c = class extends e {
 			text: JSON.stringify(n)
 		}];
 	}
-	async setCharacterRegexScripts(e, t, n, r, a, o, c, l) {
+	async setCharacterRegexScripts(e, t, n, r, i, o, c, l) {
 		let u = s(e);
 		if (!u) return [{
 			type: "text",
@@ -557,12 +557,12 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		u.customscript ||= [];
-		let d = u.customscript.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.in + e.out)) === t);
+		let d = u.customscript.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.in + e.out)) === t);
 		if (d === -1) {
 			let e = {
 				comment: n || t,
 				in: r || "",
-				out: a || "",
+				out: i || "",
 				type: o || "editdisplay",
 				flag: c || "",
 				ableFlag: l === void 0 ? !0 : l
@@ -573,7 +573,7 @@ var c = class extends e {
 			}];
 		}
 		let f = u.customscript[d];
-		return n !== void 0 && (f.comment = n), r !== void 0 && (f.in = r), a !== void 0 && (f.out = a), o !== void 0 && (f.type = o), c !== void 0 && (f.flag = c), l !== void 0 && (f.ableFlag = l), [{
+		return n !== void 0 && (f.comment = n), r !== void 0 && (f.in = r), i !== void 0 && (f.out = i), o !== void 0 && (f.type = o), c !== void 0 && (f.flag = c), l !== void 0 && (f.ableFlag = l), [{
 			type: "text",
 			text: `Successfully updated regex script "${t}" for character ${u.name || u.chaId}`
 		}];
@@ -593,7 +593,7 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		n.customscript ||= [];
-		let r = n.customscript.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.in + e.out)) === t);
+		let r = n.customscript.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.in + e.out)) === t);
 		return r === -1 ? [{
 			type: "text",
 			text: `Error: Regex script with name "${t}" not found.`
@@ -613,7 +613,7 @@ var c = class extends e {
 			text: "Error: The id pointed to a group chat, not a character."
 		}];
 		let n = (t.additionalAssets || []).map((e) => ({
-			name: e[0] || "Unnamed " + i(5515, e[1] + e[2]),
+			name: e[0] || "Unnamed " + a(5515, e[1] + e[2]),
 			path: e[1],
 			ext: e[2]
 		}));
@@ -637,7 +637,7 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		n.additionalAssets ||= [];
-		let r = n.additionalAssets.findIndex((e) => (e[0] || "Unnamed " + i(5515, e[1] + e[2])) === t);
+		let r = n.additionalAssets.findIndex((e) => (e[0] || "Unnamed " + a(5515, e[1] + e[2])) === t);
 		return r === -1 ? [{
 			type: "text",
 			text: `Error: Additional asset with name "${t}" not found.`
@@ -754,7 +754,7 @@ var c = class extends e {
 	text: `Error: Module with ID ${e} not found.`
 }], d = class extends e {
 	promptAccess(e, t) {
-		return n(a.mcpAccessPrompt.replace("{{tool}}", e).replace("{{action}}", t));
+		return r(n.mcpAccessPrompt.replace("{{tool}}", e).replace("{{action}}", t));
 	}
 	getTools() {
 		return [
@@ -1127,13 +1127,13 @@ var c = class extends e {
 		}];
 	}
 	async listModuleLorebooks(e, n = 100, r = 0) {
-		let a = t.db.modules.find((t) => t.id === e);
-		if (!a || a.mcp) return u(e);
+		let i = t.db.modules.find((t) => t.id === e);
+		if (!i || i.mcp) return u(e);
 		n > 100 && (n = 100), n < 1 && (n = 1), r < 0 && (r = 0);
-		let o = (a.lorebook || []).slice(r, r + n).map((e) => ({
+		let o = (i.lorebook || []).slice(r, r + n).map((e) => ({
 			alwaysActive: e.alwaysActive,
 			keys: e.key,
-			name: e.comment || "Unnamed " + i(5515, e.content)
+			name: e.comment || "Unnamed " + a(5515, e.content)
 		}));
 		return [{
 			type: "text",
@@ -1143,26 +1143,26 @@ var c = class extends e {
 	async getModuleLorebook(e, n) {
 		let r = t.db.modules.find((t) => t.id === e);
 		if (!r || r.mcp) return u(e);
-		let a = (r.lorebook || []).filter((e) => {
-			let t = e.comment || "Unnamed " + i(5515, e.content);
+		let i = (r.lorebook || []).filter((e) => {
+			let t = e.comment || "Unnamed " + a(5515, e.content);
 			return n.includes(t);
 		});
-		if (a.length === 0) return [{
+		if (i.length === 0) return [{
 			type: "text",
 			text: `Error: Lorebook entries with names "${n.join(", ")}" not found.`
 		}];
-		let o = a.map((e) => ({
+		let o = i.map((e) => ({
 			alwaysActive: e.alwaysActive,
 			content: e.content,
 			keys: e.key,
-			name: e.comment || "Unnamed " + i(5515, e.content)
+			name: e.comment || "Unnamed " + a(5515, e.content)
 		}));
 		return [{
 			type: "text",
 			text: JSON.stringify(o)
 		}];
 	}
-	async setModuleLorebook(e, n, r, a, o, s) {
+	async setModuleLorebook(e, n, r, i, o, s) {
 		let c = t.db.modules.find((t) => t.id === e);
 		if (!c || c.mcp) return u(e);
 		if (!await this.promptAccess("risu-set-module-lorebook", `add/modify module (${c.name}) lorebook (${n})`)) return [{
@@ -1170,10 +1170,10 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		c.lorebook ||= [];
-		let l = c.lorebook.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.content)) === n);
+		let l = c.lorebook.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.content)) === n);
 		if (l === -1) {
 			let e = {
-				key: s ? "" : a?.join(",") || "",
+				key: s ? "" : i?.join(",") || "",
 				content: r || "",
 				comment: o || n,
 				alwaysActive: s || !1,
@@ -1188,7 +1188,7 @@ var c = class extends e {
 			}];
 		}
 		let d = c.lorebook[l];
-		return r !== void 0 && (d.content = r), a !== void 0 && (d.key = s ? "" : a.join(",")), o !== void 0 && (d.comment = o), s !== void 0 && (d.alwaysActive = s, s && (d.key = "")), [{
+		return r !== void 0 && (d.content = r), i !== void 0 && (d.key = s ? "" : i.join(",")), o !== void 0 && (d.comment = o), s !== void 0 && (d.alwaysActive = s, s && (d.key = "")), [{
 			type: "text",
 			text: `Successfully updated lorebook entry "${n}" in module ${c.name}`
 		}];
@@ -1201,11 +1201,11 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		r.lorebook ||= [];
-		let a = r.lorebook.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.content)) === n);
-		return a === -1 ? [{
+		let i = r.lorebook.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.content)) === n);
+		return i === -1 ? [{
 			type: "text",
 			text: `Error: Lorebook entry with name "${n}" not found.`
-		}] : (r.lorebook.splice(a, 1), [{
+		}] : (r.lorebook.splice(i, 1), [{
 			type: "text",
 			text: `Successfully deleted lorebook entry "${n}" from module ${r.name}`
 		}]);
@@ -1214,7 +1214,7 @@ var c = class extends e {
 		let n = t.db.modules.find((t) => t.id === e);
 		if (!n || n.mcp) return u(e);
 		let r = (n.regex || []).map((e) => ({
-			comment: e.comment || "Unnamed " + i(5515, e.in + e.out),
+			comment: e.comment || "Unnamed " + a(5515, e.in + e.out),
 			in: e.in,
 			out: e.out,
 			type: e.type,
@@ -1226,7 +1226,7 @@ var c = class extends e {
 			text: JSON.stringify(r)
 		}];
 	}
-	async setModuleRegexScript(e, n, r, a, o, s, c, l) {
+	async setModuleRegexScript(e, n, r, i, o, s, c, l) {
 		let d = t.db.modules.find((t) => t.id === e);
 		if (!d || d.mcp) return u(e);
 		if (!await this.promptAccess("risu-set-module-regex-script", `add/modify module (${d.name}) regex script (${n})`)) return [{
@@ -1234,11 +1234,11 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		d.regex ||= [];
-		let f = d.regex.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.in + e.out)) === n);
+		let f = d.regex.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.in + e.out)) === n);
 		if (f === -1) {
 			let e = {
 				comment: r || n,
-				in: a || "",
+				in: i || "",
 				out: o || "",
 				type: s || "editdisplay",
 				flag: c || "",
@@ -1250,7 +1250,7 @@ var c = class extends e {
 			}];
 		}
 		let p = d.regex[f];
-		return r !== void 0 && (p.comment = r), a !== void 0 && (p.in = a), o !== void 0 && (p.out = o), s !== void 0 && (p.type = s), c !== void 0 && (p.flag = c), l !== void 0 && (p.ableFlag = l), [{
+		return r !== void 0 && (p.comment = r), i !== void 0 && (p.in = i), o !== void 0 && (p.out = o), s !== void 0 && (p.type = s), c !== void 0 && (p.flag = c), l !== void 0 && (p.ableFlag = l), [{
 			type: "text",
 			text: `Successfully updated regex script "${n}" in module ${d.name}`
 		}];
@@ -1263,11 +1263,11 @@ var c = class extends e {
 			text: "Access denied by user."
 		}];
 		r.regex ||= [];
-		let a = r.regex.findIndex((e) => (e.comment || "Unnamed " + i(5515, e.in + e.out)) === n);
-		return a === -1 ? [{
+		let i = r.regex.findIndex((e) => (e.comment || "Unnamed " + a(5515, e.in + e.out)) === n);
+		return i === -1 ? [{
 			type: "text",
 			text: `Error: Regex script with name "${n}" not found.`
-		}] : (r.regex.splice(a, 1), [{
+		}] : (r.regex.splice(i, 1), [{
 			type: "text",
 			text: `Successfully deleted regex script "${n}" from module ${r.name}`
 		}]);

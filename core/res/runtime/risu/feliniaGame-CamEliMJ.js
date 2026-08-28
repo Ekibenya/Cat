@@ -252,12 +252,12 @@ function p(e) {
 }
 async function m() {
 	return n ||= Promise.all([
-		import("./database.svelte-smLoqPx0.js"),
-		import("./index.svelte-PPxaDbM6.js"),
-		import("./scripts-4eTebsRb.js"),
-		import("./stores.svelte-BW3oIltv.js"),
-		import("./translator-CswI0bzX.js"),
-		import("./globalApi.svelte-B2wu0U7x.js")
+		import("./database.svelte-6y6bQUu0.js"),
+		import("./index.svelte-v62VlkGe.js"),
+		import("./scripts-CSEGo9qA.js"),
+		import("./stores.svelte-CKy-gdVr.js"),
+		import("./translator-BvM21ju2.js"),
+		import("./globalApi.svelte-BpSvphyR.js")
 	]).then(([e, t, n, r, i, a]) => ({
 		database: e,
 		process: t,
@@ -452,7 +452,7 @@ async function M(e = {}) {
 async function N(e) {
 	let t = await m();
 	e.provider && await E(e.provider);
-	let n = await import("./request-DpYvS06P.js"), r = t.database.getCurrentCharacter();
+	let n = await import("./request-LyNHi3Hw.js"), r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	let i = await n.requestChatData({
 		formated: e.messages,

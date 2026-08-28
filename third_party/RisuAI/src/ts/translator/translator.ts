@@ -27,6 +27,81 @@ let cache={
 
 let bergamotTranslate: (text: string, from: string, to: string, html?: boolean) => Promise<string>|null = null
 
+interface BrowserNativeTranslator {
+    translate(text:string): Promise<string>
+}
+
+interface BrowserNativeTranslatorFactory {
+    availability(options:{sourceLanguage:string, targetLanguage:string}): Promise<'available'|'downloadable'|'downloading'|'unavailable'>
+    create(options:{
+        sourceLanguage:string,
+        targetLanguage:string,
+        monitor?:(monitor:{addEventListener:(type:'downloadprogress', listener:(event:{loaded:number}) => void) => void}) => void,
+    }): Promise<BrowserNativeTranslator>
+}
+
+const browserNativeTranslatorCache = new Map<string, Promise<BrowserNativeTranslator>>()
+
+export function normalizeBrowserTranslationLanguage(language:string):string {
+    const value = String(language || '').toLowerCase()
+    if(value === 'zh-tw' || value === 'zh-hk' || value === 'zh-hant') return 'zh-Hant'
+    if(value === 'zh-cn' || value === 'zh-sg' || value === 'zh-hans') return 'zh'
+    if(value === 'iw') return 'he'
+    return value.split('-')[0]
+}
+
+function browserNativeFactory():BrowserNativeTranslatorFactory|null {
+    if(typeof window === 'undefined') return null
+    return (window as typeof window & {Translator?:BrowserNativeTranslatorFactory}).Translator ?? null
+}
+
+function browserNativeStatus(state:string, detail:Record<string, unknown> = {}) {
+    if(typeof window === 'undefined') return
+    window.dispatchEvent(new CustomEvent('felinia-native-translation-status', {detail:{state, ...detail}}))
+}
+
+export async function browserNativeTranslate(text:string, from:string, to:string):Promise<string|null> {
+    const factory = browserNativeFactory()
+    if(!factory){
+        browserNativeStatus('unsupported')
+        return null
+    }
+    const sourceLanguage = normalizeBrowserTranslationLanguage(from)
+    const targetLanguage = normalizeBrowserTranslationLanguage(to)
+    const options = {sourceLanguage, targetLanguage}
+    const availability = await factory.availability(options)
+    if(availability === 'unavailable'){
+        browserNativeStatus('unsupported', options)
+        return null
+    }
+    if(availability === 'downloadable' || availability === 'downloading'){
+        browserNativeStatus('downloading', options)
+    }
+    const key = `${sourceLanguage}\u0000${targetLanguage}`
+    let translator = browserNativeTranslatorCache.get(key)
+    if(!translator){
+        translator = factory.create({
+            ...options,
+            monitor(monitor){
+                monitor.addEventListener('downloadprogress', (event) => {
+                    browserNativeStatus('downloading', {...options, progress:event.loaded})
+                })
+            },
+        })
+        browserNativeTranslatorCache.set(key, translator)
+    }
+    try{
+        const result = await (await translator).translate(text)
+        browserNativeStatus('ready', options)
+        return result
+    }
+    catch(error){
+        browserNativeTranslatorCache.delete(key)
+        browserNativeStatus('failed', {...options, message:String((error as Error)?.message || error)})
+        throw error
+    }
+}
+
 export const LLMCacheStorage = localforage.createInstance({
     name: "LLMTranslateCache"
 })
@@ -135,6 +210,16 @@ export async function runTranslator(text:string, reverse:boolean, from:string,ta
 
 async function translateMain(text:string, arg:{from:string, to:string, host:string, translatorNote?:string}){
     let db = getDatabase()
+    if(db.translatorType === 'browser'){
+        try{
+            const result = await browserNativeTranslate(text, arg.from, arg.to)
+            if(result !== null) return result
+        }
+        catch(_error){
+            // The fixed browser game must still display a translation when the
+            // language pack is unavailable or its first download is interrupted.
+        }
+    }
     if(db.translatorType === 'llm'){
         const tr = arg.to || 'en'
         return translateLLM(text, {to: tr, from: arg.from, translatorNote: arg.translatorNote})

@@ -170,7 +170,7 @@ export interface FeliniaSessionContent {
 }
 
 export interface FeliniaTranslationOptions {
-  provider: 'google' | 'deepl' | 'deeplx' | 'bergamot' | 'llm' | 'off';
+  provider: 'google' | 'browser' | 'deepl' | 'deeplx' | 'bergamot' | 'llm' | 'off';
   deeplKey?: string;
   deeplFree?: boolean;
   deeplxUrl?: string;

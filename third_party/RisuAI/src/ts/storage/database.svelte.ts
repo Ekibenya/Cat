@@ -973,7 +973,7 @@ export interface Database{
     mancerHeader:string
     emotionProcesser:'submodel'|'embedding',
     showMenuChatList?:boolean,
-    translatorType:'google'|'deepl'|'none'|'llm'|'deeplX'|'bergamot',
+    translatorType:'google'|'browser'|'deepl'|'none'|'llm'|'deeplX'|'bergamot',
     translatorInputLanguage?:string
     htmlTranslation?:boolean,
     NAIadventure?:boolean,

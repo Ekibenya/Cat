@@ -1,5 +1,5 @@
 import { i as e } from "./chunk-DeC0fbbY.js";
-import { Ii as t, _ as n, rt as r } from "./characterCards-Bed0KpMc.js";
+import { Ri as t, _ as n, rt as r } from "./characterCards-CThRJ6_5.js";
 import { t as i } from "./internalmcp-BEm-hL3W.js";
 //#region src/ts/process/mcp/googlesearchclient.ts
 var a = /* @__PURE__ */ e(t(), 1), o = class extends i {

@@ -2966,7 +2966,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="默认 900" style="width:80px"></div>
       <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span class="on">关</span><span>低</span><span>中</span><span>高</span></span></div>
       <div class="sub" style="margin-top:16px">韩语原生写作&nbsp;·&nbsp;中文只作显示层：玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。状态栏与控制标签永不翻译。</div>
-      <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:200px"><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
+      <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:200px"><option value="browser">浏览器本地翻译（推荐）</option><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
       <div class="sRow"><span>翻译方向</span><span class="sub" style="margin:0">玩家&nbsp;中文→韩语&nbsp;·&nbsp;正文&nbsp;韩语→中文</span></div>
       <div class="sRow"><span>显示韩语原稿</span><input type="checkbox" id="trShowRaw"></div>
       <div class="sRow"><span>DeepL&nbsp;KEY</span><input class="aIn" id="trDeepLKey" type="password" placeholder="仅选择 DeepL 时需要" style="width:220px"></div>
@@ -10785,7 +10785,7 @@ var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
   tts:{src:0,base:'',key:'',model:'tts-1',voice:'',rate:105,scope:0,auto:0},
   img:{on:0,base:'',key:'',model:'',size:0,style:0},   /* style 0 ＝ NovelAI，见 IMGSTY */
   sub:{format:'openai',base:'',key:'',model:''},
-  trans:{provider:'google',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:''},
+  trans:{provider:'browser',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1},
   semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
   vars:{},gvars:{},
   samp:{temp:'',topp:'',maxt:'',minc:'',reason:0},
@@ -10803,7 +10803,7 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
     img:{on:0,auto:0,count:0,cam:0,disp:2,base:'',key:'',model:'',size:0,style:0,
          steps:'',cfg:'',w:'',h:'',seed:'',workflow:''},
     sub:{format:'openai',base:'',key:'',model:''},
-    trans:{provider:'google',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:''},
+    trans:{provider:'browser',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1},
     semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
     vars:{},gvars:{},
     samp:{temp:'',topp:'',maxt:'',minc:'',reason:0}};
@@ -10820,6 +10820,14 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
   if(!SET.loreState||typeof SET.loreState!=='object')SET.loreState={};
 })();
 function setStore(){lsSet('rome_set',JSON.stringify(SET))}
+/* First native-translation release: existing zero-config Google users move to
+   the browser-local provider once. Unsupported devices transparently retain
+   Google as the runtime fallback, so this migration cannot remove translation. */
+if(!SET.trans.nativeDefaultV1){
+  SET.trans.nativeDefaultV1=1;
+  if(!SET.trans.provider||SET.trans.provider==='google')SET.trans.provider='browser';
+  setStore();
+}
 /* FELINIA is a fixed game hosted by its embedded narrative runtime. The runtime
    database contains 41 era characters plus the 590 preset-character slots;
    only one era is selected, and its era characters are attached to that
@@ -10950,6 +10958,30 @@ function felTranslate(text,source,target){
     return risu;
   }).then(function(risu){return risu.translate(String(text),source,target,felTrCfg());});
 }
+var FEL_NATIVE_WARM={kozh:0,zhko:0};
+function felNativeTranslationWarm(){
+  if((SET.trans||{}).provider!=='browser')return;
+  if(!window.Translator){felTrStatus('本浏览器不支持本地翻译，生成后会自动使用 Google',0);return;}
+  var dir=!FEL_NATIVE_WARM.kozh?{key:'kozh',text:'준비',from:'ko',to:'zh-CN',name:'韩→中'}:
+    (!FEL_NATIVE_WARM.zhko?{key:'zhko',text:'准备',from:'zh-CN',to:'ko',name:'中→韩'}:null);
+  if(!dir)return;
+  FEL_NATIVE_WARM[dir.key]=1;
+  felTrStatus('正在准备浏览器本地'+dir.name+'语言包…',0);
+  felTranslate(dir.text,dir.from,dir.to).catch(function(){FEL_NATIVE_WARM[dir.key]=0;});
+}
+addEventListener('felinia-native-translation-status',function(event){
+  if((SET.trans||{}).provider!=='browser')return;
+  var d=event.detail||{},state=d.state;
+  if(state==='ready')felTrStatus('浏览器本地翻译已就绪 · 文本不会离开设备',0);
+  else if(state==='downloading'){
+    var pc=typeof d.progress==='number'?' '+Math.round(d.progress*100)+'%':'';
+    felTrStatus('首次下载浏览器本地语言包'+pc,0);
+  }else if(state==='unsupported'||state==='failed')felTrStatus('本地翻译不可用 · 已自动使用 Google',0);
+});
+/* Chrome requires a fresh user gesture for every new language direction.
+   Keep this cheap capture listener so the first two ordinary game clicks warm
+   韩→中 and 中→韩 separately; after both caches exist it becomes a no-op. */
+addEventListener('pointerdown',felNativeTranslationWarm,{capture:true});
 function felCanonicalizeTurns(){
   if(!felTrOn())return Promise.resolve();
   var chain=Promise.resolve();
@@ -11898,7 +11930,7 @@ function apPaneLoad(){
   $('#apMaxT').value=SET.samp.maxt;$('#apMinC').value=SET.samp.minc;
   setSeg('#sgReason',SET.samp.reason||0);
   var tr=SET.trans||{};
-  $('#trProvider').value=tr.provider||'google';$('#trShowRaw').checked=!!tr.showRaw;
+  $('#trProvider').value=tr.provider||'browser';$('#trShowRaw').checked=!!tr.showRaw;
   $('#trDeepLKey').value=tr.deeplKey||'';$('#trDeepLXUrl').value=tr.deeplxUrl||'http://localhost:1188';
   $('#trDeepLXToken').value=tr.deeplxToken||'';trPaneSync();
   var sm=SET.semantic||{};
@@ -11906,12 +11938,12 @@ function apPaneLoad(){
   $('#semBudget').value=sm.budget||3000;$('#semGpu').checked=sm.gpu!==0;semPaneSync();
 }
 function trPaneSync(){
-  var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'google';
+  var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'browser';
   var dl=$('#trDeepLKey'),dx=$('#trDeepLXUrl'),dt=$('#trDeepLXToken');
   if(dl)dl.closest('.sRow').style.display=p==='deepl'?'':'none';
   if(dx)dx.closest('.sRow').style.display=p==='deeplx'?'':'none';
   if(dt)dt.closest('.sRow').style.display=p==='deeplx'?'':'none';
-  var note={google:'Google 快速翻译 · 无需密钥 · 结果缓存于本浏览器',deepl:'DeepL API · 使用玩家自己的密钥',
+  var note={browser:'浏览器本地翻译 · 首次下载韩中语言包 · 不支持时自动使用 Google',google:'Google 快速翻译 · 无需密钥 · 结果缓存于本浏览器',deepl:'DeepL API · 使用玩家自己的密钥',
     deeplx:'DeepLX · 请求只发往玩家填写的本地服务',bergamot:'Firefox／Bergamot · 模型首次使用时下载，之后在浏览器本地运行',
     llm:'使用副模型（若已配置）或主模型完成翻译',off:'已关闭 · 模型与界面直接使用同一种语言'}[p];
   felTrStatus(note,0);
@@ -11921,7 +11953,7 @@ function semPaneSync(){
   var model=$('#semModel');if(model)model.closest('.sRow').style.display=mode==='api'?'':'none';
   var gpu=$('#semGpu');if(gpu)gpu.closest('.sRow').style.display=(mode==='bge-ko'||mode==='hybrid')?'':'none';
 }
-$('#trProvider').addEventListener('change',function(){SET.trans.provider=this.value;setStore();trPaneSync();});
+$('#trProvider').addEventListener('change',function(){SET.trans.provider=this.value;setStore();trPaneSync();if(this.value==='browser')felNativeTranslationWarm();});
 $('#trShowRaw').addEventListener('change',function(){SET.trans.showRaw=this.checked?1:0;setStore();});
 [['trDeepLKey','deeplKey'],['trDeepLXUrl','deeplxUrl'],['trDeepLXToken','deeplxToken']].forEach(function(pair){
   $('#'+pair[0]).addEventListener('input',function(){SET.trans[pair[1]]=this.value.trim();setStore();});
@@ -16580,7 +16612,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=15"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=16"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

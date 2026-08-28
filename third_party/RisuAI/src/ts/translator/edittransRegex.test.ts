@@ -22,7 +22,7 @@ vi.mock("../parser/parser.svelte", () => ({
     },
 }));
 
-import { applyEdittransRegex } from "./translator";
+import { applyEdittransRegex, normalizeBrowserTranslationLanguage } from "./translator";
 
 const script = (v: Partial<customscript>): customscript => ({
     comment: "",
@@ -43,6 +43,14 @@ beforeEach(() => {
     database.presetRegex = [];
     parserCalls.length = 0;
     vi.spyOn(console, "error").mockImplementation(() => {});
+});
+
+describe("browser-native translation language codes", () => {
+    it("normalizes FELINIA Chinese variants and preserves Korean", () => {
+        expect(normalizeBrowserTranslationLanguage("zh-CN")).toBe("zh");
+        expect(normalizeBrowserTranslationLanguage("zh-Hant")).toBe("zh-Hant");
+        expect(normalizeBrowserTranslationLanguage("ko-KR")).toBe("ko");
+    });
 });
 
 describe("applyEdittransRegex", () => {
