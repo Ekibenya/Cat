@@ -252,12 +252,12 @@ function p(e) {
 }
 async function m() {
 	return n ||= Promise.all([
-		import("./database.svelte-B2-rmWGt.js"),
-		import("./index.svelte-CZ49Faaa.js"),
-		import("./scripts-BWJExb9G.js"),
-		import("./stores.svelte-1uma_N82.js"),
-		import("./translator-I7W3Gsuy.js"),
-		import("./globalApi.svelte-D6vgD6Hb.js")
+		import("./database.svelte-Bcus0gCM.js"),
+		import("./index.svelte-N1eKJDhy.js"),
+		import("./scripts-D7ed2lD4.js"),
+		import("./stores.svelte-DiC-JPdd.js"),
+		import("./translator-LLYLOcBR.js"),
+		import("./globalApi.svelte-AOxqJqdN.js")
 	]).then(([e, t, n, r, i, a]) => ({
 		database: e,
 		process: t,
@@ -344,7 +344,10 @@ async function x(e) {
 	}, t.feliniaFinalPromptTranslation = e.provider !== "off";
 }
 async function S(e, t, n, r) {
-	return !e || r.provider === "off" ? e : (await x(r), (await m()).translator.runTranslator(e, !0, t, n, { regenerate: r.regenerate }));
+	return !e || r.provider === "off" ? e : (await x(r), (await m()).translator.runTranslator(e, !0, t, n, {
+		regenerate: r.regenerate,
+		throwOnError: !0
+	}));
 }
 async function C(e, t) {
 	let n = await m(), r = n.database.getDatabase(), i = r.characters.findIndex((t) => t.type !== "group" && p(t)?.kind === "npc" && p(t)?.key === e);
@@ -452,7 +455,7 @@ async function M(e = {}) {
 async function N(e) {
 	let t = await m();
 	e.provider && await E(e.provider);
-	let n = await import("./request-Dx-PNrCL.js"), r = t.database.getCurrentCharacter();
+	let n = await import("./request-iOPkl_0w.js"), r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	let i = await n.requestChatData({
 		formated: e.messages,

@@ -633,7 +633,10 @@ export async function translateFelinia(
   if (!text || options.provider === 'off') return text;
   await configureFeliniaTranslation(options);
   const rt = await runtime();
-  return rt.translator.runTranslator(text, true, from, to, { regenerate: options.regenerate });
+  return rt.translator.runTranslator(text, true, from, to, {
+    regenerate: options.regenerate,
+    throwOnError: true,
+  });
 }
 
 export async function setFeliniaNpcState(key: string, state: Record<string, string | number | boolean>) {

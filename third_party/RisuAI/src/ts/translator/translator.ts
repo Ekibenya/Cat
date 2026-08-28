@@ -19,6 +19,7 @@ import { processScriptFull } from "../process/scripts"
 import localforage from "localforage"
 import sendSound from '../../etc/send.mp3'
 import { splitGoogleTranslationText } from './googleChunks'
+import { normalizeDeepLXLanguage } from './deeplX'
 
 let cache={
     origin: [''],
@@ -106,8 +107,36 @@ export const LLMCacheStorage = localforage.createInstance({
     name: "LLMTranslateCache"
 })
 
-let waitTrans = 0
+let deepLXQueue:Promise<void> = Promise.resolve()
+let deepLXNextRequestAt = 0
 const googleTranslationCache = new Map<string, string>()
+
+function deepLXErrorDetail(data:unknown):string {
+    if(typeof data === 'string') return data.slice(0, 320)
+    try{
+        return JSON.stringify(data).slice(0, 320)
+    }
+    catch(_error){
+        return String(data).slice(0, 320)
+    }
+}
+
+async function enqueueDeepLX<T>(waitBetweenRequests:boolean, task:() => Promise<T>):Promise<T> {
+    const queued = deepLXQueue.then(async () => {
+        if(waitBetweenRequests){
+            const delay = deepLXNextRequestAt - Date.now()
+            if(delay > 0) await sleep(delay)
+        }
+        try{
+            return await task()
+        }
+        finally{
+            deepLXNextRequestAt = Date.now() + (waitBetweenRequests ? 1500 : 0)
+        }
+    })
+    deepLXQueue = queued.then(() => undefined, () => undefined)
+    return queued
+}
 
 async function mapConcurrent<T, R>(items:T[], limit:number, worker:(item:T) => Promise<R>):Promise<R[]> {
     const results = new Array<R>(items.length)
@@ -144,7 +173,7 @@ export async function translate(text:string, reverse:boolean) {
     return runTranslator(text, reverse, db.translator,db.aiModel.startsWith('novellist') ? 'ja' : 'en')
 }
 
-export async function runTranslator(text:string, reverse:boolean, from:string,target:string, exarg?:{translatorNote?:string, regenerate?:boolean}) {
+export async function runTranslator(text:string, reverse:boolean, from:string,target:string, exarg?:{translatorNote?:string, regenerate?:boolean, throwOnError?:boolean}) {
     const arg = {
 
         from: reverse ? from : target,
@@ -187,6 +216,7 @@ export async function runTranslator(text:string, reverse:boolean, from:string,ta
 
             if(result.startsWith('ERR::')){
                 alertError(result)
+                if(exarg?.throwOnError) throw new Error(result.slice(5))
                 return text
             }
 
@@ -246,14 +276,6 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
 
     }
     if(db.translatorType === 'deeplX'){
-        if(!db.noWaitForTranslate){
-            if(waitTrans - Date.now() > 0){
-                const waitTime = waitTrans - Date.now()
-                waitTrans = Date.now() + 3000
-                await sleep(waitTime)
-            }
-        }
-
         let url = db.deeplXOptions.url ?? 'http://localhost:1188'
 
         if(url.endsWith('/')){
@@ -266,17 +288,30 @@ async function translateMain(text:string, arg:{from:string, to:string, host:stri
 
         let headers = { "Content-Type": "application/json" }
 
-        const body = {text: text, target_lang: arg.to.toLocaleUpperCase(), source_lang: arg.from.toLocaleUpperCase()}
-
-    
         if(db.deeplXOptions.token.trim() !== '') { headers["Authorization"] = "Bearer " + db.deeplXOptions.token}
-        
-        //Since the DeepLX API is non-CORS restricted, we can use the plain fetch function
-        const f = await globalFetch(url, { method: "POST", headers: headers, body: body, plainFetchForce:true })
 
-        if(!f.ok){ return 'ERR::DeepLX API Error' + (await f.data) }
-
-        return f.data.data;
+        const sourceLanguage = normalizeDeepLXLanguage(arg.from)
+        const targetLanguage = normalizeDeepLXLanguage(arg.to)
+        const deepLXChunks = splitGoogleTranslationText(text, 8500)
+        const translated:string[] = []
+        for(const deepLXChunk of deepLXChunks){
+            const body = {text: deepLXChunk, target_lang: targetLanguage, source_lang: sourceLanguage}
+            // DeepLX fronts DeepL's web endpoint. Serialize all prose/status jobs so one
+            // rendered turn cannot create a burst that immediately rate-limits the IP.
+            const f = await enqueueDeepLX(!db.noWaitForTranslate, () => globalFetch(url, {
+                method: "POST", headers: headers, body: body, plainFetchForce:true,
+            }))
+            if(!f.ok){
+                const detail = deepLXErrorDetail(f.data)
+                if(f.status === 429) return `ERR::DeepLX 上游限流（HTTP 429）。请稍后重试或更换网络/IP${detail ? `：${detail}` : ''}`
+                if(f.status === 413) return `ERR::DeepLX 文本过长（HTTP 413）${detail ? `：${detail}` : ''}`
+                return `ERR::DeepLX 请求失败（HTTP ${f.status || '未知'}）${detail ? `：${detail}` : ''}`
+            }
+            const value = f.data?.data
+            if(typeof value !== 'string') return `ERR::DeepLX 返回格式无效：${deepLXErrorDetail(f.data)}`
+            translated.push(value)
+        }
+        return translated.join('')
     }
     if(db.translatorType == "bergamot") {
         if(!bergamotTranslate){
