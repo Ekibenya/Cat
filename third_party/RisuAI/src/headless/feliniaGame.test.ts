@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   compileFeliniaDefinition,
+  findRepeatedFeliniaDialogue,
   mergeFeliniaNativeCharacterFields,
   risuMessage,
 } from './feliniaGame';
@@ -48,7 +49,21 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(relation?.keys).toEqual(['该隐', '潘多拉', '伏羲']);
   });
 
-  it('merges active NPC native fields without polluting the era-only baseline', () => {
+  it('keeps every character entry but does not turn raw quote snippets into native examples', () => {
+    const { content, eras } = fixture();
+    const definition = compileFeliniaDefinition(content, eras);
+    const pan = definition.npcs.find((entry) => entry.name === '潘金莲');
+    expect(pan).toBeDefined();
+    expect(pan?.quotes).toEqual(['「两文钱。」', '「不用了。」']);
+    expect(pan?.mes_example).toBe('');
+    expect(definition.npcs.every((entry) => entry.mes_example === '')).toBe(true);
+    expect(pan?.personality).toContain('她话很少');
+    expect(pan?.personality).toContain('她说出口的话极少');
+    expect(pan?.personality).not.toContain('那个要求打折并索要赔偿的女顾客');
+    expect(pan?.lorebook).toHaveLength(6);
+  });
+
+  it('merges active NPC native fields once without contaminating Risu exampleMessage', () => {
     const base = {
       desc: 'ERA_DESC', personality: 'ERA_PERSONALITY', scenario: 'ERA_SCENARIO', exampleMessage: 'ERA_EXAMPLE',
     };
@@ -57,10 +72,20 @@ describe('FELINIA fixed Risu runtime data', () => {
     }]);
     expect(merged.desc).toContain('NPC_DESC');
     expect(merged.personality).toContain('NPC_PERSONALITY');
-    expect(merged.personality).toContain('NPC_EXAMPLE');
-    expect(merged.exampleMessage).toContain('NPC_EXAMPLE');
+    expect(merged.personality).not.toContain('NPC_EXAMPLE');
+    expect(merged.personality).toContain('不得复用最近三回');
+    expect(merged.exampleMessage).toBe('ERA_EXAMPLE');
     expect(base.desc).toBe('ERA_DESC');
     expect(mergeFeliniaNativeCharacterFields(base, [])).toEqual(base);
+  });
+
+  it('detects repeated character dialogue while ignoring cat suffix punctuation', () => {
+    const previous = [
+      '她摇了摇头。\n\n「不知道喵。」\n\n灯芯缩了一下。',
+      '「这件事由客人决定喵。」',
+    ];
+    expect(findRepeatedFeliniaDialogue('「不知道喵！」\n\n她把钱推回去。', previous)).toEqual(['不知道喵']);
+    expect(findRepeatedFeliniaDialogue('「我先去问问掌柜喵。」', previous)).toEqual([]);
   });
 
   it('keeps canonical Korean separate from the display-language lore scan alias', () => {

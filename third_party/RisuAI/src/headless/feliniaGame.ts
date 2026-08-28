@@ -209,6 +209,9 @@ interface FeliniaRuntimeMeta {
 
 type FeliniaNativeFields = Pick<character, 'desc' | 'personality' | 'scenario' | 'exampleMessage'>;
 
+const FELINIA_ACTIVE_NPC_VARIATION = `【人物条目与台词样本的用法】
+人物条目里的具体台词只用于辨认措辞、语气、敬语和句长，不是必须复诵的台词表，更不是口头禅。每回合必须依据眼前的新动作、新对象和新利害重新组织说法；不得照抄条目中的整句，也不得复用最近三回已经说过的同一句或同一种推脱。条目描述的局部反应只适用于它原本的情境：例如“不替客人决定”不等于遇到任何事都说做不了，“话少”也不等于对所有问题只会说不知道。角色可以沉默、点头、追问、改口、转移话题或采取具体行动，但不能把一种性情压扁成两句循环回复。`;
+
 export function mergeFeliniaNativeCharacterFields(
   base: FeliniaNativeFields,
   activeNpcs: Array<Pick<character, 'name' | 'desc' | 'personality' | 'exampleMessage'>>,
@@ -219,12 +222,17 @@ export function mergeFeliniaNativeCharacterFields(
     merged.personality = [
       merged.personality,
       `【${npc.name} · 性格与行为】\n${npc.personality || ''}`,
-      npc.exampleMessage ? `【${npc.name} · 说话样例】\n${npc.exampleMessage}` : '',
     ].filter(Boolean).join('\n\n');
     merged.scenario = [merged.scenario, `当前在场人物：${npc.name}`].filter(Boolean).join('\n');
-    merged.exampleMessage = [merged.exampleMessage, `【${npc.name} · 说话样例】\n${npc.exampleMessage || ''}`].filter(Boolean).join('\n\n');
+  }
+  if (activeNpcs.length) {
+    merged.personality = [merged.personality, FELINIA_ACTIVE_NPC_VARIATION].filter(Boolean).join('\n\n');
   }
   return merged;
+}
+
+function isRelationshipEntry(entry: Pick<FeliniaLoreEntry, 'title' | 'comment'>): boolean {
+  return /第五项\s*·\s*关系|关系/.test(String(entry.title || entry.comment || ''));
 }
 
 let runtimePromise: Promise<Runtime> | null = null;
@@ -382,7 +390,7 @@ export function compileFeliniaDefinition(
            * 「欠债、同伙、怕生」这类泛词当触发词；Flash 看到一句“不愿欠人情”
            * 就会注入该隐等未在场人物，随后擅自让他们进门。角色和关系内容一字
            * 不删，只把触发条件收紧为本时代的真实人名。 */
-          if (!/第五项\s*·\s*关系|关系/.test(String(entry.title || ''))) return entry;
+          if (!isRelationshipEntry(entry)) return entry;
           const relationNames = list(entry.keys).filter((key) => key !== figure.n && eraCharacterNames.has(key));
           return { ...entry, keys: relationNames.length ? relationNames : [`__FELINIA_RELATION_${era.i}_${figureIndex}__`] };
         });
@@ -394,8 +402,14 @@ export function compileFeliniaDefinition(
         title: figure.ti,
         name: figure.n,
         description: [figure.ti, figure.d].filter(Boolean).join('\n'),
-        personality: figureLore.map((entry) => entry.content || '').filter(Boolean).join('\n\n'),
-        mes_example: (figure.q || []).join('\n'),
+        /* 第一至第四项及第六项构成这个已激活角色的常驻本体，只放一次。
+         * 第五项关系仍留在原生 lorebook，等另一个关系人的名字出现才触发。
+         * figure.q 是资料索引里的摘句，不是 {{user}}/{{char}} 对话；把它塞进
+         * Risu exampleMessage 会被解析成上一段 assistant 示例的续文，弱模型便
+         * 会逐回照抄，因此只保存在 quotes 元数据中。 */
+        personality: figureLore.filter((entry) => !isRelationshipEntry(entry))
+          .map((entry) => entry.content || '').filter(Boolean).join('\n\n'),
+        mes_example: '',
         quotes: figure.q,
         lorebook: figureLore,
         tags: ['FELINIA', `era:${era.i}`, figure.sp || '', figure.ti || ''].filter(Boolean),
@@ -559,14 +573,17 @@ export async function activateFeliniaEra(eraIndex: number, npcKeys: string[] = [
     const found = db.characters.find((entry) => entry.type !== 'group' && meta(entry)?.kind === 'npc' && meta(entry)?.key === key) as character | undefined;
     if (!found) continue;
     activeNpcs.push(found);
-    era.globalLore.push(...clone(found.globalLore));
+    /* 非关系的五项人物资料已经作为 native personality 常驻，只让第五项关系
+     * 继续走 Risu 的关键词扫描，避免同一份人物资料每回合注入两遍。 */
+    era.globalLore.push(...clone(found.globalLore.filter((entry) =>
+      /第五项\s*·\s*关系|关系/.test(String(entry.comment || ''))
+    )));
     era.customscript.push(...clone(found.customscript));
     era.triggerscript.push(...clone(found.triggerscript));
   }
   /* An activated preset NPC is a real Risu character, not merely a bag of
-   * triggerable lore. Merge its native character fields into the active era
-   * character so description, personality and speaking examples survive even
-   * when no keyword lore fires on the current turn. */
+   * triggerable lore. Merge its native description/personality into the era;
+   * raw quote snippets deliberately remain outside native exampleMessage. */
   Object.assign(era, mergeFeliniaNativeCharacterFields({
     desc: era.desc,
     personality: era.personality,
@@ -680,7 +697,9 @@ export async function configureFeliniaProvider(provider: FeliniaProvider) {
   // existing sentinel for omitting a sampling parameter from the request.
   db.temperature = provider.temperature == null ? -1000 : Math.round(provider.temperature * 100);
   db.top_p = provider.topP == null ? -1000 : provider.topP;
-  db.reasoningEffort = provider.reasoningEffort ?? -1;
+  /* Match Risu's native default: 0 is low reasoning. Players can still choose
+   * -1 explicitly to disable/minimize it for very small or latency-sensitive models. */
+  db.reasoningEffort = provider.reasoningEffort ?? 0;
   db.maxResponse = provider.maxTokens ?? 4096;
   db.maxContext = provider.contextTokens ?? 65536;
   db.useStreaming = provider.stream ?? true;
@@ -713,6 +732,29 @@ function proseCharacters(text: string): number {
     .replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/gi, '')
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .trim().length;
+}
+
+function dialogueUnits(text: string): Array<{ raw: string; key: string }> {
+  const units: Array<{ raw: string; key: string }> = [];
+  for (const quote of String(text || '').matchAll(/「([^」\n]{2,180})」/g)) {
+    for (const rawPart of quote[1].split(/[。！？!?]+/)) {
+      const raw = rawPart.trim();
+      const key = raw
+        .replace(/\s+/g, '')
+        .replace(/[，、：；…—―~～♡]+$/g, '')
+        .replace(/喵(?:呜|嗷|咪)?[~～♡]*$/u, '');
+      if (key.length >= 3) units.push({ raw, key });
+    }
+  }
+  return units;
+}
+
+/** Returns full dialogue fragments repeated verbatim from recent assistant turns.
+ * Cat suffixes and terminal punctuation are ignored so “不知道喵” and
+ * “不知道喵。” are treated as the same line. */
+export function findRepeatedFeliniaDialogue(text: string, previousAssistantTexts: string[]): string[] {
+  const previous = new Set(previousAssistantTexts.flatMap((entry) => dialogueUnits(entry).map((unit) => unit.key)));
+  return [...new Set(dialogueUnits(text).filter((unit) => previous.has(unit.key)).map((unit) => unit.raw))];
 }
 
 export function risuMessage(turn: FeliniaTurn): Message {
@@ -757,6 +799,9 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
   const originalSystemPrompt = current.systemPrompt;
   const minChars = Math.max(0, Math.round(options.minChars || 0));
   const maxShortRetries = Math.max(0, Math.min(1, Math.round(options.maxShortRetries ?? 1)));
+  const maxRetries = Math.max(1, maxShortRetries);
+  const previousAssistantTexts = currentChat.message.slice(0, startLength)
+    .filter((message) => message.role === 'char').slice(-3).map((message) => String(message.data || ''));
   // The original visual client releases this store after awaiting sendChat.
   // The headless host owns that lifecycle now, including recovery after errors.
   rt.process.doingChat.set(false);
@@ -772,10 +817,12 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
   }
   try {
     let bestMessage: Message | undefined;
-    for (let attempt = 0; attempt <= maxShortRetries; attempt++) {
+    let fallbackMessage: Message | undefined;
+    let retryInstruction = '';
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       if (attempt > 0) {
         currentChat.message = currentChat.message.slice(0, startLength);
-        current.systemPrompt = `${originalSystemPrompt}\n\n최종 분량 교정. 직전 초안은 ${minChars}자 미만이라 폐기되었다. 같은 장면을 처음부터 다시 쓰되, 상태창을 제외한 한국어 소설 본문이 반드시 ${minChars}자 이상이 된 뒤에만 끝낸다. 요약하거나 결말을 서두르지 말고 사건, 반응, 대화와 구체적인 동작을 늘린다.`;
+        current.systemPrompt = `${originalSystemPrompt}\n\n${retryInstruction}`;
         rt.database.setCurrentCharacter(current);
         previous = currentChat.message.at(-1)?.data || '';
       }
@@ -786,22 +833,31 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
       });
       if (!ok) {
         const message = generationError(currentChat, startLength) || '生成请求失败';
-        if (!bestMessage) throw new Error(message);
-        currentChat.message.push(clone(bestMessage));
+        const recovered = bestMessage || fallbackMessage;
+        if (!recovered) throw new Error(message);
+        currentChat.message.push(clone(recovered));
         break;
       }
       if (options.preview) break;
       const generated = currentChat.message.at(-1);
       if (!generated || generated.role !== 'char') continue;
-      if (!bestMessage || proseCharacters(generated.data) > proseCharacters(bestMessage.data)) {
+      if (!fallbackMessage || proseCharacters(generated.data) > proseCharacters(fallbackMessage.data)) {
+        fallbackMessage = clone(generated);
+      }
+      const repeated = findRepeatedFeliniaDialogue(generated.data, previousAssistantTexts);
+      if (!repeated.length && (!bestMessage || proseCharacters(generated.data) > proseCharacters(bestMessage.data))) {
         bestMessage = clone(generated);
       }
-      if (!minChars || proseCharacters(generated.data) >= minChars || attempt === maxShortRetries) {
-        if (bestMessage && generated.data !== bestMessage.data) {
-          currentChat.message[currentChat.message.length - 1] = clone(bestMessage);
-        }
+      const tooShort = !!minChars && proseCharacters(generated.data) < minChars;
+      if (!repeated.length && !tooShort) break;
+      if (attempt === maxRetries) {
+        const recovered = bestMessage || fallbackMessage;
+        if (recovered) currentChat.message[currentChat.message.length - 1] = clone(recovered);
         break;
       }
+      retryInstruction = repeated.length
+        ? `【对白复读纠正】刚才草稿复用了最近三回已经说过的台词：${repeated.map((line) => `「${line}」`).join('、')}。该草稿作废。保持人物全部设定与当前场景，从本回开头重写；这些句子及同义的万能推脱都不得再次出现。根据眼前对象、动作和利害写出新的回应，也可以用沉默、追问、改口或具体行动代替。`
+        : `【篇幅纠正】刚才草稿的正文不足 ${minChars} 字，已经作废。保持同一场景从头重写；状态栏不计入字数，正文达到 ${minChars} 字后才能结束。用事件、反应、对话和具体动作扩展，不要总结或赶结局。`;
     }
     if (options.preview) return {
       text: JSON.stringify(rt.process.previewFormated),

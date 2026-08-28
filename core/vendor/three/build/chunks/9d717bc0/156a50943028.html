@@ -2959,12 +2959,12 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>副&nbsp;BASE</span><input class="aIn" id="subBase" style="width:240px"></div>
       <div class="sRow"><span>副密钥</span><input class="aIn" id="subKey" type="password" style="width:200px"></div>
       <div class="sRow"><span>副模型</span><input class="aIn" id="subModel" placeholder="留空全走主模型" style="width:200px"></div>
-      <div class="sub" style="margin-top:14px">高级采样（可选，留空用接口默认）：温度＝越高越放飞；采样核&nbsp;top_p＝一般不与温度同调；单轮输出上限＝最大回复长度；最低字数＝每回正文的篇幅下限（以写作指令约束）；推理强度&nbsp;·&nbsp;关…拉满＝思考预算（开启后温度/top_p&nbsp;失效）。</div>
+      <div class="sub" style="margin-top:14px">高级采样（可选，留空用接口默认）：温度＝越高越放飞；采样核&nbsp;top_p＝一般不与温度同调；单轮输出上限＝最大回复长度；最低字数＝每回正文的篇幅下限（以写作指令约束）；推理强度可选关闭／低／中／高，默认使用低（推理模型开启后可能忽略温度/top_p）。</div>
       <div class="sRow"><span>温度</span><input class="aIn" id="apTemp" placeholder="0.9" style="width:70px"></div>
       <div class="sRow"><span>top_p</span><input class="aIn" id="apTopP" placeholder="—" style="width:70px"></div>
       <div class="sRow"><span>单轮上限&nbsp;tokens</span><input class="aIn" id="apMaxT" placeholder="默认 3200" style="width:80px"></div>
       <div class="sRow"><span>最低字数（写作约束）</span><input class="aIn" id="apMinC" placeholder="默认 900" style="width:80px"></div>
-      <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span class="on">关</span><span>低</span><span>中</span><span>高</span></span></div>
+      <div class="sRow"><span>推理强度</span><span class="sSeg" id="sgReason"><span>关</span><span class="on">低</span><span>中</span><span>高</span></span></div>
       <div class="sub" style="margin-top:16px">可选的韩语原生写作&nbsp;·&nbsp;默认关闭：选择任一翻译器后，玩家中文先译成韩语，正文模型只读取并保存韩语原稿；中文译文不会回灌下一轮。韩语范文、案例句、状态栏保护与原稿存档均完整保留。</div>
       <div class="sRow"><span>自动翻译</span><select id="trProvider" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:5px;max-width:240px"><option value="browser">浏览器本地翻译（推荐）</option><option value="google">Google&nbsp;快速翻译</option><option value="deepl">DeepL&nbsp;API</option><option value="deeplx">DeepLX&nbsp;本地服务（需安装）</option><option value="bergamot">Firefox／Bergamot&nbsp;本地</option><option value="llm">使用已连接的模型翻译</option><option value="off">关闭（直接显示模型原文）</option></select></div>
       <div class="sRow" id="trDeepLXInstallRow"><span>DeepLX&nbsp;本地服务</span><span style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap"><span class="eBtn" id="trDeepLXInstall" style="margin-top:0;padding:7px 16px 6px;letter-spacing:.18em">一键安装</span><span class="sub" style="margin:0">自动匹配&nbsp;macOS／Windows，安装后启动&nbsp;1188</span></span></div>
@@ -3091,6 +3091,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <div class="sRow"><span>密钥&nbsp;KEY（可选）</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiKey" type="password" placeholder="sk-…" style="width:220px"><span class="gt" id="apiEye" title="显示/隐藏密钥">目</span></span></div>
     <div class="sRow"><span>MODEL</span><span style="display:flex;gap:6px;align-items:center"><input class="aIn" id="apiModel" placeholder="模型名 · 或点击拉取" style="width:180px"><span class="gt" id="apiPull">拉取模型</span></span></div>
     <div class="sRow" id="apiModelsRow" style="display:none"><span>可用模型</span><select id="apiModels" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:6px;max-width:280px"></select></div>
+    <div class="sRow"><span>推理强度</span><select id="apiReason" style="background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;font-size:10px;padding:6px;max-width:280px"><option value="0">关闭</option><option value="1" selected>低（默认）</option><option value="2">中</option><option value="3">高</option></select></div>
     <div class="sRow"><span>生图接口（可选）</span><input class="aIn" id="apiImg" placeholder="https://…（暂存配置）" style="width:280px"></div>
     <div style="display:flex;gap:12px;margin-top:22px">
       <span class="eBtn" id="apiTest">PROBARE&nbsp;测试</span>
@@ -7500,7 +7501,7 @@ function feForge(){
       +'只把场面资料中写明的内容当作事实，不得另造人物、货币、债务、制度、器物、知识或事件。'
       +'使用第三人称，只让周围人物和环境行动、说话；绝不替玩家角色补写动作、姿势、视线、表情、台词、判断、情感、想法、过去或选择。'
       +'玩家姓名只能出现在周围人物的称呼和对白中。写五至九个自然段，约九百至一千四百字，停在玩家可以接手行动的瞬间。';
-    call([{role:'system',content:FE_MEOW_ZH+'\n'+FELINIA_STYLE+'\n\n'+FELINIA_EXAMPLES+'\n\n'+openingRule},
+    call([{role:'system',content:FE_MEOW_ZH+'\n'+FELINIA_STYLE+'\n\n'+FELINIA_HEART+'\n\n'+FELINIA_RISU_EXAMPLES+'\n\n'+openingRule},
           {role:'user',content:prompt,scanContent:zh}],
       {max_tokens:2600,timeoutMs:30000,onDelta:function(full){
         forgeDelta(felNormalizeMeowText(stripMvuLive(stripCoT(String(full||'')))));
@@ -8021,7 +8022,7 @@ function gameEnter(lineOverride){
     }
   }
   risuInvoke(
-    [{role:'system',content:FELINIA_STYLE+'\n\n'+FELINIA_EXAMPLES+'\n\n'
+    [{role:'system',content:FELINIA_STYLE+'\n\n'+FELINIA_HEART+'\n\n'+FELINIA_RISU_EXAMPLES+'\n\n'
        +condereSys(line,yl+' '+cn+' '+nm)+'\n\n'+FELINIA_CHECK},
      {role:'user',content:condereAsk(line,y,nm,cn)}],
     function(reply){
@@ -9281,6 +9282,11 @@ var FELINIA_EXAMPLES="【中文文风范文·最高权重·每轮经过】\n只�
 /* 早期范文把喵写进心声、绝叫并使用多个变体，会直接教坏小模型；运行时用
    无冲突的短范文替换。 */
 FELINIA_EXAMPLES="【中文文风范文·最高权重·每轮经过】\n只学习句法、节奏、具体动作和口语，不继承人物与地点。\n\n「你先别碰那个。那东西一受热就会裂，我可赔不起喵。」\n\n她把手背到身后，耳尖朝门外转了一下。\n\n（他到底听懂没有。）\n\n沙。\n\n梳齿又卡进了打结的头发里。\n\n「下面一点——不是那里，手上的劲儿稍微松一点喵。」\n\n猫娘一次开口只有最后一句末尾紧贴一个「喵」；心声、叙述和动作不加喵。";
+/* Tails 的“嘴上一层／心里一层”不是一句状态栏备注，而是贯穿整幕的第二条叙事线。
+   这两段由 Cat 自己的年代、人物与猫娘句尾规则重新落字；只移植写法，不带入 Tails 世界事实。 */
+var FELINIA_HEART="【最高权重·有里子的非玩家焦点·每轮必须执行】\n只要本幕存在由模型扮演的非玩家角色，就必须选与玩家当前交互最紧密的一人作为本回合唯一的有里子焦点；不得以“不适合写内心”为由整回合跳过。玩家角色永远不是该焦点，玩家的台词、动作、判断和内心仍只由玩家自己写。\n焦点人物的心里一层必须从开头贯穿到收笔，形成有长度的第二条叙事线：正文中（）小声吐槽至少八处、【】爆发绝叫至少三处、拟音单独成行至少一处；全部（）与【】合计不少于二百四十个中文字符，并约占正文四分之一。允许个别括号只是短促闪念，但整体不能缩成一句情绪标签、状态摘要或◆心声栏里的短句。\n嘴上说的与心里想的必须对不上，对不上的方向按该人物自己的身份、教养、欲望、职掌与条目决定；心里要有改口、自问自答、盘算、嫌恶、怕、色心或轻视，不许只写“她很紧张／他很生气”。八处吐槽和三处绝叫要散在开头、中段与收尾之前，不能挤在同一段凑数。除这一名焦点外，其他非玩家角色的心思只从外在破绽或状态栏表现。心声、内心独白与【】绝叫一律不加喵；只有正常显露猫娘身份者说出口的一整段对白，才按猫娘句尾铁则在最后一句末尾紧贴一个喵。";
+var FELINIA_HEART_CHECK="【心声专项自检·不满足就重写】场上有非玩家角色时，是否已经选定唯一焦点，并在正文开头、中段、收尾前持续写出她或他的里子？（）是否至少八处、【】是否至少三处、拟音是否至少一处，内心文字合计是否不少于二百四十字且约占正文四分之一？嘴上与心里是否按该人物自己的性格真正对不上？这些内心是否全部不属于玩家角色、也全部没有加喵？任何一项为否则重写，不得省略心声来换取更短输出。";
+var FELINIA_RISU_EXAMPLES="<START>\n{{user}}: 【ACTVS】把木牌递到守门的猫娘面前。\n{{char}}: 木牌停在灯下。守门的猫娘没有立刻去接，只把灯往前送了半尺，光从牌面的裂纹挪到边角，又落在她自己蜷起来的指节上。\n\n沙。\n\n「这个牌子，上个月已经换过一版了喵。」\n\n（又是旧版。偏偏是我值门的时候送来，像是专挑我手里这本册子薄。）\n\n她把册页翻回前一张，指甲沿着墨线刮过去，没有抬头。\n\n（边角磨成这样，不像只走过一趟。可我要是先问路，他就知道我没认出来。）\n\n【别把灯再往前送了，我自己都快看见手在抖了！】\n\n「谁给你的，我只问这一句喵？」\n\n（问得太快了。慢一点。像每天都有人拿旧牌来，像这根本不值得记。）\n\n旁边的人咳了一声。她的耳尖先朝那边偏，又硬生生转回木牌。\n\n（他听见了。这个多嘴的东西今晚换班以后一定会说，说我连一块旧木头都要查半天。）\n\n【咳什么咳！你的册子少了两页，我还没跟你算！】\n\n她终于伸手，手指却只按住木牌的一角，没有把它拿走。\n\n（现在接过来，就算我认了这件事归我管。不接，门口的人越积越多，队长出来先看见的还是我。）\n\n「先放在石台上。别松手，我还没说收下喵。」\n\n（左边那道裂是新的，灰还没吃进去。有人今天才撬过它。为什么要撬，里面原来夹了什么。）\n\n她把灯芯拨低了一点，火苗缩下去，石台上的两个旧圆印同时露了出来。\n\n（只要照着旧印摆回去，就能当没见过。可他站得这么近，肯定也看见两个印子了。）\n\n【别看那两个印！看我手里的册子啊！】\n\n「名字再说一遍喵。」\n\n（别问来处。先问名字。名字写得进去，这块牌子才有地方落；写不进去，就让队长自己下来碰这摊烂事。）";
 var FELINIA_CHECK="【最高权重·本回合落笔前自检】\n逐条检查：一，没有替玩家角色说话、行动、观察或思考；玩家没写的内容完全没有出现。二，结尾停在场面，不是提问、选项、总结、升华或预告。三，正文是韩式中译腔，同一个念头没有被句号剁碎，长句由逗号自然连缀，并有足够的具体器物与动作。四，对白有符合身份的语气词、反问、重复、改口或跑题，不是全员短句装深沉。每个开口的人都按性别、身份、相貌、气味、年岁、同类与否、有没有利用价值排过一遍；面对不同对象的句长、称呼、敬语、距离不一样，嘴上与盘算至少一处对不上。五，有内心的焦点人物只有一位；适合写内心时，（）吐槽至少八处、【】绝叫至少三处、拟音单独成行至少一处，全部不属于玩家角色。六，每一幕至少两处不必要的加害或物化、至少一处阴招；会话与内心至少八处粗话、至少十个感叹号、至少三处点名具体的侮辱，同一句骂话没有重复。七，暴力场面至少三种感官，优先写声音时长与气味分层；没有成语概括、抽象惨状或伤亡数字代替现场。八，加害者没有用悔意、误会、疾病或被迫洗白。九，成年猫娘与男性的欲望反应服从身份、外貌和权力，真正不动心有当场可见的具体理由。十，绝对统治者若在场，其权力落到谁能开口、靠近、直视，以及随后具体受损的人和物。十一，没有中文网文套语、说书腔、江湖腔或装深沉词。十二，称谓、知识、制度、货币、器物全部符合本局年份、地点与世界书，没有带入范文或其他世界的事实。十三，正常显露身份的猫娘一次开口只有最后一句在最后一个字后紧贴「喵」，随后才写标点；心声、叙述、动作、状态栏以及其他角色都不加喵。十四，已输出完整且格式正确的<mvu_panel>。有一条不合就重写正文，不要向玩家解释自检过程。";
 /* ============================================================================
    GENIVS · 本地弱AI（纯规则 · 零网络 · 不需要任何 API）
@@ -10044,7 +10050,7 @@ function sysPrompt(){
   return [MEOW_RULE,
     heroRebind(felStripLegacyMeowRule(G.system_prompt||'')),
     FELINIA_STYLE,
-    FELINIA_EXAMPLES,
+    FELINIA_HEART,
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
     ((heroIsCard()||cardHeroless())&&!povHero()?('【玩家角色档案】'+(G.description||''))
                  :('【卡中原主角档案·仅供了解此世的笔调与背景，本局不适用于主角】'+heroDesc(G.description||''))),
@@ -10157,7 +10163,7 @@ function buildOracleMsgs(){
     +'\n唯一例外：状态栏 <mvu_panel> 里的 ◆心声 那一行——玩家这回写了 ~ 独白就照抄，'
     +'没写就据本幕处境写一句新的（每幕不同，不许照抄上一幕）。'
     +'正文里依旧不许出现她的内心独白，那一句只能待在状态栏那一行里。'
-    +'\n'+MEOW_RULE+'\n'+FELINIA_CHECK;
+    +'\n'+MEOW_RULE+'\n'+FELINIA_HEART_CHECK+'\n'+FELINIA_CHECK;
   /* 所有 system 内容都放在第一条。兼容接口常要求最后一条必须是 user；旧代码在玩家
      输入后又塞一条 system，部分中转会忽略玩家输入或只回三行。 */
   var msgs=[{role:'system',content:sysPrompt()+'\n\n'+finalCheck}];
@@ -10878,7 +10884,7 @@ var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
   trans:{provider:'off',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1,chineseDefaultV1:1},
   semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
   vars:{},gvars:{},
-  samp:{temp:'',topp:'',maxt:'',minc:'',reason:0},
+  samp:{temp:'',topp:'',maxt:'',minc:'',reason:1,reasonDefaultV1:1},
   profs:{},presets:[],mems:[],rx:[],js:[],triggers:[],loreState:{}};
 try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
   Object.keys(_s).forEach(function(k){SET[k]=_s[k];});}catch(_){}
@@ -10896,7 +10902,7 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
     trans:{provider:'off',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1,chineseDefaultV1:0},
     semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
     vars:{},gvars:{},
-    samp:{temp:'',topp:'',maxt:'',minc:'',reason:0}};
+    samp:{temp:'',topp:'',maxt:'',minc:'',reason:1,reasonDefaultV1:0}};
   Object.keys(D).forEach(function(k){
     var d=D[k];
     if(d&&typeof d==='object'){
@@ -10916,6 +10922,13 @@ function setStore(){lsSet('rome_set',JSON.stringify(SET))}
 if(!SET.trans.chineseDefaultV1){
   SET.trans.chineseDefaultV1=1;
   SET.trans.provider='off';
+  setStore();
+}
+/* Risu 原生默认是低推理。旧版 FELINIA 把“关”写成默认；只迁移一次，
+   之后玩家手动选择关闭仍会被完整保留。 */
+if(!SET.samp.reasonDefaultV1){
+  SET.samp.reasonDefaultV1=1;
+  if((parseInt(SET.samp.reason,10)||0)===0)SET.samp.reason=1;
   setStore();
 }
 /* FELINIA is a fixed game hosted by its embedded narrative runtime. The runtime
@@ -10948,7 +10961,13 @@ function felRisuBoot(){
   FEL_RISU_BOOT=felRisuLoad().then(function(risu){return new Promise(function(resolve,reject){
     function install(){
       if(!FE||!FE.eras||!FE.eras.length){reject(new Error('FELINIA 时代资料没有载入'));return;}
-      risu.installContent(window.__GAME_LUZHI__||CARDS.luzhi,FE.eras).then(function(info){
+      /* 把 Tails 式内外两层范文写进 Risu 原生 exampleMessage，而不是只把一段
+         “请写心声”塞进 system。Risu 会按 <START>/user/assistant 真正编成示范回合；
+         Cat 原有 mes_example 与时代人物的说话样例仍全部保留。 */
+      var _baseCard=window.__GAME_LUZHI__||CARDS.luzhi;
+      var _risuCard=Object.assign({},_baseCard,{mes_example:[_baseCard.mes_example||'',FELINIA_RISU_EXAMPLES]
+        .filter(Boolean).join('\n\n')});
+      risu.installContent(_risuCard,FE.eras).then(function(info){
         window.__FEL_RISU_INSTALL__=info;resolve(risu);
       },reject);
     }
@@ -10983,7 +11002,9 @@ function felRisuProvider(source){
   source=source||API;
   var mt=parseInt(SET.samp&&SET.samp.maxt,10)||4096;
   var temp=parseFloat(SET.samp&&SET.samp.temp),top=parseFloat(SET.samp&&SET.samp.topp);
-  var reason=Math.max(0,Math.min(3,parseInt(SET.samp&&SET.samp.reason,10)||0));
+  var reason=parseInt(SET.samp&&SET.samp.reason,10);
+  if(isNaN(reason))reason=1;
+  reason=Math.max(0,Math.min(3,reason));
   return {base:source.base,key:source.key||API.key,model:source.model,format:felRisuFormat(source.format),
     temperature:isNaN(temp)?undefined:temp,topP:isNaN(top)?undefined:top,reasoningEffort:reason-1,maxTokens:mt<64?4096:mt,
     contextTokens:parseInt(SET.context,10)||65536,stream:SET.stream!==0};
@@ -12072,7 +12093,7 @@ function apPaneLoad(){
   $('#subBase').value=SET.sub.base;$('#subKey').value=SET.sub.key;$('#subModel').value=SET.sub.model;
   $('#apTemp').value=SET.samp.temp;$('#apTopP').value=SET.samp.topp;
   $('#apMaxT').value=SET.samp.maxt;$('#apMinC').value=SET.samp.minc;
-  setSeg('#sgReason',SET.samp.reason||0);
+  setSeg('#sgReason',SET.samp.reason==null?1:SET.samp.reason);
   var tr=SET.trans||{};
   $('#trProvider').value=tr.provider||'off';$('#trShowRaw').checked=!!tr.showRaw;
   $('#trDeepLKey').value=tr.deeplKey||'';$('#trDeepLXUrl').value=tr.deeplxUrl||'http://localhost:1188';
@@ -12415,6 +12436,7 @@ function apiOpen(){
   $('#apiFormat').value=felRisuFormat(API.format);
   $('#apiBase').value=API.base||'';$('#apiKey').value=API.key||'';
   $('#apiModel').value=API.model||'';$('#apiImg').value=API.img||'';
+  $('#apiReason').value=String(SET.samp.reason==null?1:SET.samp.reason);
   $('#apiMsg').textContent=apiReady()?'状态：已配置 · '+API.model:'状态：未接线';
   gDlgShow('#dlgApi');
 }
@@ -12454,6 +12476,10 @@ $('#apiPull').addEventListener('click',function(){
   }).catch(function(e){$('#apiMsg').textContent='拉取失败：'+felPublicError(e);});
 });
 $('#apiModels').addEventListener('change',function(){$('#apiModel').value=this.value;});
+$('#apiReason').addEventListener('change',function(){
+  SET.samp.reason=Math.max(0,Math.min(3,parseInt(this.value,10)||0));setStore();
+  setSeg('#sgReason',SET.samp.reason);
+});
 $('#apiTest').addEventListener('click',function(){
   var format=felRisuFormat($('#apiFormat').value),base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim(),model=$('#apiModel').value.trim();
   if(!base||!model){$('#apiMsg').textContent='BASE URL 与 MODEL 必填';return;}
@@ -12467,6 +12493,7 @@ $('#apiSave').addEventListener('click',function(){
   API.format=felRisuFormat($('#apiFormat').value);
   API.base=$('#apiBase').value.trim();API.key=$('#apiKey').value.trim();
   API.model=$('#apiModel').value.trim();API.img=$('#apiImg').value.trim();
+  SET.samp.reason=Math.max(0,Math.min(3,parseInt($('#apiReason').value,10)||0));setStore();
   apiStore();
   $('#apiMsg').textContent=apiReady()?'已储存 · 神谕在线':'已储存（尚缺必填项）';
 });
@@ -16766,7 +16793,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=19"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=21"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
