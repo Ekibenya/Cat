@@ -92,10 +92,9 @@
     (p.npcs||[]).forEach(function(n){var name=String(n.name||'').trim();if(!name||seen[name])return;seen[name]=1;out.push({name:name,role:n.role||'',species:speciesOf(era,n),source:n});});
     return out;
   }
-  function speakerOf(cast,text){
-    var body=String(text||'').replace(/<mvu_panel>[\s\S]*$/,'');
-    for(var i=cast.length-1;i>=0;i--)if(!cast[i].hero&&body.indexOf(cast[i].name)>=0)return cast[i].name;
-    return '';
+  function rxEsc(text){return String(text||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+  function actorsOf(cast){
+    return (cast||[]).filter(function(p){return p&&!p.hero&&String(p.name||'').trim();});
   }
   function actorPositions(n){return n<=1?[50]:n===2?[33,67]:n===3?[20,50,80]:[13,38,63,88];}
   function renderSingles(era,cast,speaker){
@@ -174,9 +173,19 @@
   }
   function markSpeaker(speaker){
     var host=$('vnCast');if(!host)return;
-    [].forEach.call(host.children,function(el){
-      el.classList.toggle('speaking',!!speaker&&el.dataset.name===speaker);
+    /* 只有目标人物确实有一张独立立绘时才启动聚焦。群像图、未出现在前四位的角色、
+       名字含糊或解析失败都保持全员原色，绝不出现“所有人一起被压黑”的误判。 */
+    var target=null;
+    [].forEach.call(host.querySelectorAll('.vnActor'),function(el){
+      if(speaker&&el.dataset.name===speaker)target=el;
     });
+    [].forEach.call(host.children,function(el){
+      var isActor=el.classList&&el.classList.contains('vnActor');
+      var active=!!target&&el.dataset.name===speaker;
+      el.classList.toggle('speaking',active);
+      el.classList.toggle('dimmed',isActor&&!!target&&!active);
+    });
+    V.speakKey=target?speaker:'';
   }
   function renderEnsemble(era,cast,state){
     var host=$('vnEnsemble');if(!host)return;host.innerHTML='';
@@ -226,7 +235,7 @@
        · 实在太长，逗号也认；再不成才硬断。 */
   function chop(par,lo,hi){
     var out=[],buf='',i,ch,isEnd;
-    var END='。！？!?…',SOFT='，、；：,;:—',TAIL='」』）)】》”’"',OPEN='「『“（(';
+    var END='。！？!?…',SOFT='，、；：,;:—',TAIL='」』）)】》”’"',OPEN='「『“（(【';
     for(i=0;i<par.length;i++){
       ch=par[i];
       if(OPEN.indexOf(ch)>=0&&buf.length>=lo){out.push(buf);buf='';}
@@ -240,40 +249,92 @@
     if(buf.trim())out.push(buf);
     return out;
   }
-  function talkSegs(raw){
+  var META_HEAD_RX=/^【(?:ACTVS|SERMO|CONSILIVM|EDICTVM|EPISTVLA|INSIDIAE|ITER|ARMA(?:·[^】]+)?|NPC|FEL_MEOW(?:_HEART|_WAVE)?|한국어\s*원문|中文译文)】/i;
+  function talkItems(raw){
     var out=[];
-    talkText(raw).split(/\n+/).forEach(function(par){
+    talkText(raw).split(/\n+/).forEach(function(par,pi){
       par=par.trim();
       if(!par)return;
       if(/^[◆◇◈▚]/.test(par))return;          /* 面板行 */
-      if(/^【/.test(par))return;                /* 开局那几行提示 */
+      /* 只略过真正的模式/翻译标签。模型正文的【】是本作约定的爆发心声，
+         旧版用 /^【/ 一刀切，视觉小说因此从来不显示这一层。 */
+      if(META_HEAD_RX.test(par))return;
       if(/^[-—─═]{3,}$/.test(par))return;
-      chop(par,26,58).forEach(function(x){x=x.trim();if(x)out.push(x);});
+      var chunks=chop(par,26,58),cursor=0,quoted=false,thinking=false;
+      chunks.forEach(function(x){
+        var rawChunk=x,start=par.indexOf(rawChunk,cursor);if(start<0)start=cursor;
+        cursor=start+rawChunk.length;x=rawChunk.trim();if(!x)return;
+        var thoughtCarry=thinking,thought=thoughtCarry||/[（【]/.test(x);
+        var carry=quoted,hasQuote=carry||/[「“]/.test(x);
+        /* 本作只把直引号「」/“”当作当场对白；『』是回忆或转述，不亮现场人物。 */
+        for(var ci=0;ci<rawChunk.length;ci++){
+          if(rawChunk[ci]==='「'||rawChunk[ci]==='“')quoted=true;
+          else if(rawChunk[ci]==='」'||rawChunk[ci]==='”')quoted=false;
+          if(rawChunk[ci]==='（'||rawChunk[ci]==='('||rawChunk[ci]==='【')thinking=true;
+          else if(rawChunk[ci]==='）'||rawChunk[ci]===')'||rawChunk[ci]==='】')thinking=false;
+        }
+        out.push({text:x,par:par,parIndex:pi,start:start,
+          kind:thought?'thought':(hasQuote?'dialogue':'narration'),carry:carry});
+      });
     });
     return out;
   }
-  /* 这一句是谁说的：先看引号之前提到过谁，没提就看整句里最后提到的那一位。
-     没有引号的算旁白，不挂名字。 */
-  function segWho(seg,cast){
-    if(seg.indexOf('「')<0&&seg.indexOf('“')<0)return '';
-    var q=seg.search(/[「“]/),head=seg.slice(0,q),best='',bp=-1,k;
-    for(k=0;k<cast.length;k++){
-      if(cast[k].hero)continue;
-      var p1=head.lastIndexOf(cast[k].name);
-      if(p1>bp){bp=p1;best=cast[k].name;}
-    }
-    if(best)return best;
-    for(k=0;k<cast.length;k++){
-      if(cast[k].hero)continue;
-      var p2=seg.lastIndexOf(cast[k].name);
-      if(p2>bp){bp=p2;best=cast[k].name;}
-    }
-    return best;
+  function namedHere(text,actors){
+    return actors.filter(function(p){return String(text||'').indexOf(p.name)>=0;});
+  }
+  /* 一回正文只允许一位非玩家焦点拥有（）/【】里的内心。只有结构上唯一，或心声
+     邻接段落反复且无歧义地指向同一姓名时才认；并列提到两个人时宁可不聚焦。 */
+  function thoughtOwner(items,cast){
+    var actors=actorsOf(cast);if(actors.length===1)return actors[0].name;
+    var pars=[],scores={};actors.forEach(function(p){scores[p.name]=0;});
+    items.forEach(function(it){if(pars.indexOf(it.par)<0)pars.push(it.par);});
+    pars.forEach(function(par,i){
+      if(!/^[（【]/.test(par))return;
+      var direct=[];
+      actors.forEach(function(p){
+        var n=rxEsc(p.name);
+        if(new RegExp(n+'(?:的)?(?:心声|心想|暗想|想着|想道|思忖)').test(par))direct.push(p);
+      });
+      if(direct.length===1){scores[direct[0].name]+=6;return;}
+      var ctx='';
+      for(var j=i-1;j>=0&&j>=i-2;j--){if(!/^[（【]/.test(pars[j])){ctx=pars[j];break;}}
+      var mentioned=namedHere(ctx.slice(-90),actors);
+      if(mentioned.length===1)scores[mentioned[0].name]+=2;
+    });
+    var ranked=actors.slice().sort(function(a,b){return scores[b.name]-scores[a.name];});
+    if(!ranked.length||scores[ranked[0].name]<2)return '';
+    if(ranked[1]&&scores[ranked[1].name]===scores[ranked[0].name])return '';
+    return ranked[0].name;
+  }
+  /* 对白只认真正的署名关系：姓名标签、姓名+说话动词、或引号后的“某某说”。
+     引号里的被称呼者不参与判定；多人在场又没有署名时保持中性。 */
+  function dialogueOwner(item,cast){
+    var actors=actorsOf(cast);if(!actors.length)return '';
+    if(actors.length===1)return actors[0].name;
+    var par=item.par,start=item.start,local=item.text;
+    var rel=local.search(/[「“]/),open=rel>=0?start+rel:start;
+    var close=Math.max(par.lastIndexOf('」',start+local.length),par.lastIndexOf('”',start+local.length));
+    var before=par.slice(Math.max(0,open-64),open),after=close>=open?par.slice(close+1,close+54):'';
+    var verb='(?:说|问|答|喊|叫|道|骂|吼|嘀咕|低声说|开口|出声|应声|接话|回话|喝道|嚷道)';
+    var scored=[];
+    actors.forEach(function(p){
+      var n=rxEsc(p.name),score=0;
+      if(new RegExp(n+'\\s*(?:对|向|朝)\\s*[^。！？\\n「”]{0,24}'+verb+'[：:,，\\s]*$').test(before))score=Math.max(score,190);
+      if(new RegExp(n+'[^。！？\\n「”]{0,20}'+verb+'[：:,，\\s]*$').test(before))score=Math.max(score,150);
+      if(new RegExp(n+'\\s*[：:]\\s*$').test(before))score=Math.max(score,180);
+      if(new RegExp('^[\\s，,。.!！?？—-]*'+n+'[^。！？\\n]{0,12}'+verb).test(after))score=Math.max(score,200);
+      if(score)scored.push({name:p.name,score:score});
+    });
+    scored.sort(function(a,b){return b.score-a.score;});
+    if(!scored.length||scored[1]&&scored[1].score===scored[0].score)return '';
+    return scored[0].name;
   }
   function talkStop(){T.gen++;if(T.timer){clearTimeout(T.timer);T.timer=0;}T.typing=0;}
   function talkClose(){
     talkStop();T.on=false;T.i=-1;
     var b=tEl('vnTalk');if(b)b.classList.remove('on');
+    var w=tEl('vnTalkWho');if(w){w.textContent='';w.classList.remove('on');}
+    markSpeaker('');
     talkReplayBtn();
   }
   /* 念完或按了 ✕ 之后，全屏里留一枚小钮：这一回还能从头再念。
@@ -339,24 +400,24 @@
     talkShow(T.i+1);
   }
   function talkOpen(raw,cast){
-    var segs=talkSegs(raw);
+    var items=talkItems(raw),segs=items.map(function(x){return x.text;});
     /* 这一回没有可念的正文：框收起来，上一回攒下的句子也一并丢掉——
        留着的话「再念一遍」那枚钮会挂在全屏里，按下去念的是上一回的话。 */
     if(!segs.length){T.segs=[];T.who=[];T.i=-1;talkClose();return;}
     cast=cast||[];
-    /* 一口气把每一句归给谁算好。接着说下去的那几句里常常只有「她说」——
-       句子里根本没有名字，可说话的还是上一句那一位。所以名字往下顺延：
-       这一句有引号却认不出人，就沿用上一句那一位；中间夹了一段旁白（没有引号）
-       就断掉，不再往下顺——那多半已经换了场面。 */
-    var who=[],last='';
-    segs.forEach(function(seg,i){
-      var q=(seg.indexOf('「')>=0||seg.indexOf('“')>=0);
-      if(!q){who[i]='';last='';return;}
-      var n=segWho(seg,cast);
-      if(!n)n=last;
-      who[i]=n;last=n;
+    var who=[],last='',heart=thoughtOwner(items,cast);
+    items.forEach(function(item,i){
+      var n='';
+      if(item.kind==='thought')n=heart;
+      else if(item.kind==='dialogue'){
+        n=dialogueOwner(item,cast);
+        /* 只在同一对尚未闭合的直引号被长度切开时继承；独立的下一句绝不沿用。 */
+        if(!n&&item.carry)n=last;
+      }
+      who[i]=n;
+      last=item.kind==='dialogue'?n:'';
     });
-    T.segs=segs;T.who=who;T.cast=cast;T.on=true;
+    T.segs=segs;T.who=who;T.kind=items.map(function(x){return x.kind;});T.cast=cast;T.on=true;
     talkShow(0);talkReplayBtn();
   }
   /* 什么时候开：进了全屏就开；全屏里换了一回、且这一回已经落定（不再流字），
@@ -398,7 +459,7 @@
     var panel=state.panel||{},loc=textOf(panel,'时地')||(state.op&&state.op.scene)||era.locations[0]||era.title;
     var weather=textOf(panel,'天气'),isle=$('vnIsle');if(isle){isle.classList.toggle('night',NIGHT_RX.test(loc));isle.classList.toggle('red',RED_RX.test(loc));}
     setBackground(era,loc,weather);
-    var cast=castOf(era,state),speaker=speakerOf(cast,state.text);
+    var cast=castOf(era,state),speaker='';
     /* 「站着谁」与「谁在说」分成两把钥匙：前者变了才重建这一层（立绘重新显形），
        后者变了只换记号。合成一把的时候还捎上了正文尾巴的哈希——
        正文每流一个字它就变一次，于是这一层每秒重建好几遍。 */
@@ -407,10 +468,12 @@
     if(key!==V.castKey){
       V.castKey=key;V.speakKey=null;
       var ensemble=renderEnsemble(era,cast,state);
-      if(ensemble)$('vnCast').innerHTML='';else renderSingles(era,cast,speaker);
+      if(ensemble)$('vnCast').innerHTML='';else renderSingles(era,cast,'');
     }
-    if(speaker!==V.speakKey){V.speakKey=speaker;markSpeaker(speaker);}
     talkInit();talkSync(state,cast);
+    /* 新一回还在流式生成时，旧对话框即使尚未换页也不继续压暗人物。 */
+    speaker=(T.on&&isBig()&&!busy()&&T.i>=0)?((T.who||[])[T.i]||''):'';
+    if(speaker!==V.speakKey)markSpeaker(speaker);
     var eraEl=$('vnEra');if(eraEl)eraEl.innerHTML='<b>'+esc(era.yearLabel+' · '+era.title)+'</b><span>'+esc(era.subtitle)+'</span>';
     var locEl=$('vnLoc');if(locEl)locEl.textContent=loc.replace(/\s+/g,' ').slice(0,32);
     var sp=$('vnSpeaker');if(sp){sp.textContent=speaker||'';sp.classList.toggle('on',!!speaker);}
@@ -423,6 +486,6 @@
       setInterval(tick,600);
     }).catch(function(err){try{console.warn('[visual-novel]',err);}catch(_){}});
   }
-  window.FELVN={tick:tick,inspect:function(){return {ready:V.ready,total:V.manifest&&V.manifest.total,counts:V.manifest&&V.manifest.counts,era:V.lastEra&&V.lastEra.eraIndex,rendered:Object.keys(V.used).length};},preview:function(state){V.override=state||null;V.bgKey='';V.castKey='';V.speakKey=null;tick();},clearPreview:function(){V.override=null;V.bgKey='';V.castKey='';V.speakKey=null;tick();}};
+  window.FELVN={tick:tick,inspect:function(){return {ready:V.ready,total:V.manifest&&V.manifest.total,counts:V.manifest&&V.manifest.counts,era:V.lastEra&&V.lastEra.eraIndex,rendered:Object.keys(V.used).length,focus:V.speakKey||'',segment:T.i>=0?T.i:null,kind:T.i>=0&&(T.kind||[])[T.i]||''};},preview:function(state){V.override=state||null;V.bgKey='';V.castKey='';V.speakKey=null;tick();},clearPreview:function(){V.override=null;V.bgKey='';V.castKey='';V.speakKey=null;markSpeaker('');tick();}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

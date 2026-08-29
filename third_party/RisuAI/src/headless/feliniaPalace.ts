@@ -355,6 +355,22 @@ export async function exportFeliniaPalace() {
   return { version: 1, sessions };
 }
 
+/** Read one save's display-safe palace drawers without copying embedding vectors
+ * into the host UI. The full export path remains available for backups. */
+export async function getFeliniaPalaceDrawers(sessionId: string) {
+  if (!sessionId) return [];
+  const record = await palaceStore.getItem<FeliniaPalaceRecord>(recordKey(sessionId));
+  if (!record) return [];
+  return record.drawers.map((drawer) => ({
+    id: drawer.id,
+    turn: drawer.turn,
+    eraIndex: drawer.eraIndex,
+    createdAt: drawer.createdAt,
+    content: drawer.content,
+    searchText: drawer.searchText,
+  }));
+}
+
 export async function importFeliniaPalace(snapshot: { version?: number; sessions?: FeliniaPalaceRecord[] }) {
   for (const record of snapshot?.sessions || []) {
     if (!record?.sessionId || !Array.isArray(record.drawers)) continue;

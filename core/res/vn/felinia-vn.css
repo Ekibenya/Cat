@@ -24,7 +24,9 @@
    收的是所有人同一个系数，所以谁也不会比谁矮。 */
 #vnCast .vnActor{position:absolute;top:3%;bottom:auto;left:50%;height:240%;object-fit:contain;
   object-position:center bottom;transform:translateX(-50%);filter:drop-shadow(0 10px 18px rgba(0,0,0,.66));
-  opacity:1;transition:left .8s cubic-bezier(.3,.1,.25,1),filter .55s ease,transform .55s ease}
+  opacity:1;transition:left .8s cubic-bezier(.3,.1,.25,1),filter .34s ease,opacity .34s ease,transform .34s ease}
+#vnCast .vnActor.dimmed{filter:drop-shadow(0 10px 18px rgba(0,0,0,.72)) brightness(.42) saturate(.32) contrast(.94);
+  opacity:.78;transform:translateX(-50%)}
 #vnCast .vnActor.speaking{filter:drop-shadow(0 8px 20px rgba(0,0,0,.72)) brightness(1.08);
   transform:translateX(-50%) translateY(-1.5%) scale(1.025)}
 #vnEnsemble img,#vnEnsemble canvas{position:absolute;left:50%;top:3%;bottom:auto;width:120%;height:240%;object-fit:contain;

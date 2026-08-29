@@ -22,7 +22,7 @@
 })();
 </script>
 <link rel="stylesheet" href="/core/res/font/felinia-fonts.css?v=1">
-<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=12">
+<link rel="stylesheet" href="/core/res/vn/felinia-vn.css?v=13">
 <link rel="stylesheet" href="/core/res/pet/felinia-pet.css?v=16">
 <script defer src="/core/res/pet/felinia-pet.js?v=28"></script>
 <meta name="mobile-web-app-capable" content="yes">
@@ -959,6 +959,10 @@ html.lux #game #gIn.hasSug::placeholder{color:rgba(28,26,22,.34)}
 #dlgCfg .aIn{font-size:11.5px}
 #dlgCfg .esc2{font-size:10px}
 #dlgCfg textarea,#dlgCfg select{font-size:11px !important}
+.risuSet{border:1px solid rgba(132,88,0,.28);padding:0 12px 8px;margin-top:10px}
+.risuSet summary{cursor:pointer;padding:10px 0 8px;color:var(--gold-hi);font-size:10px;letter-spacing:.16em}
+.risuSet textarea{width:min(360px,58%);box-sizing:border-box;background:transparent;border:1px solid rgba(19,18,13,.2);color:#35342b;font-family:inherit;line-height:1.6;padding:6px;outline:none;resize:vertical}
+.risuSet select{background:#e9e3d6;border:1px solid rgba(19,18,13,.2);color:var(--gold-hi);font-family:inherit;padding:5px;max-width:260px}
 #dlgCfg .gt,#dlgApi .gt{font-size:10.5px;letter-spacing:.2em;color:var(--mut);border:1px solid rgba(19,18,13,.22);padding:5px 10px 4px;cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap}
 #dlgCfg .gt:hover,#dlgApi .gt:hover{color:var(--gold-hi);border-color:var(--gold)}
 .gDlg h2{font-size:14px;letter-spacing:.3em;font-weight:400;color:var(--txt);margin:20px 0 8px}
@@ -2814,7 +2818,7 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
     <span class="tag">OPTIONES</span>
     <h2>设置&nbsp;·&nbsp;控制中枢</h2>
     <div class="cfgTabs" id="cfgTabs">
-      <span class="on" data-cp="disp">显示</span><span data-cp="img">生图</span><span data-cp="voice">语音</span><span data-cp="lore">世界书</span><span data-cp="rx">正则</span><span data-cp="js">脚本</span><span data-cp="api">AI接口</span><span data-cp="preset">预设</span><span data-cp="mem">记忆</span><span data-cp="bak">备份</span><span data-cp="imgc">图库</span>
+      <span class="on" data-cp="disp">显示</span><span data-cp="img">生图</span><span data-cp="voice">语音</span><span data-cp="lore">世界书</span><span data-cp="rx">正则</span><span data-cp="js">脚本</span><span data-cp="api">AI接口</span><span data-cp="engine">生成引擎</span><span data-cp="preset">预设</span><span data-cp="mem">记忆</span><span data-cp="bak">备份</span><span data-cp="imgc">图库</span>
     </div>
     <div class="cfgPane" id="cp_disp">
       <div class="sRow"><span>SONVS&nbsp;·&nbsp;音效</span><input type="range" id="cfgVol" min="0" max="100" value="70"></div>
@@ -2904,6 +2908,10 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sub">你写的世界书条目与本卡自带世界书一同生效：正文近几轮提到「关键词」时自动注入该条设定；勾选常驻则每轮必注入（占用篇幅，慎用）。已支持&nbsp;ST&nbsp;高级字段：「次级关键词」（须与主关键词同时命中）、注入「顺序」、触发「概率」；导入的扫描深度与递归设置也自动生效。条目只存于你这台设备的浏览器。</div>
       <div class="sub" style="margin-top:10px">注入预算：每轮注入世界书的总字数上限（默认&nbsp;9k）。世界书每轮全量重发：拉高＝更多设定同时生效，但每轮更贵更慢；拉满＝不限（配大上下文模型用）。你的自定义条目永远最先装桶不被内置挤掉。</div>
       <div class="sRow"><span>注入预算（字）</span><span style="display:flex;gap:10px;align-items:center"><input type="range" id="loreBud" min="3000" max="30000" step="1000" value="9000"><b id="loreBudV" style="font-weight:400;color:var(--gold-hi);font-size:10px">9000</b></span></div>
+      <div class="sRow"><span>扫描最近消息数</span><input class="aIn" id="loreDepth" inputmode="numeric" min="1" max="100" style="width:80px"></div>
+      <div class="sRow"><span>递归扫描</span><input type="checkbox" id="loreRecursive"></div>
+      <div class="sRow"><span>关键词整词匹配</span><input type="checkbox" id="loreFullWord"></div>
+      <div class="sub">这三项直接使用内置叙事核心的世界书扫描器。递归扫描会让已命中的条目继续触发其他条目，容易扩大注入量，默认关闭。</div>
       <div id="loreList" style="margin-top:10px;max-height:180px;overflow-y:auto"></div>
       <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
         <span class="eBtn" id="loreNew" style="margin-top:0">新写一条</span>
@@ -2983,6 +2991,75 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div class="sRow"><span>记忆注入预算</span><input class="aIn" id="semBudget" inputmode="numeric" placeholder="3000" style="width:80px"></div>
       <div class="sRow"><span>优先使用显卡</span><input type="checkbox" id="semGpu"></div>
       <div class="sub" id="semStatus">两套记忆按存档隔离；本地模型按需下载并由浏览器缓存，任一记忆失败都不会阻断正常回复。</div>
+    </div>
+    <div class="cfgPane" id="cp_engine" style="display:none">
+      <div class="sub">这里是当前内置叙事核心可实际生效的完整生成设置。FELINIA&nbsp;的&nbsp;41&nbsp;个时代、角色、世界书、文风、界面与已有设置不变；空白数值表示交给接口默认。</div>
+      <details open class="risuSet"><summary>采样与长度</summary>
+        <div class="sRow"><span>最大上下文&nbsp;tokens</span><input class="aIn" id="reContext" inputmode="numeric" style="width:100px"></div>
+        <div class="sRow"><span>频率惩罚</span><input class="aIn" id="reFreq" placeholder="接口默认" style="width:90px"></div>
+        <div class="sRow"><span>存在惩罚</span><input class="aIn" id="rePres" placeholder="接口默认" style="width:90px"></div>
+        <div class="sRow"><span>top_k</span><input class="aIn" id="reTopK" placeholder="0" style="width:90px"></div>
+        <div class="sRow"><span>重复惩罚</span><input class="aIn" id="reRep" placeholder="1" style="width:90px"></div>
+        <div class="sRow"><span>min_p</span><input class="aIn" id="reMinP" placeholder="0" style="width:90px"></div>
+        <div class="sRow"><span>top_a</span><input class="aIn" id="reTopA" placeholder="0" style="width:90px"></div>
+        <div class="sRow"><span>生成种子</span><input class="aIn" id="reSeed" placeholder="-1＝随机" style="width:100px"></div>
+        <div class="sRow"><span>详细程度</span><select id="reVerbosity"><option value="0">简洁</option><option value="1">普通</option><option value="2">详细</option></select></div>
+      </details>
+      <details open class="risuSet"><summary>请求、流式与续写</summary>
+        <div class="sRow"><span>流式输出</span><input type="checkbox" id="reStream"></div>
+        <div class="sRow"><span>严格&nbsp;OpenAI&nbsp;兼容</span><input type="checkbox" id="reStrict"></div>
+        <div class="sRow"><span>自动补全请求路径</span><input type="checkbox" id="reAutoUrl"></div>
+        <div class="sRow"><span>失败重试次数</span><input class="aIn" id="reRetries" inputmode="numeric" style="width:80px"></div>
+        <div class="sRow"><span>超时（秒）</span><input class="aIn" id="reTimeout" inputmode="numeric" style="width:80px"></div>
+        <div class="sRow"><span>停止字符串</span><textarea id="reStops" rows="3" placeholder="每行一个；不含在最终正文里"></textarea></div>
+        <div class="sRow"><span>自动续写未完句</span><input type="checkbox" id="reAutoCont"></div>
+        <div class="sRow"><span>少于多少&nbsp;tokens&nbsp;自动续写</span><input class="aIn" id="reAutoMin" inputmode="numeric" style="width:80px"></div>
+        <div class="sRow"><span>移除不完整回复</span><input type="checkbox" id="reRemoveIncomplete"></div>
+        <div class="sRow"><span>空白响应自动重试</span><input type="checkbox" id="reBlankFallback"></div>
+        <div class="sRow"><span>新版&nbsp;OpenAI&nbsp;消息处理</span><input type="checkbox" id="reNewOai"></div>
+        <div class="sRow"><span>视觉输入画质</span><select id="reVision"><option value="low">低</option><option value="high">高</option><option value="auto">自动</option></select></div>
+      </details>
+      <details class="risuSet"><summary>推理模型</summary>
+        <div class="sRow"><span>思考模式</span><select id="reThinkType"><option value="off">关闭</option><option value="budget">固定预算</option><option value="adaptive">自适应</option></select></div>
+        <div class="sRow"><span>思考&nbsp;tokens</span><input class="aIn" id="reThinkTokens" inputmode="numeric" style="width:90px"></div>
+        <div class="sRow"><span>Claude&nbsp;自适应强度</span><select id="reAdaptive"><option value="low">低</option><option value="medium">中</option><option value="high">高</option><option value="xhigh">极高</option><option value="max">最大</option></select></div>
+        <div class="sRow"><span>DeepSeek&nbsp;思考</span><select id="reDeepType"><option value="off">关闭</option><option value="enabled">开启</option></select></div>
+        <div class="sRow"><span>DeepSeek&nbsp;推理强度</span><select id="reDeepEffort"><option value="high">高</option><option value="max">最大</option></select></div>
+        <div class="sRow"><span>将提示模板的思维链项送入模型</span><input type="checkbox" id="reCot"></div>
+        <div class="sub">模型返回的思考内容仍会在内核中剥离，不会显示、存档或回灌正文。</div>
+      </details>
+      <details class="risuSet"><summary>提示词格式与分词</summary>
+        <div class="sRow"><span>启用&nbsp;Instruct&nbsp;模板</span><input type="checkbox" id="reInstruct"></div>
+        <div class="sRow"><span>分词器</span><select id="reTokenizer"><option value="tik">OpenAI&nbsp;TikToken</option><option value="claude">Claude</option><option value="gemini">Gemini</option><option value="llama">Llama</option><option value="novelai">NovelAI</option></select></div>
+        <div class="sRow"><span>聊天模板</span><select id="reTemplate"><option value="chatml">ChatML</option><option value="alpaca">Alpaca</option><option value="vicuna">Vicuna</option><option value="llama2">Llama&nbsp;2</option><option value="llama3">Llama&nbsp;3</option><option value="gemma">Gemma</option><option value="jinja">Jinja</option></select></div>
+        <div class="sRow"><span>Jinja&nbsp;模板</span><textarea id="reJinja" rows="4" placeholder="聊天模板选 Jinja 时使用"></textarea></div>
+        <div class="sRow"><span>不支持 system 时的包裹格式</span><input class="aIn" id="reSysReplace" placeholder="system: {{slot}}" style="width:260px"></div>
+        <div class="sRow"><span>system&nbsp;替代角色</span><select id="reSysRole"><option value="user">user</option><option value="assistant">assistant</option></select></div>
+        <div class="sRow"><span>助手预填</span><textarea id="rePrefill" rows="2"></textarea></div>
+        <div class="sRow"><span>结尾内部格式</span><textarea id="rePostEnd" rows="2"></textarea></div>
+        <div class="sRow"><span>聊天消息按&nbsp;system&nbsp;发送</span><input type="checkbox" id="reChatSystem"></div>
+        <div class="sRow"><span>发送人物名</span><input type="checkbox" id="reSendName"></div>
+        <div class="sRow"><span>思考标签最大深度</span><input class="aIn" id="reThoughtDepth" inputmode="numeric" placeholder="-1" style="width:80px"></div>
+      </details>
+      <details class="risuSet"><summary>结构化输出与附加参数</summary>
+        <div class="sRow"><span>启用&nbsp;JSON&nbsp;Schema</span><input type="checkbox" id="reJsonOn"></div>
+        <div class="sRow"><span>严格&nbsp;Schema</span><input type="checkbox" id="reJsonStrict"></div>
+        <div class="sRow"><span>JSON&nbsp;Schema</span><textarea id="reJson" rows="6" placeholder='{"type":"object","properties":{}}'></textarea></div>
+        <div class="sRow"><span>提取字段</span><input class="aIn" id="reExtract" placeholder="留空返回完整结果" style="width:220px"></div>
+        <div class="sRow"><span>附加请求参数</span><textarea id="reParams" rows="5" placeholder="每行：参数名 = JSON值&#10;例如：service_tier = &quot;auto&quot;"></textarea></div>
+        <div class="sRow"><span>附加参数应用到所有模型</span><input type="checkbox" id="reParamsAll"></div>
+        <div class="sRow"><span>模型工具</span><input class="aIn" id="reTools" placeholder="逗号分隔，如 search" style="width:260px"></div>
+      </details>
+      <details class="risuSet"><summary>提供商缓存与保护</summary>
+        <div class="sRow"><span>自动缓存点</span><input type="checkbox" id="reAutoCache"></div>
+        <div class="sRow"><span>Claude&nbsp;缓存检索</span><input type="checkbox" id="reClaudeRetrieval"></div>
+        <div class="sRow"><span>Claude&nbsp;批处理</span><input type="checkbox" id="reClaudeBatch"></div>
+        <div class="sRow"><span>Claude&nbsp;一小时缓存</span><input type="checkbox" id="reClaudeHour"></div>
+        <div class="sRow"><span>服务器过载自动等待重试</span><input type="checkbox" id="reOverload"></div>
+        <div class="sRow"><span>OpenAI&nbsp;Flex&nbsp;处理</span><input type="checkbox" id="reFlex"></div>
+        <div class="sRow"><span>Gemini&nbsp;流式思考事件</span><input type="checkbox" id="reGeminiThoughts"></div>
+      </details>
+      <div style="display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap"><span class="eBtn" id="reDefaults" style="margin-top:0">恢复引擎默认</span><span class="sub" id="reStatus">改动即时保存，下一次请求生效。</span></div>
     </div>
     <div class="cfgPane" id="cp_preset" style="display:none">
       <div class="sub">支持&nbsp;SillyTavern&nbsp;聊天补全预设&nbsp;JSON（读取&nbsp;prompts，自动跳过占位条目），也可直接粘贴纯文本提示词。启用后每一轮都会按原顺序注入系统提示：位于对话历史之前的条目前置，之后的（如&nbsp;jailbreak）末位注入。预设存于本浏览器，刷新不丢。</div>
@@ -10106,7 +10183,8 @@ function sysPrompt(){
     '【场景】'+heroRebind(G.scenario||''),
     gearLine(),
     GENIVS.brief(),
-    (typeof memChronicle==='function'&&typeof S!=='undefined'&&S.memOn!==false&&S.mem&&S.mem.length>1)?('【长程记忆·编年长卷】以下为本局开局至今全部既定事实的编年纪要（越靠后越接近当下）。正文历史若有缺失，以此卷为准；任何叙事不得与之矛盾：\n'+memChronicle()):'',
+    (function(){if(typeof memChronicle!=='function'||typeof S==='undefined'||S.memOn===false)return '';
+      var _manual=memChronicle();return _manual?('【玩家长期手记】以下是玩家亲手记下、要求长期保留的设定与约定；剧情原文由记忆宫殿按相关性检索，不在这里重复注入：\n'+_manual):'';})(),
     (function(){if(typeof npcFavorDigest!=='function')return '';var _fd=npcFavorDigest();return _fd?('【人物好感·续记（不得健忘）】以下为曾登场人物最近一次的好感度与近况。他们即便暂时离场，好感与关系也须【延续记忆】：再次出场时自此数值起继续自然演变，严禁凭空重置、归零或大幅跳变；确有剧情推动方可增减：\n'+_fd):'';})(),
     /* 世界书不在页面拼接；原生 lorebook 管线按当前时代和人物扫描。 */
     eraGate(),                         /* 本回合是哪一年，就只准知道到哪一年 */
@@ -10166,6 +10244,7 @@ function risuInvoke(messages,cb,err,opt){
     var text=String(result.text||'');
     var trunc=!!wantTag&&text.indexOf(wantTag)<0;
     if(!aux&&result.cognition!==undefined)GAME.cognition=result.cognition||null;
+    if(!aux)try{palaceUiSync(true);}catch(_){}
     cb(text,{trunc:trunc,reason:trunc?'incomplete':'',cognition:result.cognition||null});
   }).catch(fail);
 }
@@ -10962,6 +11041,12 @@ var SET={glass:80,forma:0,face:0,mvuRing:1,loreBud:9000,context:65536,
   semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
   vars:{},gvars:{},
   samp:{temp:'',topp:'',maxt:'',minc:'',reason:1,reasonDefaultV1:1},
+  risu:{freq:'',pres:'',topk:'',rep:'',minp:'',topa:'',seed:'-1',verbosity:1,
+    stream:1,strict:1,autoUrl:1,retries:2,timeout:600,stops:'',autoCont:0,autoMin:0,removeIncomplete:0,blankFallback:0,newOai:1,vision:'low',
+    thinkType:'budget',thinkTokens:0,adaptive:'high',deepType:'off',deepEffort:'high',cot:0,
+    instruct:0,tokenizer:'tik',template:'chatml',jinja:'',sysReplace:'system: {{slot}}',sysRole:'user',prefill:'',postEnd:'',chatSystem:0,sendName:0,thoughtDepth:-1,
+    jsonOn:0,jsonStrict:1,json:'',extract:'',params:'',paramsAll:0,tools:'',
+    autoCache:0,claudeRetrieval:0,claudeBatch:0,claudeHour:0,overload:0,flex:0,geminiThoughts:0,loreDepth:5,loreRecursive:0,loreFullWord:0},
   profs:{},presets:[],mems:[],rx:[],js:[],triggers:[],loreState:{}};
 try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
   Object.keys(_s).forEach(function(k){SET[k]=_s[k];});}catch(_){}
@@ -10979,7 +11064,13 @@ try{var _s=JSON.parse(localStorage.getItem('rome_set')||'{}');
     trans:{provider:'off',showRaw:0,deeplKey:'',deeplFree:1,deeplxUrl:'http://localhost:1188',deeplxToken:'',nativeDefaultV1:1,chineseDefaultV1:0},
     semantic:{on:1,mode:'hybrid',model:'',budget:3000,topK:8,gpu:1},
     vars:{},gvars:{},
-    samp:{temp:'',topp:'',maxt:'',minc:'',reason:1,reasonDefaultV1:0}};
+    samp:{temp:'',topp:'',maxt:'',minc:'',reason:1,reasonDefaultV1:0},
+    risu:{freq:'',pres:'',topk:'',rep:'',minp:'',topa:'',seed:'-1',verbosity:1,
+      stream:1,strict:1,autoUrl:1,retries:2,timeout:600,stops:'',autoCont:0,autoMin:0,removeIncomplete:0,blankFallback:0,newOai:1,vision:'low',
+      thinkType:'budget',thinkTokens:0,adaptive:'high',deepType:'off',deepEffort:'high',cot:0,
+      instruct:0,tokenizer:'tik',template:'chatml',jinja:'',sysReplace:'system: {{slot}}',sysRole:'user',prefill:'',postEnd:'',chatSystem:0,sendName:0,thoughtDepth:-1,
+      jsonOn:0,jsonStrict:1,json:'',extract:'',params:'',paramsAll:0,tools:'',
+      autoCache:0,claudeRetrieval:0,claudeBatch:0,claudeHour:0,overload:0,flex:0,geminiThoughts:0,loreDepth:5,loreRecursive:0,loreFullWord:0}};
   Object.keys(D).forEach(function(k){
     var d=D[k];
     if(d&&typeof d==='object'){
@@ -11075,16 +11166,56 @@ function felRisuFormat(value){
   value=String(value||'openai').toLowerCase();
   return /^(openai|responses|anthropic|gemini|mistral|ollama)$/.test(value)?value:'openai';
 }
+function felRisuOptionalNumber(value){
+  if(value===''||value==null)return undefined;
+  var n=Number(value);return isFinite(n)?n:undefined;
+}
+function felRisuAdditionalParams(text){
+  var out=[];
+  String(text||'').split(/\r?\n/).forEach(function(line){
+    line=line.trim();if(!line||line.charAt(0)==='#')return;
+    var at=line.indexOf('=');if(at<1)return;
+    var key=line.slice(0,at).trim(),raw=line.slice(at+1).trim(),value=raw;
+    /* Risu 的附加参数本来就接受字符串、数字、布尔值和 json:: 前缀。
+       这里必须保留原始值：把 auto 强行 JSON.stringify 会变成带引号的字面量，
+       对象又会被当作普通字符串。对象/数组替玩家补上内核要求的 json:: 前缀即可。 */
+    if(raw.slice(0,6)!=='json::')try{
+      var parsed=JSON.parse(raw);
+      if(parsed&&typeof parsed==='object')value='json::'+raw;
+    }catch(_){}
+    if(key)out.push([key,value]);
+  });
+  return out;
+}
 function felRisuProvider(source){
   source=source||API;
   var mt=parseInt(SET.samp&&SET.samp.maxt,10)||4096;
   var temp=parseFloat(SET.samp&&SET.samp.temp),top=parseFloat(SET.samp&&SET.samp.topp);
+  var r=SET.risu||{};
   var reason=parseInt(SET.samp&&SET.samp.reason,10);
   if(isNaN(reason))reason=1;
   reason=Math.max(0,Math.min(3,reason));
   return {base:source.base,key:source.key||API.key,model:source.model,format:felRisuFormat(source.format),
     temperature:isNaN(temp)?undefined:temp,topP:isNaN(top)?undefined:top,reasoningEffort:reason-1,maxTokens:mt<64?4096:mt,
-    contextTokens:parseInt(SET.context,10)||65536,stream:SET.stream!==0};
+    contextTokens:parseInt(SET.context,10)||65536,stream:r.stream!==0,autofillRequestUrl:r.autoUrl!==0,
+    frequencyPenalty:felRisuOptionalNumber(r.freq),presencePenalty:felRisuOptionalNumber(r.pres),topK:felRisuOptionalNumber(r.topk),
+    repetitionPenalty:felRisuOptionalNumber(r.rep),minP:felRisuOptionalNumber(r.minp),topA:felRisuOptionalNumber(r.topa),
+    generationSeed:felRisuOptionalNumber(r.seed),requestRetries:felRisuOptionalNumber(r.retries),requestTimeoutSec:felRisuOptionalNumber(r.timeout),
+    strictOpenAICompatible:r.strict!==0,stopStrings:String(r.stops||'').split(/\r?\n/).map(function(v){return v.trim();}).filter(Boolean),
+    autoContinue:r.autoCont!==0,autoContinueMinTokens:parseInt(r.autoMin,10)||0,removeIncompleteResponse:r.removeIncomplete!==0,
+    fallbackWhenBlankResponse:r.blankFallback!==0,newOpenAIHandler:r.newOai!==0,visionQuality:r.vision||'low',
+    thinkingType:r.thinkType||'budget',thinkingTokens:parseInt(r.thinkTokens,10)||0,adaptiveThinkingEffort:r.adaptive||'high',
+    deepseekThinkingType:r.deepType||'off',deepseekReasoningEffort:r.deepEffort||'high',verbosity:parseInt(r.verbosity,10)||0,
+    chainOfThought:r.cot!==0,useInstructPrompt:r.instruct!==0,tokenizer:r.tokenizer||'tik',instructChatTemplate:r.template||'chatml',
+    jinjaTemplate:r.jinja||'',systemContentReplacement:r.sysReplace||'',systemRoleReplacement:r.sysRole||'user',
+    assistantPrefill:r.prefill||'',postEndInnerFormat:r.postEnd||'',sendChatAsSystem:r.chatSystem!==0,sendName:r.sendName!==0,
+    customChainOfThought:r.cot!==0,maxThoughtTagDepth:felRisuOptionalNumber(r.thoughtDepth),
+    jsonSchemaEnabled:r.jsonOn!==0,jsonSchema:r.json||'',strictJsonSchema:r.jsonStrict!==0,extractJson:r.extract||'',
+    additionalParams:felRisuAdditionalParams(r.params),applyAdditionalParamsToAll:r.paramsAll!==0,
+    modelTools:String(r.tools||'').split(/[,，\n]/).map(function(v){return v.trim();}).filter(Boolean),
+    automaticCachePoint:r.autoCache!==0,claudeRetrievalCaching:r.claudeRetrieval!==0,claudeBatching:r.claudeBatch!==0,
+    claudeOneHourCaching:r.claudeHour!==0,antiServerOverloads:r.overload!==0,openAIFlexProcessing:r.flex!==0,
+    streamGeminiThoughts:r.geminiThoughts!==0};
 }
 function felRisuRegexScripts(){
   return (SET.rx||[]).filter(function(r){return r&&r.on!==false&&r.find;}).map(function(r){
@@ -11106,6 +11237,10 @@ function felRisuPrepare(messages,options){
     return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){
       return risu.setSessionContent({systemPrompt:system,firstMessage:first,
         localLore:loreCustomGet().filter(function(e){return e&&e.on!==false;}),
+        loreTokenBudget:Math.max(64,Math.round((parseInt(SET.loreBud,10)||9000)/4)),
+        loreScanDepth:parseInt((SET.risu||{}).loreDepth,10)||5,
+        recursiveLoreScanning:(SET.risu||{}).loreRecursive!==0,
+        fullWordLoreMatching:(SET.risu||{}).loreFullWord!==0,
         regexScripts:felRisuRegexScripts(),
         defaultVariables:Object.assign({},SET.gvars||{},SET.vars||{})});
     }).then(function(){var sm=SET.semantic||{};return risu.configureMemory({enabled:sm.on!==0,
@@ -11115,7 +11250,10 @@ function felRisuPrepare(messages,options){
   });
 }
 function felRisuStart(){
-  window.__FEL_RISU_READY__=felRisuBoot().catch(function(e){
+  window.__FEL_RISU_READY__=felRisuBoot().then(function(risu){
+    try{if(typeof palaceUiSync==='function')palaceUiSync(true);}catch(_){}
+    return risu;
+  }).catch(function(e){
     window.__FEL_RISU_ERROR__=(e&&e.message)||String(e);
     throw e;
   });
@@ -11322,7 +11460,7 @@ function felRetranslateTurn(tIdx,button){
       var k=tb.getAttribute('data-cp');
       if(k==='lore')loreRender();if(k==='rx')rxRender();if(k==='js')jsRender();
       if(k==='preset')preRender();if(k==='mem')memRender();
-      if(k==='imgc')imgcRender();if(k==='api')apPaneLoad();
+      if(k==='imgc')imgcRender();if(k==='api')apPaneLoad();if(k==='engine')enginePaneLoad();
     });
   })(tabs[i]);
 })();
@@ -11992,6 +12130,15 @@ var LFEDIT=-1;
 $('#loreBud').value=SET.loreBud;$('#loreBudV').textContent=SET.loreBud;
 $('#loreBud').addEventListener('input',function(){
   SET.loreBud=+this.value;$('#loreBudV').textContent=this.value;setStore();});
+$('#loreDepth').value=(SET.risu||{}).loreDepth||5;
+$('#loreRecursive').checked=(SET.risu||{}).loreRecursive!==0;
+$('#loreFullWord').checked=(SET.risu||{}).loreFullWord!==0;
+$('#loreDepth').addEventListener('input',function(){
+  var value=this.value.replace(/[^0-9]/g,'');if(value!==this.value)this.value=value;
+  SET.risu.loreDepth=Math.max(1,Math.min(100,parseInt(value,10)||5));setStore();
+});
+$('#loreRecursive').addEventListener('change',function(){SET.risu.loreRecursive=this.checked?1:0;setStore();});
+$('#loreFullWord').addEventListener('change',function(){SET.risu.loreFullWord=this.checked?1:0;setStore();});
 function loreRender(){
   var host=$('#loreList');host.innerHTML='';
   var arr=loreCustomGet();
@@ -12181,6 +12328,54 @@ function apPaneLoad(){
   $('#semOn').checked=sm.on!==0;$('#semMode').value=sm.mode||'hybrid';$('#semModel').value=sm.model||'';
   $('#semBudget').value=sm.budget||3000;$('#semGpu').checked=sm.gpu!==0;semPaneSync();
 }
+var RISU_TEXT_FIELDS={
+  reFreq:'freq',rePres:'pres',reTopK:'topk',reRep:'rep',reMinP:'minp',reTopA:'topa',reSeed:'seed',
+  reRetries:'retries',reTimeout:'timeout',reStops:'stops',reAutoMin:'autoMin',reThinkTokens:'thinkTokens',
+  reJinja:'jinja',reSysReplace:'sysReplace',rePrefill:'prefill',rePostEnd:'postEnd',reThoughtDepth:'thoughtDepth',
+  reJson:'json',reExtract:'extract',reParams:'params',reTools:'tools'
+};
+var RISU_CHECK_FIELDS={
+  reStream:'stream',reStrict:'strict',reAutoUrl:'autoUrl',reAutoCont:'autoCont',reRemoveIncomplete:'removeIncomplete',
+  reBlankFallback:'blankFallback',reNewOai:'newOai',reCot:'cot',reInstruct:'instruct',reChatSystem:'chatSystem',
+  reSendName:'sendName',reJsonOn:'jsonOn',reJsonStrict:'jsonStrict',reParamsAll:'paramsAll',reAutoCache:'autoCache',
+  reClaudeRetrieval:'claudeRetrieval',reClaudeBatch:'claudeBatch',reClaudeHour:'claudeHour',reOverload:'overload',
+  reFlex:'flex',reGeminiThoughts:'geminiThoughts'
+};
+var RISU_SELECT_FIELDS={
+  reVerbosity:'verbosity',reVision:'vision',reThinkType:'thinkType',reAdaptive:'adaptive',reDeepType:'deepType',
+  reDeepEffort:'deepEffort',reTokenizer:'tokenizer',reTemplate:'template',reSysRole:'sysRole'
+};
+function enginePaneLoad(){
+  var r=SET.risu||{};
+  $('#reContext').value=SET.context==null?65536:SET.context;
+  Object.keys(RISU_TEXT_FIELDS).forEach(function(id){var el=$('#'+id);if(el)el.value=r[RISU_TEXT_FIELDS[id]]==null?'':r[RISU_TEXT_FIELDS[id]];});
+  Object.keys(RISU_CHECK_FIELDS).forEach(function(id){var el=$('#'+id);if(el)el.checked=r[RISU_CHECK_FIELDS[id]]!==0;});
+  Object.keys(RISU_SELECT_FIELDS).forEach(function(id){var el=$('#'+id);if(el)el.value=String(r[RISU_SELECT_FIELDS[id]]==null?'':r[RISU_SELECT_FIELDS[id]]);});
+}
+function engineStatus(text,bad){var el=$('#reStatus');if(el){el.textContent=text;el.style.color=bad?'#a74432':'';}}
+Object.keys(RISU_TEXT_FIELDS).forEach(function(id){
+  $('#'+id).addEventListener('input',function(){SET.risu[RISU_TEXT_FIELDS[id]]=this.value;setStore();engineStatus('已保存 · 下一次请求生效',0);});
+});
+Object.keys(RISU_CHECK_FIELDS).forEach(function(id){
+  $('#'+id).addEventListener('change',function(){SET.risu[RISU_CHECK_FIELDS[id]]=this.checked?1:0;setStore();engineStatus('已保存 · 下一次请求生效',0);});
+});
+Object.keys(RISU_SELECT_FIELDS).forEach(function(id){
+  $('#'+id).addEventListener('change',function(){var key=RISU_SELECT_FIELDS[id],value=this.value;SET.risu[key]=(key==='verbosity'?parseInt(value,10):value);setStore();engineStatus('已保存 · 下一次请求生效',0);});
+});
+$('#reContext').addEventListener('input',function(){
+  var value=this.value.replace(/[^0-9]/g,'');if(value!==this.value)this.value=value;
+  SET.context=Math.max(2048,parseInt(value,10)||65536);setStore();engineStatus('最大上下文已保存',0);
+});
+$('#reDefaults').addEventListener('click',function(){
+  if(!confirm('只恢复“生成引擎”这一页的默认值？接口、游戏、存档和其他设置都不会改变。'))return;
+  SET.context=65536;
+  SET.risu={freq:'',pres:'',topk:'',rep:'',minp:'',topa:'',seed:'-1',verbosity:1,
+    stream:1,strict:1,autoUrl:1,retries:2,timeout:600,stops:'',autoCont:0,autoMin:0,removeIncomplete:0,blankFallback:0,newOai:1,vision:'low',
+    thinkType:'budget',thinkTokens:0,adaptive:'high',deepType:'off',deepEffort:'high',cot:0,
+    instruct:0,tokenizer:'tik',template:'chatml',jinja:'',sysReplace:'system: {{slot}}',sysRole:'user',prefill:'',postEnd:'',chatSystem:0,sendName:0,thoughtDepth:-1,
+    jsonOn:0,jsonStrict:1,json:'',extract:'',params:'',paramsAll:0,tools:'',autoCache:0,claudeRetrieval:0,claudeBatch:0,claudeHour:0,overload:0,flex:0,geminiThoughts:0,loreDepth:5,loreRecursive:0,loreFullWord:0};
+  setStore();enginePaneLoad();engineStatus('已恢复引擎默认；其他设置与存档未改变',0);
+});
 function trPaneSync(){
   var p=($('#trProvider')&&$('#trProvider').value)||((SET.trans||{}).provider)||'off';
   var dl=$('#trDeepLKey'),dx=$('#trDeepLXUrl'),dt=$('#trDeepLXToken'),di=$('#trDeepLXInstallRow');
@@ -13169,6 +13364,9 @@ function renderMvu(panel){
   /* —— 図谱 CHAIN × 记忆 MEM（Ghost 原版移植）—— */
   GAME.lastPanel=panel;
   try{memSync();}catch(_){}
+  /* 宫殿存于 IndexedDB，读取是异步的；先按缓存绘制，再在当前存档抽屉变化时
+     自动补画一次。事件年表和长期记忆从此不再读取旧的自动摘要。 */
+  try{palaceUiSync();}catch(_){}
   h+='<div class="zjP">'
     +'<div class="mSec">'+zjHead(S.secG,'tgG','','人物关系',S.secG)+(S.secG?'<div id="zjGraphBox" class="fade">'+graphInner()+'</div>':'')+'</div>'
     +'<div class="mSec">'+zjHead(S.secA,'tgA','','事件年表',S.secA)+(S.secA?'<div class="fade">'+axisInner()+'</div>':'')+'</div>'
@@ -13191,6 +13389,44 @@ function renderMvu(panel){
 /* ═══════════ 図谱 CHAIN × 记忆 MEM（Ghost 原版整件移植：蛛网引擎/PERSONNEL FILE/编年长卷）═══════════ */
 var S={history:[],memNpc:null,_npcMetaBusy:null,memEdit:null,secG:true,secA:true,secM:true,
   graphHidden:[],npcMeta:{},mem:[],memOn:true,memN:0};
+var PALACE_UI={session:'',drawers:[],signature:'',loading:false,ready:false,error:'',checkedAt:0};
+function palaceUiEnabled(){
+  try{return !!(GAME&&GAME.memoryId&&SET.semantic&&SET.semantic.on!==0);}catch(_){return false;}
+}
+function palaceUiDrawers(){
+  var id='';try{id=felMemoryId();}catch(_){}
+  return id&&PALACE_UI.session===id&&PALACE_UI.ready?(PALACE_UI.drawers||[]):[];
+}
+function palaceUiSync(force){
+  if(!palaceUiEnabled()||!FEL_RISU||typeof FEL_RISU.getPalaceDrawers!=='function')return;
+  var id=felMemoryId(),now=Date.now();
+  if(PALACE_UI.loading)return;
+  if(!force&&PALACE_UI.session===id&&now-PALACE_UI.checkedAt<700)return;
+  PALACE_UI.loading=true;PALACE_UI.session=id;
+  FEL_RISU.getPalaceDrawers(id).then(function(drawers){
+    if(PALACE_UI.session!==id)return;
+    drawers=Array.isArray(drawers)?drawers:[];
+    var sig=drawers.map(function(d){return d.id;}).join('|'),changed=!PALACE_UI.ready||sig!==PALACE_UI.signature;
+    PALACE_UI.drawers=drawers;PALACE_UI.signature=sig;PALACE_UI.ready=true;PALACE_UI.error='';PALACE_UI.checkedAt=Date.now();
+    if(changed&&GAME.lastPanel)setTimeout(function(){try{renderMvu(GAME.lastPanel);}catch(_){}},0);
+  }).catch(function(e){
+    if(PALACE_UI.session!==id)return;
+    PALACE_UI.ready=true;PALACE_UI.error=(e&&e.message)||String(e);PALACE_UI.checkedAt=Date.now();
+    if(GAME.lastPanel)setTimeout(function(){try{renderMvu(GAME.lastPanel);}catch(_){}},0);
+  }).finally(function(){if(PALACE_UI.session===id)PALACE_UI.loading=false;});
+}
+function palaceParts(drawer){
+  var c=String((drawer&&drawer.content)||''),u='',w='';
+  var um=/【玩家原文】\n([\s\S]*?)(?=\n\n【世界原文】|$)/.exec(c);
+  var wm=/【世界原文】\n([\s\S]*)$/.exec(c);
+  if(um)u=um[1].trim();if(wm)w=wm[1].trim();
+  if(!u&&!w)w=c.trim();
+  return {u:u,w:w};
+}
+function palaceEraLabel(){
+  try{return String((GAME.op&&GAME.op.era)||((GAME.lastPanel&&GAME.lastPanel.wd||[]).filter(function(x){return x[0]==='纪年';})[0]||[])[1]||'本局');}
+  catch(_){return '本局';}
+}
 function esc(s){return esc2(s);}
 function stripCoT(t){
   return String(t||'')
@@ -13727,55 +13963,18 @@ function fdOpen(nm){
   fdRefresh();
   try{fdPlace();}catch(_){}
 }
-/* ---------------- 长程记忆 · 编年长卷 ----------------
-   每轮世界回应自动摘为一条编年纪要（年代·时地·玩家之举·记录），永久保存、
-   每轮全量注入系统提示——正文历史再怎么被截断，既定事实也不会丢。 */
-function memFp(t){var h=5381,str=String(t||'').slice(0,120);for(var i=0;i<str.length;i++)h=((h<<5)+h+str.charCodeAt(i))|0;return h;}
-function memEntryOf(worldMsg,actText){
-  var p=worldMsg.panel;
-  var line=(p&&p.world&&p.world['记录'])||'';
-  if(!line){line=stripCoT(stripMvu(worldMsg.text));line=String(line).replace(/\s+/g,' ').slice(0,70);}
-  var _td=p&&p.world?String(p.world['时地']||''):'';
-  var _era=p&&p.world?String(p.world['纪年']||''):'';
-  var _e=(_era||_td.split('·')[0]).trim();
-  if(_e&&_td.indexOf(_e+'·')===0)_td=_td.slice(_e.length+1); /* 时地自带纪年前缀时去重 */
-  return {e:_e,d:_td,
-    a:String(actText||'').replace(/\s+/g,' ').slice(0,40),s:String(line).replace(/\s+/g,' ').slice(0,90),fp:memFp(worldMsg.text)};
-}
+/* ---------------- 长程记忆 · 记忆宫殿显示 ----------------
+   剧情原文由宫殿按存档保存、按相关性检索。S.mem 只保留玩家亲手写的长期手记；
+   旧版本留下的自动摘要不删除以免破坏存档，但不再新增、显示或注入。 */
 function memSync(){
   zjSyncHist();
   if(!S.mem)S.mem=[];
-  var worlds=[],acts=[];
-  for(var i=0;i<S.history.length;i++){
-    var h=S.history[i];
-    if(h.role==='world'){worlds.push(h);acts.push(i>0&&S.history[i-1].role==='user'?S.history[i-1].text:'');}
-  }
-  var n=S.memN||0;
-  if(worlds.length<n){
-    /* 只把计数器退回去、却不删条目，等于让「已经不存在的未来」继续每回注入，
-       剧情被硬拽回原来的走向。手记不动，只截自动纪要。 */
-    var _keep=[],_auto=0;
-    for(var _q=0;_q<S.mem.length;_q++){
-      var _m=S.mem[_q];
-      if(_m&&_m.manual){_keep.push(_m);continue;}
-      if(_auto<worlds.length){_keep.push(_m);_auto++;}
-    }
-    S.mem=_keep;S.memN=worlds.length;try{savePref();}catch(_){}
-    return;
-  } // 历史被重开/回退
-  var changed=false;
-  // 重演此回：条数未增但末条内容换了 → 更新末条
-  if(worlds.length===n&&n>0&&S.mem.length&&S.mem[S.mem.length-1].fp!==memFp(worlds[n-1].text)&&!S.mem[S.mem.length-1].manual){
-    S.mem[S.mem.length-1]=memEntryOf(worlds[n-1],acts[n-1]);changed=true;
-  }
-  for(var j=n;j<worlds.length;j++){S.mem.push(memEntryOf(worlds[j],acts[j]));changed=true;}
-  if(worlds.length!==n){S.memN=worlds.length;changed=true;}
-  if(changed)savePref();
 }
 function memChronicle(){
-  var lines=S.mem.map(function(m,i){
+  var manual=(S.mem||[]).filter(function(m){return m&&m.manual;});
+  var lines=manual.map(function(m,i){
     var head=(m.e||'')+(m.d?('·'+m.d):'');
-    return (i+1)+'. '+(head?('『'+head+'』'):'')+(m.a?('玩家'+(m.manual?'手记':'之举')+'：'+m.a+'。'):'')+(m.s?('档案载：'+m.s):'');
+    return (i+1)+'. '+(head?('『'+head+'』'):'')+(m.a?('玩家手记：'+m.a+'。'):'')+(m.s?('补记：'+m.s):'');
   });
   var total=lines.join('\n');
   if(total.length<=7000)return total;
@@ -13795,7 +13994,29 @@ function _narrTail(n){
     return out.slice(-n);
   }catch(_){return '';}
 }
+function palaceAxisInner(){
+  if(!palaceUiEnabled())return '';
+  var ds=palaceUiDrawers();
+  if(!PALACE_UI.ready||PALACE_UI.loading&&!ds.length)return '<div style="padding:18px 0 6px;text-align:center;font-size:11.5px;letter-spacing:.18em;color:var(--mut)">正在开启本局记忆宫殿…</div>';
+  if(PALACE_UI.error)return '<div style="padding:18px 0 6px;text-align:center;font-size:11.5px;letter-spacing:.12em;color:#a74432">宫殿暂不可读 · 原生语义记忆仍在兜底</div>';
+  if(!ds.length)return '<div style="padding:18px 0 6px;text-align:center;font-size:11.5px;letter-spacing:.18em;color:var(--mut)">宫殿尚空 · 完成一轮后存入原文抽屉</div>';
+  var cap=60,more=Math.max(0,ds.length-cap),use=more?ds.slice(-cap):ds,era=palaceEraLabel();
+  var items=use.map(function(d,i){
+    var p=palaceParts(d),turn=d.turn<0?'开局':('第'+(d.turn+1)+'回'),world=String(p.w||d.searchText||'').replace(/\s+/g,' ').slice(0,220);
+    return '<div style="position:relative;padding:0 0 16px 22px">'
+      +'<div style="position:absolute;left:4px;top:9px;bottom:-3px;width:1px;background:rgba(19,18,13,.14)"></div>'
+      +'<div style="position:absolute;left:1px;top:6px;width:7px;height:7px;background:var(--gold)"></div>'
+      +'<div style="font-size:10.5px;color:var(--mut);letter-spacing:.12em">'+turn+' · 宫殿原文</div>'
+      +(p.u?'<div style="font-size:11.5px;color:#34332a;margin-top:3px;letter-spacing:.04em">我：'+esc(p.u.replace(/\s+/g,' ').slice(0,100))+'</div>':'')
+      +(world?'<div style="font-size:12px;color:#25241d;line-height:1.8;margin-top:3px;letter-spacing:.04em">'+esc(world)+'</div>':'')
+      +'</div>';
+  }).join('');
+  return '<div style="display:flex;align-items:center;gap:10px;margin:10px 0 12px"><div style="flex:none;font-size:11.5px;color:var(--gold2);letter-spacing:.16em;border:1px solid rgba(132,88,0,.45);padding:3px 12px 2px;background:rgba(132,88,0,.08)">'+esc(era)+'</div><div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(132,88,0,.4),transparent)"></div></div>'
+    +(more?'<div style="font-size:10.5px;color:var(--mut);margin-bottom:10px">较早 '+more+' 个抽屉仍保存在宫殿中</div>':'')
+    +'<div style="max-height:420px;overflow-y:auto;padding:4px 2px 0">'+items+'</div>';
+}
 function axisInner(){
+  if(palaceUiEnabled())return palaceAxisInner();
   var ms=S.mem||[];
   /* 只渲最近 60 笔。原先每回合把整条编年重新拼一遍 HTML 再整体 innerHTML，
      条数随回合线性增长，整局累计功是回合数的平方——两三百回合后每条消息
@@ -13819,7 +14040,49 @@ function axisInner(){
   return '<div style="max-height:420px;overflow-y:auto;padding:4px 2px 0">'+items+'</div>';
 }
 /* 记忆 MEM pane（侧栏紧凑型 compact=true；事件走 data-act 委托，输入取值按 .zjMemPane 就近作用域） */
+function palaceMemPaneInner(compact){
+  var ds=palaceUiDrawers(),on=S.memOn!==false,chars=0;
+  ds.forEach(function(d){chars+=String(d.content||'').length;});
+  var cap=60,more=Math.max(0,ds.length-cap),use=more?ds.slice(-cap):ds;
+  var rows=use.slice().reverse().map(function(d){
+    var turn=d.turn<0?'开局':('第'+(d.turn+1)+'回');
+    return '<div style="border:1px solid rgba(19,18,13,.12);padding:10px 12px;margin-bottom:7px;background:rgba(19,18,13,.015)">'
+      +'<div style="font-size:10.5px;color:var(--gold);letter-spacing:.12em;margin-bottom:6px">'+turn+' · 原文抽屉</div>'
+      +'<div style="font-size:12px;color:var(--ink2);line-height:1.8;letter-spacing:.035em;white-space:pre-wrap;overflow-wrap:anywhere">'+esc(d.content||d.searchText||'')+'</div></div>';
+  }).join('');
+  if(!PALACE_UI.ready||PALACE_UI.loading&&!ds.length)rows='<div style="text-align:center;padding:30px 0;font-size:11.5px;letter-spacing:.2em;color:var(--mut)">正在开启本局记忆宫殿…</div>';
+  else if(PALACE_UI.error)rows='<div style="text-align:center;padding:30px 0;font-size:11.5px;letter-spacing:.12em;color:#a74432">宫殿暂不可读 · 原生语义记忆仍在兜底</div>';
+  else if(!rows)rows='<div style="text-align:center;padding:30px 0;font-size:11.5px;letter-spacing:.2em;color:var(--mut)">宫殿尚空 · 完成一轮后存入原文抽屉</div>';
+  var manual=[];(S.mem||[]).forEach(function(m,i){if(m&&m.manual)manual.push({m:m,i:i});});
+  var min='width:100%;background:rgba(19,18,13,.03);border:1px solid rgba(19,18,13,.22);color:var(--ink);padding:7px 10px;font-size:12px;font-family:var(--mono)';
+  var notes=manual.slice().reverse().map(function(x){var m=x.m,i=x.i;
+    if(S.memEdit===i)return '<div style="border:1px solid rgba(132,88,0,.6);padding:11px 12px;margin-bottom:6px;background:rgba(19,18,13,.02)">'
+      +'<div style="display:flex;gap:8px"><input id="zjMeE" value="'+esc(m.e||'')+'" placeholder="纪年" style="'+min+';flex:1"><input id="zjMeD" value="'+esc(m.d||'')+'" placeholder="时地" style="'+min+';flex:1"></div>'
+      +'<input id="zjMeA" value="'+esc(m.a||'')+'" placeholder="长期手记" style="'+min+';margin-top:7px">'
+      +'<textarea id="zjMeS" placeholder="补记" style="'+min+';margin-top:7px;min-height:64px;resize:vertical;font-family:inherit;line-height:1.6">'+esc(m.s||'')+'</textarea>'
+      +'<div style="display:flex;gap:9px;margin-top:9px;justify-content:flex-end"><button data-act="memCancel" class="obtn btn" style="font-size:11.5px;letter-spacing:.15em;padding:6px 14px">取消</button><button data-act="memSave" class="gbtn btn" style="font-size:11.5px;letter-spacing:.18em;padding:6px 16px">保 存</button></div></div>';
+    return '<div style="display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(132,88,0,.18);padding:9px 12px;margin-bottom:6px;background:rgba(132,88,0,.025)">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:10.5px;color:var(--gold);letter-spacing:.1em">玩家手记</div>'
+      +'<div style="font-size:12px;color:var(--ink2);line-height:1.8;margin-top:3px">'+esc(m.a||m.s||'')+'</div></div>'
+      +'<div class="btn" data-medit="'+(i+1)+'" style="flex:none;cursor:pointer;font-size:11px;color:var(--gold);border:1px solid rgba(132,88,0,.4);padding:2px 8px">编辑</div>'
+      +'<div class="btn" data-mdel="'+i+'" style="flex:none;cursor:pointer;font-size:11px;color:#ff7f63;border:1px solid rgba(255,127,99,.4);padding:2px 8px">删</div></div>';
+  }).join('');
+  var intro='<div style="font-size:11px;letter-spacing:.06em;line-height:1.9;color:var(--mut)">记忆宫殿保存本局每轮玩家与世界的原文；生成时只检索与眼前情形有关的较早抽屉，原生语义记忆在宫殿无结果时兜底。</div>';
+  return intro
+    +'<div style="display:flex;gap:10px;align-items:center;margin:14px 0;flex-wrap:wrap">'
+    +'<div style="padding:7px 12px;font-size:11.5px;letter-spacing:.14em;border:1px solid rgba(132,88,0,.55);color:var(--gold2)">✓ 宫殿运行中</div>'
+    +'<div style="font-size:11px;letter-spacing:.06em;color:var(--mut)">'+ds.length+' 个原文抽屉 · 约'+chars+'字</div>'
+    +'<div class="btn" data-act="palaceExport" style="cursor:pointer;margin-left:auto;font-size:11.5px;letter-spacing:.12em;color:var(--gold2);border:1px solid rgba(132,88,0,.4);padding:6px 12px">导出本局宫殿</div></div>'
+    +(more?'<div style="font-size:10.5px;color:var(--mut);margin:-4px 0 10px">较早 '+more+' 个抽屉仍在宫殿中，界面只显示最近 '+cap+' 个</div>':'')
+    +(compact?'<div style="max-height:360px;overflow-y:auto">'+rows+'</div>':rows)
+    +'<div style="border-top:1px solid rgba(19,18,13,.12);margin-top:14px;padding-top:12px">'
+    +'<div style="display:flex;gap:10px;align-items:center;margin-bottom:9px"><b style="font-size:11px;letter-spacing:.14em;color:var(--gold2)">玩家长期手记</b>'
+    +'<div class="btn" data-act="memToggle" style="cursor:pointer;padding:4px 9px;font-size:10.5px;letter-spacing:.1em;border:1px solid '+(on?'rgba(132,88,0,.45)':'rgba(19,18,13,.2)')+';color:'+(on?'var(--gold2)':'var(--mut)')+'">'+(on?'✓ 注入中':'已停用')+'</div></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="zjMemAdd" placeholder="手记一笔（设定、约定或伏笔）…" style="flex:1;background:rgba(19,18,13,.03);border:1px solid rgba(19,18,13,.2);color:#13120d;font-size:12px;padding:9px 12px;font-family:var(--mono)" autocomplete="off"><button data-act="memAdd" class="obtn btn" style="flex:none;font-size:11.5px;letter-spacing:.2em;padding:0 16px">记 入</button></div>'
+    +(notes||'<div style="font-size:10.5px;color:var(--mut);padding-bottom:3px">尚无玩家手记</div>')+'</div>';
+}
 function memPaneInner(compact){
+  if(palaceUiEnabled())return palaceMemPaneInner(compact);
   var n=S.mem?S.mem.length:0;
   var chars=0;S.mem.forEach(function(m){chars+=(m.a||'').length+(m.s||'').length+(m.e||'').length;});
   var on=S.memOn!==false;
@@ -13881,6 +14144,16 @@ document.querySelector('#game .gMfd').addEventListener('click',function(e){
     me0.e=gv('zjMeE');me0.d=gv('zjMeD');me0.a=gv('zjMeA');me0.s=gv('zjMeS');me0.manual=true;me0.fp=null;
     savePref();S.memEdit=null;render();}}
   else if(a==='memCancel'){S.memEdit=null;render();}
+  else if(a==='palaceExport'){
+    if(!FEL_RISU||typeof FEL_RISU.getPalaceDrawers!=='function')return;
+    var _pid=felMemoryId();
+    FEL_RISU.getPalaceDrawers(_pid).then(function(drawers){
+      var gn=(CARDS[ACTIVE]&&CARDS[ACTIVE].name)||'FELINIA';
+      var payload={version:1,sessionId:_pid,drawers:drawers||[]};
+      var mb=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'}),mu=URL.createObjectURL(mb),ma=document.createElement('a');
+      ma.href=mu;ma.download=gn+'-记忆宫殿.json';document.body.appendChild(ma);ma.click();ma.remove();setTimeout(function(){URL.revokeObjectURL(mu);},4000);
+    }).catch(function(){});
+  }
   else if(a==='memExport'){try{var gn=(CARDS[ACTIVE]&&CARDS[ACTIVE].name)||'saga';var mb=new Blob([JSON.stringify({__app:gn,__type:'mem-scroll',entries:S.mem},null,1)],{type:'application/json'});var mu=URL.createObjectURL(mb);var ma=document.createElement('a');ma.href=mu;ma.download=gn+'编年长卷.json';document.body.appendChild(ma);ma.click();document.body.removeChild(ma);setTimeout(function(){URL.revokeObjectURL(mu);},4000);}catch(e2){}}
 });
 /* ═══════════ 天下三维 · 八城游历（RitusZhou zj3d 引擎+资材+敕令管线 原件搬运）═══════════ */
@@ -16903,11 +17176,11 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
      那条规则本是给图片字体三维包写的，它们确实不变；这三支是会改的代码。
      光改文件救不了已经存下的那一份（immutable 是存进去时就写死的），换掉地址才行。
      所以改过其中任何一支，就把这里的版本号加一：这一页本身是 no-cache，改了就到。 -->
-<script src="/core/res/vn/felinia-vn.js?v=7"></script>
+<script src="/core/res/vn/felinia-vn.js?v=8"></script>
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=30"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=32"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

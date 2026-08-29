@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildFeliniaPalaceDrawers,
+  clearFeliniaPalace,
   feliniaPalaceLexicalScore,
+  getFeliniaPalaceDrawers,
+  syncFeliniaPalace,
 } from './feliniaPalace';
 
 describe('FELINIA browser palace memory', () => {
@@ -33,5 +36,38 @@ describe('FELINIA browser palace memory', () => {
     const unrelated = feliniaPalaceLexicalScore(query, '雨后船工把湿麻绳摊在石阶上晾晒。');
     expect(relevant).toBeGreaterThan(unrelated);
     expect(relevant).toBeGreaterThan(0);
+  });
+
+  it('returns one save palace to the UI without embedding vectors or other saves', async () => {
+    await clearFeliniaPalace();
+    await syncFeliniaPalace({
+      enabled: true,
+      sessionId: 'ui-save-a',
+      eraIndex: 8,
+      vectors: false,
+      opening: '中庭的灯刚刚点亮。',
+      history: [
+        { role: 'user', content: '我把木牌放在石桌上。', memoryIndex: 1 },
+        { role: 'assistant', content: '尼禄看了一眼木牌，没有伸手。', memoryIndex: 1 },
+      ],
+    });
+    await syncFeliniaPalace({
+      enabled: true,
+      sessionId: 'ui-save-b',
+      eraIndex: 9,
+      vectors: false,
+      history: [
+        { role: 'user', content: '另一份存档。', memoryIndex: 1 },
+        { role: 'assistant', content: '不应出现。', memoryIndex: 1 },
+      ],
+    });
+
+    const drawers = await getFeliniaPalaceDrawers('ui-save-a');
+    expect(drawers).toHaveLength(2);
+    expect(drawers[1].content).toContain('我把木牌放在石桌上。');
+    expect(drawers[1].content).toContain('尼禄看了一眼木牌');
+    expect(drawers.some((drawer) => drawer.content.includes('另一份存档'))).toBe(false);
+    expect(drawers.every((drawer) => !('vector' in drawer))).toBe(true);
+    await clearFeliniaPalace();
   });
 });

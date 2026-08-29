@@ -11,6 +11,7 @@ import { LLMFormat } from '../ts/model/types';
 import {
   clearFeliniaPalace,
   exportFeliniaPalace,
+  getFeliniaPalaceDrawers,
   importFeliniaPalace,
   prepareFeliniaPalace,
   syncFeliniaPalace,
@@ -126,12 +127,62 @@ export interface FeliniaProvider {
   format?: 'openai' | 'responses' | 'anthropic' | 'gemini' | 'mistral' | 'ollama';
   temperature?: number;
   topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  topK?: number;
+  repetitionPenalty?: number;
+  minP?: number;
+  topA?: number;
   /** -1=minimal/off, 0=low, 1=medium, 2=high (Risu's native scale). */
   reasoningEffort?: number;
   maxTokens?: number;
   contextTokens?: number;
   stream?: boolean;
   autofillRequestUrl?: boolean;
+  requestRetries?: number;
+  requestTimeoutSec?: number;
+  strictOpenAICompatible?: boolean;
+  stopStrings?: string[];
+  generationSeed?: number;
+  newOpenAIHandler?: boolean;
+  visionQuality?: 'low' | 'high' | 'auto';
+  autoContinue?: boolean;
+  autoContinueMinTokens?: number;
+  removeIncompleteResponse?: boolean;
+  additionalParams?: [string, string][];
+  applyAdditionalParamsToAll?: boolean;
+  useInstructPrompt?: boolean;
+  tokenizer?: string;
+  instructChatTemplate?: string;
+  jinjaTemplate?: string;
+  systemContentReplacement?: string;
+  systemRoleReplacement?: 'user' | 'assistant';
+  assistantPrefill?: string;
+  postEndInnerFormat?: string;
+  sendChatAsSystem?: boolean;
+  sendName?: boolean;
+  customChainOfThought?: boolean;
+  chainOfThought?: boolean;
+  maxThoughtTagDepth?: number;
+  jsonSchemaEnabled?: boolean;
+  jsonSchema?: string;
+  strictJsonSchema?: boolean;
+  extractJson?: string;
+  thinkingTokens?: number;
+  thinkingType?: 'off' | 'budget' | 'adaptive';
+  adaptiveThinkingEffort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  deepseekThinkingType?: 'off' | 'enabled';
+  deepseekReasoningEffort?: 'high' | 'max';
+  verbosity?: number;
+  automaticCachePoint?: boolean;
+  claudeRetrievalCaching?: boolean;
+  claudeBatching?: boolean;
+  claudeOneHourCaching?: boolean;
+  antiServerOverloads?: boolean;
+  fallbackWhenBlankResponse?: boolean;
+  modelTools?: string[];
+  openAIFlexProcessing?: boolean;
+  streamGeminiThoughts?: boolean;
 }
 
 export interface FeliniaTurn {
@@ -195,6 +246,10 @@ export interface FeliniaSessionContent {
   postHistoryInstructions?: string;
   authorNote?: string;
   localLore?: FeliniaLoreEntry[];
+  loreTokenBudget?: number;
+  loreScanDepth?: number;
+  recursiveLoreScanning?: boolean;
+  fullWordLoreMatching?: boolean;
   regexScripts?: customscript[];
   triggerScripts?: triggerscript[];
   defaultVariables?: string | Record<string, unknown>;
@@ -928,6 +983,13 @@ export async function setFeliniaSessionContent(content: FeliniaSessionContent) {
   if (content.localLore !== undefined) {
     currentChat.localLore = content.localLore.map((entry, index) => risuLore(entry, index, 'session')).filter((entry): entry is loreBook => !!entry);
   }
+  if (content.loreTokenBudget !== undefined) current.loreSettings.tokenBudget = Math.max(64, Math.trunc(content.loreTokenBudget));
+  if (content.loreScanDepth !== undefined) current.loreSettings.scanDepth = Math.max(1, Math.trunc(content.loreScanDepth));
+  if (content.recursiveLoreScanning !== undefined) current.loreSettings.recursiveScanning = content.recursiveLoreScanning;
+  if (content.fullWordLoreMatching !== undefined) {
+    current.loreSettings.fullWordMatching = content.fullWordLoreMatching;
+    current.loreExt = { ...(current.loreExt || {}), risu_fullWordMatching: content.fullWordLoreMatching };
+  }
   if (content.regexScripts !== undefined) current.customscript.push(...clone(content.regexScripts));
   if (content.triggerScripts !== undefined) current.triggerscript.push(...clone(content.triggerScripts));
   rt.database.setCurrentCharacter(current);
@@ -1021,9 +1083,7 @@ function format(value: FeliniaProvider['format']): number {
   return LLMFormat.OpenAICompatible;
 }
 
-export async function configureFeliniaProvider(provider: FeliniaProvider) {
-  const rt = await runtime();
-  const db = rt.database.getDatabase();
+export function applyFeliniaProviderSettings(db: Partial<Database>, provider: FeliniaProvider) {
   db.aiModel = 'reverse_proxy';
   db.proxyRequestModel = 'custom';
   db.customProxyRequestModel = provider.model;
@@ -1034,6 +1094,12 @@ export async function configureFeliniaProvider(provider: FeliniaProvider) {
   // existing sentinel for omitting a sampling parameter from the request.
   db.temperature = provider.temperature == null ? -1000 : Math.round(provider.temperature * 100);
   db.top_p = provider.topP == null ? -1000 : provider.topP;
+  db.frequencyPenalty = provider.frequencyPenalty == null ? -1000 : Math.round(provider.frequencyPenalty * 100);
+  db.PresensePenalty = provider.presencePenalty == null ? -1000 : Math.round(provider.presencePenalty * 100);
+  db.top_k = provider.topK == null ? 0 : provider.topK;
+  db.repetition_penalty = provider.repetitionPenalty == null ? 1 : provider.repetitionPenalty;
+  db.min_p = provider.minP == null ? 0 : provider.minP;
+  db.top_a = provider.topA == null ? 0 : provider.topA;
   /* Match Risu's native default: 0 is low reasoning. Players can still choose
    * -1 explicitly to disable/minimize it for very small or latency-sensitive models. */
   db.reasoningEffort = provider.reasoningEffort ?? 0;
@@ -1047,8 +1113,62 @@ export async function configureFeliniaProvider(provider: FeliniaProvider) {
   // Custom browser endpoints (including Gemini CLI bridges) often implement only
   // the common OpenAI chat-completions subset. Keep Risu's prompt engine while
   // using a deliberately conservative transport payload.
-  db.strictOpenAICompatible = provider.format === 'openai' || !provider.format;
+  db.strictOpenAICompatible = provider.strictOpenAICompatible ?? (provider.format === 'openai' || !provider.format);
+  db.requestRetrys = Math.max(0, Math.trunc(provider.requestRetries ?? 2));
+  db.localNetworkTimeoutSec = Math.max(1, Math.trunc(provider.requestTimeoutSec ?? 600));
+  db.localStopStrings = [...(provider.stopStrings ?? [])];
+  db.generationSeed = Number.isFinite(provider.generationSeed) ? Math.trunc(provider.generationSeed!) : -1;
+  db.newOAIHandle = provider.newOpenAIHandler ?? true;
+  db.gptVisionQuality = provider.visionQuality ?? 'low';
+  db.autoContinueChat = provider.autoContinue ?? false;
+  db.autoContinueMinTokens = Math.max(0, Math.trunc(provider.autoContinueMinTokens ?? 0));
+  db.removeIncompleteResponse = provider.removeIncompleteResponse ?? false;
+  db.additionalParams = [...(provider.additionalParams ?? [])];
+  db.applyAdditionalParamsToAll = provider.applyAdditionalParamsToAll ?? false;
+  db.useInstructPrompt = provider.useInstructPrompt ?? false;
+  db.customTokenizer = provider.tokenizer ?? 'tik';
+  db.instructChatTemplate = provider.instructChatTemplate ?? 'chatml';
+  db.JinjaTemplate = provider.jinjaTemplate ?? '';
+  db.systemContentReplacement = provider.systemContentReplacement ?? 'system: {{slot}}';
+  db.systemRoleReplacement = provider.systemRoleReplacement ?? 'user';
+  db.promptSettings = {
+    ...(db.promptSettings || {}),
+    assistantPrefill: provider.assistantPrefill ?? '',
+    postEndInnerFormat: provider.postEndInnerFormat ?? '',
+    sendChatAsSystem: provider.sendChatAsSystem ?? false,
+    sendName: provider.sendName ?? false,
+    utilOverride: db.promptSettings?.utilOverride ?? false,
+    customChainOfThought: provider.customChainOfThought ?? false,
+    maxThoughtTagDepth: Number.isFinite(provider.maxThoughtTagDepth) ? Math.trunc(provider.maxThoughtTagDepth!) : -1,
+  };
+  db.chainOfThought = provider.chainOfThought ?? false;
+  db.jsonSchemaEnabled = provider.jsonSchemaEnabled ?? false;
+  db.jsonSchema = provider.jsonSchema ?? '';
+  db.strictJsonSchema = provider.strictJsonSchema ?? true;
+  db.extractJson = provider.extractJson ?? '';
+  db.thinkingTokens = Math.max(0, Math.trunc(provider.thinkingTokens ?? 0));
+  db.thinkingType = provider.thinkingType ?? 'budget';
+  db.adaptiveThinkingEffort = provider.adaptiveThinkingEffort ?? 'high';
+  db.deepseekThinkingType = provider.deepseekThinkingType ?? 'off';
+  db.deepseekReasoningEffort = provider.deepseekReasoningEffort ?? 'high';
+  db.verbosity = Math.max(0, Math.min(2, Math.trunc(provider.verbosity ?? 1)));
+  db.automaticCachePoint = provider.automaticCachePoint ?? false;
+  db.claudeRetrivalCaching = provider.claudeRetrievalCaching ?? false;
+  db.claudeBatching = provider.claudeBatching ?? false;
+  db.claude1HourCaching = provider.claudeOneHourCaching ?? false;
+  db.antiServerOverloads = provider.antiServerOverloads ?? false;
+  db.fallbackWhenBlankResponse = provider.fallbackWhenBlankResponse ?? false;
+  db.modelTools = [...(provider.modelTools ?? [])];
+  db.openAIFlexProcessing = provider.openAIFlexProcessing ?? false;
+  db.streamGeminiThoughts = provider.streamGeminiThoughts ?? false;
   db.inlayErrorResponse = true;
+  return db;
+}
+
+export async function configureFeliniaProvider(provider: FeliniaProvider) {
+  const rt = await runtime();
+  const db = rt.database.getDatabase();
+  applyFeliniaProviderSettings(db, provider);
 }
 
 function generationError(chat: Chat, startLength: number): string {
@@ -1391,7 +1511,9 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
         bestCandidate = candidate;
       }
       const tooShort = !!minChars && proseCharacters(generated.data) < minChars;
-      if (!temporalViolations.length && !repeated.length && !tooShort) break;
+      const blankResponse = !String(generated.data || '').trim();
+      if (!temporalViolations.length && !repeated.length && !tooShort
+        && !(blankResponse && rt.database.getDatabase().fallbackWhenBlankResponse)) break;
       if (attempt === maxRetries) {
         const recovered = bestCandidate || fallbackCandidate;
         if (recovered) {
@@ -1403,7 +1525,9 @@ export async function generateFeliniaTurn(options: FeliniaGenerateOptions = {}) 
         }
         break;
       }
-      retryInstruction = temporalViolations.length
+      retryInstruction = blankResponse
+        ? '【空白响应纠正】接口刚才没有返回可显示正文。保持当前场景与人物状态，从本回开头完整作答；不要只返回思考、控制标签或空白。'
+        : temporalViolations.length
         ? `【时代越界纠正】刚才草稿出现了当前纪年以后才存在的内容：${temporalViolations.slice(0, 5).join('、')}。该草稿已作废。未来资料没有进入本局，不得猜测、预言、暗示或换同义词重新写入；只使用当前时代卡、当前地点、已触发世界书和过去已经发生的事实，从本回开头重写。`
         : repeated.length
         ? `【对白复读纠正】刚才草稿复用了最近三回已经说过的台词：${repeated.map((line) => `「${line}」`).join('、')}。该草稿作废。保持人物全部设定与当前场景，从本回开头重写；这些句子及同义的万能推脱都不得再次出现。根据眼前对象、动作和利害写出新的回应，也可以用沉默、追问、改口或具体行动代替。`
@@ -1536,6 +1660,7 @@ export const FeliniaRisu = Object.freeze({
   preparePalace: prepareFeliniaPalace,
   syncPalace: syncFeliniaPalace,
   exportPalace: exportFeliniaPalace,
+  getPalaceDrawers: getFeliniaPalaceDrawers,
   importPalace: importFeliniaPalace,
   clearPalace: clearFeliniaPalace,
   snapshot: snapshotFeliniaRisu,

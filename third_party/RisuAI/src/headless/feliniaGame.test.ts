@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFeliniaCognitionPrompt,
   buildFeliniaPlanningPrompt,
+  applyFeliniaProviderSettings,
   compileFeliniaDefinition,
   extractFeliniaCognition,
   findFeliniaTemporalViolations,
@@ -26,6 +27,59 @@ function fixture() {
 }
 
 describe('FELINIA fixed Risu runtime data', () => {
+  it('maps every exposed engine setting into the Risu database', () => {
+    const db = applyFeliniaProviderSettings({}, {
+      base: 'https://example.invalid/v1', model: 'test-model', format: 'openai',
+      frequencyPenalty: 0.37, presencePenalty: 0.19, topK: 42,
+      repetitionPenalty: 1.08, minP: 0.05, topA: 0.1,
+      requestRetries: 4, requestTimeoutSec: 321, stream: false,
+      stopStrings: ['<END>', 'STOP'], generationSeed: 77,
+      autoContinue: true, autoContinueMinTokens: 256, removeIncompleteResponse: true,
+      additionalParams: [['service_tier', '"auto"']], applyAdditionalParamsToAll: true,
+      useInstructPrompt: true, tokenizer: 'llama', instructChatTemplate: 'jinja', jinjaTemplate: '{{ messages }}',
+      systemContentReplacement: 'SYS {{slot}}', systemRoleReplacement: 'assistant',
+      assistantPrefill: 'prefill', postEndInnerFormat: 'tail', sendChatAsSystem: true, sendName: true,
+      chainOfThought: true, customChainOfThought: true, maxThoughtTagDepth: 2,
+      jsonSchemaEnabled: true, jsonSchema: '{"type":"object"}', strictJsonSchema: false, extractJson: 'result',
+      thinkingTokens: 2048, thinkingType: 'adaptive', adaptiveThinkingEffort: 'xhigh',
+      deepseekThinkingType: 'enabled', deepseekReasoningEffort: 'max', verbosity: 2,
+      automaticCachePoint: true, claudeRetrievalCaching: true, claudeBatching: true,
+      claudeOneHourCaching: true, antiServerOverloads: true, fallbackWhenBlankResponse: true,
+      modelTools: ['search'], openAIFlexProcessing: true, streamGeminiThoughts: true,
+    });
+    expect({
+      frequencyPenalty: db.frequencyPenalty, presencePenalty: db.PresensePenalty,
+      topK: db.top_k, repetitionPenalty: db.repetition_penalty, minP: db.min_p, topA: db.top_a,
+      retries: db.requestRetrys, timeout: db.localNetworkTimeoutSec, stream: db.useStreaming,
+      stops: db.localStopStrings, seed: db.generationSeed, autoContinue: db.autoContinueChat,
+      autoMin: db.autoContinueMinTokens, removeIncomplete: db.removeIncompleteResponse,
+      params: db.additionalParams, paramsAll: db.applyAdditionalParamsToAll,
+      instruct: db.useInstructPrompt, tokenizer: db.customTokenizer, template: db.instructChatTemplate,
+      jinja: db.JinjaTemplate, systemReplacement: db.systemContentReplacement, systemRole: db.systemRoleReplacement,
+      prefill: db.promptSettings.assistantPrefill, postEnd: db.promptSettings.postEndInnerFormat,
+      chatSystem: db.promptSettings.sendChatAsSystem, sendName: db.promptSettings.sendName,
+      cot: db.chainOfThought, customCot: db.promptSettings.customChainOfThought, thoughtDepth: db.promptSettings.maxThoughtTagDepth,
+      jsonOn: db.jsonSchemaEnabled, json: db.jsonSchema, jsonStrict: db.strictJsonSchema, extract: db.extractJson,
+      thinkingTokens: db.thinkingTokens, thinkingType: db.thinkingType, adaptive: db.adaptiveThinkingEffort,
+      deepType: db.deepseekThinkingType, deepEffort: db.deepseekReasoningEffort, verbosity: db.verbosity,
+      autoCache: db.automaticCachePoint, retrieval: db.claudeRetrivalCaching, batch: db.claudeBatching,
+      hourCache: db.claude1HourCaching, overload: db.antiServerOverloads, blankFallback: db.fallbackWhenBlankResponse,
+      tools: db.modelTools, flex: db.openAIFlexProcessing, geminiThoughts: db.streamGeminiThoughts,
+    }).toEqual({
+      frequencyPenalty: 37, presencePenalty: 19, topK: 42, repetitionPenalty: 1.08, minP: 0.05, topA: 0.1,
+      retries: 4, timeout: 321, stream: false, stops: ['<END>', 'STOP'], seed: 77,
+      autoContinue: true, autoMin: 256, removeIncomplete: true,
+      params: [['service_tier', '"auto"']], paramsAll: true,
+      instruct: true, tokenizer: 'llama', template: 'jinja', jinja: '{{ messages }}',
+      systemReplacement: 'SYS {{slot}}', systemRole: 'assistant', prefill: 'prefill', postEnd: 'tail',
+      chatSystem: true, sendName: true, cot: true, customCot: true, thoughtDepth: 2,
+      jsonOn: true, json: '{"type":"object"}', jsonStrict: false, extract: 'result',
+      thinkingTokens: 2048, thinkingType: 'adaptive', adaptive: 'xhigh', deepType: 'enabled', deepEffort: 'max', verbosity: 2,
+      autoCache: true, retrieval: true, batch: true, hourCache: true, overload: true, blankFallback: true,
+      tools: ['search'], flex: true, geminiThoughts: true,
+    });
+  });
+
   it('compiles every era and character without installing unscoped historical research globally', () => {
     const { content, eras } = fixture();
     const definition = compileFeliniaDefinition(content, eras);
