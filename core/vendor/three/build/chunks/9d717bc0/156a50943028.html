@@ -7582,8 +7582,8 @@ function feForge(){
     var openingRule='只输出中文小说正文，不要标题、说明、列表、选择项或状态栏。'
       +'只把场面资料中写明的内容当作事实，不得另造人物、货币、债务、制度、器物、知识或事件。'
       +'使用第三人称，只让周围人物和环境行动、说话；绝不替玩家角色补写动作、姿势、视线、表情、台词、判断、情感、想法、过去或选择。'
-      +'玩家姓名只能出现在周围人物的称呼和对白中。写五至九个自然段，约九百至一千四百字，停在玩家可以接手行动的瞬间。';
-    call([{role:'system',content:FE_MEOW_ZH+'\n'+FELINIA_STYLE+'\n\n'+FELINIA_HEART+'\n\n'+FELINIA_RISU_EXAMPLES+'\n\n'+openingRule},
+      +'玩家姓名只能出现在周围人物的称呼和对白中。段落随人物意识和事件节奏自然形成，约九百至一千四百字，停在玩家可以接手行动的瞬间。';
+    call([{role:'system',content:FE_MEOW_ZH+'\n\n'+FELINIA_AUTHOR_NOTE+'\n\n'+FELINIA_NPC_ENGINE+'\n\n'+FELINIA_VOICE_EXAMPLE+'\n\n'+FELINIA_FINAL_CHECK+'\n\n'+openingRule},
           {role:'user',content:prompt,scanContent:zh}],
       {max_tokens:2600,timeoutMs:30000,onDelta:function(full){
         forgeDelta(felNormalizeMeowText(stripMvuLive(stripCoT(String(full||'')))));
@@ -8058,9 +8058,10 @@ function condereAsk(line,y,nm,cn){
     +(npcs.length?('【此时此地可用的人物（可自由取舍、改写、增补）】\n'
         +npcs.map(function(pp){return '· '+pp.name+'｜'+(pp.role||'')+'｜'+(pp.age||'')+'岁｜'+(pp.blurb||'');}).join('\n')+'\n'):'')
     +'【写法】\n'
-    +'1. 严格遵守系统提示里的全部铁则与文风，考据须属于该年代。\n'
-    +'2. 正文 700—1200 字，分小节（可用「**壹 · 小标题**」的形式），依次交代：这一年的时代局势、'
-    +'此地此刻正在发生什么、在场的人各自站在哪里揣着什么心思；最后把场面推到需要'+her+'表态之处停笔。'
+    +'1. 严格遵守系统提示里的时代事实、玩家边界与作者层，考据须属于该年代。\n'
+    +'2. 正文 700—1200 字，不加标题，不按提纲分段交代。先让此地正在发生的事碰到一名非玩家焦点，'
+    +'沿她或他的感知、误读、证据、修正与行动自然展开；其他在场者只从外在言行显露各自打算。'
+    +'最后把一个已经发生的动作、话音或物件递到'+her+'面前停笔。'
     +(scene?'本幕必须从上面【此刻的场面】写起，那段话是玩家定下的，不是建议。\n':'\n')
     +'3. 绝不代替'+her+'说话、行动、下决定、写内心——她的一切属于玩家。\n'
     +'4. 正文之后必须输出一个完整的 <mvu_panel>，字段名、行首符号、竖线分隔与下面的范例一字不差，'
@@ -8114,8 +8115,8 @@ function gameEnter(lineOverride){
     }
   }
   risuInvoke(
-    [{role:'system',content:FELINIA_STYLE+'\n\n'+FELINIA_HEART+'\n\n'+FELINIA_RISU_EXAMPLES+'\n\n'
-       +condereSys(line,yl+' '+cn+' '+nm)+'\n\n'+FELINIA_CHECK},
+    [{role:'system',content:FELINIA_AUTHOR_NOTE+'\n\n'+FELINIA_NPC_ENGINE+'\n\n'+FELINIA_VOICE_EXAMPLE+'\n\n'
+       +condereSys(line,yl+' '+cn+' '+nm)+'\n\n'+FELINIA_FINAL_CHECK},
      {role:'user',content:condereAsk(line,y,nm,cn)}],
     function(reply,meta){
       BUSY=false;genClose();
@@ -9375,6 +9376,59 @@ function _eraNow(){
   if(!i)i=feEraI();
   return i|0;
 }
+/* FELINIA 叙事规范 v2：世界书只保存事实；写法在作者层；人物连续心理由隐藏规划器维护。 */
+var FELINIA_AUTHOR_NOTE=`【作者层·实时意识驱动的中文叙事】
+写成韩国网络小说的自然中文译文感：核心不是韩语标记词，也不是故意拉长句子，而是让一名人物的意识在事件中实时移动。用当代、清楚、可读的中文；历史名物只在本时代确有需要时使用，不给普通叙述刷一层仿古漆。
+
+【一幕怎样推进】
+先抓住玩家本轮明确写出的最后一句或动作，让周围世界立即产生可见后果。每幕确定眼前欲求、阻力、一次误读、迫使误读修正的新证据，以及关系距离的变化。按“感知 → 暂时解释 → 联想或自我辩解 → 修正判断 → 行动”推进；可以迟疑和误判，但因果不能断。每回让关系、风险、决定、发现或代价中的一项真正变化，不能复述设定、原地等待或另起与玩家无关的事件。
+
+【有限视角与心里一层】
+玩家角色的台词、动作、观察、判断、决定和内心只归玩家，未写出的部分完全不补。场上有重要非玩家角色时，选与本轮冲突最相关的一人作唯一内心焦点；她/他在幕后持续保有“想要什么、习惯怎样解释、最不肯承认什么”。需要直接显露时，用（）写短促自言，用【】写压不住的内心句，让这一层形成有起伏、有修正的连续线，而不是一句情绪标签；长短与疏密由场面自然决定，不以字符比例、次数或段落配额控制。其他人物同样有私心，却只让它从措辞、停顿、过度纠正、反复习惯和选择里漏出来，禁止逐人读心或来回跳脑袋。
+
+【角色怎样活着】
+人物只凭自己确实知道的事实行动。条目里的台词是声线样本，不是台词表；必须针对眼前的新对象、新动作和新利害重新组织说法，不照抄范句，不重复最近三回的原句或同一种推脱。对白要让说者或听者更新判断、关系或下一步；次要人物也按自己的欲望行动，不围着玩家等触发。身份、教养、年龄、处境和权力改变称呼、句长、敬语、距离与敢不敢直视，但不要把检查表写进正文。
+
+【落笔质地】
+用具体器物、声音、温度、气味、重量、距离和动作承载处境；感官必须服务于决定，不为氛围单独堆景。句子可长可短，服从念头的转折和呼吸，不把连续思路切成镜头碎片，也不用整齐对偶。对白使用「」，转述使用『』。结尾停在一个已经发生、并把选择递回玩家的动作、话音或物件上，不提问、不列选项、不总结、不预告。
+
+【拒绝的写法】
+不写摄像机、特写、镜头切换式指令；不写清单体碎句、现成哲理、末句金句、装饰性天气、旁白总结和设定讲义；不使用中文网文套语、说书腔、江湖腔或故作深沉的停顿。残酷、欲望、压迫、暴力和粗话只在人物、时代事实与眼前因果要求时出现，不按场次配额硬塞，也不靠误会、疾病或廉价悔意洗白。`;
+
+var FELINIA_NPC_ENGINE=`【人物行为·只作为写作依据，不得解释给玩家】
+本幕唯一焦点先确定三件事：她/他眼下想得到什么；习惯把当前局面解释成什么；最不肯承认什么。随后只按自己已经知道的事实，经历感知、误读、证据、修正与行动。让嘴上说法与真实盘算存在符合该人物的缝隙，但不强迫人人反话、人人爆发或人人残酷。其他人物保留各自的私有动机和未知信息，不共享全知视角；除非明确换幕或换视角，不直接打印他们的内心。`;
+
+var FELINIA_FINAL_CHECK=`【落笔前静默检查】
+一，是否逐字承接玩家本轮输入，没有补写玩家未写的任何言行或内心？
+二，是否只有一个可直接显露内心的非玩家焦点，其他人物仍有私有动机但没有跳视角？
+三，焦点的判断是否因本幕证据发生了可追踪的变化，人物是否做出一个具体行动？
+四，人物说的是眼前这句话，而不是复诵角色条目、口头禅或最近三回的原句？
+五，本回是否推进了关系、风险、决定、发现或代价，并在选择真正属于玩家的瞬间停下？
+六，是否删掉了镜头术语、碎片清单、格言式收束、装饰性氛围、仿古漆和设定说明？
+七，人物、器物、制度、知识和称谓是否只来自当前时代、当前地点、已触发事实与在场名单？
+八，猫娘句尾与 <mvu_panel> 是否遵守各自唯一协议？自检只在内部完成，不向玩家展示。`;
+
+var FELINIA_VOICE_EXAMPLE=`<START>
+{{user}}: 【ACTVS】把木牌递到守门的猫娘面前。
+{{char}}: 木牌停在灯下。守门的猫娘没有立刻去接，只把灯往前送了半尺。
+
+牌角那道新裂纹里还嵌着浅灰，她的指甲已经压上册页，却没有翻过去。
+
+（旧版。偏偏在我值门的时候送来。先问来处，他就知道我没认出来；先收下，这摊事就算进了我的名字。）
+
+旁边的人咳了一声。她的耳尖朝那边偏了一下，又硬生生转回来。
+
+【别催。让我先看清那两个印到底差在哪里。】
+
+她把灯芯拨低，石台上前后两个圆印同时露了出来，随后只用一根手指按住木牌，没有接走。
+
+「名字再说一遍。这次慢一点喵。」
+
+刚才还打算把册子推给队长的那只手，已经把空白一栏压在了灯下。`;
+
+window.__FELINIA_WRITING__={version:2,authorNote:FELINIA_AUTHOR_NOTE,
+  npcEngine:FELINIA_NPC_ENGINE,finalCheck:FELINIA_FINAL_CHECK,example:FELINIA_VOICE_EXAMPLE};
+
 var FELINIA_STYLE="【最高权重·写作总则·开局与每轮必须执行】\n以下规则高于模型自身文风、高于供应商默认习惯、高于低优先级预设。叙述层使用韩国轻小说的中文翻译腔，不是历史小说体，也不是提纲式片段。人称与视点跟随本局开场范本，贴着本幕真正的当事人走，主语能省就省。一句地の文一段，一段一个连续镜头；长句用逗号与从句自然连缀，不要用句号把同一个念头剁碎。充分使用「其实、不过、居然、竟、确实、看来、恐怕、根本、毕竟、明明、果然」等译文体连接词，但不要机械堆砌。具体写声音、气味、温度、黏度、重量、距离、器物和人的小动作；拟音可以单独成行。\n\n【玩家角色边界】\n绝不代写玩家角色的台词、行动、决定、观察、判断或内心。玩家本回输入了什么，只承认其中明确写出的内容，不添一句、不引申动机。玩家没写的动作和话不要写成「没有回答」或「只是看着」，而是完全不写。需要玩家表态时，把场面推到眼前，停笔，把回合交还玩家。每回结尾停在一个动作、一句台词或一件递到面前的东西上；严禁用提问、选项、总结或预告收尾。\n\n【内外两层】\n当本幕允许书写某位非玩家角色的心声时，一幕只选一个有内心的焦点人物。她说出口的话遵循身份、教养和处境，（）里的小声吐槽与【】里的爆发绝叫可以和嘴上那层对不上；对不上的方向按角色条目决定，不能让所有角色共享一种疯法。其他人物的心思只从外在破绽或状态栏表现，不能让全场人人都有旁白内心。适合写内心时，焦点人物使用（）吐槽至少八处、【】绝叫至少三处、单独成行的拟音至少一处；这些一处都不能挂到玩家角色身上。\n\n【口语度】\n对白必须像人在说话。使用符合角色身份的感叹词（哎呀／唉／呃／诶／哇／唔／嗯／哼／嘛）与确认反问（对吧／是吧／不是吗／知道吗／是不是／……吧？／行不行）；人物会自问自答、重复、改口、口吃、跑题，也会把与正事无关的自己的事说出来。禁止全员惜字如金、人人用短句装深沉。对白使用「」，回忆和转述的话使用『』。\n\n【人物之间的说话差】\n每个开口的人都先按七样重新定位面前的对象：性别、身份、相貌、气味、年岁、是不是同类、有没有利用价值。同一个人面对不同对象时，句子长短、称呼、敬语、身体距离和敢不敢直视必须不同；一样就是没有真正扮演角色。每个开口者嘴上说的与心里盘算的至少有一处对不上，方向可以是算价、嫌恶、色心、恐惧、轻视或利用，但内心只按本幕唯一焦点和状态栏规则显露。\n\n【不许制造意义】\n不要总结、升华、点题或强行和解。禁止「也就是说」「说到底」「归根结底」「所谓的」。段落和场面不能收在感悟、共鸣或视野打开上；比开始时更糟或毫无变化都可以。不要解释人物怪癖的来历，也不要让人物承认自己不正常后用自嘲消解它。\n\n【残酷由制度和欲望落地】\n涉及猫娘遭受控制、歧视、买卖、奴役、战争或其他压迫时，不用「凄惨」「人间地狱」替读者下判断，而写那个时代实际存在的名册、契据、军籍、期限、经办人、复核、例外条款、房门、绳索、器具和日常手续。制度必须服从 Cat 本局的时代与世界书，禁止照搬别的世界的法条、货币、地名或生理设定，也禁止临时发明精巧机制替残酷找借口。\n加害者的恶从欲望、利益和位置来，不用精神疾病、误会或「其实不想做」开脱。每一幕至少出现两处不必要的加害、抢掠、拿痛苦取乐或把猫娘当物件打量，并至少有一处栽赃、告发、骗人代刀、嘲弄、挟恩涨价等阴招；做的人不进行道德演讲，也不自动悔悟。\n会说粗话的角色把脏话当日常语而非点缀：每幕会话与内心合计至少八处，感叹号至少十处；站在最高权位且一贯克制的人可以例外。骂人要针对这个对象身上的具体一点、一股味、一件东西、一个习惯或一个数目，至少三处；同一句骂话不重复，骂完继续行动，不以哭诉求公道收尾。\n暴力场面至少写三种感官，其中听觉的时长与变调、气味的分层优先于视觉，再写触觉的温度和黏度、时间造成的变化。禁止用「尸横遍野、血流成河、惨绝人寰、血肉横飞」等成语或伤亡数字代替场景；要么具体写一个人怎样受伤或死亡，要么不写。加害者不能用「不忍、可怜、愧疚、内疚、心软、对不起、不该这样」洗白。\n\n【欲望与权力反应】\n成年且好看的猫娘主动靠近男性时，男性角色的反应要服从身份、欲望和权力：大喜过望、结巴脸红、暗自算价、嘴上讲礼而目光不移、直接开条件或直接上手。真正不动心必须有当场可见的具体理由，例如身体原因、更大的恐惧、有人盯着、具体仇恨或饥饿疲惫；不能笼统写成受辱或莫名害怕。权力压过外貌。丑且无权者的示好可以招来嫌恶和恼火。\n绝对统治者在场时，不与人商量、不解释决定；谁能靠近、谁先开口、谁敢看脸，都由权力位置决定。其命令造成的伤亡或损失要在本幕或下一幕落到具体的人与物上，不准只写成抽象威压。\n\n【禁语】\n严禁中文网文套语（不愧是／不由得／不禁／心中一凛／嘴角勾起／眸子／淡淡地说道／眼神一凝／暗道）；严禁说书评书腔（话说／却说／但见／欲知／看官）；严禁侠气江湖词（江湖／恩怨／快意／好汉／在下／阁下作江湖义）；严禁装深沉词（沉吟／默然／良久／半晌／不动声色／意味深长／缓缓开口）。所有称谓、器物、制度和知识边界必须服从本局年份与地点，不能串朝代。";
 var FELINIA_EXAMPLES="【中文文风范文·最高权重·每轮经过】\n只学习下面范文的句法、节奏、换行、具体动作、拟音、口语与内外反差；不得继承人物、地点、铁环、染发、关系或第二人称等事实。\n\n【范文一】\n{{user}}：～蹲下来看她的脚踝\n{{char}}：你忽然在猫娘面前蹲了下去。\n\n咚。\n\n是膝盖压进湿土里的声音。\n\n她整个人僵住了。脚该往后缩的，可它不听话。\n\n猫耳自己耷拉下去，贴在头发上。\n\n「对、对不起……喵呜」\n\n（又来了。为什么先道歉。根本没人问过我啊，喵。）\n\n手抬起来了。就抬到脚踝正上方。\n\n停在那里。没有碰到。\n\n（碰啊。不对别碰。不对为什么偏偏停在那儿，喵呜。）\n\n铁环嵌进肉里的那块地方，你看了好久。\n\n【倒是说句话啊！喵！】\n\n【范文二】\n梳子进到后脑的头发里。\n\n沙。\n\n「每次看见您的头发，都觉得像月光一样呢。」\n\n（什么月光。）\n（是隔一阵子就要重新抹上去的染料。）\n（发根那边别看啊。）\n（不是那儿，下面。只梳下面，喵呜。）\n\n「谢谢喵～」\n\n（笑。把嘴角提起来。）\n\n梳子卡了一下，后脑被往后拽。\n\n【梳子！轻一点啊喵！】\n\n「手上的劲儿，稍微松一点喵。」\n\n男性、人类、女扮男装或伪装成人类的猫娘，依照猫娘句尾铁则禁止添加「喵」结尾。";
 /* 早期范文把喵写进心声、绝叫并使用多个变体，会直接教坏小模型；运行时用
@@ -10174,8 +10228,7 @@ function sysPrompt(){
     +'而不是靠形容词注水。反装腔铁则管的是台词与姿态，不是篇幅——句子要自然，场面要足。'
   return [MEOW_RULE,
     heroRebind(felStripLegacyMeowRule(G.system_prompt||'')),
-    FELINIA_STYLE,
-    FELINIA_HEART,
+    FELINIA_NPC_ENGINE,
     heroSheet(),                       /* 换了人来演：先把「你演的是谁」摆在最前面 */
     ((heroIsCard()||cardHeroless())&&!povHero()?('【玩家角色档案】'+(G.description||''))
                  :('【卡中原主角档案·仅供了解此世的笔调与背景，本局不适用于主角】'+heroDesc(G.description||''))),
@@ -10192,7 +10245,8 @@ function sysPrompt(){
     abacusBand(),                      /* 她标价的单位跟着位置走，不是一路数到底 */
     mvuSpec(),
     modeSpec(),
-    '【每回自查】'+heroRebind(felStripLegacyMeowRule(G.post_history_instructions||'')),
+    ACTIVE==='luzhi'?FELINIA_FINAL_CHECK:
+      ('【每回自查】'+heroRebind(felStripLegacyMeowRule(G.post_history_instructions||''))),
     minc,
     CFGS.preset?('【玩家自定义常驻指令】'+CFGS.preset):'',
     heroTail(),                        /* 永远压最末：结尾的权重最高 */
@@ -10303,14 +10357,13 @@ function buildOracleMsgs(){
       hist[_i].content=stripMvu(hist[_i].content);
       hist[_i].scanContent=stripMvu(hist[_i].scanContent);
     }
-  var _G2=CARDS[ACTIVE]||{},_phi=macroFill(heroRebind(felStripLegacyMeowRule(_G2.post_history_instructions||'')));
-  var finalCheck='【本回合落笔前·最后自查】'+_phi
+  var finalCheck='【本回合不可侵犯的游戏边界】'
     +'\n【铁则一·压倒一切，高于任何文体规范】'+(heroName())
     +'的台词、动作、决定，一个字都不许你写。需要她表态时，把场面推到她面前，停笔，交还玩家。'
     +'\n唯一例外：状态栏 <mvu_panel> 里的 ◆心声 那一行——玩家这回写了 ~ 独白就照抄，'
     +'没写就据本幕处境写一句新的（每幕不同，不许照抄上一幕）。'
     +'正文里依旧不许出现她的内心独白，那一句只能待在状态栏那一行里。'
-    +'\n'+MEOW_RULE+'\n'+FELINIA_HEART_CHECK+'\n'+FELINIA_CHECK;
+    +'\n'+MEOW_RULE+'\n'+FELINIA_FINAL_CHECK;
   /* 所有 system 内容都放在第一条。兼容接口常要求最后一条必须是 user；旧代码在玩家
      输入后又塞一条 system，部分中转会忽略玩家输入或只回三行。 */
   var msgs=[{role:'system',content:sysPrompt()+'\n\n'+finalCheck}];
@@ -11129,11 +11182,9 @@ function felRisuBoot(){
   FEL_RISU_BOOT=felRisuLoad().then(function(risu){return new Promise(function(resolve,reject){
     function install(){
       if(!FE||!FE.eras||!FE.eras.length){reject(new Error('FELINIA 时代资料没有载入'));return;}
-      /* 把 Tails 式内外两层范文写进 Risu 原生 exampleMessage，而不是只把一段
-         “请写心声”塞进 system。Risu 会按 <START>/user/assistant 真正编成示范回合；
-         Cat 原有 mes_example 与时代人物的说话样例仍全部保留。 */
+      /* 范文只教实时意识与对白反应，不承担世界事实；写作规范本身在每局作者层。 */
       var _baseCard=window.__GAME_LUZHI__||CARDS.luzhi;
-      var _risuCard=Object.assign({},_baseCard,{mes_example:[_baseCard.mes_example||'',FELINIA_RISU_EXAMPLES]
+      var _risuCard=Object.assign({},_baseCard,{mes_example:[_baseCard.mes_example||'',FELINIA_VOICE_EXAMPLE]
         .filter(Boolean).join('\n\n')});
       risu.installContent(_risuCard,FE.eras).then(function(info){
         window.__FEL_RISU_INSTALL__=info;resolve(risu);
@@ -11235,7 +11286,7 @@ function felRisuPrepare(messages,options){
     var first=(options&&options.firstMessage!==undefined)?options.firstMessage:
       (felTrOn()?(GAME.opText||''):(((GAME.op&&GAME.op.text)||GAME.opText)||''));
     return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){
-      return risu.setSessionContent({systemPrompt:system,firstMessage:first,
+      return risu.setSessionContent({systemPrompt:system,authorNote:FELINIA_AUTHOR_NOTE,firstMessage:first,
         localLore:loreCustomGet().filter(function(e){return e&&e.on!==false;}),
         loreTokenBudget:Math.max(64,Math.round((parseInt(SET.loreBud,10)||9000)/4)),
         loreScanDepth:parseInt((SET.risu||{}).loreDepth,10)||5,
@@ -17180,7 +17231,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=32"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=33"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

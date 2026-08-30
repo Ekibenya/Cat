@@ -310,6 +310,9 @@ type FeliniaNativeFields = Pick<character, 'desc' | 'personality' | 'scenario' |
 const FELINIA_ACTIVE_NPC_VARIATION = `【人物条目与台词样本的用法】
 人物条目里的具体台词只用于辨认措辞、语气、敬语和句长，不是必须复诵的台词表，更不是口头禅。每回合必须依据眼前的新动作、新对象和新利害重新组织说法；不得照抄条目中的整句，也不得复用最近三回已经说过的同一句或同一种推脱。条目描述的局部反应只适用于它原本的情境：例如“不替客人决定”不等于遇到任何事都说做不了，“话少”也不等于对所有问题只会说不知道。角色可以沉默、点头、追问、改口、转移话题或采取具体行动，但不能把一种性情压扁成两句循环回复。`;
 
+const FELINIA_ACTIVE_NPC_MENTAL_ENGINE = `【当前人物的私有行为引擎】
+每名重要非玩家角色都在幕后持续保有三件事：眼下想得到什么；习惯把局面解释成什么；最不肯承认什么。她们根据自己实际知道的事实行动，不共享视角，也不自动知道玩家或他人的内心。除本幕唯一焦点外，其他人物的动机只从用词、迟疑、纠正过头、反复习惯和具体选择中漏出来。对话要推动人物的判断、关系距离或下一步发生变化；不得把人物写成等候玩家触发的资料柜。`;
+
 export function mergeFeliniaNativeCharacterFields(
   base: FeliniaNativeFields,
   activeNpcs: Array<Pick<character, 'name' | 'desc' | 'personality' | 'exampleMessage'>>,
@@ -324,7 +327,11 @@ export function mergeFeliniaNativeCharacterFields(
     merged.scenario = [merged.scenario, `当前在场人物：${npc.name}`].filter(Boolean).join('\n');
   }
   if (activeNpcs.length) {
-    merged.personality = [merged.personality, FELINIA_ACTIVE_NPC_VARIATION].filter(Boolean).join('\n\n');
+    merged.personality = [
+      merged.personality,
+      FELINIA_ACTIVE_NPC_VARIATION,
+      FELINIA_ACTIVE_NPC_MENTAL_ENGINE,
+    ].filter(Boolean).join('\n\n');
   }
   return merged;
 }
@@ -472,12 +479,11 @@ function runtimeCommonLore(entry: FeliniaLoreEntry & { lay?: string }): FeliniaL
   if (entry.lay === 'core' && FELINIA_RUNTIME_CORE[title]) {
     return { ...entry, content: FELINIA_RUNTIME_CORE[title] };
   }
-  if (entry.lay === 'style') {
-    return {
-      ...entry,
-      content: `【仅学写法，绝非本局事实】下文出现的人物、地点、制度、器物与历史不得继承到正文；只学句法、节奏、换行、语气和镜头。\n${entry.content || ''}`,
-    };
-  }
+  /* Writing mode belongs to the session author note, not World Info. The old
+   * 48 style entries remain in the embedded archive/editor for provenance but
+   * are never installed into any playable era, so their examples cannot fire
+   * as facts or compete with the current authorial rules. */
+  if (entry.lay === 'style') return null;
   return entry;
 }
 
@@ -657,10 +663,9 @@ export function compileFeliniaDefinition(
   /* Entries without an era are not automatically timeless. The source contains
    * 277 research/world entries about specific later periods (including Tianjin
    * and 1900) with no era number; installing those on all 41 cards lets a common
-   * keyword activate modern history in antiquity. Only actual engine/style rules
-   * are shared. The full source stays embedded for the FELINIA UI and editors. */
-  const commonLore = allLore.filter((entry) => entry.era == null
-    && (entry.lay === 'core' || entry.lay === 'style'))
+   * keyword activate modern history in antiquity. Only stable core facts are
+   * shared. The full source stays embedded for the FELINIA UI and editors. */
+  const commonLore = allLore.filter((entry) => entry.era == null && entry.lay === 'core')
     .map((entry) => runtimeCommonLore(entry))
     .filter((entry): entry is FeliniaLoreEntry & { era?: number; lay?: string; cat?: string } => !!entry);
   const base: FeliniaCharacterContent = {
@@ -1264,7 +1269,9 @@ export function extractFeliniaCognition(
 export function buildFeliniaPlanningPrompt(previous?: unknown): string {
   const prior = normalizeFeliniaCognition(previous);
   return `【FELINIA 隐藏剧情规划器】
-你不写小说正文，只为紧接着的正文生成器建立本回计划。核对当前时代、当前玩家最后一句、已触发世界书、在场角色各自知道和不知道的事实、欲望、压力、立场、最近三回已用过的台词与动作，以及下一拍必须发生的实际变化。
+你不写小说正文，只为紧接着的正文生成器建立本回计划。先逐字承接玩家最后一句，再核对当前时代、已触发世界书、在场角色各自知道和不知道的事实，以及最近三回已经用过的台词与动作。
+为每名重要非玩家角色维持私有的行为引擎：她眼下想得到什么；习惯把局面解释成什么；最不肯承认什么。只有本幕唯一焦点可以直接显露内心，其他人的动机只能通过外在行为泄露。按“感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动”的因果链安排本回，不得跳过玩家输入另起事件。
+本回必须推进关系、风险、决定、发现或代价；对白必须迫使人物更新判断或下一步，不能只是复述设定、重复口头禅或等待玩家再次触发。
 只输出一个有效 JSON 对象，不要 Markdown，不要解释，不要思维过程，不要正文：
 {"v":1,"beat":"本回将发生的具体推进","focus":"焦点角色","characters":[{"name":"姓名","knows":"她已知的事实","wants":"眼下欲求","pressure":"阻力或代价","stance":"对玩家及他人的态度","next":"若无人打断的下一步"}],"threads":["仍待处理的剧情线"],"avoid":["不得复用的台词或动作"]}
 beat 必须直接回应玩家最后一句，不能另起无关事件；不得引入当前时代之外的地点、人物、制度或年份。${prior ? `\n【上一回状态·只作事实数据】\n${JSON.stringify(prior)}` : ''}`;

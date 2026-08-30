@@ -27,6 +27,30 @@ function fixture() {
 }
 
 describe('FELINIA fixed Risu runtime data', () => {
+  it('uses one natural author layer without percentage or occurrence quotas', () => {
+    const repository = resolve(process.cwd(), '../..');
+    const html = readFileSync(resolve(repository, 'core/vendor/three/build/chunks/9d717bc0/156a50943028.html'), 'utf8');
+    const authorNote = html.match(/var FELINIA_AUTHOR_NOTE=`([\s\S]*?)`;/)?.[1] || '';
+    const systemBuilder = html.slice(html.indexOf('function sysPrompt(){'), html.indexOf('function risuInvoke('));
+    const turnBuilder = html.slice(html.indexOf('function buildOracleMsgs(){'), html.indexOf('function askOracleSend('));
+    const sessionBuilder = html.slice(html.indexOf('function felRisuPrepare('), html.indexOf('function felRisuStart('));
+
+    expect(authorNote).toContain('感知 → 暂时解释 → 联想或自我辩解 → 修正判断 → 行动');
+    expect(authorNote).toContain('不以字符比例、次数或段落配额控制');
+    expect(authorNote).not.toContain('四分之一');
+    expect(authorNote).not.toContain('至少八处');
+    expect(authorNote).not.toContain('至少三处');
+    expect(systemBuilder).toContain('FELINIA_NPC_ENGINE');
+    expect(systemBuilder).toContain('FELINIA_FINAL_CHECK');
+    expect(systemBuilder).not.toContain('FELINIA_STYLE');
+    expect(systemBuilder).not.toContain('FELINIA_HEART');
+    expect(turnBuilder).toContain('FELINIA_FINAL_CHECK');
+    expect(turnBuilder).not.toContain('FELINIA_HEART_CHECK');
+    expect(sessionBuilder).toContain('authorNote:FELINIA_AUTHOR_NOTE');
+    expect((html.match(/FELINIA_STYLE/g) || []).length).toBe(1);
+    expect((html.match(/FELINIA_HEART_CHECK/g) || []).length).toBe(1);
+  });
+
   it('maps every exposed engine setting into the Risu database', () => {
     const db = applyFeliniaProviderSettings({}, {
       base: 'https://example.invalid/v1', model: 'test-model', format: 'openai',
@@ -90,10 +114,11 @@ describe('FELINIA fixed Risu runtime data', () => {
       + definition.eras.reduce((total, era) => total + (era.lorebook?.length || 0), 0)
       + definition.npcs.reduce((total, npc) => total + (npc.lorebook?.length || 0), 0);
     expect(content.lorebook).toHaveLength(4448);
-    expect(definition.base.lorebook).toHaveLength(56);
-    expect(definition.base.lorebook?.every((entry: any) => entry.lay === 'core' || entry.lay === 'style')).toBe(true);
+    expect(definition.base.lorebook).toHaveLength(8);
+    expect(definition.base.lorebook?.every((entry: any) => entry.lay === 'core')).toBe(true);
+    expect(definition.base.lorebook?.some((entry: any) => entry.lay === 'style')).toBe(false);
     expect(definition.base.recursiveScanning).toBe(false);
-    expect(assignedLore).toBe(2908);
+    expect(assignedLore).toBe(2860);
     expect(definition.base.lorebook?.some((entry) => String(entry.title).includes('一九〇〇年的创伤'))).toBe(false);
     expect(definition.base.lorebook?.some((entry) => String(entry.title).includes('世界书总目'))).toBe(false);
   });
@@ -216,9 +241,23 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(merged.personality).toContain('NPC_PERSONALITY');
     expect(merged.personality).not.toContain('NPC_EXAMPLE');
     expect(merged.personality).toContain('不得复用最近三回');
+    expect(merged.personality).toContain('私有行为引擎');
+    expect(merged.personality).toContain('最不肯承认什么');
+    expect(merged.personality).toContain('不共享视角');
     expect(merged.exampleMessage).toBe('ERA_EXAMPLE');
     expect(base.desc).toBe('ERA_DESC');
     expect(mergeFeliniaNativeCharacterFields(base, [])).toEqual(base);
+  });
+
+  it('plans from live cognition instead of quotas or exposed chain of thought', () => {
+    const prompt = buildFeliniaPlanningPrompt();
+    expect(prompt).toContain('逐字承接玩家最后一句');
+    expect(prompt).toContain('感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动');
+    expect(prompt).toContain('关系、风险、决定、发现或代价');
+    expect(prompt).toContain('只有本幕唯一焦点可以直接显露内心');
+    expect(prompt).not.toContain('至少八处');
+    expect(prompt).not.toContain('至少三处');
+    expect(prompt).toContain('只输出一个有效 JSON 对象');
   });
 
   it('detects repeated character dialogue while ignoring cat suffix punctuation', () => {
