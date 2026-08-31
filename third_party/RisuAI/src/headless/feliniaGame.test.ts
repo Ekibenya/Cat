@@ -37,6 +37,9 @@ describe('FELINIA fixed Risu runtime data', () => {
 
     expect(authorNote).toContain('感知 → 暂时解释 → 联想或自我辩解 → 修正判断 → 行动');
     expect(authorNote).toContain('不以字符比例、次数或段落配额控制');
+    expect(authorNote).toContain('句式签名');
+    expect(authorNote).toContain('…………');
+    expect(authorNote).toContain('不能自动变成全书反复出现的意象');
     expect(authorNote).not.toContain('四分之一');
     expect(authorNote).not.toContain('至少八处');
     expect(authorNote).not.toContain('至少三处');
@@ -47,8 +50,13 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(turnBuilder).toContain('FELINIA_FINAL_CHECK');
     expect(turnBuilder).not.toContain('FELINIA_HEART_CHECK');
     expect(sessionBuilder).toContain('authorNote:FELINIA_AUTHOR_NOTE');
-    expect((html.match(/FELINIA_STYLE/g) || []).length).toBe(1);
-    expect((html.match(/FELINIA_HEART_CHECK/g) || []).length).toBe(1);
+    expect(html).toContain('window.__FELINIA_WRITING__={version:3');
+    expect(html).toContain('/core/res/runtime/risu/risu-headless.js?v=34');
+    expect(html).not.toContain('FELINIA_STYLE');
+    expect(html).not.toContain('FELINIA_EXAMPLES');
+    expect(html).not.toContain('FELINIA_HEART');
+    expect(html).not.toContain('FELINIA_RISU_EXAMPLES');
+    expect(html).not.toContain('FELINIA_CHECK');
   });
 
   it('maps every exposed engine setting into the Risu database', () => {
@@ -214,6 +222,17 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(relation?.keys).toEqual(['该隐', '潘多拉', '伏羲']);
   });
 
+  it('uses generic material and meal keys only for broad systems, never narrow props', () => {
+    const { content, eras } = fixture();
+    const definition = compileFeliniaDefinition(content, eras);
+    const genericKeys = /^(?:食物|饭|餐|衣服|服装|衣物|布料|气味|住处|房屋|钱|货币)$/;
+    const keyedEntries = definition.eras.flatMap((era) => era.lorebook || []).filter((entry) =>
+      entry.keys.some((key) => genericKeys.test(String(key).trim())),
+    );
+    expect(keyedEntries.length).toBeGreaterThan(0);
+    expect(keyedEntries.every((entry) => /服装|住处与钱/.test(String(entry.title)))).toBe(true);
+  });
+
   it('keeps current character traits but does not turn archives or raw quotes into native examples', () => {
     const { content, eras } = fixture();
     const definition = compileFeliniaDefinition(content, eras);
@@ -244,6 +263,9 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(merged.personality).toContain('私有行为引擎');
     expect(merged.personality).toContain('最不肯承认什么');
     expect(merged.personality).toContain('不共享视角');
+    expect(merged.personality).toContain('句式签名');
+    expect(merged.personality).toContain('对方刚才实际说了什么');
+    expect(merged.personality).toContain('省略号是隐藏、试探、争取时间或突然明白时的正常呼吸');
     expect(merged.exampleMessage).toBe('ERA_EXAMPLE');
     expect(base.desc).toBe('ERA_DESC');
     expect(mergeFeliniaNativeCharacterFields(base, [])).toEqual(base);
@@ -255,6 +277,10 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(prompt).toContain('感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动');
     expect(prompt).toContain('关系、风险、决定、发现或代价');
     expect(prompt).toContain('只有本幕唯一焦点可以直接显露内心');
+    expect(prompt).toContain('开口方式、抢或让回合、注意目标');
+    expect(prompt).toContain('“……”或更长的“…………”');
+    expect(prompt).toContain('旧饭菜、旧衣物、旧气味或范例道具');
+    expect(prompt).toContain('"voice"');
     expect(prompt).not.toContain('至少八处');
     expect(prompt).not.toContain('至少三处');
     expect(prompt).toContain('只输出一个有效 JSON 对象');
@@ -282,11 +308,12 @@ describe('FELINIA fixed Risu runtime data', () => {
 
   it('extracts only compact save-safe dramatic state and never exposes it', () => {
     const result = extractFeliniaCognition(
-      '正文先出现。\n<felinia_state>{"v":1,"beat":"门外脚步逼近","focus":"潘金莲","characters":[{"name":"潘金莲","knows":"门外有人","wants":"保住账本","next":"熄灯查看"}],"threads":["门外来客"],"avoid":["不知道喵"]}</felinia_state>',
+      '正文先出现。\n<felinia_state>{"v":1,"beat":"门外脚步逼近","focus":"潘金莲","characters":[{"name":"潘金莲","knows":"门外有人","wants":"保住账本","voice":"先报价格，被追问时只纠正最致命的一点，收尾把货物推回去","next":"熄灯查看"}],"threads":["门外来客"],"avoid":["不知道喵"]}</felinia_state>',
     );
     expect(result.text).toBe('正文先出现。');
     expect(result.cognition?.focus).toBe('潘金莲');
     expect(result.cognition?.characters?.[0].next).toBe('熄灯查看');
+    expect(result.cognition?.characters?.[0].voice).toContain('先报价格');
     expect(result.cognition?.avoid).toEqual(['不知道喵']);
     expect(JSON.stringify(result.cognition)).not.toContain('<');
   });

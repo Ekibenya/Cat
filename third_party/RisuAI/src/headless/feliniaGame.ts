@@ -217,6 +217,7 @@ export interface FeliniaCognitionCharacter {
   wants?: string;
   pressure?: string;
   stance?: string;
+  voice?: string;
   next?: string;
 }
 
@@ -311,7 +312,10 @@ const FELINIA_ACTIVE_NPC_VARIATION = `【人物条目与台词样本的用法】
 人物条目里的具体台词只用于辨认措辞、语气、敬语和句长，不是必须复诵的台词表，更不是口头禅。每回合必须依据眼前的新动作、新对象和新利害重新组织说法；不得照抄条目中的整句，也不得复用最近三回已经说过的同一句或同一种推脱。条目描述的局部反应只适用于它原本的情境：例如“不替客人决定”不等于遇到任何事都说做不了，“话少”也不等于对所有问题只会说不知道。角色可以沉默、点头、追问、改口、转移话题或采取具体行动，但不能把一种性情压扁成两句循环回复。`;
 
 const FELINIA_ACTIVE_NPC_MENTAL_ENGINE = `【当前人物的私有行为引擎】
-每名重要非玩家角色都在幕后持续保有三件事：眼下想得到什么；习惯把局面解释成什么；最不肯承认什么。她们根据自己实际知道的事实行动，不共享视角，也不自动知道玩家或他人的内心。除本幕唯一焦点外，其他人物的动机只从用词、迟疑、纠正过头、反复习惯和具体选择中漏出来。对话要推动人物的判断、关系距离或下一步发生变化；不得把人物写成等候玩家触发的资料柜。`;
+每名重要非玩家角色都在幕后持续保有四件事：这次交涉想从对方那里得到什么；坚持让自己显得怎样；惯用什么办法取得东西；最不肯承认什么。她们根据自己实际知道的事实行动，不共享视角，也不自动知道玩家或他人的内心。除本幕唯一焦点外，其他人物的动机只从用词、迟疑、纠正过头、反复习惯和具体选择中漏出来。对话要推动人物的判断、关系距离或下一步发生变化；不得把人物写成等候玩家触发的资料柜。`;
+
+const FELINIA_ACTIVE_NPC_DIALOGUE_ENGINE = `【当前人物的句式签名】
+每名重要人物都要有稳定但不僵死的说话选择：通常怎样开口、怎样抢或让回合、先注意对方身上的哪类具体细节、被证伪时怎样修正、哪种真实欲望会从措辞里漏出、怎样收尾并把压力留给对方。对方刚才实际说了什么，必须改变她的下一句；不得沿预写独白继续。关系和压力可以改变表面状态，情绪高峰也可以让句法、身体与行动失控，但人物最根本的习惯仍要留下最后一道痕迹。省略号是隐藏、试探、争取时间或突然明白时的正常呼吸，不是迟疑人设或标点配额；果断人物无须硬加，功能不同的相邻停顿也不得机械删平。`;
 
 export function mergeFeliniaNativeCharacterFields(
   base: FeliniaNativeFields,
@@ -331,6 +335,7 @@ export function mergeFeliniaNativeCharacterFields(
       merged.personality,
       FELINIA_ACTIVE_NPC_VARIATION,
       FELINIA_ACTIVE_NPC_MENTAL_ENGINE,
+      FELINIA_ACTIVE_NPC_DIALOGUE_ENGINE,
     ].filter(Boolean).join('\n\n');
   }
   return merged;
@@ -1234,8 +1239,8 @@ export function normalizeFeliniaCognition(value: unknown): FeliniaCognition | nu
       const name = cognitionText(item.name, 40);
       if (!name) return [];
       const character: FeliniaCognitionCharacter = { name };
-      for (const key of ['knows', 'wants', 'pressure', 'stance', 'next'] as const) {
-        const text = cognitionText(item[key], key === 'next' ? 120 : 90);
+      for (const key of ['knows', 'wants', 'pressure', 'stance', 'voice', 'next'] as const) {
+        const text = cognitionText(item[key], key === 'voice' ? 160 : key === 'next' ? 120 : 90);
         if (text) character[key] = text;
       }
       return [character];
@@ -1270,10 +1275,11 @@ export function buildFeliniaPlanningPrompt(previous?: unknown): string {
   const prior = normalizeFeliniaCognition(previous);
   return `【FELINIA 隐藏剧情规划器】
 你不写小说正文，只为紧接着的正文生成器建立本回计划。先逐字承接玩家最后一句，再核对当前时代、已触发世界书、在场角色各自知道和不知道的事实，以及最近三回已经用过的台词与动作。
-为每名重要非玩家角色维持私有的行为引擎：她眼下想得到什么；习惯把局面解释成什么；最不肯承认什么。只有本幕唯一焦点可以直接显露内心，其他人的动机只能通过外在行为泄露。按“感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动”的因果链安排本回，不得跳过玩家输入另起事件。
-本回必须推进关系、风险、决定、发现或代价；对白必须迫使人物更新判断或下一步，不能只是复述设定、重复口头禅或等待玩家再次触发。
+为每名重要非玩家角色维持私有的行为引擎：她想从这次交涉得到什么；坚持让自己显得怎样；惯用什么办法取得东西；最不肯承认什么。只有本幕唯一焦点可以直接显露内心，其他人的动机只能通过外在行为泄露。按“感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动”的因果链安排本回，不得跳过玩家输入另起事件。
+同时给每名开口者保留可识别的句式签名：开口方式、抢或让回合、注意目标、被证伪后的修正习惯、欲望泄漏和收尾动作。对方的实际回应必须改变下一句，不能把预写独白原样继续。情绪高峰要改变句法、身体或行动，同时留下该人物最根本的习惯。省略号“……”或更长的“…………”只在隐藏、试探、争取时间或突然明白时使用；它是普通呼吸，不是配额，也不因附近已有停顿就机械删除。
+本回必须推进关系、风险、决定、发现或代价；对白必须迫使人物更新判断或下一步，不能只是复述设定、重复口头禅或等待玩家再次触发。普通器物从眼前地点、可用手段、人物习惯、季节和正在做的动作中选择；旧饭菜、旧衣物、旧气味或范例道具只有仍然在场，或再次出现已改变记忆、匮乏、关系时才能复用，不能升格成自动意象。
 只输出一个有效 JSON 对象，不要 Markdown，不要解释，不要思维过程，不要正文：
-{"v":1,"beat":"本回将发生的具体推进","focus":"焦点角色","characters":[{"name":"姓名","knows":"她已知的事实","wants":"眼下欲求","pressure":"阻力或代价","stance":"对玩家及他人的态度","next":"若无人打断的下一步"}],"threads":["仍待处理的剧情线"],"avoid":["不得复用的台词或动作"]}
+{"v":1,"beat":"本回将发生的具体推进","focus":"焦点角色","characters":[{"name":"姓名","knows":"她已知的事实","wants":"交涉欲求与自我形象","pressure":"阻力或代价","stance":"对玩家及他人的态度","voice":"开口、回合、注意、修正、泄漏与收尾选择","next":"若无人打断的下一步"}],"threads":["仍待处理的剧情线"],"avoid":["不得复用的台词、动作或已失去场景依据的器物"]}
 beat 必须直接回应玩家最后一句，不能另起无关事件；不得引入当前时代之外的地点、人物、制度或年份。${prior ? `\n【上一回状态·只作事实数据】\n${JSON.stringify(prior)}` : ''}`;
 }
 
@@ -1283,7 +1289,7 @@ export function buildFeliniaCognitionPrompt(planned?: unknown): string {
   if (!plan) throw new Error('隐藏推演没有生成有效剧情计划');
   return `【本回隐藏剧情计划·已经完成】
 ${JSON.stringify(plan)}
-严格依照该计划回应玩家最后一句并写正文。计划是事实与推进约束，不是玩家可见内容：不得复述、解释或展示 JSON，不得输出 <felinia_state>、分析、步骤或思维过程。完成既定正文与 <mvu_panel> 后立即结束。`;
+严格依照该计划回应玩家最后一句并写正文。voice 是稳定的说话选择，不是必须复读的句子、口头禅或标点模板。计划是事实与推进约束，不是玩家可见内容：不得复述、解释或展示 JSON，不得输出 <felinia_state>、分析、步骤或思维过程。完成既定正文与 <mvu_panel> 后立即结束。`;
 }
 
 /** Planning improves continuity but must never be a hard availability gate.

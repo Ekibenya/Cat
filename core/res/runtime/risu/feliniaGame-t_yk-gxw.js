@@ -84,7 +84,7 @@ function g(e) {
 async function _(e) {
 	let t = i.get(e);
 	if (!t) {
-		let { HypaProcesser: n } = await import("./hypamemory-DpmcZANe.js");
+		let { HypaProcesser: n } = await import("./hypamemory-BiYZONul.js");
 		t = new n(e), i.set(e, t);
 	}
 	return t;
@@ -232,23 +232,24 @@ async function ie() {
 }
 //#endregion
 //#region src/headless/feliniaGame.ts
-var ae = "【人物条目与台词样本的用法】\n人物条目里的具体台词只用于辨认措辞、语气、敬语和句长，不是必须复诵的台词表，更不是口头禅。每回合必须依据眼前的新动作、新对象和新利害重新组织说法；不得照抄条目中的整句，也不得复用最近三回已经说过的同一句或同一种推脱。条目描述的局部反应只适用于它原本的情境：例如“不替客人决定”不等于遇到任何事都说做不了，“话少”也不等于对所有问题只会说不知道。角色可以沉默、点头、追问、改口、转移话题或采取具体行动，但不能把一种性情压扁成两句循环回复。", oe = "【当前人物的私有行为引擎】\n每名重要非玩家角色都在幕后持续保有三件事：眼下想得到什么；习惯把局面解释成什么；最不肯承认什么。她们根据自己实际知道的事实行动，不共享视角，也不自动知道玩家或他人的内心。除本幕唯一焦点外，其他人物的动机只从用词、迟疑、纠正过头、反复习惯和具体选择中漏出来。对话要推动人物的判断、关系距离或下一步发生变化；不得把人物写成等候玩家触发的资料柜。";
-function se(e, t) {
+var ae = "【人物条目与台词样本的用法】\n人物条目里的具体台词只用于辨认措辞、语气、敬语和句长，不是必须复诵的台词表，更不是口头禅。每回合必须依据眼前的新动作、新对象和新利害重新组织说法；不得照抄条目中的整句，也不得复用最近三回已经说过的同一句或同一种推脱。条目描述的局部反应只适用于它原本的情境：例如“不替客人决定”不等于遇到任何事都说做不了，“话少”也不等于对所有问题只会说不知道。角色可以沉默、点头、追问、改口、转移话题或采取具体行动，但不能把一种性情压扁成两句循环回复。", oe = "【当前人物的私有行为引擎】\n每名重要非玩家角色都在幕后持续保有四件事：这次交涉想从对方那里得到什么；坚持让自己显得怎样；惯用什么办法取得东西；最不肯承认什么。她们根据自己实际知道的事实行动，不共享视角，也不自动知道玩家或他人的内心。除本幕唯一焦点外，其他人物的动机只从用词、迟疑、纠正过头、反复习惯和具体选择中漏出来。对话要推动人物的判断、关系距离或下一步发生变化；不得把人物写成等候玩家触发的资料柜。", se = "【当前人物的句式签名】\n每名重要人物都要有稳定但不僵死的说话选择：通常怎样开口、怎样抢或让回合、先注意对方身上的哪类具体细节、被证伪时怎样修正、哪种真实欲望会从措辞里漏出、怎样收尾并把压力留给对方。对方刚才实际说了什么，必须改变她的下一句；不得沿预写独白继续。关系和压力可以改变表面状态，情绪高峰也可以让句法、身体与行动失控，但人物最根本的习惯仍要留下最后一道痕迹。省略号是隐藏、试探、争取时间或突然明白时的正常呼吸，不是迟疑人设或标点配额；果断人物无须硬加，功能不同的相邻停顿也不得机械删平。";
+function ce(e, t) {
 	let n = { ...e };
 	for (let e of t) n.desc = [n.desc, `【当前在场角色 · ${e.name}】\n${e.desc || ""}`].filter(Boolean).join("\n\n"), n.personality = [n.personality, `【${e.name} · 性格与行为】\n${e.personality || ""}`].filter(Boolean).join("\n\n"), n.scenario = [n.scenario, `当前在场人物：${e.name}`].filter(Boolean).join("\n");
 	return t.length && (n.personality = [
 		n.personality,
 		ae,
-		oe
+		oe,
+		se
 	].filter(Boolean).join("\n\n")), n;
 }
-function ce(e) {
+function le(e) {
 	return /第五项\s*·\s*关系|关系/.test(String(e.title || e.comment || ""));
 }
-function le(e) {
+function ue(e) {
 	return /第一项\s*·\s*概要|第三项\s*·\s*来历/.test(String(e.title || e.comment || ""));
 }
-function ue(e) {
+function de(e) {
 	return /〕在场的人$|〕在场的小人物$/.test(String(e.title || e.comment || ""));
 }
 var w = {
@@ -266,7 +267,7 @@ var w = {
 	八: 8,
 	九: 9
 };
-function de(e) {
+function fe(e) {
 	if (/^\d+$/.test(e)) return Number(e);
 	if (/^[〇零○一二两三四五六七八九]+$/.test(e)) return Number([...e].map((e) => w[e]).join(""));
 	let t = {
@@ -280,28 +281,28 @@ function de(e) {
 	else return null;
 	return n + r + i;
 }
-function fe(e, t) {
+function pe(e, t) {
 	for (let n of e.matchAll(/(\u516c\u5143\u524d|\u516c\u5143|\u524d)?([\d〇零○一二两三四五六七八九十百千万]{1,8})\u5e74/g)) {
 		if (!n[1] && !/^\d{2,5}$/.test(n[2]) && !/^[〇零○一二两三四五六七八九]{2,5}$/.test(n[2])) continue;
-		let e = de(n[2]);
+		let e = fe(n[2]);
 		if (e != null && (n[1] === "公元前" || n[1] === "前" ? -e : e) > t) return !0;
 	}
 	for (let n of e.matchAll(/(\u516c\u5143\u524d|\u524d)?([\d〇零○一二两三四五六七八九十百]{1,5})\u4e16\u7eaa/g)) {
-		let e = de(n[2]);
+		let e = fe(n[2]);
 		if (!(e == null || e < 1) && (n[1] ? -(e * 100) : (e - 1) * 100 + 1) > t) return !0;
 	}
 	return !1;
 }
-function pe(e, t) {
-	let n = (e.match(/[^\u3002\uff01\uff1f\uff1b]+[\u3002\uff01\uff1f\uff1b]?/g) || [e]).filter((e) => !fe(e, t) && !/\u540e\u4e16|\u540e\u6765/.test(e));
+function me(e, t) {
+	let n = (e.match(/[^\u3002\uff01\uff1f\uff1b]+[\u3002\uff01\uff1f\uff1b]?/g) || [e]).filter((e) => !pe(e, t) && !/\u540e\u4e16|\u540e\u6765/.test(e));
 	if (!n.length) return "";
 	let r = n.join("").trim();
 	return /^\s*\u00b7/.test(e) && !/^\s*\u00b7/.test(r) ? `\u00b7 ${r}` : r;
 }
-function me(e, t) {
-	return String(e || "").split("\n").map((e) => pe(e, t)).filter(Boolean).join("\n");
+function T(e, t) {
+	return String(e || "").split("\n").map((e) => me(e, t)).filter(Boolean).join("\n");
 }
-var T = {
+var E = {
 	"〔通则〕身体": "· 身高中位约一四〇厘米，体重中位约四〇公斤。\n· 猫耳与尾巴承担感官与情绪表达，尾根神经丰富。\n· 手是人类手形，可使用本时代已经存在的精细工具；手背有毛，掌面有肉垫。\n· 脚是猫科式脚掌与肉垫，不是人类脚；鞋、踏板与长时间站立的安排须顺应身体。\n· 身体掉毛，换毛期尤其明显。\n· 正面攻击力与抗击打很弱，速度不等于力气大。\n· 跑得远快于人类；能攀爬、翻越、夜视良好、天生会游，平衡与反应很高。\n· 夜视不是在全黑中看见；天生会游不等于不会失温或溺水。",
 	"〔通则〕血与卫生": "· 猫娘的血只能在猫娘之间使用，不能与人类血液混用。\n· 本时代任何救治伤病的安排，都必须把两类身体分开处理。\n· 不能使用为人类身体制作的便溺设施，须用低位、干燥、吸附性的颗粒料。\n· 对部分只在人类身体中流行的热病发病率较低，但也有另一套呼吸、肠胃、血液、肾脏尿路与心肌负担。\n· 不要概括成“猫娘身体弱”或“猫娘不生病”。",
 	"〔通则〕窝群与生育": "· 人类男性与猫娘所生的后代只能是猫娘。\n· 一生只生一窝，一窝可有多名女儿；姊妹、母女、同伴与共同照护构成窝群。\n· 妊娠约九十至九十五日，十至十二岁进入青春期，三十五岁以后已相当于人类老年。\n· 寿命约为同地同阶层人类的一半；幼女存活、婚育与照护的具体结果只按当前时代与地点。\n· 有固定发情期，建立长期情感依附时更看重对方是否善待自己。",
@@ -313,9 +314,9 @@ var T = {
 };
 function he(e) {
 	let t = String(e.title || e.comment || "");
-	return /母条目.*世界书总目/.test(t) ? null : e.lay === "core" && T[t] ? {
+	return /母条目.*世界书总目/.test(t) ? null : e.lay === "core" && E[t] ? {
 		...e,
-		content: T[t]
+		content: E[t]
 	} : e.lay === "style" ? null : e;
 }
 function ge(e, t) {
@@ -423,9 +424,9 @@ var _e = [
 		"手机"
 	]
 ];
-function E(e, t) {
+function D(e, t) {
 	let n = /* @__PURE__ */ new Set(), r = String(e || "");
-	for (let e of r.match(/[^。！？；\n]+[。！？；]?/g) || []) fe(e, t) && n.add(e.trim().slice(0, 80));
+	for (let e of r.match(/[^。！？；\n]+[。！？；]?/g) || []) pe(e, t) && n.add(e.trim().slice(0, 80));
 	for (let [e, i, a] of _e) e.lastIndex = 0, t < i && e.test(r) && n.add(`${a}（${i}年后）`);
 	return [...n];
 }
@@ -437,20 +438,20 @@ function ve(e, t) {
 	}
 	return new Set([...n.entries()].filter(([, e]) => e.size === t).map(([e]) => e));
 }
-var D = null;
-function O(e) {
+var O = null;
+function k(e) {
 	if (typeof structuredClone == "function") try {
 		return structuredClone(e);
 	} catch {}
 	return JSON.parse(JSON.stringify(e));
 }
-function k() {
+function A() {
 	return globalThis.crypto?.randomUUID?.() || `felinia-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
-function A(e) {
+function j(e) {
 	return Array.isArray(e) ? e.map(String).map((e) => e.trim()).filter(Boolean) : String(e || "").split(/[,，、|]/).map((e) => e.trim()).filter(Boolean);
 }
-function j(e) {
+function M(e) {
 	return typeof e == "string" ? e : e ? Object.entries(e).map(([e, t]) => `${e}=${typeof t == "string" ? t : JSON.stringify(t)}`).join("\n") : "";
 }
 function ye(e) {
@@ -461,13 +462,13 @@ function ye(e) {
 	][e];
 	if (e === "system" || e === "user" || e === "assistant") return e;
 }
-function M(e, t, n) {
+function N(e, t, n) {
 	if (e.enabled === !1 || e.on === !1) return null;
 	let r = { ...e.extensions || {} }, i = String(e.content || ""), a = e.probability ?? e.prob;
 	(e.useProbability ?? a !== void 0) && a !== void 0 && a !== 100 && (i = `@@probability ${a}\n${i}`);
 	let o = ye(e.role);
 	e.position === 4 && typeof e.depth == "number" && o && (i = `@@depth ${e.depth}\n@@role ${o}\n${i}`);
-	let s = A(e.secondary_keys ?? e.keys2);
+	let s = j(e.secondary_keys ?? e.keys2);
 	typeof e.selectiveLogic == "number" && s.length && (e.selectiveLogic === 1 && (i = `@@exclude_keys_all ${s.join(",")}\n${i}`), e.selectiveLogic === 2 && s.forEach((e) => {
 		i = `@@exclude_keys ${e}\n${i}`;
 	}), e.selectiveLogic === 3 && s.forEach((e) => {
@@ -476,7 +477,7 @@ function M(e, t, n) {
 	let c = e.match_whole_words ?? e.fullWordMatching;
 	return c === !0 && (i = `@@match_full_word\n${i}`), c === !1 && (i = `@@match_partial_word\n${i}`), r.risu_case_sensitive = e.case_sensitive ?? e.caseSensitive ?? !1, {
 		id: String(e.id ?? `${n}-lore-${t}`),
-		key: A(e.keys).join(", "),
+		key: j(e.keys).join(", "),
 		secondkey: s.join(", "),
 		insertorder: e.insertion_order ?? e.ord ?? 100,
 		comment: e.comment ?? e.title ?? e.name ?? `${n} ${t + 1}`,
@@ -499,7 +500,7 @@ function be() {
 		localLore: [],
 		scriptstate: {},
 		fmIndex: -1,
-		id: k()
+		id: A()
 	};
 }
 function xe(e, t) {
@@ -520,7 +521,7 @@ function xe(e, t) {
 		defaultVariables: t.defaultVariables ?? e.defaultVariables
 	};
 }
-function N(e, t) {
+function P(e, t) {
 	let n = e.lorebook || [], r = ve(n, t.length), i = n.filter((e) => e.era == null && e.lay === "core").map((e) => he(e)).filter((e) => !!e), a = {
 		name: e.name || "FELINIA",
 		description: e.description,
@@ -545,8 +546,8 @@ function N(e, t) {
 		fullWordMatching: e.fullWordMatching
 	}, o = [], s = [];
 	for (let i of t) {
-		let t = Number(i.y ?? 0), a = new Set((i.figs || []).map((e) => e.n)), c = n.filter((e) => e.era === i.i && e.lay !== "figures" && !ue(e)).flatMap((e) => {
-			let n = me(String(e.content || "").split("\n").filter((e) => !r.has(e.trim())).join("\n"), t);
+		let t = Number(i.y ?? 0), a = new Set((i.figs || []).map((e) => e.n)), c = n.filter((e) => e.era === i.i && e.lay !== "figures" && !de(e)).flatMap((e) => {
+			let n = T(String(e.content || "").split("\n").filter((e) => !r.has(e.trim())).join("\n"), t);
 			return n ? [{
 				...e,
 				content: n
@@ -579,14 +580,14 @@ function N(e, t) {
 			}
 		}), (i.figs || []).forEach((e, r) => {
 			let o = n.filter((t) => t.era === i.i && t.lay === "figures" && (t.cat === `人 · ${e.n}` || String(t.title || "").startsWith(`${e.n} ·`))).map((t) => {
-				if (!ce(t)) return t;
-				let n = A(t.keys).filter((t) => t !== e.n && a.has(t));
+				if (!le(t)) return t;
+				let n = j(t.keys).filter((t) => t !== e.n && a.has(t));
 				return {
 					...t,
 					keys: n.length ? n : [`__FELINIA_RELATION_${i.i}_${r}__`]
 				};
-			}).filter((e) => !le(e)).flatMap((e) => {
-				let n = me(e.content, t);
+			}).filter((e) => !ue(e)).flatMap((e) => {
+				let n = T(e.content, t);
 				return n ? [{
 					...e,
 					content: n
@@ -599,7 +600,7 @@ function N(e, t) {
 				title: e.ti,
 				name: e.n,
 				description: l ? `物种：${l}` : "",
-				personality: o.filter((e) => !ce(e)).map((e) => e.content || "").filter(Boolean).join("\n\n"),
+				personality: o.filter((e) => !le(e)).map((e) => e.content || "").filter(Boolean).join("\n\n"),
 				mes_example: "",
 				quotes: e.q,
 				lorebook: o,
@@ -625,8 +626,8 @@ function N(e, t) {
 		npcs: s
 	};
 }
-function P(e, t) {
-	let n = t.kind === "era" ? `era-${t.eraIndex}` : `npc-${t.key}`, r = (e.lorebook || []).map((e, t) => M(e, t, n)).filter((e) => !!e), i = O(e.regex || []), a = O(e.triggers || []), o = {
+function F(e, t) {
+	let n = t.kind === "era" ? `era-${t.eraIndex}` : `npc-${t.key}`, r = (e.lorebook || []).map((e, t) => N(e, t, n)).filter((e) => !!e), i = k(e.regex || []), a = k(e.triggers || []), o = {
 		...t,
 		baseLoreCount: r.length,
 		baseRegexCount: i.length,
@@ -650,7 +651,7 @@ function P(e, t) {
 		bias: [],
 		emotionImages: [],
 		globalLore: r,
-		chaId: k(),
+		chaId: A(),
 		sdData: [],
 		customscript: i,
 		triggerscript: a,
@@ -684,7 +685,7 @@ function P(e, t) {
 		source: [],
 		ccAssets: [],
 		lowLevelAccess: !1,
-		defaultVariables: j(e.defaultVariables),
+		defaultVariables: M(e.defaultVariables),
 		reloadKeys: 0,
 		prebuiltAssetCommand: "",
 		prebuiltAssetExclude: [],
@@ -693,17 +694,17 @@ function P(e, t) {
 		hideChatIcon: !0
 	};
 }
-function F(e) {
+function I(e) {
 	return e.extentions?.felinia;
 }
-async function I() {
-	return D ||= Promise.all([
-		import("./database.svelte-CUQpbqF_.js"),
-		import("./index.svelte-5mrvF_D2.js"),
-		import("./scripts-ByGUe0tc.js"),
-		import("./stores.svelte-nlEDrxsr.js"),
-		import("./translator-CsKspvYV.js"),
-		import("./globalApi.svelte-DJRvaaaJ.js")
+async function L() {
+	return O ||= Promise.all([
+		import("./database.svelte-FgK7m0Ym.js"),
+		import("./index.svelte-CX_u1ZSW.js"),
+		import("./scripts-CatsANQR.js"),
+		import("./stores.svelte-MIgqTXU-.js"),
+		import("./translator-ZJudJtf-.js"),
+		import("./globalApi.svelte-D4plaTWW.js")
 	]).then(([e, t, n, r, i, a]) => ({
 		database: e,
 		process: t,
@@ -711,9 +712,9 @@ async function I() {
 		stores: r,
 		translator: i,
 		globalApi: a
-	})), D;
+	})), O;
 }
-function L() {
+function R() {
 	return {
 		characters: [],
 		language: "en",
@@ -725,18 +726,18 @@ function L() {
 		botPresetsId: 0
 	};
 }
-async function R(e) {
-	let t = await I();
-	t.database.setDatabase(L());
+async function z(e) {
+	let t = await L();
+	t.database.setDatabase(R());
 	let n = [...e.eras].sort((e, t) => e.index - t.index).map((t) => {
 		let n = xe(e.base, t), r = Number(t.year);
-		return P(n, {
+		return F(n, {
 			kind: "era",
 			key: `era:${t.index}`,
 			eraIndex: t.index,
 			eraYear: Number.isFinite(r) ? r : void 0
 		});
-	}), r = new Map(e.eras.map((e) => [e.index, Number(e.year)])), i = e.npcs.map((e) => P(e, {
+	}), r = new Map(e.eras.map((e) => [e.index, Number(e.year)])), i = e.npcs.map((e) => F(e, {
 		kind: "npc",
 		key: e.key,
 		eraIndex: e.eraIndex,
@@ -748,51 +749,51 @@ async function R(e) {
 		total: a.characters.length
 	};
 }
-async function z(e, t) {
-	return R(N(e, t));
+async function B(e, t) {
+	return z(P(e, t));
 }
-async function B(e, t = []) {
-	let n = await I(), r = n.database.getDatabase(), i = r.characters.findIndex((t) => t.type !== "group" && F(t)?.kind === "era" && F(t)?.eraIndex === e);
+async function V(e, t = []) {
+	let n = await L(), r = n.database.getDatabase(), i = r.characters.findIndex((t) => t.type !== "group" && I(t)?.kind === "era" && I(t)?.eraIndex === e);
 	if (i < 0) throw Error(`FELINIA era ${e} is not installed`);
-	let a = r.characters[i], o = F(a);
+	let a = r.characters[i], o = I(a);
 	a.globalLore = a.globalLore.slice(0, o.baseLoreCount), a.customscript = a.customscript.slice(0, o.baseRegexCount), a.triggerscript = a.triggerscript.slice(0, o.baseTriggerCount), a.desc = o.baseDesc ?? a.desc, a.personality = o.basePersonality ?? a.personality, a.scenario = o.baseScenario ?? a.scenario, a.exampleMessage = o.baseExampleMessage ?? a.exampleMessage;
 	let s = [];
 	for (let e of [...new Set(t)]) {
-		let t = r.characters.find((t) => t.type !== "group" && F(t)?.kind === "npc" && F(t)?.key === e);
-		t && (s.push(t), a.globalLore.push(...O(t.globalLore.filter((e) => /第五项\s*·\s*关系|关系/.test(String(e.comment || ""))))), a.customscript.push(...O(t.customscript)), a.triggerscript.push(...O(t.triggerscript)));
+		let t = r.characters.find((t) => t.type !== "group" && I(t)?.kind === "npc" && I(t)?.key === e);
+		t && (s.push(t), a.globalLore.push(...k(t.globalLore.filter((e) => /第五项\s*·\s*关系|关系/.test(String(e.comment || ""))))), a.customscript.push(...k(t.customscript)), a.triggerscript.push(...k(t.triggerscript)));
 	}
-	return Object.assign(a, se({
+	return Object.assign(a, ce({
 		desc: a.desc,
 		personality: a.personality,
 		scenario: a.scenario,
 		exampleMessage: a.exampleMessage
-	}, s)), o.activeNpcKeys = s.map((e) => F(e).key), a.extentions.felinia = o, n.stores.selectedCharID.set(i), n.database.setCharacterByIndex(i, a), {
+	}, s)), o.activeNpcKeys = s.map((e) => I(e).key), a.extentions.felinia = o, n.stores.selectedCharID.set(i), n.database.setCharacterByIndex(i, a), {
 		era: e,
 		character: a,
 		activeNpcs: s
 	};
 }
-async function V(e) {
-	let t = await I(), n = t.database.getCurrentCharacter();
+async function H(e) {
+	let t = await L(), n = t.database.getCurrentCharacter();
 	if (!n || n.type === "group") throw Error("No FELINIA era is active");
-	e.systemPrompt !== void 0 && (n.systemPrompt = e.systemPrompt), e.description !== void 0 && (n.desc = e.description), e.personality !== void 0 && (n.personality = e.personality), e.scenario !== void 0 && (n.scenario = e.scenario), e.firstMessage !== void 0 && (n.firstMessage = e.firstMessage), e.postHistoryInstructions !== void 0 && (n.replaceGlobalNote = e.postHistoryInstructions), e.defaultVariables !== void 0 && (n.defaultVariables = j(e.defaultVariables));
+	e.systemPrompt !== void 0 && (n.systemPrompt = e.systemPrompt), e.description !== void 0 && (n.desc = e.description), e.personality !== void 0 && (n.personality = e.personality), e.scenario !== void 0 && (n.scenario = e.scenario), e.firstMessage !== void 0 && (n.firstMessage = e.firstMessage), e.postHistoryInstructions !== void 0 && (n.replaceGlobalNote = e.postHistoryInstructions), e.defaultVariables !== void 0 && (n.defaultVariables = M(e.defaultVariables));
 	let r = n.chats[n.chatPage];
-	return e.authorNote !== void 0 && (r.note = e.authorNote), e.localLore !== void 0 && (r.localLore = e.localLore.map((e, t) => M(e, t, "session")).filter((e) => !!e)), e.loreTokenBudget !== void 0 && (n.loreSettings.tokenBudget = Math.max(64, Math.trunc(e.loreTokenBudget))), e.loreScanDepth !== void 0 && (n.loreSettings.scanDepth = Math.max(1, Math.trunc(e.loreScanDepth))), e.recursiveLoreScanning !== void 0 && (n.loreSettings.recursiveScanning = e.recursiveLoreScanning), e.fullWordLoreMatching !== void 0 && (n.loreSettings.fullWordMatching = e.fullWordLoreMatching, n.loreExt = {
+	return e.authorNote !== void 0 && (r.note = e.authorNote), e.localLore !== void 0 && (r.localLore = e.localLore.map((e, t) => N(e, t, "session")).filter((e) => !!e)), e.loreTokenBudget !== void 0 && (n.loreSettings.tokenBudget = Math.max(64, Math.trunc(e.loreTokenBudget))), e.loreScanDepth !== void 0 && (n.loreSettings.scanDepth = Math.max(1, Math.trunc(e.loreScanDepth))), e.recursiveLoreScanning !== void 0 && (n.loreSettings.recursiveScanning = e.recursiveLoreScanning), e.fullWordLoreMatching !== void 0 && (n.loreSettings.fullWordMatching = e.fullWordLoreMatching, n.loreExt = {
 		...n.loreExt || {},
 		risu_fullWordMatching: e.fullWordLoreMatching
-	}), e.regexScripts !== void 0 && n.customscript.push(...O(e.regexScripts)), e.triggerScripts !== void 0 && n.triggerscript.push(...O(e.triggerScripts)), t.database.setCurrentCharacter(n), n;
+	}), e.regexScripts !== void 0 && n.customscript.push(...k(e.regexScripts)), e.triggerScripts !== void 0 && n.triggerscript.push(...k(e.triggerScripts)), t.database.setCurrentCharacter(n), n;
 }
-async function H(e) {
-	let t = await I(), n = t.database.getDatabase(), r = t.database.getCurrentCharacter();
+async function U(e) {
+	let t = await L(), n = t.database.getDatabase(), r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	r.supaMemory = e.enabled && e.mode !== "off", n.hypaV3 = r.supaMemory, n.hypav2 = !1, n.hypaMemory = !1, n.hypaModel = e.gpu === !1 ? "multiMiniLM" : "multiMiniLMGPU";
 	let i = n.hypaV3Presets?.[n.hypaV3PresetId];
 	i && (i.settings.summarizationModel = "feliniaVerbatim", i.settings.maxChatsPerSummary = 2, i.settings.queryChatCount = 4), e.mode === "api" && e.apiKey !== void 0 && (n.supaMemoryKey = e.apiKey);
-	let a = F(r);
+	let a = I(r);
 	a && (a.palaceEnabled = r.supaMemory, a.palaceSessionId = String(e.sessionId || ""), a.palaceBudgetChars = Math.max(400, Math.min(12e3, e.budgetChars || 3e3)), a.palaceTopK = Math.max(1, Math.min(12, e.topK || 8)), a.palaceGpu = e.gpu !== !1, a.palaceVectors = e.mode !== "lexical", a.palaceRecallActive = !1, r.extentions.felinia = a), t.database.setCurrentCharacter(r);
 }
-async function U(e) {
-	let t = (await I()).database.getDatabase();
+async function W(e) {
+	let t = (await L()).database.getDatabase();
 	t.translatorType = e.provider === "deeplx" ? "deeplX" : e.provider, t.deeplOptions = {
 		key: e.deeplKey || "",
 		freeApi: e.deeplFree ?? !0
@@ -801,14 +802,14 @@ async function U(e) {
 		token: e.deeplxToken || ""
 	}, t.feliniaFinalPromptTranslation = e.provider !== "off";
 }
-async function W(e, t, n, r) {
-	return !e || r.provider === "off" ? e : (await U(r), (await I()).translator.runTranslator(e, !0, t, n, {
+async function Se(e, t, n, r) {
+	return !e || r.provider === "off" ? e : (await W(r), (await L()).translator.runTranslator(e, !0, t, n, {
 		regenerate: r.regenerate,
 		throwOnError: !0
 	}));
 }
 async function G(e, t) {
-	let n = await I(), r = n.database.getDatabase(), i = r.characters.findIndex((t) => t.type !== "group" && F(t)?.kind === "npc" && F(t)?.key === e);
+	let n = await L(), r = n.database.getDatabase(), i = r.characters.findIndex((t) => t.type !== "group" && I(t)?.kind === "npc" && I(t)?.key === e);
 	if (i < 0) throw Error(`FELINIA character ${e} is not installed`);
 	let a = r.characters[i];
 	a.scriptstate = {
@@ -816,8 +817,8 @@ async function G(e, t) {
 		...t
 	}, n.database.setCharacterByIndex(i, a);
 }
-async function Se(e, t) {
-	let n = await I();
+async function Ce(e, t) {
+	let n = await L();
 	await n.database.importPreset({
 		name: e,
 		data: t
@@ -825,11 +826,11 @@ async function Se(e, t) {
 	let r = n.database.getDatabase();
 	r.botPresets.length && (r.botPresetsId = r.botPresets.length - 1, n.database.changeToPreset(r.botPresetsId, !1));
 }
-function Ce(e) {
+function we(e) {
 	return e === "responses" ? t.OpenAIResponseAPI : e === "anthropic" ? t.Anthropic : e === "gemini" ? t.GoogleCloud : e === "mistral" ? t.Mistral : e === "ollama" ? t.Ollama : t.OpenAICompatible;
 }
-function we(e, t) {
-	return e.aiModel = "reverse_proxy", e.proxyRequestModel = "custom", e.customProxyRequestModel = t.model, e.forceReplaceUrl = t.base, e.proxyKey = t.key || "", e.customAPIFormat = Ce(t.format), e.temperature = t.temperature == null ? -1e3 : Math.round(t.temperature * 100), e.top_p = t.topP == null ? -1e3 : t.topP, e.frequencyPenalty = t.frequencyPenalty == null ? -1e3 : Math.round(t.frequencyPenalty * 100), e.PresensePenalty = t.presencePenalty == null ? -1e3 : Math.round(t.presencePenalty * 100), e.top_k = t.topK == null ? 0 : t.topK, e.repetition_penalty = t.repetitionPenalty == null ? 1 : t.repetitionPenalty, e.min_p = t.minP == null ? 0 : t.minP, e.top_a = t.topA == null ? 0 : t.topA, e.reasoningEffort = t.reasoningEffort ?? 0, e.maxResponse = t.maxTokens ?? 4096, e.maxContext = t.contextTokens ?? 65536, e.useStreaming = t.stream ?? !0, e.autofillRequestUrl = t.autofillRequestUrl ?? !0, e.usePlainFetch = !0, e.strictOpenAICompatible = t.strictOpenAICompatible ?? (t.format === "openai" || !t.format), e.requestRetrys = Math.max(0, Math.trunc(t.requestRetries ?? 2)), e.localNetworkTimeoutSec = Math.max(1, Math.trunc(t.requestTimeoutSec ?? 600)), e.localStopStrings = [...t.stopStrings ?? []], e.generationSeed = Number.isFinite(t.generationSeed) ? Math.trunc(t.generationSeed) : -1, e.newOAIHandle = t.newOpenAIHandler ?? !0, e.gptVisionQuality = t.visionQuality ?? "low", e.autoContinueChat = t.autoContinue ?? !1, e.autoContinueMinTokens = Math.max(0, Math.trunc(t.autoContinueMinTokens ?? 0)), e.removeIncompleteResponse = t.removeIncompleteResponse ?? !1, e.additionalParams = [...t.additionalParams ?? []], e.applyAdditionalParamsToAll = t.applyAdditionalParamsToAll ?? !1, e.useInstructPrompt = t.useInstructPrompt ?? !1, e.customTokenizer = t.tokenizer ?? "tik", e.instructChatTemplate = t.instructChatTemplate ?? "chatml", e.JinjaTemplate = t.jinjaTemplate ?? "", e.systemContentReplacement = t.systemContentReplacement ?? "system: {{slot}}", e.systemRoleReplacement = t.systemRoleReplacement ?? "user", e.promptSettings = {
+function Te(e, t) {
+	return e.aiModel = "reverse_proxy", e.proxyRequestModel = "custom", e.customProxyRequestModel = t.model, e.forceReplaceUrl = t.base, e.proxyKey = t.key || "", e.customAPIFormat = we(t.format), e.temperature = t.temperature == null ? -1e3 : Math.round(t.temperature * 100), e.top_p = t.topP == null ? -1e3 : t.topP, e.frequencyPenalty = t.frequencyPenalty == null ? -1e3 : Math.round(t.frequencyPenalty * 100), e.PresensePenalty = t.presencePenalty == null ? -1e3 : Math.round(t.presencePenalty * 100), e.top_k = t.topK == null ? 0 : t.topK, e.repetition_penalty = t.repetitionPenalty == null ? 1 : t.repetitionPenalty, e.min_p = t.minP == null ? 0 : t.minP, e.top_a = t.topA == null ? 0 : t.topA, e.reasoningEffort = t.reasoningEffort ?? 0, e.maxResponse = t.maxTokens ?? 4096, e.maxContext = t.contextTokens ?? 65536, e.useStreaming = t.stream ?? !0, e.autofillRequestUrl = t.autofillRequestUrl ?? !0, e.usePlainFetch = !0, e.strictOpenAICompatible = t.strictOpenAICompatible ?? (t.format === "openai" || !t.format), e.requestRetrys = Math.max(0, Math.trunc(t.requestRetries ?? 2)), e.localNetworkTimeoutSec = Math.max(1, Math.trunc(t.requestTimeoutSec ?? 600)), e.localStopStrings = [...t.stopStrings ?? []], e.generationSeed = Number.isFinite(t.generationSeed) ? Math.trunc(t.generationSeed) : -1, e.newOAIHandle = t.newOpenAIHandler ?? !0, e.gptVisionQuality = t.visionQuality ?? "low", e.autoContinueChat = t.autoContinue ?? !1, e.autoContinueMinTokens = Math.max(0, Math.trunc(t.autoContinueMinTokens ?? 0)), e.removeIncompleteResponse = t.removeIncompleteResponse ?? !1, e.additionalParams = [...t.additionalParams ?? []], e.applyAdditionalParamsToAll = t.applyAdditionalParamsToAll ?? !1, e.useInstructPrompt = t.useInstructPrompt ?? !1, e.customTokenizer = t.tokenizer ?? "tik", e.instructChatTemplate = t.instructChatTemplate ?? "chatml", e.JinjaTemplate = t.jinjaTemplate ?? "", e.systemContentReplacement = t.systemContentReplacement ?? "system: {{slot}}", e.systemRoleReplacement = t.systemRoleReplacement ?? "user", e.promptSettings = {
 		...e.promptSettings || {},
 		assistantPrefill: t.assistantPrefill ?? "",
 		postEndInnerFormat: t.postEndInnerFormat ?? "",
@@ -841,9 +842,9 @@ function we(e, t) {
 	}, e.chainOfThought = t.chainOfThought ?? !1, e.jsonSchemaEnabled = t.jsonSchemaEnabled ?? !1, e.jsonSchema = t.jsonSchema ?? "", e.strictJsonSchema = t.strictJsonSchema ?? !0, e.extractJson = t.extractJson ?? "", e.thinkingTokens = Math.max(0, Math.trunc(t.thinkingTokens ?? 0)), e.thinkingType = t.thinkingType ?? "budget", e.adaptiveThinkingEffort = t.adaptiveThinkingEffort ?? "high", e.deepseekThinkingType = t.deepseekThinkingType ?? "off", e.deepseekReasoningEffort = t.deepseekReasoningEffort ?? "high", e.verbosity = Math.max(0, Math.min(2, Math.trunc(t.verbosity ?? 1))), e.automaticCachePoint = t.automaticCachePoint ?? !1, e.claudeRetrivalCaching = t.claudeRetrievalCaching ?? !1, e.claudeBatching = t.claudeBatching ?? !1, e.claude1HourCaching = t.claudeOneHourCaching ?? !1, e.antiServerOverloads = t.antiServerOverloads ?? !1, e.fallbackWhenBlankResponse = t.fallbackWhenBlankResponse ?? !1, e.modelTools = [...t.modelTools ?? []], e.openAIFlexProcessing = t.openAIFlexProcessing ?? !1, e.streamGeminiThoughts = t.streamGeminiThoughts ?? !1, e.inlayErrorResponse = !0, e;
 }
 async function K(e) {
-	we((await I()).database.getDatabase(), e);
+	Te((await L()).database.getDatabase(), e);
 }
-function Te(e, t) {
+function Ee(e, t) {
 	let n = [...e.message.slice(t)].reverse().find((e) => e.role === "char" && /```risuerror\b/i.test(e.data || ""));
 	return n ? (e.message = e.message.slice(0, t), String(n.data || "").replace(/^```risuerror\s*/i, "").replace(/```\s*$/i, "").trim()) : "";
 }
@@ -873,9 +874,10 @@ function Y(e) {
 				"wants",
 				"pressure",
 				"stance",
+				"voice",
 				"next"
 			]) {
-				let n = J(t[e], e === "next" ? 120 : 90);
+				let n = J(t[e], e === "voice" ? 160 : e === "next" ? 120 : 90);
 				n && (r[e] = n);
 			}
 			return [r];
@@ -889,31 +891,32 @@ function Y(e) {
 	}
 	return Object.keys(r).length > 1 ? r : null;
 }
-function Ee(e, t) {
+function De(e, t) {
 	let n = String(e || ""), r = [...n.matchAll(/<\s*felinia_state\b[^>]*>([\s\S]*?)<\s*\/\s*felinia_state\s*>/gi)], i = r.length ? Y(r.at(-1)?.[1]) : null;
 	return {
 		text: q(n),
 		cognition: i || Y(t)
 	};
 }
-function De(e) {
+function Oe(e) {
 	let t = Y(e);
 	return `【FELINIA 隐藏剧情规划器】
 你不写小说正文，只为紧接着的正文生成器建立本回计划。先逐字承接玩家最后一句，再核对当前时代、已触发世界书、在场角色各自知道和不知道的事实，以及最近三回已经用过的台词与动作。
-为每名重要非玩家角色维持私有的行为引擎：她眼下想得到什么；习惯把局面解释成什么；最不肯承认什么。只有本幕唯一焦点可以直接显露内心，其他人的动机只能通过外在行为泄露。按“感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动”的因果链安排本回，不得跳过玩家输入另起事件。
-本回必须推进关系、风险、决定、发现或代价；对白必须迫使人物更新判断或下一步，不能只是复述设定、重复口头禅或等待玩家再次触发。
+为每名重要非玩家角色维持私有的行为引擎：她想从这次交涉得到什么；坚持让自己显得怎样；惯用什么办法取得东西；最不肯承认什么。只有本幕唯一焦点可以直接显露内心，其他人的动机只能通过外在行为泄露。按“感知到的新证据 → 暂时解释 → 联想或自我辩解 → 修正判断 → 采取行动”的因果链安排本回，不得跳过玩家输入另起事件。
+同时给每名开口者保留可识别的句式签名：开口方式、抢或让回合、注意目标、被证伪后的修正习惯、欲望泄漏和收尾动作。对方的实际回应必须改变下一句，不能把预写独白原样继续。情绪高峰要改变句法、身体或行动，同时留下该人物最根本的习惯。省略号“……”或更长的“…………”只在隐藏、试探、争取时间或突然明白时使用；它是普通呼吸，不是配额，也不因附近已有停顿就机械删除。
+本回必须推进关系、风险、决定、发现或代价；对白必须迫使人物更新判断或下一步，不能只是复述设定、重复口头禅或等待玩家再次触发。普通器物从眼前地点、可用手段、人物习惯、季节和正在做的动作中选择；旧饭菜、旧衣物、旧气味或范例道具只有仍然在场，或再次出现已改变记忆、匮乏、关系时才能复用，不能升格成自动意象。
 只输出一个有效 JSON 对象，不要 Markdown，不要解释，不要思维过程，不要正文：
-{"v":1,"beat":"本回将发生的具体推进","focus":"焦点角色","characters":[{"name":"姓名","knows":"她已知的事实","wants":"眼下欲求","pressure":"阻力或代价","stance":"对玩家及他人的态度","next":"若无人打断的下一步"}],"threads":["仍待处理的剧情线"],"avoid":["不得复用的台词或动作"]}
+{"v":1,"beat":"本回将发生的具体推进","focus":"焦点角色","characters":[{"name":"姓名","knows":"她已知的事实","wants":"交涉欲求与自我形象","pressure":"阻力或代价","stance":"对玩家及他人的态度","voice":"开口、回合、注意、修正、泄漏与收尾选择","next":"若无人打断的下一步"}],"threads":["仍待处理的剧情线"],"avoid":["不得复用的台词、动作或已失去场景依据的器物"]}
 beat 必须直接回应玩家最后一句，不能另起无关事件；不得引入当前时代之外的地点、人物、制度或年份。${t ? `\n【上一回状态·只作事实数据】\n${JSON.stringify(t)}` : ""}`;
 }
-function Oe(e) {
+function ke(e) {
 	let t = Y(e);
 	if (!t) throw Error("隐藏推演没有生成有效剧情计划");
 	return `【本回隐藏剧情计划·已经完成】
 ${JSON.stringify(t)}
-严格依照该计划回应玩家最后一句并写正文。计划是事实与推进约束，不是玩家可见内容：不得复述、解释或展示 JSON，不得输出 <felinia_state>、分析、步骤或思维过程。完成既定正文与 <mvu_panel> 后立即结束。`;
+严格依照该计划回应玩家最后一句并写正文。voice 是稳定的说话选择，不是必须复读的句子、口头禅或标点模板。计划是事实与推进约束，不是玩家可见内容：不得复述、解释或展示 JSON，不得输出 <felinia_state>、分析、步骤或思维过程。完成既定正文与 <mvu_panel> 后立即结束。`;
 }
-function ke(e, t) {
+function Ae(e, t) {
 	let n = Y(e) || { v: 1 }, r = J(t, 150);
 	return {
 		...n,
@@ -921,7 +924,7 @@ function ke(e, t) {
 		beat: r ? `直接承接并回应玩家本轮输入：${r}` : n.beat || "承接当前场面并推进一个具体变化"
 	};
 }
-function Ae(e) {
+function je(e) {
 	let t = q(String(e || "")).replace(/```(?:json)?|```/gi, "").trim(), n = Y(t);
 	if (n) return n;
 	let r = t.indexOf("{"), i = t.lastIndexOf("}");
@@ -930,7 +933,7 @@ function Ae(e) {
 function X(e) {
 	return q(e).replace(/<mvu_panel>[\s\S]*?<\/mvu_panel>/gi, "").trim().length;
 }
-function je(e) {
+function Me(e) {
 	let t = [];
 	for (let n of String(e || "").matchAll(/「([^」\n]{2,180})」/g)) for (let e of n[1].split(/[。！？!?]+/)) {
 		let n = e.trim(), r = n.replace(/\s+/g, "").replace(/[，、：；…—―~～♡]+$/g, "").replace(/喵(?:呜|嗷|咪)?[~～♡]*$/u, "");
@@ -941,11 +944,11 @@ function je(e) {
 	}
 	return t;
 }
-function Me(e, t) {
-	let n = new Set(t.flatMap((e) => je(e).map((e) => e.key)));
-	return [...new Set(je(e).filter((e) => n.has(e.key)).map((e) => e.raw))];
+function Ne(e, t) {
+	let n = new Set(t.flatMap((e) => Me(e).map((e) => e.key)));
+	return [...new Set(Me(e).filter((e) => n.has(e.key)).map((e) => e.raw))];
 }
-function Z(e) {
+function Pe(e) {
 	let t = e.role === "assistant" || e.role === "char";
 	return {
 		role: t ? "char" : "user",
@@ -956,13 +959,13 @@ function Z(e) {
 		time: e.time ?? Date.now()
 	};
 }
-async function Ne(e) {
-	let t = await I(), n = t.database.getCurrentCharacter();
+async function Fe(e) {
+	let t = await L(), n = t.database.getCurrentCharacter();
 	if (!n || n.type === "group") throw Error("No FELINIA era is active");
-	n.chats[n.chatPage].message = e.filter((e) => e.role !== "system").map(Z), t.database.setCurrentCharacter(n);
+	n.chats[n.chatPage].message = e.filter((e) => e.role !== "system").map(Pe), t.database.setCurrentCharacter(n);
 }
-async function Q() {
-	let e = (await I()).database.getCurrentCharacter();
+async function Z() {
+	let e = (await L()).database.getCurrentCharacter();
 	return !e || e.type === "group" ? [] : e.chats[e.chatPage].message.map((e, t) => ({
 		role: e.role === "char" ? "assistant" : "user",
 		content: e.role === "char" ? q(e.data) : e.data,
@@ -972,16 +975,16 @@ async function Q() {
 		memoryIndex: /^felinia-turn:-?\d+$/.test(String(e.chatId || "")) ? Number(String(e.chatId).slice(13)) : t
 	}));
 }
-async function Pe(e = {}) {
-	let t = await I();
+async function Q(e = {}) {
+	let t = await L();
 	e.provider && await K(e.provider);
 	let n = t.database.getCurrentCharacter();
 	if (!n || n.type === "group") throw Error("No FELINIA era is active");
-	let r = n.chats[n.chatPage], i = r.message.length, a = n.systemPrompt, o = F(n), s = o ? {
+	let r = n.chats[n.chatPage], i = r.message.length, a = n.systemPrompt, o = I(n), s = o ? {
 		enabled: o.palaceEnabled === !0,
 		sessionId: o.palaceSessionId || "",
 		eraIndex: o.eraIndex,
-		history: await Q(),
+		history: await Z(),
 		opening: n.firstMessage || "",
 		budgetChars: o.palaceBudgetChars || 3e3,
 		topK: o.palaceTopK || 8,
@@ -993,7 +996,7 @@ async function Pe(e = {}) {
 		source: "disabled"
 	};
 	o && (o.palaceRecallActive = c.source === "palace" && !!c.text, n.extentions.felinia = o), e.onPhase?.("planning");
-	let l = (await (await import("./lorebook.svelte-CiOWkpK4.js")).loadLoreBookV3Prompt()).actives.map((e) => e.prompt).filter(Boolean).join("\n\n"), u = [{
+	let l = (await (await import("./lorebook.svelte-Ce-FRrse.js")).loadLoreBookV3Prompt()).actives.map((e) => e.prompt).filter(Boolean).join("\n\n"), u = [{
 		role: "system",
 		content: [
 			a,
@@ -1003,7 +1006,7 @@ async function Pe(e = {}) {
 			n.replaceGlobalNote ? `【落笔后置规则】\n${n.replaceGlobalNote}` : "",
 			l ? `【本回实际触发的世界书】\n${l}` : "",
 			c.text,
-			De(e.cognition)
+			Oe(e.cognition)
 		].filter(Boolean).join("\n\n")
 	}, ...r.message.slice(-10).map((e) => ({
 		role: e.role === "char" ? "assistant" : "user",
@@ -1011,7 +1014,7 @@ async function Pe(e = {}) {
 		name: e.name
 	}))], d = [...r.message].reverse().find((e) => e.role !== "char")?.data || "", f = null;
 	try {
-		f = Ae((await $({
+		f = je((await $({
 			messages: u,
 			signal: e.signal,
 			maxTokens: 700
@@ -1019,8 +1022,8 @@ async function Pe(e = {}) {
 	} catch (t) {
 		if (e.signal?.aborted) throw t;
 	}
-	f ||= ke(e.cognition, d), e.onPhase?.("writing");
-	let p = Oe(f), m = c.text ? `${a}\n\n${c.text}\n\n${p}` : `${a}\n\n${p}`;
+	f ||= Ae(e.cognition, d), e.onPhase?.("writing");
+	let p = ke(f), m = c.text ? `${a}\n\n${c.text}\n\n${p}` : `${a}\n\n${p}`;
 	n.systemPrompt = m, t.database.setCurrentCharacter(n);
 	let h = Math.max(0, Math.round(e.minChars || 0)), g = Math.max(0, Math.min(1, Math.round(e.maxShortRetries ?? 1))), _ = Math.max(1, g), v = r.message.slice(0, i).filter((e) => e.role === "char").slice(-3).map((e) => q(e.data));
 	t.process.doingChat.set(!1);
@@ -1038,30 +1041,30 @@ async function Pe(e = {}) {
 				signal: e.signal,
 				preview: e.preview
 			})) {
-				let e = Te(r, i) || "生成请求失败", t = a || c;
+				let e = Ee(r, i) || "生成请求失败", t = a || c;
 				if (!t) throw Error(e);
-				r.message.push(O(t.message)), l = t.cognition;
+				r.message.push(k(t.message)), l = t.cognition;
 				break;
 			}
 			if (e.preview) break;
 			let d = r.message.at(-1);
 			if (!d || d.role !== "char") continue;
-			let p = Ee(d.data, f);
+			let p = De(d.data, f);
 			d.data = p.text;
 			let g = {
-				message: O(d),
+				message: k(d),
 				cognition: p.cognition
 			};
 			l = p.cognition;
-			let b = o?.eraYear == null ? [] : E(d.data, o.eraYear);
+			let b = o?.eraYear == null ? [] : D(d.data, o.eraYear);
 			!b.length && (!c || X(d.data) > X(c.message.data)) && (c = g);
-			let x = Me(d.data, v);
+			let x = Ne(d.data, v);
 			!b.length && !x.length && (!a || X(d.data) > X(a.message.data)) && (a = g);
 			let ee = !!h && X(d.data) < h, S = !String(d.data || "").trim();
 			if (!b.length && !x.length && !ee && !(S && t.database.getDatabase().fallbackWhenBlankResponse)) break;
 			if (s === _) {
 				let e = a || c;
-				if (e) r.message[r.message.length - 1] = O(e.message), l = e.cognition;
+				if (e) r.message[r.message.length - 1] = k(e.message), l = e.cognition;
 				else if (b.length) throw r.message = r.message.slice(0, i), Error(`生成内容越过当前时代边界：${b.slice(0, 3).join("、")}`);
 				break;
 			}
@@ -1069,13 +1072,13 @@ async function Pe(e = {}) {
 		}
 		if (e.preview) return {
 			text: JSON.stringify(t.process.previewFormated),
-			prompt: O(t.process.previewFormated),
-			history: await Q()
+			prompt: k(t.process.previewFormated),
+			history: await Z()
 		};
 		let d = t.database.getCurrentChat()?.message.at(-1);
 		if (d?.role === "char" && (d.data = q(d.data)), !d || d.role !== "char" || !String(d.data || "").trim()) throw Error("接口没有返回可显示的正文");
 		e.onDelta?.(d.data), t.database.setCurrentCharacter(n);
-		let p = await Q();
+		let p = await Z();
 		if (s) try {
 			await x({
 				...s,
@@ -1094,9 +1097,9 @@ async function Pe(e = {}) {
 	}
 }
 async function $(e) {
-	let t = await I();
+	let t = await L();
 	e.provider && await K(e.provider);
-	let n = await import("./request-IAbnL2mA.js"), r = t.database.getCurrentCharacter();
+	let n = await import("./request-B6BlEmr0.js"), r = t.database.getCurrentCharacter();
 	if (!r || r.type === "group") throw Error("No FELINIA era is active");
 	let i = await n.requestChatData({
 		formated: e.messages,
@@ -1123,8 +1126,8 @@ async function $(e) {
 	}
 	return i.type === "multiline" ? { text: q(i.result.join("\n")) } : { text: q(i.result) };
 }
-async function Fe(e) {
-	let t = await I(), n = `${e.base.replace(/\/$/, "").replace(/\/(chat\/completions|responses)$/i, "")}/models`, r = await t.globalApi.globalFetch(n, {
+async function Ie(e) {
+	let t = await L(), n = `${e.base.replace(/\/$/, "").replace(/\/(chat\/completions|responses)$/i, "")}/models`, r = await t.globalApi.globalFetch(n, {
 		method: "GET",
 		headers: e.key ? { Authorization: `Bearer ${e.key}` } : {},
 		plainFetchForce: !0
@@ -1132,52 +1135,52 @@ async function Fe(e) {
 	if (!r.ok) throw Error(typeof r.data == "string" ? r.data : `HTTP ${r.status}`);
 	return (Array.isArray(r.data?.data) ? r.data.data : Array.isArray(r.data?.models) ? r.data.models : []).map((e) => String(e?.id || e?.name || "")).filter(Boolean);
 }
-async function Ie(e) {
-	let t = await I(), n = t.database.getCurrentCharacter();
+async function Le(e) {
+	let t = await L(), n = t.database.getCurrentCharacter();
 	return n ? t.scripts.processScript(n, e, "editdisplay") : e;
 }
-async function Le() {
-	return (await I()).database.getDatabase({ snapshot: !0 });
+async function Re() {
+	return (await L()).database.getDatabase({ snapshot: !0 });
 }
-async function Re(e) {
-	let t = await I();
+async function ze(e) {
+	let t = await L();
 	t.database.setDatabase(e);
-	let n = e.characters.findIndex((e) => e.type !== "group" && F(e)?.kind === "era");
+	let n = e.characters.findIndex((e) => e.type !== "group" && I(e)?.kind === "era");
 	t.stores.selectedCharID.set(n);
 }
-async function ze() {
-	let e = await I();
-	e.database.setDatabase(L()), e.stores.selectedCharID.set(-1);
+async function Be() {
+	let e = await L();
+	e.database.setDatabase(R()), e.stores.selectedCharID.set(-1);
 }
-var Be = Object.freeze({
+var Ve = Object.freeze({
 	version: "2026.8.250",
 	upstreamCommit: "e565563a288ebe4c65b6099a1645ba477d1c84b4",
-	install: R,
-	installContent: z,
-	compileDefinition: N,
-	activateEra: B,
-	setSessionContent: V,
-	configureMemory: H,
-	configureTranslation: U,
-	translate: W,
+	install: z,
+	installContent: B,
+	compileDefinition: P,
+	activateEra: V,
+	setSessionContent: H,
+	configureMemory: U,
+	configureTranslation: W,
+	translate: Se,
 	setNpcState: G,
-	importPreset: Se,
+	importPreset: Ce,
 	configureProvider: K,
-	setHistory: Ne,
-	getHistory: Q,
-	generate: Pe,
+	setHistory: Fe,
+	getHistory: Z,
+	generate: Q,
 	request: $,
-	listModels: Fe,
-	processDisplay: Ie,
+	listModels: Ie,
+	processDisplay: Le,
 	preparePalace: C,
 	syncPalace: x,
 	exportPalace: te,
 	getPalaceDrawers: ne,
 	importPalace: re,
 	clearPalace: ie,
-	snapshot: Le,
-	restore: Re,
-	reset: ze
+	snapshot: Re,
+	restore: ze,
+	reset: Be
 });
 //#endregion
-export { Be as FeliniaRisu, B as activateFeliniaEra, we as applyFeliniaProviderSettings, Oe as buildFeliniaCognitionPrompt, De as buildFeliniaPlanningPrompt, N as compileFeliniaDefinition, H as configureFeliniaMemory, K as configureFeliniaProvider, U as configureFeliniaTranslation, Ee as extractFeliniaCognition, E as findFeliniaTemporalViolations, Me as findRepeatedFeliniaDialogue, Pe as generateFeliniaTurn, Q as getFeliniaHistory, Se as importRisuPreset, z as installFeliniaContent, R as installFeliniaGame, Fe as listFeliniaModels, se as mergeFeliniaNativeCharacterFields, Y as normalizeFeliniaCognition, Ae as parseFeliniaPlanningResponse, Ie as processFeliniaDisplay, ke as recoverFeliniaPlanning, $ as requestFeliniaAux, ze as resetFeliniaRisu, Re as restoreFeliniaRisu, Z as risuMessage, Ne as setFeliniaHistory, G as setFeliniaNpcState, V as setFeliniaSessionContent, Le as snapshotFeliniaRisu, q as stripFeliniaReasoning, W as translateFelinia };
+export { Ve as FeliniaRisu, V as activateFeliniaEra, Te as applyFeliniaProviderSettings, ke as buildFeliniaCognitionPrompt, Oe as buildFeliniaPlanningPrompt, P as compileFeliniaDefinition, U as configureFeliniaMemory, K as configureFeliniaProvider, W as configureFeliniaTranslation, De as extractFeliniaCognition, D as findFeliniaTemporalViolations, Ne as findRepeatedFeliniaDialogue, Q as generateFeliniaTurn, Z as getFeliniaHistory, Ce as importRisuPreset, B as installFeliniaContent, z as installFeliniaGame, Ie as listFeliniaModels, ce as mergeFeliniaNativeCharacterFields, Y as normalizeFeliniaCognition, je as parseFeliniaPlanningResponse, Le as processFeliniaDisplay, Ae as recoverFeliniaPlanning, $ as requestFeliniaAux, Be as resetFeliniaRisu, ze as restoreFeliniaRisu, Pe as risuMessage, Fe as setFeliniaHistory, G as setFeliniaNpcState, H as setFeliniaSessionContent, Re as snapshotFeliniaRisu, q as stripFeliniaReasoning, Se as translateFelinia };
