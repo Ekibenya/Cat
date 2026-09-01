@@ -10868,7 +10868,7 @@ function auPluck(){
 /* 本地预览只用于改界面，不让音乐反复打扰测试；线上域名照常播放。
    file:// 也算本地，免得误点本地 HTML 后第一下交互突然响起来。 */
 var LOCAL_TEST=/^(localhost|127\.0\.0\.1|\[?::1\]?)$/i.test(location.hostname)||location.protocol==='file:';
-/* —— 幕间乐：真曲库（古乐 34 + 攻壳 13，Fons Vitae 为首曲；按曲点播、放完自动下一首循环） —— */
+/* —— 幕间乐：真曲库（Fons Vitae 为首曲；按曲点播、放完自动下一首循环） —— */
 var BGM_LIST=[
  /* 前二十二首搬自三叶那一份，排在最前，所以开机第一首就是它们
     （BGM.i 初值是 0，进门放的是 bgmPlay(0)）。原先这一卡的四十七首顺次排在后面。
@@ -10929,20 +10929,7 @@ var BGM_LIST=[
  {d:'6ec3d70776',t:"Subtilis"},
  {d:'663614d9eb',t:"Terencio. Hecyra 861"},
  {d:'f922783cbf',t:"Theatralis Et Hipocitae"},
- {d:'3c4e8c6072',t:"Vulgaris-Sine Populi Notione"},
- {d:'10ffdf273d',t:"川井宪次 - M01 谣I-Making of Cyborg"},
- {d:'4da2c76d46',t:"川井宪次 - M02 Ghosthack (本编未使用)"},
- {d:'af7a902eb6',t:"川井宪次 - M03 Puppetmaster"},
- {d:'2324d42e59',t:"川井宪次 - M04 Virtual Crime"},
- {d:'c98e2a05a9',t:"川井宪次 - M05 谣II-Ghost City"},
- {d:'e6e23f74bc',t:"川井宪次 - M06 Access"},
- {d:'ba2043df83',t:"川井宪次 - M07 Nightstalker"},
- {d:'56b7f05ff1',t:"川井宪次 - M08 Floating Museum"},
- {d:'72e1317b53',t:"川井宪次 - M09 Ghostdive"},
- {d:'d85a5949b7',t:"川井宪次 - M10 谣III-Reincarnation"},
- {d:'82de58a191',t:"AngleHarry - Go Ghost（TV版）"},
- {d:'054d79e71f',t:"Fang Ka Wing - Bonus Track 插入歌 每天见一见!"},
- {d:'97018375b4',t:"川井宪次,Steve Aoki - Utai IV Reawakening (Steve Aoki Remix)"}
+ {d:'3c4e8c6072',t:"Vulgaris-Sine Populi Notione"}
 ];
 var BGM={i:0,a:null,on:false,skip:0};
 function bgmEl(){
