@@ -1,0 +1,2 @@
+import { Ar as e, Cr as t, Dr as n, Er as r, Or as i, Sr as a, Tr as o, br as s, jr as c, kr as l, wr as u, xr as d, yr as f } from "./characterCards-BVIlRLPv.js";
+export { f as allowedDbKeys, s as checkPluginUpdate, d as createBlankPlugin, a as customProviderStore, t as getV2PluginAPIs, u as handlePluginInstallViaPlugin, o as importPlugin, r as loadPlugins, n as loadV2Plugin, i as pluginProcess, l as pluginV2, e as translatorPlugin, c as updatePlugin };

@@ -1,4 +1,4 @@
-import { t as e } from "./internalmcp-BEm-hL3W.js";
+import { t as e } from "./internalmcp-DA5Wm260.js";
 //#region src/ts/process/mcp/dice.ts
 var t = class extends e {
 	constructor() {

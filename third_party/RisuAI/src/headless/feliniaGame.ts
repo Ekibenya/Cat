@@ -1614,17 +1614,106 @@ export async function requestFeliniaAux(options: FeliniaAuxRequestOptions) {
   return { text: stripFeliniaReasoning(response.result) };
 }
 
+export interface FeliniaModelListRequest {
+  url: string;
+  headers: Record<string, string>;
+}
+
+function modelListUrl(base: string, providerFormat: FeliniaProvider['format']): URL {
+  const value = String(base || '').trim();
+  if (!value) throw new Error('BASE URL 不能为空');
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('BASE URL 格式无效');
+  }
+  if (!/^https?:$/.test(url.protocol)) throw new Error('BASE URL 只支持 HTTP 或 HTTPS');
+  url.hash = '';
+  url.search = '';
+  let path = url.pathname.replace(/\/+$/, '');
+  const kind = providerFormat || 'openai';
+
+  if (kind === 'ollama') {
+    path = path.replace(/\/api\/(?:chat|generate|embeddings?|embed|tags)$/i, '/api');
+    if (!path || path === '/') path = '/api';
+    else if (!/\/api$/i.test(path)) path += '/api';
+    url.pathname = `${path}/tags`;
+    return url;
+  }
+
+  if (kind === 'gemini') {
+    const modelPath = path.match(/^(.*?\/models)(?:\/[^/]+(?::(?:streamGenerateContent|generateContent))?)?$/i);
+    if (modelPath) path = modelPath[1];
+    else if (/\/v1(?:beta)?$/i.test(path)) path += '/models';
+    else if (!path || path === '/') path = '/v1beta/models';
+    else path += '/v1beta/models';
+    url.pathname = path;
+    url.searchParams.set('pageSize', '1000');
+    return url;
+  }
+
+  path = path.replace(/\/(?:chat\/completions|completions|responses|messages)$/i, '');
+  if (!/\/models$/i.test(path)) {
+    if (!path || path === '/') path = '/v1';
+    else if (!/\/v1$/i.test(path)) path += '/v1';
+    path += '/models';
+  }
+  url.pathname = path;
+  if (kind === 'anthropic') url.searchParams.set('limit', '1000');
+  return url;
+}
+
+export function buildFeliniaModelListRequest(provider: FeliniaProvider): FeliniaModelListRequest {
+  const kind = provider.format || 'openai';
+  const url = modelListUrl(provider.base, kind);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (provider.key) {
+    if (kind === 'anthropic') headers['x-api-key'] = provider.key;
+    else if (kind === 'gemini') headers['x-goog-api-key'] = provider.key;
+    else headers.Authorization = `Bearer ${provider.key}`;
+  }
+  if (kind === 'anthropic') {
+    headers['anthropic-version'] = '2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  }
+  return { url: url.toString(), headers };
+}
+
+export function parseFeliniaModelList(data: any, providerFormat: FeliniaProvider['format'] = 'openai'): string[] {
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data?.models)
+        ? data.models
+        : [];
+  const seen = new Set<string>();
+  const models: string[] = [];
+  for (const entry of rows) {
+    if (providerFormat === 'gemini') {
+      const actions = entry?.supportedGenerationMethods || entry?.supportedActions;
+      if (Array.isArray(actions) && actions.length && !actions.includes('generateContent')) continue;
+    }
+    const id = String(entry?.id || entry?.model || entry?.name || '').replace(/^models\//, '').trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    models.push(id);
+  }
+  return models;
+}
+
 export async function listFeliniaModels(provider: FeliniaProvider) {
   const rt = await runtime();
-  const url = `${provider.base.replace(/\/$/, '').replace(/\/(chat\/completions|responses)$/i, '')}/models`;
-  const response = await rt.globalApi.globalFetch(url, {
+  const request = buildFeliniaModelListRequest(provider);
+  const response = await rt.globalApi.globalFetch(request.url, {
     method: 'GET',
-    headers: provider.key ? { Authorization: `Bearer ${provider.key}` } : {},
+    headers: request.headers,
     plainFetchForce: true,
+    requestTimeoutMs: Math.max(1000, Math.min(30000, Math.trunc((provider.requestTimeoutSec ?? 15) * 1000))),
   });
   if (!response.ok) throw new Error(typeof response.data === 'string' ? response.data : `HTTP ${response.status}`);
-  const rows = Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data?.models) ? response.data.models : []);
-  return rows.map((entry: any) => String(entry?.id || entry?.name || '')).filter(Boolean);
+  return parseFeliniaModelList(response.data, provider.format);
 }
 
 export async function processFeliniaDisplay(text: string) {

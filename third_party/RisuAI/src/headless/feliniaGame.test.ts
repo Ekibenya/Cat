@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildFeliniaCognitionPrompt,
+  buildFeliniaModelListRequest,
   buildFeliniaPlanningPrompt,
   applyFeliniaProviderSettings,
   compileFeliniaDefinition,
@@ -12,6 +13,7 @@ import {
   mergeFeliniaNativeCharacterFields,
   normalizeFeliniaCognition,
   parseFeliniaPlanningResponse,
+  parseFeliniaModelList,
   recoverFeliniaPlanning,
   risuMessage,
   stripFeliniaReasoning,
@@ -27,6 +29,69 @@ function fixture() {
 }
 
 describe('FELINIA fixed Risu runtime data', () => {
+  it('publishes every direct browser-runtime dependency as one coherent build', () => {
+    const repository = resolve(process.cwd(), '../..');
+    const runtimeDir = resolve(repository, 'core/res/runtime/risu');
+    const loader = readFileSync(resolve(runtimeDir, 'risu-headless.js'), 'utf8');
+    const gameFile = loader.match(/feliniaGame:\s*\(\)\s*=>\s*import\("\.\/(feliniaGame-[^"]+\.js)"\)/)?.[1];
+    expect(gameFile).toBeTruthy();
+    const game = readFileSync(resolve(runtimeDir, gameFile!), 'utf8');
+    const imports = [...`${loader}\n${game}`.matchAll(/import\("\.\/([^"?]+\.js)"\)/g)].map((match) => match[1]);
+    expect(imports.length).toBeGreaterThan(10);
+    expect(imports.filter((file) => !existsSync(resolve(runtimeDir, file)))).toEqual([]);
+  });
+
+  it('builds native model-list requests for every exposed provider', () => {
+    expect(buildFeliniaModelListRequest({
+      base: 'https://openai.example/', key: 'openai-key', model: '', format: 'openai',
+    })).toEqual({
+      url: 'https://openai.example/v1/models',
+      headers: { Accept: 'application/json', Authorization: 'Bearer openai-key' },
+    });
+    expect(buildFeliniaModelListRequest({
+      base: 'https://openai.example/v1/responses', key: 'response-key', model: '', format: 'responses',
+    }).url).toBe('https://openai.example/v1/models');
+    expect(buildFeliniaModelListRequest({
+      base: 'https://api.anthropic.com', key: 'claude-key', model: '', format: 'anthropic',
+    })).toEqual({
+      url: 'https://api.anthropic.com/v1/models?limit=1000',
+      headers: {
+        Accept: 'application/json',
+        'x-api-key': 'claude-key',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+    });
+    expect(buildFeliniaModelListRequest({
+      base: 'https://generativelanguage.googleapis.com', key: 'gemini-key', model: '', format: 'gemini',
+    })).toEqual({
+      url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
+      headers: { Accept: 'application/json', 'x-goog-api-key': 'gemini-key' },
+    });
+    expect(buildFeliniaModelListRequest({
+      base: 'https://api.mistral.ai/v1/chat/completions', key: 'mistral-key', model: '', format: 'mistral',
+    }).url).toBe('https://api.mistral.ai/v1/models');
+    expect(buildFeliniaModelListRequest({
+      base: 'http://localhost:11434', model: '', format: 'ollama',
+    })).toEqual({
+      url: 'http://localhost:11434/api/tags',
+      headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('parses OpenAI, Anthropic, Gemini, Mistral and Ollama model lists', () => {
+    expect(parseFeliniaModelList({ data: [{ id: 'gpt-a' }, { id: 'gpt-a' }] }, 'openai')).toEqual(['gpt-a']);
+    expect(parseFeliniaModelList([{ id: 'mistral-a' }], 'mistral')).toEqual(['mistral-a']);
+    expect(parseFeliniaModelList({ models: [{ name: 'ollama-a', model: 'ollama-a:latest' }] }, 'ollama')).toEqual(['ollama-a:latest']);
+    expect(parseFeliniaModelList({
+      models: [
+        { name: 'models/gemini-a', supportedGenerationMethods: ['generateContent'] },
+        { name: 'models/embed-a', supportedGenerationMethods: ['embedContent'] },
+      ],
+    }, 'gemini')).toEqual(['gemini-a']);
+    expect(parseFeliniaModelList({ data: [{ id: 'claude-a' }] }, 'anthropic')).toEqual(['claude-a']);
+  });
+
   it('uses one natural author layer without percentage or occurrence quotas', () => {
     const repository = resolve(process.cwd(), '../..');
     const html = readFileSync(resolve(repository, 'core/vendor/three/build/chunks/9d717bc0/156a50943028.html'), 'utf8');
@@ -51,7 +116,7 @@ describe('FELINIA fixed Risu runtime data', () => {
     expect(turnBuilder).not.toContain('FELINIA_HEART_CHECK');
     expect(sessionBuilder).toContain('authorNote:FELINIA_AUTHOR_NOTE');
     expect(html).toContain('window.__FELINIA_WRITING__={version:3');
-    expect(html).toContain('/core/res/runtime/risu/risu-headless.js?v=34');
+    expect(html).toContain('/core/res/runtime/risu/risu-headless.js?v=35');
     expect(html).not.toContain('FELINIA_STYLE');
     expect(html).not.toContain('FELINIA_EXAMPLES');
     expect(html).not.toContain('FELINIA_HEART');

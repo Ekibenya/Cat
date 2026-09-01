@@ -12807,8 +12807,11 @@ $('#apiEye').addEventListener('click',function(){
   var k=$('#apiKey');k.type=k.type==='password'?'text':'password';
 });
 $('#apiPull').addEventListener('click',function(){
+  var btn=this;
+  if(btn.getAttribute('aria-busy')==='true')return;
   var format=felRisuFormat($('#apiFormat').value),base=$('#apiBase').value.trim(),key=$('#apiKey').value.trim();
   if(!base){$('#apiMsg').textContent='先填 BASE URL';return;}
+  btn.setAttribute('aria-busy','true');btn.style.pointerEvents='none';
   $('#apiMsg').textContent='拉取模型中…';
   felRisuBoot().then(function(risu){return risu.listModels(felRisuProvider({format:format,base:base,key:key,model:'model-list'}));}).then(function(list){
     if(!list.length)throw new Error('空列表');
@@ -12816,7 +12819,8 @@ $('#apiPull').addEventListener('click',function(){
     list.forEach(function(id){var o=document.createElement('option');o.value=o.textContent=id;sel.appendChild(o);});
     $('#apiModelsRow').style.display='';
     $('#apiMsg').textContent='拉到 '+list.length+' 个模型，从下拉拣选';
-  }).catch(function(e){$('#apiMsg').textContent='拉取失败：'+felPublicError(e);});
+  }).catch(function(e){$('#apiMsg').textContent='拉取失败：'+felPublicError(e);})
+  .finally(function(){btn.removeAttribute('aria-busy');btn.style.pointerEvents='';});
 });
 $('#apiModels').addEventListener('change',function(){$('#apiModel').value=this.value;});
 $('#apiReason').addEventListener('change',function(){
@@ -17231,7 +17235,7 @@ try{var _bs=document.getElementById('buildStamp');if(_bs)_bs.textContent='BUILD 
 <script src="/core/res/era/felinia-era.js?v=2"></script>
 <!-- Embedded browser runtime. FELINIA supplies the only interface and fixed game data. -->
 <script type="importmap">{"imports":{"@huggingface/transformers":"/core/res/runtime/risu/vendor/transformers.web.min.js","onnxruntime-common":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs","onnxruntime-web":"/core/res/runtime/risu/vendor/ort.webgpu.min.mjs"}}</script>
-<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=34"></script>
+<script type="module" src="/core/res/runtime/risu/risu-headless.js?v=35"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "55e2f40fcd044dabb54d2b402dbf4db0"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

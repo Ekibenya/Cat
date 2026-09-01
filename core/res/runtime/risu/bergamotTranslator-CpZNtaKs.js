@@ -1,6 +1,6 @@
 import { i as e } from "./chunk-DeC0fbbY.js";
 import { y as t } from "./browser-BOPsNcbU.js";
-import { v as n } from "./characterCards-B-JmSHKq.js";
+import { v as n } from "./characterCards-BVIlRLPv.js";
 //#region node_modules/.pnpm/@browsermt+bergamot-translator@0.4.9/node_modules/@browsermt/bergamot-translator/translator.js
 typeof window < "u" && window.Worker || (globalThis.Worker = class {
 	#e;

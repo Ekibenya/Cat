@@ -1126,33 +1126,72 @@ async function $(e) {
 	}
 	return i.type === "multiline" ? { text: q(i.result.join("\n")) } : { text: q(i.result) };
 }
-async function Ie(e) {
-	let t = await L(), n = `${e.base.replace(/\/$/, "").replace(/\/(chat\/completions|responses)$/i, "")}/models`, r = await t.globalApi.globalFetch(n, {
+function Ie(e, t) {
+	let n = String(e || "").trim();
+	if (!n) throw Error("BASE URL 不能为空");
+	let r;
+	try {
+		r = new URL(n);
+	} catch {
+		throw Error("BASE URL 格式无效");
+	}
+	if (!/^https?:$/.test(r.protocol)) throw Error("BASE URL 只支持 HTTP 或 HTTPS");
+	r.hash = "", r.search = "";
+	let i = r.pathname.replace(/\/+$/, ""), a = t || "openai";
+	if (a === "ollama") return i = i.replace(/\/api\/(?:chat|generate|embeddings?|embed|tags)$/i, "/api"), !i || i === "/" ? i = "/api" : /\/api$/i.test(i) || (i += "/api"), r.pathname = `${i}/tags`, r;
+	if (a === "gemini") {
+		let e = i.match(/^(.*?\/models)(?:\/[^/]+(?::(?:streamGenerateContent|generateContent))?)?$/i);
+		return e ? i = e[1] : /\/v1(?:beta)?$/i.test(i) ? i += "/models" : !i || i === "/" ? i = "/v1beta/models" : i += "/v1beta/models", r.pathname = i, r.searchParams.set("pageSize", "1000"), r;
+	}
+	return i = i.replace(/\/(?:chat\/completions|completions|responses|messages)$/i, ""), /\/models$/i.test(i) || (!i || i === "/" ? i = "/v1" : /\/v1$/i.test(i) || (i += "/v1"), i += "/models"), r.pathname = i, a === "anthropic" && r.searchParams.set("limit", "1000"), r;
+}
+function Le(e) {
+	let t = e.format || "openai", n = Ie(e.base, t), r = { Accept: "application/json" };
+	return e.key && (t === "anthropic" ? r["x-api-key"] = e.key : t === "gemini" ? r["x-goog-api-key"] = e.key : r.Authorization = `Bearer ${e.key}`), t === "anthropic" && (r["anthropic-version"] = "2023-06-01", r["anthropic-dangerous-direct-browser-access"] = "true"), {
+		url: n.toString(),
+		headers: r
+	};
+}
+function Re(e, t = "openai") {
+	let n = Array.isArray(e) ? e : Array.isArray(e?.data) ? e.data : Array.isArray(e?.models) ? e.models : [], r = /* @__PURE__ */ new Set(), i = [];
+	for (let e of n) {
+		if (t === "gemini") {
+			let t = e?.supportedGenerationMethods || e?.supportedActions;
+			if (Array.isArray(t) && t.length && !t.includes("generateContent")) continue;
+		}
+		let n = String(e?.id || e?.model || e?.name || "").replace(/^models\//, "").trim();
+		!n || r.has(n) || (r.add(n), i.push(n));
+	}
+	return i;
+}
+async function ze(e) {
+	let t = await L(), n = Le(e), r = await t.globalApi.globalFetch(n.url, {
 		method: "GET",
-		headers: e.key ? { Authorization: `Bearer ${e.key}` } : {},
-		plainFetchForce: !0
+		headers: n.headers,
+		plainFetchForce: !0,
+		requestTimeoutMs: Math.max(1e3, Math.min(3e4, Math.trunc((e.requestTimeoutSec ?? 15) * 1e3)))
 	});
 	if (!r.ok) throw Error(typeof r.data == "string" ? r.data : `HTTP ${r.status}`);
-	return (Array.isArray(r.data?.data) ? r.data.data : Array.isArray(r.data?.models) ? r.data.models : []).map((e) => String(e?.id || e?.name || "")).filter(Boolean);
+	return Re(r.data, e.format);
 }
-async function Le(e) {
+async function Be(e) {
 	let t = await L(), n = t.database.getCurrentCharacter();
 	return n ? t.scripts.processScript(n, e, "editdisplay") : e;
 }
-async function Re() {
+async function Ve() {
 	return (await L()).database.getDatabase({ snapshot: !0 });
 }
-async function ze(e) {
+async function He(e) {
 	let t = await L();
 	t.database.setDatabase(e);
 	let n = e.characters.findIndex((e) => e.type !== "group" && I(e)?.kind === "era");
 	t.stores.selectedCharID.set(n);
 }
-async function Be() {
+async function Ue() {
 	let e = await L();
 	e.database.setDatabase(R()), e.stores.selectedCharID.set(-1);
 }
-var Ve = Object.freeze({
+var We = Object.freeze({
 	version: "2026.8.250",
 	upstreamCommit: "e565563a288ebe4c65b6099a1645ba477d1c84b4",
 	install: z,
@@ -1170,17 +1209,17 @@ var Ve = Object.freeze({
 	getHistory: Z,
 	generate: Q,
 	request: $,
-	listModels: Ie,
-	processDisplay: Le,
+	listModels: ze,
+	processDisplay: Be,
 	preparePalace: C,
 	syncPalace: x,
 	exportPalace: te,
 	getPalaceDrawers: ne,
 	importPalace: re,
 	clearPalace: ie,
-	snapshot: Re,
-	restore: ze,
-	reset: Be
+	snapshot: Ve,
+	restore: He,
+	reset: Ue
 });
 //#endregion
-export { Ve as FeliniaRisu, V as activateFeliniaEra, Te as applyFeliniaProviderSettings, ke as buildFeliniaCognitionPrompt, Oe as buildFeliniaPlanningPrompt, P as compileFeliniaDefinition, U as configureFeliniaMemory, K as configureFeliniaProvider, W as configureFeliniaTranslation, De as extractFeliniaCognition, D as findFeliniaTemporalViolations, Ne as findRepeatedFeliniaDialogue, Q as generateFeliniaTurn, Z as getFeliniaHistory, Ce as importRisuPreset, B as installFeliniaContent, z as installFeliniaGame, Ie as listFeliniaModels, ce as mergeFeliniaNativeCharacterFields, Y as normalizeFeliniaCognition, je as parseFeliniaPlanningResponse, Le as processFeliniaDisplay, Ae as recoverFeliniaPlanning, $ as requestFeliniaAux, Be as resetFeliniaRisu, ze as restoreFeliniaRisu, Pe as risuMessage, Fe as setFeliniaHistory, G as setFeliniaNpcState, H as setFeliniaSessionContent, Re as snapshotFeliniaRisu, q as stripFeliniaReasoning, Se as translateFelinia };
+export { We as FeliniaRisu, V as activateFeliniaEra, Te as applyFeliniaProviderSettings, ke as buildFeliniaCognitionPrompt, Le as buildFeliniaModelListRequest, Oe as buildFeliniaPlanningPrompt, P as compileFeliniaDefinition, U as configureFeliniaMemory, K as configureFeliniaProvider, W as configureFeliniaTranslation, De as extractFeliniaCognition, D as findFeliniaTemporalViolations, Ne as findRepeatedFeliniaDialogue, Q as generateFeliniaTurn, Z as getFeliniaHistory, Ce as importRisuPreset, B as installFeliniaContent, z as installFeliniaGame, ze as listFeliniaModels, ce as mergeFeliniaNativeCharacterFields, Y as normalizeFeliniaCognition, Re as parseFeliniaModelList, je as parseFeliniaPlanningResponse, Be as processFeliniaDisplay, Ae as recoverFeliniaPlanning, $ as requestFeliniaAux, Ue as resetFeliniaRisu, He as restoreFeliniaRisu, Pe as risuMessage, Fe as setFeliniaHistory, G as setFeliniaNpcState, H as setFeliniaSessionContent, Ve as snapshotFeliniaRisu, q as stripFeliniaReasoning, Se as translateFelinia };
