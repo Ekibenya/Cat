@@ -3062,13 +3062,13 @@ button:focus-visible,.go:focus-visible{outline:1px solid var(--gold);outline-off
       <div style="display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap"><span class="eBtn" id="reDefaults" style="margin-top:0">恢复引擎默认</span><span class="sub" id="reStatus">改动即时保存，下一次请求生效。</span></div>
     </div>
     <div class="cfgPane" id="cp_preset" style="display:none">
-      <div class="sub">支持&nbsp;SillyTavern&nbsp;聊天补全预设&nbsp;JSON（读取&nbsp;prompts，自动跳过占位条目），也可直接粘贴纯文本提示词。启用后每一轮都会按原顺序注入系统提示：位于对话历史之前的条目前置，之后的（如&nbsp;jailbreak）末位注入。预设存于本浏览器，刷新不丢。</div>
+      <div class="sub">「上传预设」认四种文件：SillyTavern&nbsp;聊天补全预设&nbsp;JSON（读&nbsp;prompts&nbsp;与&nbsp;prompt_order，自动跳过占位条目）、本页导出的预设&nbsp;JSON、纯文本提示词，以及内核原生预设。导入后逐条落进下面的列表，可单独开关、改名、改注入位置。启用后每一轮都按原顺序注入系统提示：位于对话历史之前的条目前置，之后的（如&nbsp;jailbreak）末位注入。预设存于本浏览器，刷新不丢。</div>
       <div id="preList" style="margin-top:12px;max-height:180px;overflow-y:auto"></div>
       <div style="display:flex;gap:12px;margin-top:12px">
         <span class="eBtn" id="preNew" style="margin-top:0">新建</span>
         <span class="eBtn" id="preImp" style="margin-top:0">上传预设</span>
         <span class="eBtn" id="preExp" style="margin-top:0">导出</span>
-        <input type="file" id="preFile" accept=".json,.txt" style="display:none"><span class="sub" id="preMsg"></span>
+        <input type="file" id="preFile" accept=".json,.txt,.risupreset,.risup" style="display:none"><span class="sub" id="preMsg"></span>
       </div>
       <div id="preForm" style="display:none;margin-top:12px;border:1px solid rgba(132,88,0,.35);padding:12px">
         <div class="sRow"><span>名称</span><input class="aIn" id="pfName" style="width:200px"></div>
@@ -10248,9 +10248,10 @@ function sysPrompt(){
     ACTIVE==='luzhi'?FELINIA_FINAL_CHECK:
       ('【每回自查】'+heroRebind(felStripLegacyMeowRule(G.post_history_instructions||''))),
     minc,
-    CFGS.preset?('【玩家自定义常驻指令】'+CFGS.preset):'',
+    presetHead(),
     heroTail(),                        /* 永远压最末：结尾的权重最高 */
     povTail(),
+    presetTail(),                     /* 玩家标为「末位注入」的预设：人写的字里最后一段 */
     MEOW_RULE                         /* 系统提示末尾再压一次 */
   /* 整份系统提示统一过一遍宏替换：卡的四个字段、预设、玩家自定义常驻指令里
      都可能带 {{user}}/{{char}}。 */
@@ -12489,6 +12490,52 @@ function risuAuxInvoke(messages,cb,err){
   risuInvoke(messages,cb,err,{aux:1,noStream:true,max_tokens:800});
 }
 /* —— 预·预设 —— */
+/* 玩家自己的预设：合成前置与末位两段送进系统提示。
+   从前 SET.presets 只在设置面板里显示——新建也好、导入也好，存下来就再没有下文，
+   提示词里只认旧版那一条 CFGS.preset。于是「预设」这一整页等于没接线。 */
+function presetJoin(pos){
+  var out=[];
+  if(pos===0&&CFGS.preset)out.push(String(CFGS.preset));
+  (SET.presets||[]).forEach(function(p){
+    if(!p||p.on===false)return;
+    if((p.pos===1?1:0)!==pos)return;
+    var t=String(p.text||'').trim();if(t)out.push(t);
+  });
+  return out.join('\n\n');
+}
+function presetHead(){var t=presetJoin(0);return t?('【玩家自定义常驻指令】'+t):'';}
+function presetTail(){var t=presetJoin(1);return t?('【玩家自定义·末位指令】'+t):'';}
+/* SillyTavern 聊天补全预设 → 本作的预设条目。
+   prompt_order 决定顺序与开关（ST 每个角色存一份，取条目最多的那一份）；
+   marker 条目是占位符（对话历史、世界书、角色卡…），由本作自己填，跳过；
+   对话历史那枚占位符是分界线，在它之后的（jailbreak 之类）算末位注入。 */
+function presetFromST(o){
+  var prompts=Array.isArray(o.prompts)?o.prompts:[],byId={},out=[];
+  prompts.forEach(function(p){if(p&&p.identifier)byId[p.identifier]=p;});
+  var order=null;
+  (o.prompt_order||[]).forEach(function(po){
+    if(po&&Array.isArray(po.order)&&(!order||po.order.length>order.length))order=po.order;
+  });
+  var seq=order?order.map(function(it){
+      var p=it&&byId[it.identifier];
+      return p?{p:p,on:it.enabled!==false}:null;
+    }).filter(Boolean)
+   :prompts.map(function(p){return {p:p,on:p&&p.enabled!==false};});
+  var cut=seq.length,i;
+  for(i=0;i<seq.length;i++)if(seq[i].p.identifier==='chatHistory'){cut=i;break;}
+  seq.forEach(function(it,idx){
+    var p=it.p;
+    if(!p||p.marker)return;
+    var t=String(p.content||'').trim();if(!t)return;
+    out.push({name:String(p.name||p.identifier||'预设').slice(0,60),
+      pos:idx>cut?1:0,text:t,on:it.on!==false});
+  });
+  return out;
+}
+function presetIsRisuJson(o){
+  return !!(o&&typeof o==='object'&&!Array.isArray(o)
+    &&(o.promptTemplate||o.formatingOrder||o.mainPrompt!==undefined||o.jailbreakToggle!==undefined));
+}
 var PREEDIT=-1;
 function preRender(){
   var host=$('#preList');host.innerHTML='';
@@ -12518,14 +12565,48 @@ $('#pfSave2').addEventListener('click',function(){
   setStore();preRender();$('#preForm').style.display='none';
 });
 $('#preImp').addEventListener('click',function(){$('#preFile').click();});
+/* 上传预设。从前不管拿到什么都直接丢给内核的原生导入，然后一律回一句
+   「原生预设已经启用」——SillyTavern 的聊天补全预设、纯文本提示词、乃至本页
+   自己导出的那份 JSON，全都石沉大海：列表里不多一条，提示词里也没有它。
+   现在按文件真正的样子分流，只有认不出来的才交给原生导入。 */
 $('#preFile').addEventListener('change',function(){
   var f=this.files[0];if(!f)return;
   var input=this;
-  f.arrayBuffer().then(function(buf){return felRisuBoot().then(function(risu){
-    return risu.importPreset(f.name,new Uint8Array(buf));
-  });}).then(function(){$('#preMsg').textContent='原生预设已经启用';})
-    .catch(function(e){$('#preMsg').textContent='预设解析失败：'+felPublicError(e);})
-    .then(function(){input.value='';});
+  function done(msg){$('#preMsg').textContent=msg;input.value='';}
+  function add(list,how){
+    list=(list||[]).filter(function(x){return x&&String(x.text||'').trim();});
+    if(!list.length){done('这份文件里没有可用的提示词条目');return;}
+    SET.presets=(SET.presets||[]).concat(list);
+    setStore();preRender();
+    done('已导入 '+list.length+' 条（'+how+'）·可逐条开关与改注入位置');
+  }
+  function native(){
+    return f.arrayBuffer().then(function(buf){return felRisuBoot().then(function(risu){
+      return risu.importPreset(f.name,new Uint8Array(buf));
+    });}).then(function(){done('原生预设已经启用');});
+  }
+  var binary=/\.(risupreset|risup|risum|bin|gz|zip|png)$/i.test(f.name);
+  (binary?native():f.text().then(function(txt){
+    txt=String(txt||'').replace(/^\uFEFF/,'');
+    if(/\u0000/.test(txt))return native();      /* 压缩档或二进制：交给原生导入 */
+    var body=txt.trim();
+    if(!body){done('文件是空的');return;}
+    var o=null;try{o=JSON.parse(body);}catch(_){}
+    if(o&&typeof o==='object'){
+      if(presetIsRisuJson(o))return native();   /* 内核自己的预设 JSON */
+      /* 本作导出的那一份：[{name,pos,text,on}] */
+      if(Array.isArray(o)&&o.some(function(x){return x&&typeof x.text==='string';}))
+        return add(o.map(function(x){
+          return {name:String(x.name||'预设').slice(0,60),pos:x.pos===1?1:0,
+            text:String(x.text||''),on:x.on!==false};}),'本作预设');
+      if(Array.isArray(o.prompts))return add(presetFromST(o),'SillyTavern 预设');
+      var one=String(o.content||o.text||o.prompt||'').trim();
+      if(one)return add([{name:String(o.name||f.name).slice(0,60),pos:0,text:one,on:true}],'单条提示词');
+      return native();                          /* 认不出来的 JSON */
+    }
+    /* 不是 JSON：整份当纯文本提示词收下 */
+    return add([{name:f.name.replace(/\.[^.]+$/,'').slice(0,60)||'预设',pos:0,text:body,on:true}],'纯文本');
+  })).catch(function(e){done('预设解析失败：'+felPublicError(e));});
 });
 $('#preExp').addEventListener('click',function(){
   var b=new Blob([JSON.stringify(SET.presets,null,1)],{type:'application/json'});
