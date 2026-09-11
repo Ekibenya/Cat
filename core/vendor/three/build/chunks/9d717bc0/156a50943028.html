@@ -10274,14 +10274,22 @@ function risuInvoke(messages,cb,err,opt){
   var minChars=num(opt.min_chars,aux?0:((typeof SET!=='undefined'&&SET.samp.minc)?SET.samp.minc:900));
   delete opt.min_chars;
   var timeoutMs=num(opt.timeoutMs,aux?25000:40000);delete opt.timeoutMs;
+  var streaming=false,lastText='';
   var ac=window.AbortController?new AbortController():null;
   if(!aux)GENAC=ac;
-  var fired=false,timedOut=false,timer=setTimeout(function(){
+  var fired=false,timedOut=false,timer=null;
+  /* 正式回合不自动掐断：字出来了就是这一回，掐不掐只听玩家的「✕ 中断」。
+     原来是整回合硬上限 40 秒，思考型模型推演＋正文常常超过，字都出来了还被作废。
+     辅助请求（aux）没有画面可看，仍按原来的时限自动放弃。 */
+  if(aux)timer=setTimeout(function(){
     if(fired)return;timedOut=true;try{if(ac)ac.abort();}catch(_){}
     fail(new Error('接口 '+Math.round(timeoutMs/1000)+' 秒没有返回'));
   },timeoutMs);
-  function fail(e){if(fired)return;fired=true;clearTimeout(timer);
-    err(timedOut?('接口 '+Math.round(timeoutMs/1000)+' 秒没有返回，已中断'):felPublicError(e));}
+  (function(){var _d=onDelta;onDelta=function(t){if(!fired){streaming=true;lastText=String(t||'');}if(_d)return _d(t);};})();
+  function fail(e){if(fired)return;fired=true;if(timer)clearTimeout(timer);
+    /* 字已经出来了就不作废：中断或断线都把已到的正文落定，只标记未收尾，想重来按 ↻ 重演 */
+    if(!aux&&streaming&&lastText.trim()){cb(lastText,{trunc:true,reason:'半路中断，已保留已生成的部分',cognition:null});return;}
+    err(timedOut?('接口 '+Math.round(timeoutMs/1000)+' 秒没有返回，已放弃'):felPublicError(e));}
   (aux?felRisuBoot().then(function(risu){
     var ei=_eraNow()||1;return risu.activateEra(ei,felRisuNpcKeys(ei)).then(function(){return risu;});
   }):felRisuPrepare(messages,{firstMessage:opening?'':undefined})).then(function(risu){
@@ -10439,7 +10447,7 @@ function askOracleSend(msgs){
       renderReply(display,idx,streamed);            /* 已流式出过字：跳过打字机，直接落定 */
       if(meta&&meta.trunc)narrAdd('sys',
         '⚠&nbsp;本回未正常收尾（'+esc2(meta.reason||'截断')+'），正文与状态栏可能不完整'
-        +'&nbsp;——&nbsp;可在&nbsp;设置·链&nbsp;调大「单轮上限&nbsp;tokens」，或按&nbsp;↻&nbsp;重演',null);
+        +(meta.reason==='半路中断，已保留已生成的部分'?'&nbsp;——&nbsp;想重来就按&nbsp;↻&nbsp;重演':'&nbsp;——&nbsp;可在&nbsp;设置·链&nbsp;调大「单轮上限&nbsp;tokens」，或按&nbsp;↻&nbsp;重演'),null);
     }).catch(function(e){
       /* 翻译服务断线不丢模型原稿：保存原始韩语并让玩家看见，下一回也仍可继续。 */
       genClose();BUSY=false;felTrStatus('译文失败，已保留韩语原稿：'+((e&&e.message)||e),1);
@@ -11239,7 +11247,7 @@ function felRisuProvider(source){
     contextTokens:parseInt(SET.context,10)||65536,stream:r.stream!==0,autofillRequestUrl:r.autoUrl!==0,
     frequencyPenalty:felRisuOptionalNumber(r.freq),presencePenalty:felRisuOptionalNumber(r.pres),topK:felRisuOptionalNumber(r.topk),
     repetitionPenalty:felRisuOptionalNumber(r.rep),minP:felRisuOptionalNumber(r.minp),topA:felRisuOptionalNumber(r.topa),
-    generationSeed:felRisuOptionalNumber(r.seed),requestRetries:felRisuOptionalNumber(r.retries),requestTimeoutSec:felRisuOptionalNumber(r.timeout),
+    generationSeed:felRisuOptionalNumber(r.seed),requestRetries:felRisuOptionalNumber(r.retries),requestTimeoutSec:Math.max(600,felRisuOptionalNumber(r.timeout)||0),
     strictOpenAICompatible:r.strict!==0,stopStrings:String(r.stops||'').split(/\r?\n/).map(function(v){return v.trim();}).filter(Boolean),
     autoContinue:r.autoCont!==0,autoContinueMinTokens:parseInt(r.autoMin,10)||0,removeIncompleteResponse:r.removeIncomplete!==0,
     fallbackWhenBlankResponse:r.blankFallback!==0,newOpenAIHandler:r.newOai!==0,visionQuality:r.vision||'low',
