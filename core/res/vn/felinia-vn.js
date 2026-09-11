@@ -8,12 +8,23 @@
     cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;
     var g=cv.getContext('2d');if(g)g.drawImage(im,0,0);
   }
+  /* 立绘走不稳的网络时常常一次拉不下来。原来没接 onerror：拉失败就留一块什么都没画的空画布
+     杵在台上。现在失败了隔一会儿换个查询串再拉，最多三次；三次都不行就把这块画布收起来。 */
   function plate(cls,src,onload){
-    var cv=document.createElement('canvas');
+    var cv=document.createElement('canvas'),tries=0;
     if(cls)cv.className=cls;
-    var im=new Image();
-    im.onload=function(){pix(cv,im);if(onload)onload();};
-    im.src=src;
+    cv.width=0;cv.height=0;cv.style.visibility='hidden';
+    function attempt(){
+      var im=new Image();im.decoding='async';
+      im.onload=function(){pix(cv,im);cv.style.visibility='';if(onload)onload();};
+      im.onerror=function(){
+        tries++;
+        if(tries>=3){cv.style.display='none';try{console.warn('[felinia-vn] 立绘加载失败',src);}catch(_){}return;}
+        setTimeout(attempt,900*tries);
+      };
+      im.src=tries?(src+(src.indexOf('?')>=0?'&':'?')+'r='+tries+'_'+Date.now()):src;
+    }
+    attempt();
     return cv;
   }
   var CAT_RX=/猫娘|猫耳|耳尾|尾巴|肉垫|窝群|同类/;
@@ -481,7 +492,7 @@
     
   }
   function init(){
-    fetch('/core/res/data/felinia/vn-images.json?v=2').then(function(r){if(!r.ok)throw new Error('image index '+r.status);return r.json();}).then(function(data){
+    fetch('/core/res/data/felinia/vn-images.json?v=3').then(function(r){if(!r.ok)throw new Error('image index '+r.status);return r.json();}).then(function(data){
       V.manifest=data;V.ready=true;tick();
       setInterval(tick,600);
     }).catch(function(err){try{console.warn('[visual-novel]',err);}catch(_){}});
